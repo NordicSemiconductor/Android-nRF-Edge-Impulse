@@ -3,15 +3,11 @@ package no.nordicsemi.android.ei
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Scaffold
+import androidx.compose.material.Text
+import androidx.compose.material.TopAppBar
+import androidx.compose.runtime.*
 import no.nordicsemi.android.ei.ui.theme.NordicTheme
 
 class MainActivity : AppCompatActivity() {
@@ -19,28 +15,31 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             NordicTheme(darkTheme = false) {
-                Screen(name = title.toString())
+                Screen()
             }
         }
     }
 }
 
 @Composable
-fun Screen(name: String) {
-    var title by remember { mutableStateOf(name) }
+fun Screen() {
+    var topBarVisible by remember { mutableStateOf(false) }
+    var topBarTitle by remember { mutableStateOf("")}
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(text = title)
-                }
-            )
+            if (topBarVisible) {
+                TopAppBar(
+                    title = { Text(text = topBarTitle) }
+                )
+            }
         },
         backgroundColor = MaterialTheme.colors.background
     ) {
         Navigation(
-            Modifier.padding(16.dp),
-            onTitleChange = { title = it }
+            tabBarSpec = { visible,  title ->
+                topBarVisible = visible
+                topBarTitle = title ?: ""
+            }
         )
     }
 }
