@@ -3,6 +3,9 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/GitHub/Android-nRF-Edge-Impulse/app/src/main/res/drawable/ic_edge_impulse_mark_rgb.xml" value="0.3074074074074074" />
+        <entry key="..\:/GitHub/Android-nRF-Edge-Impulse/app/src/main/res/drawable/ic_new_nordic_logo.xml" value="0.3074074074074074" />
+        <entry key="..\:/GitHub/Android-nRF-Edge-Impulse/app/src/main/res/drawable/nordic_logo.xml" value="0.3074074074074074" />
         <entry key="..\:/Users/alno/AndroidstudioProjects/nRFEdgeImpulse/app/src/main/res/drawable/ic_login_logo.xml" value="0.2677083333333333" />
       </map>
     </option>
