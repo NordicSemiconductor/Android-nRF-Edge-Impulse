@@ -11,20 +11,19 @@ import no.nordicsemi.android.ei.ui.Login
 @Composable
 fun Navigation(
     modifier: Modifier = Modifier,
-    tabBarSpec: (visible: Boolean, title: String?) -> Unit
+    refreshToolbar: (visible: Boolean, title: String?) -> Unit
 ) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "login") {
         composable("login") {
-            tabBarSpec(false, "Login")
+            refreshToolbar(false, "Login")
             Login(
                 modifier = modifier,
-                navigation = navController
             )
         }
 
         composable("projects") {
-            tabBarSpec(false, "Projects")
+            refreshToolbar(false, "Projects")
             Text(text = "Projects")
         }
     }

@@ -42,7 +42,7 @@ fun Screen() {
         Navigation(
             modifier = Modifier
                 .padding(innerPadding),
-            tabBarSpec = { visible, title ->
+            refreshToolbar = { visible, title ->
                 topBarVisible = visible
                 topBarTitle = title ?: ""
             }

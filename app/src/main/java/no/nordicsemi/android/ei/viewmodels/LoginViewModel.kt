@@ -1,34 +1,23 @@
 package no.nordicsemi.android.ei.viewmodels
 
-import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import no.nordicsemi.android.ei.eiservice.LoginBody
-import no.nordicsemi.android.ei.repository.NrfEiRepository
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import kotlinx.coroutines.launch
+import no.nordicsemi.android.ei.repository.LoginRepository
 import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val repo: NrfEiRepository
+    private val state: SavedStateHandle,
+   // private val repo: LoginRepository
 ) : ViewModel() {
 
     fun login(username: String, password: String) {
-        repo.eiService.login(loginBody = LoginBody(username = username, password = password))
-            .enqueue(object :
-                Callback<String> {
-                override fun onResponse(call: Call<String>, response: Response<String>) {
-                    Log.i("SS", "Response: $response")
-                    Log.i("SS", "Response: $response")
-                }
-
-                override fun onFailure(call: Call<String>, t: Throwable) {
-                    TODO("Not yet implemented")
-                }
-
-            })
+        viewModelScope.launch {
+     //       val token = repo.login(username, password)
+        }
     }
 
 }

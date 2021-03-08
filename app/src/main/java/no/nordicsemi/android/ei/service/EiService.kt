@@ -1,13 +1,14 @@
-package no.nordicsemi.android.ei.eiservice
+package no.nordicsemi.android.ei.service
 
-import retrofit2.Call
+import no.nordicsemi.android.ei.service.`object`.LoginBody
 import retrofit2.http.Body
 import retrofit2.http.Headers
 import retrofit2.http.POST
 
 interface EiService {
+
     @Headers("Accept: application/json", "Content-Type: application/json")
     @POST("api-login")
-    fun login(@Body loginBody: LoginBody): Call<String>
+    suspend fun login(@Body loginBody: LoginBody): String
 
 }

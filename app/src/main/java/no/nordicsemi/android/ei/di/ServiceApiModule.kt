@@ -3,21 +3,20 @@ package no.nordicsemi.android.ei.di
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
-import no.nordicsemi.android.ei.eiservice.EiService
+import dagger.hilt.android.components.ViewModelComponent
+import no.nordicsemi.android.ei.service.EiService
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.create
-import javax.inject.Singleton
 
-@InstallIn(SingletonComponent::class)
 @Module
-object EdgeImpulseApiModule {
+@InstallIn(ViewModelComponent::class)
+object ServiceApiModule {
 
-    @Singleton
     @Provides
     fun provideRepository(): EiService = Retrofit.Builder()
         .baseUrl("https://studio.edgeimpulse.com/v1/")
         .addConverterFactory(GsonConverterFactory.create())
         .build().create()
+
 }

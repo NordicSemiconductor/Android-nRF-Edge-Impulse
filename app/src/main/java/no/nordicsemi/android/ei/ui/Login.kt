@@ -15,7 +15,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ui.theme.NordicBlue
 import no.nordicsemi.android.ei.viewmodels.LoginViewModel
@@ -23,7 +22,6 @@ import no.nordicsemi.android.ei.viewmodels.LoginViewModel
 @Composable
 fun Login(
     modifier: Modifier = Modifier,
-    navigation: NavHostController,
     viewModel: LoginViewModel = viewModel()
 ) {
     var username by remember { mutableStateOf(TextFieldValue("")) }
