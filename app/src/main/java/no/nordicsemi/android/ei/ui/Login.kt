@@ -1,7 +1,6 @@
 package no.nordicsemi.android.ei.ui
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -15,29 +14,25 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ui.theme.NordicBlue
-import no.nordicsemi.android.ei.ui.theme.NordicBlueDark
+import no.nordicsemi.android.ei.viewmodels.LoginViewModel
 
 @Composable
 fun Login(
     modifier: Modifier = Modifier,
     navigation: NavHostController,
+    viewModel: LoginViewModel = viewModel()
 ) {
-    LoginSection(modifier)
-}
-
-@Composable
-fun LoginSection(modifier: Modifier) {
     var username by remember { mutableStateOf(TextFieldValue("")) }
     var password by remember { mutableStateOf(TextFieldValue("")) }
     var passwordState: Boolean by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
-            .fillMaxHeight()
-            .background(color = NordicBlueDark),
+            .fillMaxHeight(),
         verticalArrangement = Arrangement.Center
     ) {
         Card(modifier = modifier.padding(16.dp)) {
@@ -109,7 +104,12 @@ fun LoginSection(modifier: Modifier) {
                     textAlign = TextAlign.End
                 )
                 Button(
-                    onClick = { /*TODO*/ },
+                    onClick = {
+                        viewModel.login(
+                            "roshan.rajaratnam@nordicsemi.no",
+                            "%!H8Ic2OlDIFHgF5@1DlbULfO*xO9y^yOc6ikZyX"
+                        )
+                    },
                     modifier = Modifier
                         .padding(top = 16.dp)
                         .fillMaxWidth()
