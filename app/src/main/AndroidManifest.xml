@@ -16,9 +16,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.nRFEdgeImpulse">
         <activity
-            android:name="no.nordicsemi.android.ei.MainActivity"
+            android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
+            android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.nRFEdgeImpulse.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

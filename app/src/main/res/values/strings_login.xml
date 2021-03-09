@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="field_username">Username or e-mail</string>
+    <string name="field_password">Password</string>
+
+    <string name="action_show_password">Show password</string>
+    <string name="action_forgot_password">Forgot password?</string>
+    <string name="action_login">Login</string>
+    <string name="action_signup">Sign Up</string>
+
+    <string name="label_no_account">Don\'t have an account yet?</string>
+</resources>

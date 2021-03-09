@@ -1,3 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">nRF Edge Impulse</string>
+
+    <string name="name_nordic">Nordic Semiconductor</string>
+    <string name="name_edge_impulse">Edge Impulse</string>
 </resources>

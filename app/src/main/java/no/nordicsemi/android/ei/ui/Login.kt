@@ -1,20 +1,20 @@
 package no.nordicsemi.android.ei.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ui.theme.NordicBlue
 import no.nordicsemi.android.ei.viewmodels.LoginViewModel
@@ -22,52 +22,42 @@ import no.nordicsemi.android.ei.viewmodels.LoginViewModel
 @Composable
 fun Login(
     modifier: Modifier = Modifier,
-    viewModel: LoginViewModel = viewModel()
+    viewModel: LoginViewModel,
 ) {
-    var username by remember { mutableStateOf(TextFieldValue("")) }
-    var password by remember { mutableStateOf(TextFieldValue("")) }
-    var passwordState: Boolean by remember { mutableStateOf(false) }
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var passwordState by remember { mutableStateOf(false) }
 
     Column(
-        modifier = modifier
-            .fillMaxHeight(),
+        modifier = modifier.fillMaxHeight(),
         verticalArrangement = Arrangement.Center
     ) {
-        Card(modifier = modifier.padding(16.dp)) {
+        Card(modifier = Modifier.padding(16.dp)) {
             Column(
-                modifier = modifier
-                    .padding(16.dp),
+                modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Row {
-                    Surface(
-                        modifier = Modifier.size(50.dp),
-                        shape = CircleShape
-                    ) {
-                        Image(
-                            painter = painterResource(R.drawable.ic_new_nordic_logo),
-                            contentDescription = "Nordic Semiconductor",
-                            modifier = modifier.padding(8.dp)
-                        )
-                    }
-                    Surface(
-                        modifier = Modifier.size(50.dp),
-                        shape = CircleShape
-                    ) {
-                        Image(
-                            painter = painterResource(R.drawable.ic_edge_impulse_mark_rgb),
-                            contentDescription = "Edge Impulse"
-                        )
-                    }
+                Row(
+                    Modifier.padding(vertical = 16.dp)
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.ic_new_nordic_logo),
+                        contentDescription = stringResource(R.string.name_nordic),
+                        modifier = Modifier.size(64.dp).padding(8.dp),
+                    )
+                    Image(
+                        painter = painterResource(R.drawable.ic_edge_impulse_mark_rgb),
+                        contentDescription = stringResource(R.string.name_edge_impulse),
+                        modifier = Modifier.size(64.dp),
+                    )
                 }
 
                 OutlinedTextField(
-                    modifier = modifier
-                        .fillMaxWidth(),
                     value = username,
                     onValueChange = { username = it },
-                    label = { Text("Username") },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(stringResource(R.string.field_username)) },
                     singleLine = true
                 )
                 OutlinedTextField(
@@ -76,7 +66,7 @@ fun Login(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp),
-                    label = { Text("Password") },
+                    label = { Text(stringResource(R.string.field_password)) },
                     visualTransformation = if (passwordState) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = {
@@ -87,14 +77,15 @@ fun Login(
                                     if (passwordState) R.drawable.ic_baseline_visibility_24
                                     else R.drawable.ic_baseline_visibility_off_24
                                 ),
-                                contentDescription = "Toggle password"
+                                contentDescription = stringResource(R.string.action_show_password)
                             )
                         }
                     },
                     singleLine = true
                 )
                 Text(
-                    text = "Forgot password?", modifier = modifier
+                    text = stringResource(R.string.action_forgot_password),
+                    modifier = Modifier
                         .fillMaxWidth()
                         .clickable(enabled = true, onClick = {/*TODO*/ })
                         .padding(top = 8.dp),
@@ -104,8 +95,8 @@ fun Login(
                 Button(
                     onClick = {
                         viewModel.login(
-                            "roshan.rajaratnam@nordicsemi.no",
-                            "%!H8Ic2OlDIFHgF5@1DlbULfO*xO9y^yOc6ikZyX"
+                            username = username,
+                            password = password,
                         )
                     },
                     modifier = Modifier
@@ -113,8 +104,8 @@ fun Login(
                         .fillMaxWidth()
                 ) {
                     Text(
-                        text = "Login",
-                        modifier = modifier.padding(
+                        text = stringResource(R.string.action_login),
+                        modifier = Modifier.padding(
                             start = 16.dp,
                             top = 4.dp,
                             end = 16.dp,
@@ -123,11 +114,11 @@ fun Login(
                     )
                 }
                 Row(
-                    modifier = modifier.padding(top = 16.dp)
+                    modifier = Modifier.padding(top = 16.dp)
                 ) {
-                    Text(text = "Don't have an account yet?")
+                    Text(text = stringResource(R.string.label_no_account))
                     Spacer(modifier = Modifier.padding(start = 4.dp))
-                    Text(text = "Sign Up", color = NordicBlue)
+                    Text(text = stringResource(R.string.action_signup), color = NordicBlue)
                 }
             }
         }

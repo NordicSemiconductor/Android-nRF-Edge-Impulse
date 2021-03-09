@@ -66,8 +66,7 @@ dependencies {
     // Hilt - Dagger
     implementation "com.google.dagger:hilt-android:$hilt_dagger_version"
     kapt "com.google.dagger:hilt-compiler:$hilt_dagger_version"
-//    implementation "androidx.hilt:hilt-lifecycle-viewmodel:$hilt_android_version"
-//    kapt "androidx.hilt:hilt-compiler:$hilt_android_version"
+    implementation "androidx.hilt:hilt-navigation:$hilt_android_version"
 
     // For instrumentation tests
     androidTestImplementation "com.google.dagger:hilt-android-testing:$hilt_dagger_version"
