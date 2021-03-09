@@ -9,6 +9,6 @@ class LoginRepository(private val service: EiService) {
         service.login(loginRequest = LoginRequest(username, password))
 
     suspend fun projects(token: String) =
-        service.projects(token)
+        service.projects("jwt=$token")
 
 }

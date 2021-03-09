@@ -17,7 +17,7 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             val response = repo.login(username, password)
             Log.e("AA", response.toString())
-            val projects = repo.projects("jwt=${response.token}")
+            val projects = repo.projects(response.token)
             Log.e("AA", projects.toString())
         }
     }
