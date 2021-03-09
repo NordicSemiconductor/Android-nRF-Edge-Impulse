@@ -1,5 +1,6 @@
 package no.nordicsemi.android.ei.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,7 +15,10 @@ class LoginViewModel @Inject constructor(
 
     fun login(username: String, password: String) {
         viewModelScope.launch {
-            val token = repo.login(username, password)
+            val response = repo.login(username, password)
+            Log.e("AA", response.toString())
+            val projects = repo.projects("jwt=${response.token}")
+            Log.e("AA", projects.toString())
         }
     }
 
