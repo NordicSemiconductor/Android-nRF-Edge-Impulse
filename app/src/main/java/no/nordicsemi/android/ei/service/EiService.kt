@@ -7,10 +7,20 @@ import retrofit2.http.*
 
 interface EiService {
 
+    /**
+     * Get a JWT token to authenticate with the API.
+     *
+     * @see <a href="https://docs.edgeimpulse.com/reference#login-1">Docs: Get JWT token</a>
+     */
     @Headers("Accept: application/json", "Content-Type: application/json")
     @POST("api-login")
     suspend fun login(@Body loginRequest: LoginRequest): LoginResponse
 
+    /**
+     * Retrieve list of active projects.
+     *
+     * @see <a href="https://docs.edgeimpulse.com/reference#listprojects">Docs: List active projects</a>
+     */
     @Headers("Accept: application/json", "Content-Type: application/json")
     @GET("api/projects")
     suspend fun projects(@Header("cookie") jwt: String): ProjectResponse
