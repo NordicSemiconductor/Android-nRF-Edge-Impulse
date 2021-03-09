@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.repository.LoginRepository
 import javax.inject.Inject
@@ -14,7 +15,7 @@ class LoginViewModel @Inject constructor(
 ) : ViewModel() {
 
     fun login(username: String, password: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val response = repo.login(username, password)
             Log.e("AA", response.toString())
             val projects = repo.projects(response.token)
