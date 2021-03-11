@@ -1,30 +1,34 @@
 package no.nordicsemi.android.ei.ui
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ui.theme.NordicBlue
-import no.nordicsemi.android.ei.viewmodels.LoginViewModel
+import no.nordicsemi.android.ei.ui.theme.NordicTheme
 
 @Composable
 fun Login(
     modifier: Modifier = Modifier,
-    viewModel: LoginViewModel,
+    enabled: Boolean = true,
+    onLogin: (username: String, password: String) -> Unit = { _: String, _: String -> },
+    onForgotPassword: () -> Unit = {},
+    onSignUp: () -> Unit = {},
+    login: String? = null,
+    error: String? = null,
 ) {
-    var username by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf(login ?: "") }
     var password by remember { mutableStateOf("") }
     var passwordState by remember { mutableStateOf(false) }
 
@@ -44,19 +48,26 @@ fun Login(
                     Image(
                         painter = painterResource(R.drawable.ic_new_nordic_logo),
                         contentDescription = stringResource(R.string.name_nordic),
-                        modifier = Modifier.size(64.dp).padding(8.dp),
+                        modifier = Modifier
+                            .size(64.dp)
+                            .padding(8.dp),
                     )
                     Image(
-                        painter = painterResource(R.drawable.ic_edge_impulse_mark_rgb),
+                        painter = painterResource(R.drawable.ic_edge_impulse),
                         contentDescription = stringResource(R.string.name_edge_impulse),
                         modifier = Modifier.size(64.dp),
                     )
+                }
+
+                error?.let { message ->
+                    Text(text = stringResource(R.string.label_login_error, message))
                 }
 
                 OutlinedTextField(
                     value = username,
                     onValueChange = { username = it },
                     modifier = Modifier.fillMaxWidth(),
+                    enabled = enabled,
                     label = { Text(stringResource(R.string.field_username)) },
                     singleLine = true
                 )
@@ -66,6 +77,7 @@ fun Login(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp),
+                    enabled = enabled,
                     label = { Text(stringResource(R.string.field_password)) },
                     visualTransformation = if (passwordState) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
@@ -86,22 +98,17 @@ fun Login(
                 Text(
                     text = stringResource(R.string.action_forgot_password),
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = true, onClick = {/*TODO*/ })
-                        .padding(top = 8.dp),
+                        .clickable(enabled = enabled, onClick = onForgotPassword)
+                        .padding(vertical = 8.dp),
                     color = NordicBlue,
-                    textAlign = TextAlign.End
+                    textAlign = TextAlign.End,
                 )
                 Button(
-                    onClick = {
-                        viewModel.login(
-                            username = username,
-                            password = password,
-                        )
-                    },
+                    onClick = { onLogin(username, password) },
                     modifier = Modifier
                         .padding(top = 16.dp)
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
+                    enabled = enabled,
                 ) {
                     Text(
                         text = stringResource(R.string.action_login),
@@ -118,9 +125,21 @@ fun Login(
                 ) {
                     Text(text = stringResource(R.string.label_no_account))
                     Spacer(modifier = Modifier.padding(start = 4.dp))
-                    Text(text = stringResource(R.string.action_signup), color = NordicBlue)
+                    Text(
+                        text = stringResource(R.string.action_signup),
+                        color = NordicBlue,
+                        modifier = Modifier.clickable(enabled = enabled,onClick = onSignUp)
+                    )
                 }
             }
         }
+    }
+}
+
+@Preview
+@Composable
+fun LoginPreview() {
+    NordicTheme(darkTheme = false) {
+        Login(error = "Invalid password")
     }
 }

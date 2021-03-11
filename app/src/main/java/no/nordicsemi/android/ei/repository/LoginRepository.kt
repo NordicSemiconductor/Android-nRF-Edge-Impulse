@@ -6,7 +6,7 @@ import no.nordicsemi.android.ei.service.param.LoginRequest
 class LoginRepository(private val service: EiService) {
 
     suspend fun login(username: String, password: String) =
-        service.login(loginRequest = LoginRequest(username, password))
+        service.login(loginRequest = LoginRequest(username, password, null))
 
     suspend fun projects(token: String) =
         service.projects("jwt=$token")

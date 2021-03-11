@@ -9,4 +9,5 @@
     <string name="action_signup">Sign Up</string>
 
     <string name="label_no_account">Don\'t have an account yet?</string>
+    <string name="label_login_error">Failed to log in: %s</string>
 </resources>

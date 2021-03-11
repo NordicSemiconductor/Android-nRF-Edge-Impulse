@@ -7,7 +7,7 @@ package no.nordicsemi.android.ei.service.param
  */
 data class LoginResponse(
     /** JWT token, to be used to log in in the future through JWTAuthentication. */
-    val token: String,
+    val token: String?,
     /** Whether the operation succeeded. */
     val success: Boolean,
     /** Optional error description (set if [success] was false). */
