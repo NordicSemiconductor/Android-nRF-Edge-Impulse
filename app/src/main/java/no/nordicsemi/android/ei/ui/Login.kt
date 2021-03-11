@@ -1,31 +1,32 @@
 package no.nordicsemi.android.ei.ui
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ui.theme.NordicBlue
-import no.nordicsemi.android.ei.viewmodels.LoginViewModel
 
+@ExperimentalCoroutinesApi
 @Composable
 fun Login(
     modifier: Modifier = Modifier,
-    viewModel: LoginViewModel,
+    username: String,
+    onUsernameChange: (String) -> Unit,
+    password: String,
+    onPasswordChange: (String) -> Unit,
+    onLogin: (username: String, password: String) -> Unit
 ) {
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
     var passwordState by remember { mutableStateOf(false) }
 
     Column(
@@ -44,7 +45,9 @@ fun Login(
                     Image(
                         painter = painterResource(R.drawable.ic_new_nordic_logo),
                         contentDescription = stringResource(R.string.name_nordic),
-                        modifier = Modifier.size(64.dp).padding(8.dp),
+                        modifier = Modifier
+                            .size(64.dp)
+                            .padding(8.dp),
                     )
                     Image(
                         painter = painterResource(R.drawable.ic_edge_impulse_mark_rgb),
@@ -55,14 +58,14 @@ fun Login(
 
                 OutlinedTextField(
                     value = username,
-                    onValueChange = { username = it },
+                    onValueChange = { onUsernameChange(it) },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(stringResource(R.string.field_username)) },
                     singleLine = true
                 )
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { password = it },
+                    onValueChange = { onPasswordChange(it) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp),
@@ -94,10 +97,7 @@ fun Login(
                 )
                 Button(
                     onClick = {
-                        viewModel.login(
-                            username = username,
-                            password = password,
-                        )
+                        onLogin(username, password)
                     },
                     modifier = Modifier
                         .padding(top = 16.dp)

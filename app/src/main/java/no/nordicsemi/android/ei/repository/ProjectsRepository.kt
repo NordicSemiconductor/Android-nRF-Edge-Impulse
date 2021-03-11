@@ -5,9 +5,9 @@ import kotlinx.coroutines.withContext
 import no.nordicsemi.android.ei.service.EiService
 import no.nordicsemi.android.ei.service.param.LoginRequest
 
-class LoginRepository(private val service: EiService) {
+class ProjectsRepository(private val service: EiService) {
 
-    suspend fun login(username: String, password: String) = withContext(Dispatchers.IO) {
-        service.login(loginRequest = LoginRequest(username, password))
+    suspend fun projects(token: String) = withContext(Dispatchers.IO) {
+        service.projects("jwt=$token")
     }
 }

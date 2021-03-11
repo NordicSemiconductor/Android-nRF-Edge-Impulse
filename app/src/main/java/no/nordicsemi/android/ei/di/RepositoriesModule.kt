@@ -5,8 +5,9 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ViewModelComponent
 import dagger.hilt.android.scopes.ViewModelScoped
-import no.nordicsemi.android.ei.service.EiService
 import no.nordicsemi.android.ei.repository.LoginRepository
+import no.nordicsemi.android.ei.repository.ProjectsRepository
+import no.nordicsemi.android.ei.service.EiService
 
 @Module
 @InstallIn(ViewModelComponent::class)
@@ -14,8 +15,14 @@ object RepositoriesModule {
 
     @Provides
     @ViewModelScoped
-    fun provideRepository(eiService: EiService): LoginRepository {
+    fun provideLoginRepository(eiService: EiService): LoginRepository {
         return LoginRepository(eiService)
+    }
+
+    @Provides
+    @ViewModelScoped
+    fun provideProjectsRepository(eiService: EiService): ProjectsRepository {
+        return ProjectsRepository(eiService)
     }
 
 }
