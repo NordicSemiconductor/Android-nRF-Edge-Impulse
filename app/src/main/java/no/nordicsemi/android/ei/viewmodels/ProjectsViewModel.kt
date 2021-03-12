@@ -28,9 +28,9 @@ class ProjectsViewModel @Inject constructor(
     }
 
     /**
-     * Loads projects from the Edge Impulse Studio
+     * Loads projects from the Edge Impulse Studio.
      *
-     * @param withPullToRefresh True if pull to refresh was used to load projects
+     * @param withPullToRefresh True if pull to refresh was used to load projects.
      */
     fun loadProjects(withPullToRefresh: Boolean = false) {
         if (withPullToRefresh) {
