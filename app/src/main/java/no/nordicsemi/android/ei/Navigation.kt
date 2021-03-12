@@ -3,9 +3,6 @@ package no.nordicsemi.android.ei
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.HiltViewModelFactory
@@ -15,7 +12,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigate
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.service.param.LoginResponse
 import no.nordicsemi.android.ei.ui.Login
 import no.nordicsemi.android.ei.ui.Projects
@@ -29,7 +25,6 @@ fun Navigation(
     refreshToolbar: (visible: Boolean, title: String?) -> Unit
 ) {
     val navController = rememberNavController()
-    var token by remember { mutableStateOf("") }
     NavHost(navController = navController, startDestination = "login") {
         composable("login") { backStackEntry ->
             refreshToolbar(false, "Login")
@@ -41,7 +36,6 @@ fun Navigation(
             val password: String by viewModel.password.observeAsState("")
             val loginResponse: LoginResponse by viewModel.loginResponse.observeAsState(LoginResponse())
             if (loginResponse.success) {
-                token = loginResponse.token!!
                 navController.navigate("projects")
             }
             Login(
@@ -67,17 +61,17 @@ fun Navigation(
                     navController.previousBackStackEntry!!
                 )
             )
-            val projects: List<Project> by viewModel.projects.observeAsState(listOf())
-            viewModel.projects(token = token)
+            val projects by viewModel.projects.observeAsState(listOf())
+            val refreshingState by viewModel.pullToRefresh.observeAsState(false)
+
             Projects(
                 modifier = modifier,
-                token = token,
+                projects = projects,
+                refreshingState = refreshingState,
                 onRefresh = {
-                    viewModel.projects(token = it)
-                },
-                projects = projects
+                        viewModel.loadProjects(true)
+                }
             )
-
         }
     }
 }

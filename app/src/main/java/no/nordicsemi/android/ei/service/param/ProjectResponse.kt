@@ -4,6 +4,6 @@ import no.nordicsemi.android.ei.model.Project
 
 data class ProjectResponse(
     val projects: List<Project>,
-    val success: Boolean,
+    val success: Boolean = false,
     val error: String?
 )

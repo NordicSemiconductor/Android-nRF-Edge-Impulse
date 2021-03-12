@@ -11,20 +11,24 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import no.nordicsemi.android.ei.ui.theme.NordicTheme
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+
+    @ExperimentalCoroutinesApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            NordicTheme(darkTheme = false) {
+            NordicTheme {
                 Screen()
             }
         }
     }
 }
 
+@ExperimentalCoroutinesApi
 @Composable
 fun Screen() {
     var topBarVisible by remember { mutableStateOf(false) }
