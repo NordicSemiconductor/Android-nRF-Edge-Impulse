@@ -7,18 +7,12 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import dagger.hilt.android.AndroidEntryPoint
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ui.Login
@@ -58,11 +52,12 @@ class LoginActivity : AccountAuthenticatorActivity() {
                 Scaffold(
                     backgroundColor = MaterialTheme.colors.background
                 ) { innerPadding ->
-                    val showProgress by viewModel.isInProgress.observeAsState(false)
+                    val busy by viewModel.isInProgress.observeAsState(false)
                     val error by viewModel.error.observeAsState()
 
                     Login(
                         modifier = Modifier.padding(innerPadding),
+                        enabled = !busy,
                         onLogin = { username, password ->
                             viewModel.login(username, password, authTokenType)
                         },
@@ -75,16 +70,6 @@ class LoginActivity : AccountAuthenticatorActivity() {
                         login = accountName ?: "",
                         error = error
                     )
-                    if (showProgress) {
-                        Box(
-                            Modifier
-                                .fillMaxSize()
-                                .background(Color(0x99000000)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    }
                 }
             }
         }

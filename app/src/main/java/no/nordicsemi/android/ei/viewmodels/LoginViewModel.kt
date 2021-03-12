@@ -1,7 +1,9 @@
 package no.nordicsemi.android.ei.viewmodels
 
-import android.util.Log
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -22,8 +24,8 @@ class LoginViewModel @Inject constructor(
     )
 
     private val _isInProgress = MutableLiveData(false)
-    private val _error = MutableLiveData<String?>()
     private val _authData = MutableLiveData<AuthData>()
+    private val _error = MutableLiveData<String?>()
 
     val isInProgress: LiveData<Boolean>
         get() = _isInProgress

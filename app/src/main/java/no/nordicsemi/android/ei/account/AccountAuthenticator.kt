@@ -7,14 +7,15 @@ import android.accounts.AccountManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.ei.repository.LoginRepository
 import javax.inject.Inject
 
-class AccountAuthenticator(
-    private val context: Context
+class AccountAuthenticator @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val loginRepository: LoginRepository
 ) : AbstractAccountAuthenticator(context) {
-    @Inject lateinit var loginRepository: LoginRepository
 
     override fun addAccount(
         response: AccountAuthenticatorResponse?,
@@ -71,10 +72,7 @@ class AccountAuthenticator(
         return bundle
     }
 
-    override fun editProperties(
-        response: AccountAuthenticatorResponse?,
-        accountType: String?
-    ): Bundle {
+    override fun getAuthTokenLabel(authTokenType: String?): String {
         TODO("Not yet implemented")
     }
 
@@ -86,15 +84,18 @@ class AccountAuthenticator(
         TODO("Not yet implemented")
     }
 
-    override fun getAuthTokenLabel(authTokenType: String?): String {
-        TODO("Not yet implemented")
-    }
-
     override fun updateCredentials(
         response: AccountAuthenticatorResponse?,
         account: Account?,
         authTokenType: String?,
         options: Bundle?
+    ): Bundle {
+        TODO("Not yet implemented")
+    }
+
+    override fun editProperties(
+        response: AccountAuthenticatorResponse?,
+        accountType: String?
     ): Bundle {
         TODO("Not yet implemented")
     }

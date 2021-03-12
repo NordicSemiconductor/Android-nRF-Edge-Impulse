@@ -22,13 +22,8 @@ import javax.inject.Singleton
 object ServiceApiModule {
 
     @Provides
-    fun provideAuthenticator(@ApplicationContext context: Context): AbstractAccountAuthenticator {
-        return AccountAuthenticator(context)
-    }
-
-    @Provides
     @Singleton
-    fun provideRepository(): EiService {
+    fun provideService(): EiService {
         val interceptor = HttpLoggingInterceptor()
         interceptor.apply { interceptor.level = HttpLoggingInterceptor.Level.BODY }
         val client: OkHttpClient = OkHttpClient.Builder().addInterceptor(interceptor).build()

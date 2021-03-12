@@ -7,6 +7,7 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -107,18 +108,19 @@ fun Login(
                     onClick = { onLogin(username, password) },
                     modifier = Modifier
                         .padding(top = 16.dp)
+                        .height(46.dp)
                         .fillMaxWidth(),
                     enabled = enabled,
                 ) {
-                    Text(
-                        text = stringResource(R.string.action_login),
-                        modifier = Modifier.padding(
-                            start = 16.dp,
-                            top = 4.dp,
-                            end = 16.dp,
-                            bottom = 4.dp
+                    if (enabled) {
+                        Text(
+                            text = stringResource(R.string.action_login),
                         )
-                    )
+                    } else {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
                 Row(
                     modifier = Modifier.padding(top = 16.dp)
