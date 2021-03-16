@@ -17,4 +17,4 @@ val NordicLightGrey = Color(0xFFD9E1E2)
 val NordicMiddleGrey = Color(0xFF768692)
 val NordicDarkGrey = Color(0xFF333f48)
 
-val LightGrey = Color(0xFFF5F5F5)
+val NordicBackground = Color(0xFFF5F5F5)
