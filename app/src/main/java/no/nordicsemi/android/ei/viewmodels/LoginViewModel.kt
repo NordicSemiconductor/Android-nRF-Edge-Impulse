@@ -1,12 +1,13 @@
 package no.nordicsemi.android.ei.viewmodels
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import no.nordicsemi.android.ei.repository.LoginRepository
 import no.nordicsemi.android.ei.service.param.LoginResponse
 import javax.inject.Inject
@@ -15,29 +16,38 @@ import javax.inject.Inject
 class LoginViewModel @Inject constructor(
     private val repo: LoginRepository
 ) : ViewModel() {
+  
+    data class AuthData(
+        val username: String,
+        val password: String,
+        val token: String,
+        val tokenType: String
+    )
 
-    private val _username = MutableLiveData("")
-    val username: LiveData<String> = _username
+    private val _isInProgress = MutableLiveData(false)
+    private val _authData = MutableLiveData<AuthData>()
+    private val _error = MutableLiveData<String?>()
 
-    private val _password = MutableLiveData("")
-    val password: LiveData<String> = _password
+    val isInProgress: LiveData<Boolean>
+        get() = _isInProgress
 
-    private val _loginResponse = MutableLiveData(LoginResponse())
-    val loginResponse: LiveData<LoginResponse> = _loginResponse
+    val error: LiveData<String?>
+        get() = _error
 
-    fun onUsernameChange(username: String) {
-        _username.value = username
-    }
+    val ready: LiveData<AuthData>
+        get() = _authData
 
-    fun onPasswordChange(password: String) {
-        _password.value = password
-    }
-
-    fun login(username: String, password: String) {
+    fun login(username: String, password: String, authTokenType: String) {
+        _isInProgress.value = true
         viewModelScope.launch {
-            val loginResponse = repo.login(username, password)
-            Log.i("AA", loginResponse.toString())
-            _loginResponse.value = loginResponse
+            repo.login(username, password).let { response ->
+                _isInProgress.value = false
+                response.token?.let { token ->
+                    _authData.value = AuthData(username, password, token, authTokenType)
+                } ?: run {
+                    _error.value = response.error ?: "Invalid token"
+                }
+            }
         }
     }
 

@@ -12,47 +12,32 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigate
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import no.nordicsemi.android.ei.service.param.LoginResponse
-import no.nordicsemi.android.ei.ui.Login
 import no.nordicsemi.android.ei.ui.Projects
-import no.nordicsemi.android.ei.viewmodels.LoginViewModel
+import no.nordicsemi.android.ei.ui.Splashscreen
 import no.nordicsemi.android.ei.viewmodels.ProjectsViewModel
+import no.nordicsemi.android.ei.viewmodels.SplashscreenViewModel
 
 @ExperimentalCoroutinesApi
 @Composable
 fun Navigation(
     modifier: Modifier = Modifier,
-    refreshToolbar: (visible: Boolean, title: String?) -> Unit
+    refreshToolbar: (visible: Boolean, title: String?) -> Unit,
 ) {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "login") {
-        composable("login") { backStackEntry ->
-            refreshToolbar(false, "Login")
-            val viewModel: LoginViewModel = viewModel(
-                key = "Login",
-                HiltViewModelFactory(LocalContext.current, backStackEntry)
+    NavHost(navController = navController, startDestination = "splashscreen") {
+
+        composable(Route.splashscreen) { backStackEntry ->
+            refreshToolbar(false, "Splashscreen")
+            val viewModel: SplashscreenViewModel = viewModel(
+                factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
             )
-            val username: String by viewModel.username.observeAsState("")
-            val password: String by viewModel.password.observeAsState("")
-            val loginResponse: LoginResponse by viewModel.loginResponse.observeAsState(LoginResponse())
-            if (loginResponse.success) {
-                navController.navigate("projects")
-            }
-            Login(
-                modifier = modifier,
-                username = username,
-                onUsernameChange = { viewModel.onUsernameChange(username = it) },
-                password = password,
-                onPasswordChange = { viewModel.onPasswordChange(password = it) },
-                onLogin = { u, p ->
-                    viewModel.login(
-                        username = u, password = p
-                    )
-                }
+            Splashscreen(
+                navController = navController,
+                viewModel = viewModel
             )
         }
 
-        composable("projects") {
+        composable(Route.projects) {
             refreshToolbar(true, "Projects")
             val viewModel: ProjectsViewModel = viewModel(
                 key = "Projects",
