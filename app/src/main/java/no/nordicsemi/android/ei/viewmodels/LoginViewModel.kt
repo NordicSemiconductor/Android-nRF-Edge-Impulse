@@ -20,7 +20,7 @@ class LoginViewModel @Inject constructor(
         val username: String,
         val password: String,
         val token: String,
-        val tokenType: String?
+        val tokenType: String
     )
 
     private val _isInProgress = MutableLiveData(false)
@@ -36,14 +36,15 @@ class LoginViewModel @Inject constructor(
     val ready: LiveData<AuthData>
         get() = _authData
 
-    fun login(username: String, password: String, authTokenType: String?) {
+    fun login(username: String, password: String, authTokenType: String) {
         _isInProgress.value = true
-        viewModelScope.launch(Dispatchers.IO) {
-            repo.login(username, password).run {
-                withContext(Dispatchers.Main) {
-                    _isInProgress.value = false
-                    if (token != null) _authData.value = AuthData(username, password, token, authTokenType)
-                    else _error.value = error ?: "Invalid token"
+        viewModelScope.launch {
+            repo.login(username, password).let { response ->
+                _isInProgress.value = false
+                response.token?.let { token ->
+                    _authData.value = AuthData(username, password, token, authTokenType)
+                } ?: run {
+                    _error.value = response.error ?: "Invalid token"
                 }
             }
         }

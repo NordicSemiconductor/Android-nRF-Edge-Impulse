@@ -1,8 +1,10 @@
 package no.nordicsemi.android.ei.service
 
+import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.service.param.LoginRequest
 import no.nordicsemi.android.ei.service.param.LoginResponse
 import no.nordicsemi.android.ei.service.param.ProjectResponse
+import retrofit2.Response
 import retrofit2.http.*
 
 interface EiService {
@@ -15,6 +17,15 @@ interface EiService {
     @Headers("Accept: application/json", "Content-Type: application/json")
     @POST("api-login")
     suspend fun login(@Body loginRequest: LoginRequest): LoginResponse
+
+    /**
+     * Get information about the current user. This function is only available through a JWT token.
+     *
+     * @see <a href="https://docs.edgeimpulse.com/reference#createuser">Docs: Get current user</a>
+     */
+    @Headers("Accept: application/json", "Content-Type: application/json")
+    @GET("api/user")
+    suspend fun getCurrentUser(@Header("x-jwt-token") jwt: String): Response<User>
 
     /**
      * Retrieve list of active projects.

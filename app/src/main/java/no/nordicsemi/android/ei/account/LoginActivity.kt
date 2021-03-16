@@ -34,7 +34,7 @@ class LoginActivity : AccountAuthenticatorActivity() {
 
         val accountType = intent.getStringExtra(KEY_ACCOUNT_TYPE) ?: getString(R.string.account_type)
         val accountName = intent.getStringExtra(KEY_ACCOUNT_NAME)
-        val authTokenType = intent.getStringExtra(KEY_AUTH_TOKEN_TYPE)
+        val authTokenType = intent.getStringExtra(KEY_AUTH_TOKEN_TYPE) ?: "limited_access"
 
         val viewModel: LoginViewModel by viewModels()
         viewModel.ready.observe(this) { authData ->
@@ -88,7 +88,7 @@ class LoginActivity : AccountAuthenticatorActivity() {
         accountName: String,
         accountPassword: String,
         accountType: String,
-        authTokenType: String?,
+        authTokenType: String,
         authToken: String
     ) {
         val accountManager = AccountManager.get(this)

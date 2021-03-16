@@ -14,7 +14,7 @@ import javax.inject.Inject
 
 class AccountAuthenticator @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val loginRepository: LoginRepository
+    private val loginRepository: LoginRepository,
 ) : AbstractAccountAuthenticator(context) {
 
     override fun addAccount(

@@ -35,6 +35,9 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
         useIR = true
+        // This is required so that Result<T> can be used as return type.
+        // http://rustyrazorblade.com/post/2018/2018-12-06-kotlin-result/
+        freeCompilerArgs = ["-Xallow-result-return-type"]
     }
     buildFeatures {
         compose true
@@ -55,10 +58,11 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:1.0.0-alpha02'
-    implementation 'androidx.activity:activity-compose:1.3.0-alpha03'
-    implementation 'androidx.navigation:navigation-compose:1.0.0-alpha08'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:1.0.0-alpha03'
+    implementation 'androidx.activity:activity-compose:1.3.0-alpha04'
+    implementation 'androidx.navigation:navigation-compose:1.0.0-alpha09'
     implementation 'androidx.preference:preference-ktx:1.1.1'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.3'
 
     testImplementation 'junit:junit:4.13.2'
 
