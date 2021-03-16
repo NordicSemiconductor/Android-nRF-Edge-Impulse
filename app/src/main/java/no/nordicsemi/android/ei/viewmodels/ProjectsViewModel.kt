@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import no.nordicsemi.android.ei.model.DevelopmentKeys
 import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.repository.ProjectsRepository
 import javax.inject.Inject
@@ -22,6 +23,9 @@ class ProjectsViewModel @Inject constructor(
 
     private val _pullToRefresh = MutableLiveData(false)
     val pullToRefresh: LiveData<Boolean> = _pullToRefresh
+
+    private val _developmentKeys = MutableLiveData(DevelopmentKeys())
+    val developmentKeys: LiveData<DevelopmentKeys> = _developmentKeys
 
     init {
         loadProjects()
@@ -46,6 +50,22 @@ class ProjectsViewModel @Inject constructor(
                     it.success
                 }?.apply {
                     _projects.value = projects
+                }
+            }
+        }
+    }
+
+    /**
+     * Gets the development keys for a given Project Id
+     */
+    fun getDevelopmentKeys(projectId: Int) {
+        viewModelScope.launch {
+            repo.developmentKeys(token = token, projectId = projectId).run {
+                Log.i("AA", toString())
+                this.takeIf {
+                    it.success
+                }?.apply {
+                    _developmentKeys.value = DevelopmentKeys(apiKey, hmacKey)
                 }
             }
         }

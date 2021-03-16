@@ -1,7 +1,7 @@
 package no.nordicsemi.android.ei.ui
 
-import android.util.Log
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -28,7 +28,8 @@ fun Projects(
     modifier: Modifier = Modifier,
     projects: List<Project>,
     refreshingState: Boolean,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onItemClick: (Int) -> Unit
 ) {
     SwipeToRefreshLayout(
         refreshingState = refreshingState,
@@ -42,11 +43,21 @@ fun Projects(
                 )
             }
         },
-        content = { ProjectList(modifier = modifier, projects = projects) })
+        content = {
+            ProjectList(
+                modifier = modifier,
+                projects = projects,
+                onItemClick = onItemClick
+            )
+        })
 }
 
 @Composable
-fun ProjectList(modifier: Modifier, projects: List<Project>) {
+fun ProjectList(
+    modifier: Modifier,
+    projects: List<Project>,
+    onItemClick: (Int) -> Unit
+) {
     val scrollState = rememberLazyListState()
     LazyColumn(
         modifier = modifier
@@ -56,15 +67,24 @@ fun ProjectList(modifier: Modifier, projects: List<Project>) {
         state = scrollState
     ) {
         itemsIndexed(items = projects) { _, project ->
-            ProjectRow(modifier = modifier, project = project)
+            ProjectRow(
+                modifier = modifier,
+                project = project,
+                onItemClick = onItemClick
+            )
         }
     }
 }
 
 @Composable
-fun ProjectRow(modifier: Modifier = Modifier, project: Project) {
+fun ProjectRow(
+    modifier: Modifier = Modifier,
+    project: Project,
+    onItemClick: (Int) -> Unit
+) {
     Card(
-        shape = MaterialTheme.shapes.large
+        modifier = modifier.clickable(onClick = { onItemClick(project.id) }),
+        shape = MaterialTheme.shapes.large,
     ) {
         Column {
             Row(

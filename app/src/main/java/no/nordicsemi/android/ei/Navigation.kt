@@ -69,7 +69,10 @@ fun Navigation(
                 projects = projects,
                 refreshingState = refreshingState,
                 onRefresh = {
-                        viewModel.loadProjects(true)
+                    viewModel.loadProjects(true)
+                },
+                onItemClick = { projectId ->
+                    viewModel.getDevelopmentKeys(projectId)
                 }
             )
         }
