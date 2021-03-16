@@ -1,10 +1,10 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     ext {
-        compose_version = '1.0.0-beta01'       // https://developer.android.com/jetpack/compose/setup
+        compose_version = '1.0.0-beta02'       // https://developer.android.com/jetpack/compose/setup
         kotlin_version = '1.4.30'              // https://developer.android.com/jetpack/compose/setup#configure_kotlin
         hilt_dagger_version = '2.33-beta'      // https://developer.android.com/training/dependency-injection/hilt-android
-        hilt_android_version = '1.0.0-alpha03'
+        hilt_android_version = '1.0.0-beta01'
         lifecycle_version = '2.3.0'            // https://developer.android.com/jetpack/androidx/releases/lifecycle
     }
     repositories {
