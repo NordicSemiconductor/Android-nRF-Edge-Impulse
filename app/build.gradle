@@ -38,7 +38,8 @@ android {
         useIR = true
         // This is required so that Result<T> can be used as return type.
         // http://rustyrazorblade.com/post/2018/2018-12-06-kotlin-result/
-        freeCompilerArgs = ["-Xallow-result-return-type"]
+        freeCompilerArgs += "-Xallow-result-return-type"
+        freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
     }
     buildFeatures {
         compose true

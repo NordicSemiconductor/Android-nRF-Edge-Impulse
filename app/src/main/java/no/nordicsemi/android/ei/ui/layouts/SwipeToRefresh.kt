@@ -64,7 +64,7 @@ fun SwipeToRefreshLayout(
         }
 
         // TODO (https://issuetracker.google.com/issues/164113834): This state->event trampoline is a
-        //  workaround for a bug in the SwipableState API. Currently, state.value is a duplicated
+        //  workaround for a bug in the SwipeableState API. Currently, state.value is a duplicated
         //  source of truth of refreshingState.
         LaunchedEffect(refreshingState) { state.animateTo(refreshingState) }
     }

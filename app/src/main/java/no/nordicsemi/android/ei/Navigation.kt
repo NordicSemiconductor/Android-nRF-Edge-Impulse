@@ -11,13 +11,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import no.nordicsemi.android.ei.ui.Projects
 import no.nordicsemi.android.ei.ui.Splashscreen
 import no.nordicsemi.android.ei.viewmodels.ProjectsViewModel
 import no.nordicsemi.android.ei.viewmodels.SplashscreenViewModel
 
-@ExperimentalCoroutinesApi
 @Composable
 fun Navigation(
     modifier: Modifier = Modifier,

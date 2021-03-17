@@ -17,12 +17,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.ui.layouts.SwipeToRefreshLayout
 
-@ExperimentalCoroutinesApi
 @Composable
 fun Projects(
     modifier: Modifier = Modifier,
