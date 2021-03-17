@@ -21,6 +21,7 @@ import androidx.navigation.compose.popUpTo
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.Route
 import no.nordicsemi.android.ei.account.AccountHelper
+import no.nordicsemi.android.ei.ui.theme.NordicTheme
 import no.nordicsemi.android.ei.viewmodels.SplashscreenViewModel
 import retrofit2.HttpException
 
@@ -90,8 +91,18 @@ private fun SplashscreenView(
     }
 }
 
-@Preview
+@Preview(name = "Light")
 @Composable
-fun SplashscreenPreview() {
-    SplashscreenView("Logging In...")
+fun SplashscreenPreviewLight() {
+    NordicTheme(darkTheme = false) {
+        SplashscreenView("Logging In...")
+    }
+}
+
+@Preview(name = "Dark")
+@Composable
+fun SplashscreenPreviewDark() {
+    NordicTheme(darkTheme = true) {
+        SplashscreenView("Logging In...")
+    }
 }
