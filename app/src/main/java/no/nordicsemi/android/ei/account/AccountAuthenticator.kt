@@ -10,6 +10,7 @@ import android.os.Bundle
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.ei.repository.LoginRepository
+import no.nordicsemi.android.ei.util.guard
 import javax.inject.Inject
 
 class AccountAuthenticator @Inject constructor(
@@ -24,6 +25,15 @@ class AccountAuthenticator @Inject constructor(
         requiredFeatures: Array<out String>?,
         options: Bundle?
     ): Bundle {
+        val accountManager = AccountManager.get(context)
+        val accountExists = accountManager.getAccountsByType(accountType).isNotEmpty()
+        guard(!accountExists) {
+            val bundle = Bundle()
+            bundle.putInt(AccountManager.KEY_ERROR_CODE, 1)
+            bundle.putString(AccountManager.KEY_ERROR_MESSAGE, "Only one account is allowed")
+            return bundle
+        }
+
         val intent = Intent(context, LoginActivity::class.java)
         intent.putExtra(LoginActivity.KEY_ACCOUNT_TYPE, accountType)
         intent.putExtra(LoginActivity.KEY_AUTH_TOKEN_TYPE, authTokenType)
