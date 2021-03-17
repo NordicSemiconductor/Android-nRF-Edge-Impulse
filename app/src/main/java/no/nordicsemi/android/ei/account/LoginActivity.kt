@@ -48,7 +48,7 @@ class LoginActivity : AccountAuthenticatorActivity() {
         }
 
         setContent {
-            NordicTheme(darkTheme = false) {
+            NordicTheme {
                 Scaffold(
                     backgroundColor = MaterialTheme.colors.background
                 ) { innerPadding ->

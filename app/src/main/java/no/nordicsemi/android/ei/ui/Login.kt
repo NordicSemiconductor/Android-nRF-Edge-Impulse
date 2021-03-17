@@ -166,9 +166,19 @@ fun Login(
     }
 }
 
-@Preview
+@Preview(name = "Dark")
 @Composable
-fun LoginPreview() {
+fun LoginPreviewDark() {
+    NordicTheme(darkTheme = true) {
+        Surface {
+            Login(error = "Invalid password")
+        }
+    }
+}
+
+@Preview(name = "Light")
+@Composable
+fun LoginPreviewLight() {
     NordicTheme(darkTheme = false) {
         Surface {
             Login(error = "Invalid password")
