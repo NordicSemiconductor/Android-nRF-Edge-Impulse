@@ -39,6 +39,8 @@ android {
         // This is required so that Result<T> can be used as return type.
         // http://rustyrazorblade.com/post/2018/2018-12-06-kotlin-result/
         freeCompilerArgs += "-Xallow-result-return-type"
+        // This is required to use @OptIn annotation without a warning.
+        // https://kotlinlang.org/docs/opt-in-requirements.html#require-opt-in-for-api
         freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
     }
     buildFeatures {
