@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="title_projects">Projects</string>
     <string name="name_project_logo">Project logo</string>
     <string name="id">Id: %d</string>
 </resources>

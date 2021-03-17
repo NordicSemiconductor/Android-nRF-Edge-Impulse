@@ -5,11 +5,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.HiltViewModelFactory
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.navigate
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import no.nordicsemi.android.ei.ui.Projects
@@ -24,10 +24,10 @@ fun Navigation(
     refreshToolbar: (visible: Boolean, title: String?) -> Unit,
 ) {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "splashscreen") {
+    NavHost(navController = navController, startDestination = Route.splashscreen) {
 
         composable(Route.splashscreen) { backStackEntry ->
-            refreshToolbar(false, "Splashscreen")
+            refreshToolbar(false, null)
             val viewModel: SplashscreenViewModel = viewModel(
                 factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
             )
@@ -38,10 +38,9 @@ fun Navigation(
         }
 
         composable(Route.projects) {
-            refreshToolbar(true, "Projects")
+            refreshToolbar(true, stringResource(R.string.title_projects))
             val viewModel: ProjectsViewModel = viewModel(
-                key = "Projects",
-                HiltViewModelFactory(
+                factory = HiltViewModelFactory(
                     LocalContext.current,
                     it
                 )
