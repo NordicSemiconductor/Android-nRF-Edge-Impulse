@@ -2,6 +2,7 @@ package no.nordicsemi.android.ei.ui
 
 import android.app.Activity
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -12,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -74,7 +76,9 @@ private fun SplashscreenView(
 ) {
     Box(
         contentAlignment = Alignment.BottomCenter,
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colorResource(id = R.color.colorNordicLogoTop))
     ) {
         Image(
             painter = painterResource(id = R.drawable.nordic_logo),
@@ -95,14 +99,6 @@ private fun SplashscreenView(
 @Composable
 fun SplashscreenPreviewLight() {
     NordicTheme(darkTheme = false) {
-        SplashscreenView("Logging In...")
-    }
-}
-
-@Preview(name = "Dark")
-@Composable
-fun SplashscreenPreviewDark() {
-    NordicTheme(darkTheme = true) {
         SplashscreenView("Logging In...")
     }
 }
