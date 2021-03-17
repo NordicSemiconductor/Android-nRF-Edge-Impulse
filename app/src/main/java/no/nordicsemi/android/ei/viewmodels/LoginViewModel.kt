@@ -9,13 +9,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import no.nordicsemi.android.ei.repository.LoginRepository
+import no.nordicsemi.android.ei.service.param.LoginResponse
 import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val repo: LoginRepository
 ) : ViewModel() {
-
+  
     data class AuthData(
         val username: String,
         val password: String,

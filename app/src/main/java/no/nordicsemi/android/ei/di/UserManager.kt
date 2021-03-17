@@ -1,6 +1,5 @@
 package no.nordicsemi.android.ei.di
 
-import dagger.hilt.EntryPoints
 import no.nordicsemi.android.ei.model.User
 import javax.inject.Inject
 import javax.inject.Provider
@@ -25,8 +24,6 @@ class UserManager @Inject constructor(
     fun userLoggedIn(user: User, token: String) {
         // When the user logs in, we create a new instance of UserComponent
         userComponent = userComponentProvider.get().setUser(user).setToken(token).build()
-
-        // EntryPoints.get(userComponent, UserComponentEntryPoint::class.java).userDataRepository().token
     }
 
     fun logout() {
