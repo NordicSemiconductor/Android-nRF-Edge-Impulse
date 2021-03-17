@@ -5,8 +5,11 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.EntryPoints
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import no.nordicsemi.android.ei.di.UserComponentEntryPoint
+import no.nordicsemi.android.ei.di.UserManager
 import no.nordicsemi.android.ei.model.DevelopmentKeys
 import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.repository.ProjectsRepository
@@ -14,9 +17,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProjectsViewModel @Inject constructor(
-    private val token: String,
-    private val repo: ProjectsRepository
+    private val repo: ProjectsRepository,
+    userManager: UserManager
 ) : ViewModel() {
+
+    private val token =
+        EntryPoints.get(userManager.userComponent!!, UserComponentEntryPoint::class.java)
+            .userDataRepository().token
 
     private val _projects = MutableLiveData(listOf<Project>())
     val projects: LiveData<List<Project>> = _projects

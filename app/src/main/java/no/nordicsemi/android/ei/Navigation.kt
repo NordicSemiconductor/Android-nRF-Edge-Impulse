@@ -43,7 +43,7 @@ fun Navigation(
                 key = "Projects",
                 HiltViewModelFactory(
                     LocalContext.current,
-                    navController.previousBackStackEntry!!
+                    it
                 )
             )
             val projects by viewModel.projects.observeAsState(listOf())

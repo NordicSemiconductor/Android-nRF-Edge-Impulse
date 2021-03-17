@@ -21,8 +21,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ui.theme.NordicBlue
+import no.nordicsemi.android.ei.ui.theme.NordicTheme
 
-@ExperimentalCoroutinesApi
 @Composable
 fun Login(
     modifier: Modifier = Modifier,
@@ -70,7 +70,7 @@ fun Login(
 
                 OutlinedTextField(
                     value = username,
-                    onValueChange = { onUsernameChange(it) },
+                    onValueChange = { username = it },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = enabled,
                     label = { Text(stringResource(R.string.field_username)) },
@@ -78,7 +78,7 @@ fun Login(
                 )
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { onPasswordChange(it) },
+                    onValueChange = { password = it },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp),
