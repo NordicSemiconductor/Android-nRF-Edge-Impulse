@@ -46,7 +46,7 @@ fun Splashscreen(
             progressMessage = activity.getString(R.string.label_obtaining_user_data)
             try {
                 viewModel.getUserData(token)
-                navController.navigate(Route.projects) {
+                navController.navigate(Route.user) {
                     popUpTo(Route.splashscreen) {
                         inclusive = true
                     }

@@ -22,34 +22,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             NordicTheme {
-                Screen()
+                Navigation()
             }
         }
-    }
-}
-
-@ExperimentalCoroutinesApi
-@Composable
-fun Screen() {
-    var topBarVisible by remember { mutableStateOf(false) }
-    var topBarTitle by remember { mutableStateOf("") }
-    Scaffold(
-        topBar = {
-            if (topBarVisible) {
-                TopAppBar(
-                    title = { Text(text = topBarTitle) }
-                )
-            }
-        },
-        backgroundColor = MaterialTheme.colors.background
-    ) { innerPadding ->
-        Navigation(
-            modifier = Modifier
-                .padding(innerPadding),
-            refreshToolbar = { visible, title ->
-                topBarVisible = visible
-                topBarTitle = title ?: ""
-            }
-        )
     }
 }
