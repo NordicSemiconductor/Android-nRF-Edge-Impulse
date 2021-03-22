@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -82,7 +84,10 @@ fun UserAppBar(
                         content = {
                             var showMenu by remember { mutableStateOf(false) }
                             IconButton(onClick = { showMenu = true }) {
-                                Icon(Icons.Default.MoreVert, "More actions")
+                                Icon(
+                                    Icons.Default.MoreVert,
+                                    stringResource(R.string.content_description_more_actions)
+                                )
                             }
                             DropdownMenu(
                                 expanded = showMenu,
@@ -112,7 +117,7 @@ fun UserAppBar(
                     shape = CircleShape,
                 ) {
                     CoilImage(
-                        data = user.photo ?: R.drawable.ic_edge_impulse,
+                        data = user.photo ?: Icons.Filled.AccountCircle,
                         contentDescription = stringResource(R.string.content_description_user_image),
                         alignment = Alignment.Center
                     )
