@@ -11,9 +11,8 @@
     <string name="label_no_account">Don\'t have an account yet?</string>
     <string name="label_login_error">Failed to log in: %s</string>
 
-    <string name="label_obtaining_token">Obtaining Token…</string>
+    <string name="label_logging_in">Logging in…</string>
     <string name="label_obtaining_user_data">Obtaining User Data…</string>
 
-    <string name="error_obtaining_token_failed">Obtaining Token failed</string>
     <string name="error_obtaining_user_data_failed">Obtaining User Data failed</string>
 </resources>

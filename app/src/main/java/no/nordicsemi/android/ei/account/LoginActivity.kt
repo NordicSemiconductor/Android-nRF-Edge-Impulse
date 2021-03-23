@@ -27,7 +27,6 @@ class LoginActivity : AccountAuthenticatorActivity() {
         const val KEY_ACCOUNT_NAME = "KEY_ACCOUNT_NAME"
         const val KEY_ACCOUNT_TYPE = "KEY_ACCOUNT_TYPE"
         const val KEY_AUTH_TOKEN_TYPE = "KEY_AUTH_TOKEN_TYPE"
-        const val KEY_NEW_ACCOUNT = "KEY_NEW_ACCOUNT"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,7 +40,6 @@ class LoginActivity : AccountAuthenticatorActivity() {
         viewModel.ready.observe(this) { authData ->
             finishLogin(
                 authData.username,
-                authData.password,
                 accountType,
                 authData.tokenType,
                 authData.token
@@ -87,25 +85,41 @@ class LoginActivity : AccountAuthenticatorActivity() {
 
     private fun finishLogin(
         accountName: String,
-        accountPassword: String,
         accountType: String,
         authTokenType: String,
         authToken: String
     ) {
         val accountManager = AccountManager.get(this)
-        val account = Account(accountName, accountType)
-        if (intent.getBooleanExtra(KEY_NEW_ACCOUNT, false)) {
-            // Creating the account on the device and setting the auth token we got
-            // (Not setting the auth token will cause another call to the server to authenticate the user)
-            accountManager.addAccountExplicitly(account, accountPassword, null)
-            accountManager.setAuthToken(account, authTokenType, authToken)
-        } else {
-            accountManager.setPassword(account, accountPassword)
-        }
 
+        // The app supports only a single account.
+        // If there was one already, rename it to the new account name.
+        val accounts = accountManager.getAccountsByType(accountType)
+        val account = accounts.firstOrNull() ?: run {
+            Account(accountName, accountType).also { account ->
+                accountManager.addAccountExplicitly(account, "" /* DON'T STORE PASSWORD */, null)
+            }
+        }
+        accountManager.setAuthToken(account, authTokenType, authToken)
+
+        // If the account name has changed, rename it.
+        val oldAccountName = intent.getStringExtra(KEY_ACCOUNT_NAME)
+        takeIf { accountName != oldAccountName }?.run {
+            accountManager.renameAccount(account, accountName, {
+                finalize(accountType, accountName, authToken)
+            }, null)
+        } ?: run {
+            finalize(accountType, accountName, authToken)
+        }
+    }
+
+    private fun finalize(
+        accountType: String,
+        accountName: String,
+        authToken: String
+    ) {
         val bundle = Bundle()
-        bundle.putString(AccountManager.KEY_ACCOUNT_NAME, accountName)
         bundle.putString(AccountManager.KEY_ACCOUNT_TYPE, accountType)
+        bundle.putString(AccountManager.KEY_ACCOUNT_NAME, accountName)
         bundle.putString(AccountManager.KEY_AUTHTOKEN, authToken)
         setAccountAuthenticatorResult(bundle)
 

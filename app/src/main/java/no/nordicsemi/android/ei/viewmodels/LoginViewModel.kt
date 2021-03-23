@@ -5,11 +5,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import no.nordicsemi.android.ei.repository.LoginRepository
-import no.nordicsemi.android.ei.service.param.LoginResponse
 import javax.inject.Inject
 
 @HiltViewModel

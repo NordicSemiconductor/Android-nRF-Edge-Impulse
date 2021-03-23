@@ -8,14 +8,11 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.runBlocking
-import no.nordicsemi.android.ei.repository.LoginRepository
 import no.nordicsemi.android.ei.util.guard
 import javax.inject.Inject
 
 class AccountAuthenticator @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val loginRepository: LoginRepository,
 ) : AbstractAccountAuthenticator(context) {
 
     override fun addAccount(
@@ -37,7 +34,6 @@ class AccountAuthenticator @Inject constructor(
         val intent = Intent(context, LoginActivity::class.java)
         intent.putExtra(LoginActivity.KEY_ACCOUNT_TYPE, accountType)
         intent.putExtra(LoginActivity.KEY_AUTH_TOKEN_TYPE, authTokenType)
-        intent.putExtra(LoginActivity.KEY_NEW_ACCOUNT, true)
         intent.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response)
 
         val bundle = Bundle()
@@ -53,14 +49,14 @@ class AccountAuthenticator @Inject constructor(
         options: Bundle?
     ): Bundle {
         val accountManager = AccountManager.get(context)
-        var authToken: String? = accountManager.peekAuthToken(account!!, authTokenType)
+        val authToken: String? = accountManager.peekAuthToken(account!!, authTokenType)
 
-        if (authToken == null) {
-            val loginResponse = runBlocking {
-                loginRepository.login(account.name, accountManager.getPassword(account))
-            }
-            authToken = loginResponse.token
-        }
+//        if (authToken == null) {
+//            val loginResponse = runBlocking {
+//                loginRepository.login(account.name, accountManager.getPassword(account))
+//            }
+//            authToken = loginResponse.token
+//        }
         if (authToken != null) {
             val result = Bundle()
             result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name)
@@ -73,7 +69,6 @@ class AccountAuthenticator @Inject constructor(
         intent.putExtra(LoginActivity.KEY_ACCOUNT_NAME, account.name)
         intent.putExtra(LoginActivity.KEY_ACCOUNT_TYPE, account.type)
         intent.putExtra(LoginActivity.KEY_AUTH_TOKEN_TYPE, authTokenType)
-        intent.putExtra(LoginActivity.KEY_NEW_ACCOUNT, false)
         intent.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response)
 
         val bundle = Bundle()

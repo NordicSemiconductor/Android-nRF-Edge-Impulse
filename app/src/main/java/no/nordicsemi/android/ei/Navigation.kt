@@ -48,7 +48,7 @@ fun Navigation(
                         viewModel.refreshUser()
                     },
                     onLogoutClick = {
-                        viewModel.logOut()
+                        viewModel.logout()
                         navController.navigateUp()
                     }
                 )

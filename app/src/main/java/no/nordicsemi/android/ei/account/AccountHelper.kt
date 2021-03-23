@@ -4,6 +4,7 @@ import android.accounts.Account
 import android.accounts.AccountManager
 import android.accounts.OperationCanceledException
 import android.app.Activity
+import android.content.Context
 import kotlinx.coroutines.suspendCancellableCoroutine
 import no.nordicsemi.android.ei.R
 import java.security.InvalidParameterException
@@ -75,9 +76,9 @@ object AccountHelper {
         }
     }
 
-    fun invalidateAuthToken(token: String, activity: Activity) {
-        val accountManager = AccountManager.get(activity)
-        val accountType = activity.getString(R.string.account_type)
+    fun invalidateAuthToken(token: String, context: Context) {
+        val accountManager = AccountManager.get(context)
+        val accountType = context.getString(R.string.account_type)
         accountManager.invalidateAuthToken(accountType, token)
     }
 
