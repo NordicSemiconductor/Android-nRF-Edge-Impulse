@@ -15,6 +15,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import dagger.hilt.android.AndroidEntryPoint
 import no.nordicsemi.android.ei.R
+import no.nordicsemi.android.ei.Uris
 import no.nordicsemi.android.ei.ui.Login
 import no.nordicsemi.android.ei.ui.theme.NordicTheme
 import no.nordicsemi.android.ei.viewmodels.LoginViewModel
@@ -48,7 +49,7 @@ class LoginActivity : AccountAuthenticatorActivity() {
         }
 
         setContent {
-            NordicTheme(darkTheme = false) {
+            NordicTheme {
                 Scaffold(
                     backgroundColor = MaterialTheme.colors.background
                 ) { innerPadding ->
@@ -62,10 +63,10 @@ class LoginActivity : AccountAuthenticatorActivity() {
                             viewModel.login(username, password, authTokenType)
                         },
                         onForgotPassword = {
-                            open(Uri.parse("https://studio.edgeimpulse.com/forgot-password"))
+                            open(Uris.ForgetPassword)
                         },
                         onSignUp = {
-                            open(Uri.parse("https://studio.edgeimpulse.com/signup"))
+                            open(Uris.SignUp)
                         },
                         login = accountName ?: "",
                         error = error
