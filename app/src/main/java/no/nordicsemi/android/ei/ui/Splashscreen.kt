@@ -15,6 +15,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -36,14 +37,19 @@ fun Splashscreen(
     val activity = LocalContext.current as Activity
 
     LaunchedEffect(key1 = "logging in") {
+        progressMessage = ""
         val account = AccountHelper.getOrCreateAccount(activity).getOrElse {
             activity.finish()
             return@LaunchedEffect
         }
         while (true) {
-            progressMessage = activity.getString(R.string.label_obtaining_token)
+            progressMessage = activity.getString(R.string.label_logging_in)
             val token = AccountHelper.getAuthToken(account, activity).getOrElse {
-                progressMessage = it.localizedMessage ?: activity.getString(R.string.error_obtaining_token_failed)
+                it.localizedMessage?.let { message ->
+                    progressMessage = message
+                } ?: run {
+                    activity.finish()
+                }
                 return@LaunchedEffect
             }
             progressMessage = activity.getString(R.string.label_obtaining_user_data)
@@ -99,6 +105,6 @@ private fun SplashscreenView(
 @Composable
 fun SplashscreenPreviewLight() {
     NordicTheme(darkTheme = false) {
-        SplashscreenView("Logging In...")
+        SplashscreenView(stringResource(id = R.string.label_logging_in))
     }
 }
