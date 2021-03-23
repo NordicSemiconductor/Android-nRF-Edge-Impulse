@@ -1,18 +1,24 @@
 package no.nordicsemi.android.ei.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.accompanist.coil.CoilImage
 import no.nordicsemi.android.ei.R
@@ -38,7 +44,7 @@ fun User(
                 onLogoutClick = onLogoutClick,
             )
         }
-    ) {
+    ) { innerPadding ->
         SwipeToRefreshLayout(
             refreshingState = refreshingState,
             onRefresh = onRefresh,
@@ -53,7 +59,9 @@ fun User(
             },
             content = {
                 ProjectsList(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
                     projects = user.projects
                 )
             })
@@ -62,29 +70,28 @@ fun User(
 
 @Composable
 fun ProjectsList(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     projects: List<Project>
 ) {
     val scrollState = rememberLazyListState()
+    val horizontalPadding =
     LazyColumn(
         modifier = modifier,
+        contentPadding = PaddingValues(top = 72.dp, bottom = 36.dp),
         state = scrollState
     ) {
         item {
             Text(
                 modifier = Modifier
-                    .padding(start = 16.dp)
-                    .padding(top = 72.dp, bottom = 16.dp),
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
                 text = stringResource(id = R.string.title_projects),
                 color = MaterialTheme.colors.onSurface,
                 style = MaterialTheme.typography.h6
             )
         }
         items(items = projects) { project ->
-            ProjectRow(
-                modifier = modifier,
-                project = project
-            )
+            ProjectRow(project = project)
+            Divider(modifier = Modifier.width(Dp.Hairline))
         }
     }
 }
@@ -94,56 +101,32 @@ fun ProjectRow(
     modifier: Modifier = Modifier,
     project: Project
 ) {
-    Column {
-        Row(
-            modifier = modifier
-                .background(MaterialTheme.colors.surface)
-                .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp)
-                .wrapContentHeight()
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            CoilImage(
-                modifier = Modifier
-                    .size(36.dp)
-                    .padding(8.dp),
-                data = project.logo ?: R.drawable.ic_project_diagram,
-                contentDescription = stringResource(R.string.content_description_project_logo),
-            )
-            Column(
-                modifier = Modifier
-                    .padding(start = 8.dp)
-                    .align(Alignment.CenterVertically)
-            ) {
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = project.name,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1
-                )
-                CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-                    Text(
-                        stringResource(
-                            id = R.string.description,
-                            formatArgs = arrayOf(project.description)
-                        ),
-                        style = MaterialTheme.typography.body2,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1
-                    )
-                    Text(
-                        stringResource(
-                            id = R.string.created,
-                            formatArgs = arrayOf(project.created)
-                        ),
-                        style = MaterialTheme.typography.body2,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1
-                    )
-                }
+    Row(
+        modifier = modifier
+            .background(MaterialTheme.colors.surface)
+            .clickable { }
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        CoilImage(
+            data = project.logo ?: R.drawable.ic_project_diagram,
+            contentDescription = stringResource(R.string.content_description_project_logo),
+            modifier = Modifier
+                .padding(8.dp)
+                .size(24.dp),
+            error = {
+                Image(painter = painterResource(id = R.drawable.ic_project_diagram), contentDescription = null)
+            },
+            loading = {
+                Image(painter = painterResource(id = R.drawable.ic_project_diagram), contentDescription = null, alpha = 0.1f)
             }
-        }
-        Divider()
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            modifier = Modifier.weight(1.0f),
+            text = project.name,
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1
+        )
     }
 }

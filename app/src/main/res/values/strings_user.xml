@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="label_welcome">Welcome!</string>
+    <string name="label_welcome">Dashboard</string>
     <string name="action_logout">Logout</string>
     <string name="content_description_more_actions">More actions</string>
 </resources>
