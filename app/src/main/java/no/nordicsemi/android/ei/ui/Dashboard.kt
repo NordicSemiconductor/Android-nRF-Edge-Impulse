@@ -115,7 +115,7 @@ fun ProjectsList(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_project_diagram),
                     contentDescription = null,
@@ -123,8 +123,8 @@ fun ProjectsList(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "No projects created yet",
-                    style = MaterialTheme.typography.h5
+                    text = stringResource(R.string.label_no_projects),
+                    style = MaterialTheme.typography.h6
                 )
             }
         }
@@ -145,7 +145,7 @@ fun ProjectRow(
     ) {
         CoilImage(
             data = project.logo ?: R.drawable.ic_project_diagram,
-            contentDescription = stringResource(R.string.content_description_project_logo),
+            contentDescription = null,
             modifier = Modifier
                 .padding(8.dp)
                 .size(24.dp),

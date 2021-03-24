@@ -9,7 +9,6 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -85,10 +84,7 @@ fun UserAppBar(
                         content = {
                             var showMenu by remember { mutableStateOf(false) }
                             IconButton(onClick = { showMenu = true }) {
-                                Icon(
-                                    Icons.Default.MoreVert,
-                                    stringResource(R.string.content_description_more_actions)
-                                )
+                                Icon(Icons.Default.MoreVert, contentDescription = null)
                             }
                             DropdownMenu(
                                 expanded = showMenu,
