@@ -5,8 +5,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ViewModelComponent
 import dagger.hilt.android.scopes.ViewModelScoped
-import no.nordicsemi.android.ei.repository.LoginRepository
-import no.nordicsemi.android.ei.repository.ProjectsRepository
+import no.nordicsemi.android.ei.repository.ProjectRepository
 import no.nordicsemi.android.ei.service.EiService
 
 @Module
@@ -15,7 +14,7 @@ object RepositoriesModule {
 
     @Provides
     @ViewModelScoped
-    fun provideProjectsRepository(eiService: EiService): ProjectsRepository =
-        ProjectsRepository(eiService)
+    fun provideProjectsRepository(eiService: EiService): ProjectRepository =
+        ProjectRepository(eiService)
 
 }
