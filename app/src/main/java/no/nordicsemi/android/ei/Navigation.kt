@@ -10,7 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import no.nordicsemi.android.ei.ui.Splashscreen
-import no.nordicsemi.android.ei.ui.User
+import no.nordicsemi.android.ei.ui.Dashboard
 import no.nordicsemi.android.ei.viewmodels.SplashscreenViewModel
 import no.nordicsemi.android.ei.viewmodels.UserViewModel
 
@@ -41,7 +41,7 @@ fun Navigation(
             val user by viewModel.user.observeAsState()
             val refreshingState by viewModel.pullToRefresh.observeAsState(false)
             user?.let {
-                User(
+                Dashboard(
                     user = it,
                     refreshingState = refreshingState,
                     onRefresh = {

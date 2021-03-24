@@ -25,7 +25,7 @@ import no.nordicsemi.android.ei.ui.layouts.SwipeToRefreshLayout
 import no.nordicsemi.android.ei.ui.layouts.UserAppBar
 
 @Composable
-fun User(
+fun Dashboard(
     user: User,
     refreshingState: Boolean,
     onRefresh: () -> Unit,
