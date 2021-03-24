@@ -47,6 +47,9 @@ fun Navigation(
                     onRefresh = {
                         viewModel.refreshUser()
                     },
+                    onCreateNewProject = {
+
+                    },
                     onLogoutClick = {
                         viewModel.logout()
                         navController.navigateUp()

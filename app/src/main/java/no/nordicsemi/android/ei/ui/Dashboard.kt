@@ -9,11 +9,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -31,6 +32,7 @@ fun Dashboard(
     user: User,
     refreshingState: Boolean,
     onRefresh: () -> Unit,
+    onCreateNewProject: () -> Unit,
     onLogoutClick: () -> Unit
 ) {
     Scaffold(
@@ -41,6 +43,17 @@ fun Dashboard(
                 },
                 user = user,
                 onLogoutClick = onLogoutClick,
+            )
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                text = { 
+                    Text(text = "Create new project")
+                },
+                onClick = onCreateNewProject,
+                icon = {
+                    Icon(Icons.Default.Add, contentDescription = "Create new project")
+                }
             )
         }
     ) { innerPadding ->
@@ -88,7 +101,10 @@ fun ProjectsList(
                     style = MaterialTheme.typography.h6
                 )
             }
-            items(items = notEmptyProjects) { project ->
+            items(
+                items = notEmptyProjects,
+                key = { project -> project.id }
+            ) { project ->
                 ProjectRow(project = project)
                 Divider(modifier = Modifier.width(Dp.Hairline))
             }
