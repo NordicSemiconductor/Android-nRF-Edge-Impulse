@@ -10,8 +10,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -70,24 +72,45 @@ fun ProjectsList(
     modifier: Modifier = Modifier,
     projects: List<Project>
 ) {
-    val scrollState = rememberLazyListState()
-    LazyColumn(
-        modifier = modifier,
-        contentPadding = PaddingValues(top = 72.dp, bottom = 36.dp),
-        state = scrollState
-    ) {
-        item {
-            Text(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                text = stringResource(id = R.string.title_projects),
-                color = MaterialTheme.colors.onSurface,
-                style = MaterialTheme.typography.h6
-            )
+    projects.takeIf { it.isNotEmpty() }?.let { notEmptyProjects ->
+        val scrollState = rememberLazyListState()
+        LazyColumn(
+            modifier = modifier,
+            contentPadding = PaddingValues(top = 72.dp, bottom = 36.dp),
+            state = scrollState
+        ) {
+            item {
+                Text(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    text = stringResource(id = R.string.title_projects),
+                    color = MaterialTheme.colors.onSurface,
+                    style = MaterialTheme.typography.h6
+                )
+            }
+            items(items = notEmptyProjects) { project ->
+                ProjectRow(project = project)
+                Divider(modifier = Modifier.width(Dp.Hairline))
+            }
         }
-        items(items = projects) { project ->
-            ProjectRow(project = project)
-            Divider(modifier = Modifier.width(Dp.Hairline))
+    } ?: run {
+        Column(
+            modifier = modifier,
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_project_diagram),
+                    contentDescription = null,
+                    modifier = Modifier.size(72.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "No projects created yet",
+                    style = MaterialTheme.typography.h5
+                )
+            }
         }
     }
 }
