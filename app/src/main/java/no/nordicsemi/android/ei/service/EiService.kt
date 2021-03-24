@@ -26,7 +26,7 @@ interface EiService {
      */
     @Headers("Accept: application/json", "Content-Type: application/json")
     @GET("api/user")
-    suspend fun getCurrentUser(@Header("x-jwt-token") jwt: String): Response<User>
+    suspend fun getCurrentUser(@Header("x-jwt-token") jwt: String): User
 
     /**
      * Lists the active projects for a given user.

@@ -27,6 +27,7 @@ import no.nordicsemi.android.ei.account.AccountHelper
 import no.nordicsemi.android.ei.ui.theme.NordicTheme
 import no.nordicsemi.android.ei.viewmodels.SplashscreenViewModel
 import retrofit2.HttpException
+import java.net.UnknownHostException
 
 @Composable
 fun Splashscreen(
@@ -60,15 +61,17 @@ fun Splashscreen(
                         inclusive = true
                     }
                 }
-                return@LaunchedEffect
+            } catch (e: UnknownHostException) {
+                progressMessage = activity.getString(R.string.error_no_internet)
             } catch (e: HttpException) {
                 if (e.code() == 302) { // Moved Temporarily
                     AccountHelper.invalidateAuthToken(token, activity)
+                    continue
                 } else {
                     progressMessage = e.message() ?: activity.getString(R.string.error_obtaining_user_data_failed)
-                    return@LaunchedEffect
                 }
             }
+            break
         }
     }
     SplashscreenView(

@@ -9,5 +9,4 @@ import javax.inject.Inject
 class UserDataRepository @Inject constructor(
     @JwtToken val token: String,
     val user: User,
-) {
-}
+)

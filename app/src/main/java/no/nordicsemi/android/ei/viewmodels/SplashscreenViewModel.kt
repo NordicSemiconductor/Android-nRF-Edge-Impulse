@@ -13,14 +13,9 @@ class SplashscreenViewModel @Inject constructor(
     private val loginRepository: LoginRepository
 ): ViewModel() {
 
-    @Throws(HttpException::class)
     suspend fun getUserData(token: String) =
-        loginRepository.getCurrentUser(token).apply {
-            takeIf { it.isSuccessful }?.body()?.let { user ->
-                userManager.userLoggedIn(user, token)
-            } ?: run {
-                throw HttpException(this)
-            }
-        }
+        loginRepository
+            .getCurrentUser(token)
+            .apply { userManager.userLoggedIn(this, token) }
 
 }

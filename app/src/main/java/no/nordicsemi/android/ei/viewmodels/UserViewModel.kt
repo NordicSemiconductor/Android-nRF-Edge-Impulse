@@ -2,10 +2,14 @@ package no.nordicsemi.android.ei.viewmodels
 
 import android.app.Application
 import android.content.Context
-import androidx.lifecycle.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.EntryPoints
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.account.AccountHelper
 import no.nordicsemi.android.ei.di.UserComponentEntryPoint
@@ -35,16 +39,14 @@ class UserViewModel @Inject constructor(
 
     fun refreshUser() {
         _pullToRefresh.value = true
-        viewModelScope.launch {
-            loginRepository.getCurrentUser(repo.token).apply {
-                _pullToRefresh.value = false
-                takeIf { it.isSuccessful }?.body()?.let { user ->
-                    userManager.userLoggedIn(user, repo.token)
-                    _user.value = user
-                } ?: run {
-                    //TODO handle internet connectivity issues
-                }
-            }
+        val handler = CoroutineExceptionHandler { _, _ ->
+            _pullToRefresh.value = false
+        }
+        viewModelScope.launch(handler) {
+            loginRepository
+                .getCurrentUser(repo.token)
+                .apply { userManager.userLoggedIn(this, repo.token) }
+                .also { _pullToRefresh.value = false }
         }
     }
 
