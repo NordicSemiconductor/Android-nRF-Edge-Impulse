@@ -10,8 +10,6 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import dagger.hilt.android.AndroidEntryPoint
 import no.nordicsemi.android.ei.R
@@ -51,12 +49,9 @@ class LoginActivity : AccountAuthenticatorActivity() {
                 Scaffold(
                     backgroundColor = MaterialTheme.colors.background
                 ) { innerPadding ->
-                    val busy by viewModel.isInProgress.observeAsState(false)
-                    val error by viewModel.error.observeAsState()
-
                     Login(
                         modifier = Modifier.padding(innerPadding),
-                        enabled = !busy,
+                        enabled = !viewModel.isInProgress,
                         onLogin = { username, password ->
                             viewModel.login(username, password, authTokenType)
                         },
@@ -67,7 +62,7 @@ class LoginActivity : AccountAuthenticatorActivity() {
                             open(Uris.SignUp)
                         },
                         login = accountName ?: "",
-                        error = error
+                        error = viewModel.error
                     )
                 }
             }

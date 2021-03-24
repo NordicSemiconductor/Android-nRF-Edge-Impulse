@@ -2,9 +2,10 @@ package no.nordicsemi.android.ei.viewmodels
 
 import android.app.Application
 import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.EntryPoints
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,27 +27,32 @@ class UserViewModel @Inject constructor(
     private val loginRepository: LoginRepository,
 ) : AndroidViewModel(context as Application) {
 
-    private val _pullToRefresh = MutableLiveData(false)
-    val pullToRefresh: LiveData<Boolean> = _pullToRefresh
+    var pullToRefresh: Boolean by mutableStateOf(false)
+        private set
+
+    var error: Throwable? by mutableStateOf(null)
+        private set
+
+    var user: User by mutableStateOf(repo.user)
+        private set
 
     private val repo: UserDataRepository
         get() = EntryPoints
             .get(userManager.userComponent!!, UserComponentEntryPoint::class.java)
             .userDataRepository()
 
-    private val _user = MutableLiveData(repo.user)
-    val user: LiveData<User> = _user
-
     fun refreshUser() {
-        _pullToRefresh.value = true
-        val handler = CoroutineExceptionHandler { _, _ ->
-            _pullToRefresh.value = false
+        pullToRefresh = true
+        val handler = CoroutineExceptionHandler { _, throwable ->
+            error = throwable
+            pullToRefresh = false
         }
         viewModelScope.launch(handler) {
             loginRepository
                 .getCurrentUser(repo.token)
                 .apply { userManager.userLoggedIn(this, repo.token) }
-                .also { _pullToRefresh.value = false }
+                .apply { user = this }
+                .also { pullToRefresh = false }
         }
     }
 

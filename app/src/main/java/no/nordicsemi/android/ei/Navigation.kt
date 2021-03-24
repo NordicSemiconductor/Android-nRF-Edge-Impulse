@@ -29,33 +29,24 @@ fun Navigation(
             )
         }
 
-        composable(Route.user) { it ->
-            val viewModel: UserViewModel =
-                viewModel(
-                    factory = HiltViewModelFactory(
-                        LocalContext.current,
-                        it
-                    )
-                )
+        composable(Route.user) { backStackEntry ->
+            val viewModel: UserViewModel = viewModel(
+                factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
+            )
+            Dashboard(
+                user = viewModel.user,
+                refreshingState = viewModel.pullToRefresh,
+                onRefresh = {
+                    viewModel.refreshUser()
+                },
+                onCreateNewProject = {
 
-            val user by viewModel.user.observeAsState()
-            val refreshingState by viewModel.pullToRefresh.observeAsState(false)
-            user?.let {
-                Dashboard(
-                    user = it,
-                    refreshingState = refreshingState,
-                    onRefresh = {
-                        viewModel.refreshUser()
-                    },
-                    onCreateNewProject = {
-
-                    },
-                    onLogoutClick = {
-                        viewModel.logout()
-                        navController.navigateUp()
-                    }
-                )
-            }
+                },
+                onLogoutClick = {
+                    viewModel.logout()
+                    navController.navigateUp()
+                }
+            )
         }
     }
 }

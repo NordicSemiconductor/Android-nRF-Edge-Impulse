@@ -2,6 +2,9 @@ package no.nordicsemi.android.ei.viewmodels
 
 import android.app.Application
 import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -28,36 +31,33 @@ class LoginViewModel @Inject constructor(
         val tokenType: String
     )
 
-    private val _isInProgress = MutableLiveData(false)
+    var isInProgress: Boolean by mutableStateOf(false)
+        private set
+
+    var error: String? by mutableStateOf(null)
+        private set
+
     private val _authData = MutableLiveData<AuthData>()
-    private val _error = MutableLiveData<String?>()
-
-    val isInProgress: LiveData<Boolean>
-        get() = _isInProgress
-
-    val error: LiveData<String?>
-        get() = _error
-
     val ready: LiveData<AuthData>
         get() = _authData
 
     fun login(username: String, password: String, authTokenType: String) {
         val context = getApplication() as Context
-        _isInProgress.value = true
+        isInProgress = true
         val handler = CoroutineExceptionHandler { _, throwable ->
             when (throwable) {
-                is UnknownHostException -> _error.value = context.getString(R.string.error_no_internet)
-                else -> _error.value = throwable.localizedMessage
+                is UnknownHostException -> error = context.getString(R.string.error_no_internet)
+                else -> error = throwable.localizedMessage
             }
-            _isInProgress.value = false
+            isInProgress = false
         }
         viewModelScope.launch(handler) {
             repo.login(username, password).let { response ->
-                _isInProgress.value = false
+                isInProgress = false
                 response.token?.let { token ->
                     _authData.value = AuthData(username, password, token, authTokenType)
                 } ?: run {
-                    _error.value = response.error ?: context.getString(R.string.error_invalid_token)
+                    error = response.error ?: context.getString(R.string.error_invalid_token)
                 }
             }
         }
