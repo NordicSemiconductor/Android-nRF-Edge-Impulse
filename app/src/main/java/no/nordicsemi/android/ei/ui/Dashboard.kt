@@ -15,6 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -39,6 +42,7 @@ fun Dashboard(
     onCreateNewProject: () -> Unit,
     onLogoutClick: () -> Unit
 ) {
+    var hideExtendedFab by remember { mutableStateOf(true) }
     val snackbarHostState = remember { SnackbarHostState() }
     error?.let { throwable ->
         val message = when (throwable) {
@@ -61,15 +65,25 @@ fun Dashboard(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                text = { 
-                    Text(text = "Create new project")
-                },
-                onClick = onCreateNewProject,
-                icon = {
-                    Icon(Icons.Default.Add, contentDescription = "Create new project")
-                }
-            )
+            if (hideExtendedFab) {
+                ExtendedFloatingActionButton(
+                    text = {
+                        Text(text = "Create new project")
+                    },
+                    onClick = onCreateNewProject,
+                    modifier = Modifier.padding(16.dp),
+                    icon = {
+                        Icon(Icons.Default.Add, contentDescription = "Create new project")
+                    }
+                )
+            } else {
+                FloatingActionButton(
+                    onClick = { onCreateNewProject() },
+                    modifier = Modifier.padding(16.dp),
+                    content = {
+                        Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                    })
+            }
         }
     ) { innerPadding ->
         SwipeToRefreshLayout(
@@ -90,7 +104,10 @@ fun Dashboard(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding),
-                    projects = user.projects
+                    projects = user.projects,
+                    hideExtendedFab = {
+                        hideExtendedFab = it
+                    }
                 )
             })
     }
@@ -99,7 +116,8 @@ fun Dashboard(
 @Composable
 fun ProjectsList(
     modifier: Modifier = Modifier,
-    projects: List<Project>
+    projects: List<Project>,
+    hideExtendedFab: (Boolean) -> Unit
 ) {
     projects.takeIf { it.isNotEmpty() }?.let { notEmptyProjects ->
         val scrollState = rememberLazyListState()
@@ -124,6 +142,9 @@ fun ProjectsList(
                 ProjectRow(project = project)
                 Divider(modifier = Modifier.width(Dp.Hairline))
             }
+            hideExtendedFab(
+                scrollState.firstVisibleItemIndex == 0
+            )
         }
     } ?: run {
         Column(
@@ -166,10 +187,17 @@ fun ProjectRow(
                 .padding(8.dp)
                 .size(24.dp),
             error = {
-                Image(painter = painterResource(id = R.drawable.ic_project_diagram), contentDescription = null)
+                Image(
+                    painter = painterResource(id = R.drawable.ic_project_diagram),
+                    contentDescription = null
+                )
             },
             loading = {
-                Image(painter = painterResource(id = R.drawable.ic_project_diagram), contentDescription = null, alpha = 0.1f)
+                Image(
+                    painter = painterResource(id = R.drawable.ic_project_diagram),
+                    contentDescription = null,
+                    alpha = 0.1f
+                )
             }
         )
         Spacer(modifier = Modifier.width(8.dp))
