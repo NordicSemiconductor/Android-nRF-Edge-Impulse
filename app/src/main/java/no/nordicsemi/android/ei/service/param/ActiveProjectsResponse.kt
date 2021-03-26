@@ -7,7 +7,7 @@ import no.nordicsemi.android.ei.model.Project
  *
  * @see <a href="https://docs.edgeimpulse.com/reference#listprojects">Docs: List active projects</a>
  */
-data class ProjectResponse(
+data class ActiveProjectsResponse(
     val projects: List<Project>,
     val success: Boolean = false,
     val error: String?

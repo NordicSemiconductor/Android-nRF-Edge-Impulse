@@ -12,8 +12,8 @@ import androidx.navigation.compose.*
 import no.nordicsemi.android.ei.account.AccountHelper
 import no.nordicsemi.android.ei.ui.Dashboard
 import no.nordicsemi.android.ei.ui.Splashscreen
+import no.nordicsemi.android.ei.viewmodels.DashboardViewModel
 import no.nordicsemi.android.ei.viewmodels.SplashscreenViewModel
-import no.nordicsemi.android.ei.viewmodels.UserViewModel
 import retrofit2.HttpException
 import java.net.HttpURLConnection
 import java.net.UnknownHostException
@@ -47,7 +47,7 @@ fun Navigation(
         }
 
         composable(Route.user) { backStackEntry ->
-            val viewModel: UserViewModel = viewModel(
+            val viewModel: DashboardViewModel = viewModel(
                 factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
             )
             val error by viewModel.error
@@ -57,11 +57,12 @@ fun Navigation(
                 user = viewModel.user,
                 refreshState = viewModel.isRefreshing,
                 error = error,
-                onRefresh = {
-                    viewModel.refreshUser()
+                onRefresh = { isScrolling, isFirstItemVisible ->
+                    if (!isScrolling && isFirstItemVisible)
+                        viewModel.refreshUser()
                 },
-                onCreateNewProject = {
-
+                onCreateNewProject = { name ->
+                    viewModel.createProject(name)
                 },
                 onLogoutClick = {
                     viewModel.logout()

@@ -19,15 +19,15 @@ import no.nordicsemi.android.ei.account.AccountHelper
 import no.nordicsemi.android.ei.di.UserComponentEntryPoint
 import no.nordicsemi.android.ei.di.UserManager
 import no.nordicsemi.android.ei.model.User
-import no.nordicsemi.android.ei.repository.LoginRepository
+import no.nordicsemi.android.ei.repository.DashboardRepository
 import no.nordicsemi.android.ei.repository.UserDataRepository
 import javax.inject.Inject
 
 @HiltViewModel
-class UserViewModel @Inject constructor(
+class DashboardViewModel @Inject constructor(
     @ApplicationContext context: Context,
     private val userManager: UserManager,
-    private val loginRepository: LoginRepository,
+    private val dashboardRepository: DashboardRepository,
 ) : AndroidViewModel(context as Application) {
 
     // User is kept outside of refresh state, as it is available also when refreshing.
@@ -53,7 +53,7 @@ class UserViewModel @Inject constructor(
                 .also { isRefreshing = false }
         }
         viewModelScope.launch(handler) {
-            loginRepository
+            dashboardRepository
                 .getCurrentUser(repo.token)
                 .apply { userManager.userLoggedIn(this, repo.token) }
                 .apply { user = this }
@@ -61,7 +61,16 @@ class UserViewModel @Inject constructor(
         }
     }
 
-    fun logout(){
+    fun createProject(projectName:String) {
+        val handler = CoroutineExceptionHandler { _, throwable ->
+            viewModelScope.launch { _error.emit(throwable) }
+        }
+        viewModelScope.launch(handler) {
+            dashboardRepository.createProject(repo.token, projectName)
+        }
+    }
+
+    fun logout() {
         AccountHelper.invalidateAuthToken(repo.token, getApplication())
         userManager.logout()
     }

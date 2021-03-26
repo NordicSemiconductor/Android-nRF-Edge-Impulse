@@ -8,23 +8,22 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import dev.chrisbanes.accompanist.coil.CoilImage
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Project
@@ -38,11 +37,10 @@ fun Dashboard(
     user: User,
     refreshState: Boolean,
     error: Throwable?,
-    onRefresh: () -> Unit,
-    onCreateNewProject: () -> Unit,
+    onRefresh: (Boolean, Boolean) -> Unit,
+    onCreateNewProject: (String) -> Unit,
     onLogoutClick: () -> Unit
 ) {
-    var hideExtendedFab by remember { mutableStateOf(true) }
     val snackbarHostState = remember { SnackbarHostState() }
     error?.let { throwable ->
         val message = when (throwable) {
@@ -52,6 +50,13 @@ fun Dashboard(
         LaunchedEffect(throwable) {
             snackbarHostState.showSnackbar(message)
         }
+    }
+    var isFirstItemVisible by rememberSaveable { mutableStateOf(true) }
+    var showDialog by rememberSaveable { mutableStateOf(false) }
+    if (showDialog) {
+        CreateProjectDialog(onConfirm = onCreateNewProject, onDismiss = {
+            showDialog = false
+        })
     }
     Scaffold(
         scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
@@ -65,39 +70,47 @@ fun Dashboard(
             )
         },
         floatingActionButton = {
-            if (hideExtendedFab) {
+            if (isFirstItemVisible) {
                 ExtendedFloatingActionButton(
                     text = {
-                        Text(text = "Create new project")
+                        Text(text = stringResource(R.string.action_create_project))
                     },
-                    onClick = onCreateNewProject,
+                    onClick = { showDialog = true },
                     modifier = Modifier.padding(16.dp),
                     icon = {
-                        Icon(Icons.Default.Add, contentDescription = "Create new project")
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = stringResource(R.string.content_description_create_project)
+                        )
                     }
                 )
             } else {
                 FloatingActionButton(
-                    onClick = { onCreateNewProject() },
+                    onClick = { showDialog = true },
                     modifier = Modifier.padding(16.dp),
                     content = {
-                        Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = stringResource(R.string.content_description_create_project)
+                        )
                     })
             }
         }
     ) { innerPadding ->
+        var isScrolling by remember { mutableStateOf(false) }
         SwipeToRefreshLayout(
             refreshingState = refreshState,
-            onRefresh = onRefresh,
+            onRefresh = { onRefresh(isScrolling, isFirstItemVisible) },
             refreshIndicator = {
-                Surface(elevation = 10.dp, shape = CircleShape) {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .padding(4.dp),
-                        strokeWidth = 2.dp,
-                    )
-                }
+                if (!isScrolling && isFirstItemVisible)
+                    Surface(elevation = 10.dp, shape = CircleShape) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .padding(4.dp),
+                            strokeWidth = 2.dp,
+                        )
+                    }
             },
             content = {
                 ProjectsList(
@@ -105,8 +118,11 @@ fun Dashboard(
                         .fillMaxSize()
                         .padding(innerPadding),
                     projects = user.projects,
-                    hideExtendedFab = {
-                        hideExtendedFab = it
+                    isFirstItemVisible = {
+                        isFirstItemVisible = it
+                    },
+                    isScrolling = {
+                        isScrolling = it
                     }
                 )
             })
@@ -117,7 +133,8 @@ fun Dashboard(
 fun ProjectsList(
     modifier: Modifier = Modifier,
     projects: List<Project>,
-    hideExtendedFab: (Boolean) -> Unit
+    isScrolling: (Boolean) -> Unit,
+    isFirstItemVisible: (Boolean) -> Unit
 ) {
     projects.takeIf { it.isNotEmpty() }?.let { notEmptyProjects ->
         val scrollState = rememberLazyListState()
@@ -142,9 +159,8 @@ fun ProjectsList(
                 ProjectRow(project = project)
                 Divider(modifier = Modifier.width(Dp.Hairline))
             }
-            hideExtendedFab(
-                scrollState.firstVisibleItemIndex == 0
-            )
+            isScrolling(scrollState.firstVisibleItemScrollOffset < -5)
+            isFirstItemVisible(scrollState.firstVisibleItemIndex == 0)
         }
     } ?: run {
         Column(
@@ -207,5 +223,78 @@ fun ProjectRow(
             overflow = TextOverflow.Ellipsis,
             maxLines = 1
         )
+    }
+}
+
+@Composable
+private fun CreateProjectDialog(
+    modifier: Modifier = Modifier,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var name by rememberSaveable { mutableStateOf("") }
+    Dialog(onDismissRequest = { onDismiss() }) {
+        Column(
+            modifier = modifier
+                .requiredWidth(400.dp)
+                .background(MaterialTheme.colors.surface)
+                .padding(start = 32.dp, top = 24.dp, end = 32.dp, bottom = 8.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    modifier = Modifier.size(24.dp),
+                    painter = painterResource(id = R.drawable.ic_project_diagram),
+                    contentDescription = null,
+                    tint = MaterialTheme.colors.onSurface
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(id = R.string.label_create_project),
+                    color = MaterialTheme.colors.onSurface,
+                    style = MaterialTheme.typography.h6,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                modifier = modifier.padding(top = 8.dp, bottom = 8.dp),
+                text = stringResource(R.string.label_enter_project_name),
+                color = MaterialTheme.colors.onSurface
+            )
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, bottom = 8.dp),
+                label = { Text(stringResource(R.string.field_project_name)) },
+                keyboardOptions = KeyboardOptions(
+                    autoCorrect = false,
+                    imeAction = ImeAction.Next,
+                ),
+                singleLine = true,
+                colors = TextFieldDefaults.outlinedTextFieldColors(textColor = MaterialTheme.colors.onSurface)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(modifier = Modifier.align(Alignment.End)) {
+                TextButton(
+                    modifier = Modifier
+                        .padding(8.dp),
+                    onClick = { onDismiss() }) {
+                    Text(text = "CANCEL")
+                }
+                TextButton(
+                    modifier = Modifier
+                        .padding(8.dp),
+                    onClick = {
+                        onConfirm(name)
+                        onDismiss()
+                    }) {
+                    Text(text = "CREATE")
+                }
+            }
+        }
     }
 }

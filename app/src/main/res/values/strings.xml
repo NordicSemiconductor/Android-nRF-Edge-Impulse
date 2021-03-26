@@ -8,4 +8,5 @@
     <string name="name_edge_impulse">Edge Impulse</string>
     <string name="title_projects">Projects</string>
     <string name="content_description_user_image">User Image</string>
+    <string name="label_enter_project_name">Enter a name for your new project</string>
 </resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="label_welcome">Dashboard</string>
+    <string name="action_logout">Logout</string>
+    <string name="content_description_more_actions">More actions</string>
+    <string name="action_create_project">CREATE NEW PROJECT</string>
+    <string name="label_create_project">Create New Project</string>
+    <string name="content_description_create_project">Create New Project</string>
+    <string name="field_project_name">Name</string>
+</resources>
