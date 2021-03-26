@@ -1,6 +1,5 @@
 package no.nordicsemi.android.ei.ui
 
-import android.app.Activity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -8,79 +7,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.navigate
-import androidx.navigation.compose.popUpTo
 import no.nordicsemi.android.ei.R
-import no.nordicsemi.android.ei.Route
-import no.nordicsemi.android.ei.account.AccountHelper
 import no.nordicsemi.android.ei.ui.theme.NordicTheme
-import no.nordicsemi.android.ei.viewmodels.SplashscreenViewModel
-import retrofit2.HttpException
-import java.net.UnknownHostException
 
 @Composable
 fun Splashscreen(
-    navController: NavHostController,
-    viewModel: SplashscreenViewModel
-) {
-    var progressMessage by rememberSaveable { mutableStateOf("") }
-    val activity = LocalContext.current as Activity
-
-    LaunchedEffect(key1 = "logging in") {
-        progressMessage = ""
-        val account = AccountHelper.getOrCreateAccount(activity).getOrElse {
-            activity.finish()
-            return@LaunchedEffect
-        }
-        while (true) {
-            progressMessage = activity.getString(R.string.label_logging_in)
-            val token = AccountHelper.getAuthToken(account, activity).getOrElse {
-                it.localizedMessage?.let { message ->
-                    progressMessage = message
-                } ?: run {
-                    activity.finish()
-                }
-                return@LaunchedEffect
-            }
-            progressMessage = activity.getString(R.string.label_obtaining_user_data)
-            try {
-                viewModel.getUserData(token)
-                navController.navigate(Route.user) {
-                    popUpTo(Route.splashscreen) {
-                        inclusive = true
-                    }
-                }
-            } catch (e: UnknownHostException) {
-                progressMessage = activity.getString(R.string.error_no_internet)
-            } catch (e: HttpException) {
-                if (e.code() == 302) { // Moved Temporarily
-                    AccountHelper.invalidateAuthToken(token, activity)
-                    continue
-                } else {
-                    progressMessage = e.message() ?: activity.getString(R.string.error_obtaining_user_data_failed)
-                }
-            }
-            break
-        }
-    }
-    SplashscreenView(
-        progressMessage = progressMessage
-    )
-}
-
-@Composable
-private fun SplashscreenView(
     progressMessage: String? = null
 ) {
     Box(
@@ -108,6 +47,6 @@ private fun SplashscreenView(
 @Composable
 fun SplashscreenPreviewLight() {
     NordicTheme(darkTheme = false) {
-        SplashscreenView(stringResource(id = R.string.label_logging_in))
+        Splashscreen(stringResource(id = R.string.label_logging_in))
     }
 }
