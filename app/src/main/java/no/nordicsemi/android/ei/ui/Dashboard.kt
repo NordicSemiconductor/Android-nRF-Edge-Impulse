@@ -81,7 +81,7 @@ fun Dashboard(
                     icon = {
                         Icon(
                             Icons.Default.Add,
-                            contentDescription = stringResource(R.string.content_description_create_project)
+                            contentDescription = null
                         )
                     }
                 )
@@ -92,7 +92,7 @@ fun Dashboard(
                     content = {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = stringResource(R.string.content_description_create_project)
+                            contentDescription = null
                         )
                     })
             }
@@ -248,9 +248,8 @@ private fun CreateProjectDialog(
     ) {
         Column(
             modifier = modifier
-                .requiredWidth(400.dp)
                 .background(MaterialTheme.colors.surface)
-                .padding(start = 32.dp, top = 24.dp, end = 32.dp, bottom = 8.dp)
+                .padding(start = 24.dp, top = 24.dp, end = 24.dp, bottom = 8.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically
@@ -263,7 +262,7 @@ private fun CreateProjectDialog(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(id = R.string.label_create_project),
+                    text = stringResource(id = R.string.dialog_title_create_project),
                     color = MaterialTheme.colors.onSurface,
                     style = MaterialTheme.typography.h6,
                     fontWeight = FontWeight.SemiBold

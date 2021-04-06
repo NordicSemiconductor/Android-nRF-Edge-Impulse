@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="label_welcome">Dashboard</string>
+    <string name="title_projects">Projects</string>
+    <string name="content_description_user_image">User Image</string>
+    <string name="label_no_projects">No projects created yet</string>
     <string name="action_logout">Logout</string>
-    <string name="content_description_more_actions">More actions</string>
     <string name="action_create_project">CREATE NEW PROJECT</string>
-    <string name="label_create_project">Create New Project</string>
-    <string name="content_description_create_project">Create New Project</string>
-    <string name="field_project_name">Name</string>
+    <string name="error_refreshing_failed">Refreshing failed.</string>
+
+    <string name="dialog_title_create_project">Create New Project</string>
+    <string name="label_enter_project_name">Enter a name for your new project</string>
+    <string name="field_project_name">Project Name</string>
+    <string name="action_dialog_cancel">CANCEL</string>
+    <string name="action_dialog_create">CREATE</string>
 </resources>
