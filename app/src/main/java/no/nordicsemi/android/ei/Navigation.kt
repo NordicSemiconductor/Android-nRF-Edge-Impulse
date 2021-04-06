@@ -4,7 +4,9 @@ import android.app.Activity
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.hilt.navigation.HiltViewModelFactory
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import no.nordicsemi.android.ei.account.AccountHelper
@@ -48,9 +50,13 @@ fun Navigation(
             val viewModel: UserViewModel = viewModel(
                 factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
             )
+            val error by viewModel.error
+                .flowWithLifecycle(LocalLifecycleOwner.current.lifecycle)
+                .collectAsState(initial = null)
             Dashboard(
                 user = viewModel.user,
-                refreshingState = viewModel.pullToRefresh,
+                refreshState = viewModel.isRefreshing,
+                error = error,
                 onRefresh = {
                     viewModel.refreshUser()
                 },

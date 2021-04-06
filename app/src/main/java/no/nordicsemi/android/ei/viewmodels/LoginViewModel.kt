@@ -35,6 +35,7 @@ class LoginViewModel @Inject constructor(
 ) : AndroidViewModel(context as Application) {
 
     var state: LoginState by mutableStateOf(LoginState.LoggedOut)
+        private set
 
     fun login(username: String, password: String, authTokenType: String) {
         val context = getApplication() as Context

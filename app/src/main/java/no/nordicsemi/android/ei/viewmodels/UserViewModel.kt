@@ -11,6 +11,9 @@ import dagger.hilt.EntryPoints
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.account.AccountHelper
 import no.nordicsemi.android.ei.di.UserComponentEntryPoint
@@ -27,14 +30,15 @@ class UserViewModel @Inject constructor(
     private val loginRepository: LoginRepository,
 ) : AndroidViewModel(context as Application) {
 
-    var pullToRefresh: Boolean by mutableStateOf(false)
-        private set
-
-    var error: Throwable? by mutableStateOf(null)
-        private set
-
+    // User is kept outside of refresh state, as it is available also when refreshing.
     var user: User by mutableStateOf(repo.user)
         private set
+
+    var isRefreshing: Boolean by mutableStateOf(false)
+        private set
+
+    private var _error = MutableSharedFlow<Throwable>()
+    val error: SharedFlow<Throwable> = _error.asSharedFlow()
 
     private val repo: UserDataRepository
         get() = EntryPoints
@@ -42,17 +46,18 @@ class UserViewModel @Inject constructor(
             .userDataRepository()
 
     fun refreshUser() {
-        pullToRefresh = true
+        isRefreshing = true
         val handler = CoroutineExceptionHandler { _, throwable ->
-            error = throwable
-            pullToRefresh = false
+            viewModelScope
+                .launch { _error.emit(throwable) }
+                .also { isRefreshing = false }
         }
         viewModelScope.launch(handler) {
             loginRepository
                 .getCurrentUser(repo.token)
                 .apply { userManager.userLoggedIn(this, repo.token) }
                 .apply { user = this }
-                .also { pullToRefresh = false }
+                .also { isRefreshing = false }
         }
     }
 

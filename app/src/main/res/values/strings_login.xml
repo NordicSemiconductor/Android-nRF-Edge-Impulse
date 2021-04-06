@@ -14,7 +14,7 @@
     <string name="label_logging_in">Logging in…</string>
     <string name="label_obtaining_user_data">Obtaining User Data…</string>
 
-    <string name="error_no_internet">Check the Internet connection</string>
-    <string name="error_invalid_token">Invalid token</string>
-    <string name="error_obtaining_user_data_failed">Obtaining User Data failed</string>
+    <string name="error_no_internet">Check the Internet connection.</string>
+    <string name="error_invalid_token">Invalid token.</string>
+    <string name="error_obtaining_user_data_failed">Obtaining User Data failed.</string>
 </resources>

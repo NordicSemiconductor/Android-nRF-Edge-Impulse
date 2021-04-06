@@ -13,6 +13,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -26,16 +28,29 @@ import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.ui.layouts.SwipeToRefreshLayout
 import no.nordicsemi.android.ei.ui.layouts.UserAppBar
+import java.net.UnknownHostException
 
 @Composable
 fun Dashboard(
     user: User,
-    refreshingState: Boolean,
+    refreshState: Boolean,
+    error: Throwable?,
     onRefresh: () -> Unit,
     onCreateNewProject: () -> Unit,
     onLogoutClick: () -> Unit
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    error?.let { throwable ->
+        val message = when (throwable) {
+            is UnknownHostException -> stringResource(id = R.string.error_no_internet)
+            else -> throwable.localizedMessage ?: stringResource(id = R.string.error_refreshing_failed)
+        }
+        LaunchedEffect(throwable) {
+            snackbarHostState.showSnackbar(message)
+        }
+    }
     Scaffold(
+        scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
         topBar = {
             UserAppBar(
                 title = {
@@ -58,14 +73,15 @@ fun Dashboard(
         }
     ) { innerPadding ->
         SwipeToRefreshLayout(
-            refreshingState = refreshingState,
+            refreshingState = refreshState,
             onRefresh = onRefresh,
             refreshIndicator = {
                 Surface(elevation = 10.dp, shape = CircleShape) {
                     CircularProgressIndicator(
                         modifier = Modifier
                             .size(36.dp)
-                            .padding(4.dp)
+                            .padding(4.dp),
+                        strokeWidth = 2.dp,
                     )
                 }
             },
