@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="label_welcome">Dashboard</string>
+    <string name="label_no_projects">No projects created yet</string>
+    <string name="error_refreshing_failed">Refreshing failed</string>
+
     <string name="action_logout">Logout</string>
-    <string name="content_description_more_actions">More actions</string>
 </resources>

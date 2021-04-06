@@ -22,7 +22,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             NordicTheme {
-                Navigation()
+                Navigation(
+                    onError = { finish() }
+                )
             }
         }
     }

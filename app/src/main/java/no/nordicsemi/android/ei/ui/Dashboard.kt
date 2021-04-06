@@ -10,11 +10,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -26,15 +28,29 @@ import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.ui.layouts.SwipeToRefreshLayout
 import no.nordicsemi.android.ei.ui.layouts.UserAppBar
+import java.net.UnknownHostException
 
 @Composable
-fun User(
+fun Dashboard(
     user: User,
-    refreshingState: Boolean,
+    refreshState: Boolean,
+    error: Throwable?,
     onRefresh: () -> Unit,
+    onCreateNewProject: () -> Unit,
     onLogoutClick: () -> Unit
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    error?.let { throwable ->
+        val message = when (throwable) {
+            is UnknownHostException -> stringResource(id = R.string.error_no_internet)
+            else -> throwable.localizedMessage ?: stringResource(id = R.string.error_refreshing_failed)
+        }
+        LaunchedEffect(throwable) {
+            snackbarHostState.showSnackbar(message)
+        }
+    }
     Scaffold(
+        scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
         topBar = {
             UserAppBar(
                 title = {
@@ -43,17 +59,29 @@ fun User(
                 user = user,
                 onLogoutClick = onLogoutClick,
             )
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                text = { 
+                    Text(text = "Create new project")
+                },
+                onClick = onCreateNewProject,
+                icon = {
+                    Icon(Icons.Default.Add, contentDescription = "Create new project")
+                }
+            )
         }
     ) { innerPadding ->
         SwipeToRefreshLayout(
-            refreshingState = refreshingState,
+            refreshingState = refreshState,
             onRefresh = onRefresh,
             refreshIndicator = {
                 Surface(elevation = 10.dp, shape = CircleShape) {
                     CircularProgressIndicator(
                         modifier = Modifier
                             .size(36.dp)
-                            .padding(4.dp)
+                            .padding(4.dp),
+                        strokeWidth = 2.dp,
                     )
                 }
             },
@@ -73,25 +101,48 @@ fun ProjectsList(
     modifier: Modifier = Modifier,
     projects: List<Project>
 ) {
-    val scrollState = rememberLazyListState()
-    val horizontalPadding =
-    LazyColumn(
-        modifier = modifier,
-        contentPadding = PaddingValues(top = 72.dp, bottom = 36.dp),
-        state = scrollState
-    ) {
-        item {
-            Text(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                text = stringResource(id = R.string.title_projects),
-                color = MaterialTheme.colors.onSurface,
-                style = MaterialTheme.typography.h6
-            )
+    projects.takeIf { it.isNotEmpty() }?.let { notEmptyProjects ->
+        val scrollState = rememberLazyListState()
+        LazyColumn(
+            modifier = modifier,
+            contentPadding = PaddingValues(top = 72.dp, bottom = 36.dp),
+            state = scrollState
+        ) {
+            item {
+                Text(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    text = stringResource(id = R.string.title_projects),
+                    color = MaterialTheme.colors.onSurface,
+                    style = MaterialTheme.typography.h6
+                )
+            }
+            items(
+                items = notEmptyProjects,
+                key = { project -> project.id }
+            ) { project ->
+                ProjectRow(project = project)
+                Divider(modifier = Modifier.width(Dp.Hairline))
+            }
         }
-        items(items = projects) { project ->
-            ProjectRow(project = project)
-            Divider(modifier = Modifier.width(Dp.Hairline))
+    } ?: run {
+        Column(
+            modifier = modifier,
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_project_diagram),
+                    contentDescription = null,
+                    modifier = Modifier.size(72.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = stringResource(R.string.label_no_projects),
+                    style = MaterialTheme.typography.h6
+                )
+            }
         }
     }
 }
@@ -110,7 +161,7 @@ fun ProjectRow(
     ) {
         CoilImage(
             data = project.logo ?: R.drawable.ic_project_diagram,
-            contentDescription = stringResource(R.string.content_description_project_logo),
+            contentDescription = null,
             modifier = Modifier
                 .padding(8.dp)
                 .size(24.dp),

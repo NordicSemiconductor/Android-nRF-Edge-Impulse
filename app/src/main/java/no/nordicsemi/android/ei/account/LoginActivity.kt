@@ -10,14 +10,13 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import dagger.hilt.android.AndroidEntryPoint
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.Uris
 import no.nordicsemi.android.ei.ui.Login
 import no.nordicsemi.android.ei.ui.theme.NordicTheme
+import no.nordicsemi.android.ei.viewmodels.LoginState
 import no.nordicsemi.android.ei.viewmodels.LoginViewModel
 
 @AndroidEntryPoint
@@ -36,39 +35,35 @@ class LoginActivity : AccountAuthenticatorActivity() {
         val accountName = intent.getStringExtra(KEY_ACCOUNT_NAME)
         val authTokenType = intent.getStringExtra(KEY_AUTH_TOKEN_TYPE) ?: "limited_access"
 
-        val viewModel: LoginViewModel by viewModels()
-        viewModel.ready.observe(this) { authData ->
-            finishLogin(
-                authData.username,
-                accountType,
-                authData.tokenType,
-                authData.token
-            )
-        }
-
         setContent {
             NordicTheme {
                 Scaffold(
                     backgroundColor = MaterialTheme.colors.background
                 ) { innerPadding ->
-                    val busy by viewModel.isInProgress.observeAsState(false)
-                    val error by viewModel.error.observeAsState()
-
-                    Login(
-                        modifier = Modifier.padding(innerPadding),
-                        enabled = !busy,
-                        onLogin = { username, password ->
-                            viewModel.login(username, password, authTokenType)
-                        },
-                        onForgotPassword = {
-                            open(Uris.ForgetPassword)
-                        },
-                        onSignUp = {
-                            open(Uris.SignUp)
-                        },
-                        login = accountName ?: "",
-                        error = error
-                    )
+                    val viewModel: LoginViewModel by viewModels()
+                    when (val state = viewModel.state) {
+                        is LoginState.LoggedIn -> finishLogin(
+                            state.username,
+                            accountType,
+                            state.tokenType,
+                            state.token
+                        )
+                        else -> Login(
+                                    modifier = Modifier.padding(innerPadding),
+                                    enabled = state !is LoginState.InProgress,
+                                    onLogin = { username, password ->
+                                        viewModel.login(username, password, authTokenType)
+                                    },
+                                    onForgotPassword = {
+                                        open(Uris.ForgetPassword)
+                                    },
+                                    onSignUp = {
+                                        open(Uris.SignUp)
+                                    },
+                                    login = accountName ?: "",
+                                    error = if (state is LoginState.Error) state.message else null
+                                )
+                    }
                 }
             }
         }
