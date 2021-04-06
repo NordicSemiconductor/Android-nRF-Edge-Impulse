@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="name_project_logo">Project logo</string>
+    <string name="content_description_project_logo">Project Logo</string>
+    <string name="action_dialog_cancel">CANCEL</string>
+    <string name="action_dialog_create">CREATE</string>
+    <string name="label_no_projects">No projects created yet</string>
+</resources>

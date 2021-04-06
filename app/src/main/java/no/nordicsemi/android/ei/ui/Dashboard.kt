@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import dev.chrisbanes.accompanist.coil.CoilImage
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Project
@@ -232,8 +233,19 @@ private fun CreateProjectDialog(
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
+    // TODO error handling
     var name by rememberSaveable { mutableStateOf("") }
-    Dialog(onDismissRequest = { onDismiss() }) {
+    var onConfirmClick by rememberSaveable { mutableStateOf(false) }
+    Dialog(
+        onDismissRequest = { onDismiss() },
+        properties =
+        if (onConfirmClick) {
+            DialogProperties(
+                dismissOnBackPress = false,
+                dismissOnClickOutside = false
+            )
+        } else DialogProperties()
+    ) {
         Column(
             modifier = modifier
                 .requiredWidth(400.dp)
@@ -283,16 +295,19 @@ private fun CreateProjectDialog(
                     modifier = Modifier
                         .padding(8.dp),
                     onClick = { onDismiss() }) {
-                    Text(text = "CANCEL")
+                    Text(text = stringResource(R.string.action_dialog_cancel))
                 }
                 TextButton(
                     modifier = Modifier
                         .padding(8.dp),
                     onClick = {
+                        onConfirmClick = !onConfirmClick
                         onConfirm(name)
-                        onDismiss()
-                    }) {
-                    Text(text = "CREATE")
+                        // TODO dismiss after completion and error handling
+                        // onDismiss()
+                    }
+                ) {
+                    Text(text = stringResource(R.string.action_dialog_create))
                 }
             }
         }
