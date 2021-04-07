@@ -16,7 +16,7 @@ import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.Uris
 import no.nordicsemi.android.ei.ui.Login
 import no.nordicsemi.android.ei.ui.theme.NordicTheme
-import no.nordicsemi.android.ei.viewmodels.LoginState
+import no.nordicsemi.android.ei.util.LoginState
 import no.nordicsemi.android.ei.viewmodels.LoginViewModel
 
 @AndroidEntryPoint
