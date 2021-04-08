@@ -6,7 +6,7 @@ package no.nordicsemi.android.ei.service.param
  * @see <a href="https://docs.edgeimpulse.com/reference#createproject">Docs: Create new project</a>
  */
 data class CreateProjectResponse(
-    val projectId: Int,
+    val id: Int,
     val success: Boolean = false,
     val error: String?
 )
