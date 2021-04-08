@@ -1,4 +1,4 @@
-package no.nordicsemi.android.ei.util
+package no.nordicsemi.android.ei.viewmodels.state
 
 sealed class LoginState {
     object LoggedOut: LoginState()

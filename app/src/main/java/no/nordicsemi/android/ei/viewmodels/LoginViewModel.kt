@@ -13,8 +13,8 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.repository.LoginRepository
-import no.nordicsemi.android.ei.util.LoginState
-import no.nordicsemi.android.ei.util.LoginState.*
+import no.nordicsemi.android.ei.viewmodels.state.LoginState
+import no.nordicsemi.android.ei.viewmodels.state.LoginState.*
 import java.net.UnknownHostException
 import javax.inject.Inject
 
