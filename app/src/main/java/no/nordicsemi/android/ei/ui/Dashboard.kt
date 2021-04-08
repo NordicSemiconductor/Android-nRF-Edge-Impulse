@@ -1,5 +1,6 @@
 package no.nordicsemi.android.ei.ui
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -25,39 +27,64 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.flowWithLifecycle
 import dev.chrisbanes.accompanist.coil.CoilImage
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Project
-import no.nordicsemi.android.ei.model.User
+import no.nordicsemi.android.ei.service.param.CreateProjectResponse
 import no.nordicsemi.android.ei.ui.layouts.SwipeToRefreshLayout
 import no.nordicsemi.android.ei.ui.layouts.UserAppBar
+import no.nordicsemi.android.ei.viewmodels.DashboardViewModel
 import java.net.UnknownHostException
 
 @Composable
 fun Dashboard(
-    user: User,
-    refreshState: Boolean,
-    error: Throwable?,
-    onRefresh: (Boolean, Boolean) -> Unit,
-    onCreateNewProject: (String) -> Unit,
-    onLogoutClick: () -> Unit
+    viewModel: DashboardViewModel,
+    onLogout: (Unit) -> Unit
 ) {
+    val user = viewModel.user
+    val refreshState = viewModel.isRefreshing
+    val error by viewModel.error
+        .flowWithLifecycle(LocalLifecycleOwner.current.lifecycle)
+        .collectAsState(initial = null)
+    val createProjectResponse by viewModel.createProjectResponse
+        .flowWithLifecycle(LocalLifecycleOwner.current.lifecycle)
+        .collectAsState(initial = null)
     val snackbarHostState = remember { SnackbarHostState() }
     error?.let { throwable ->
-        val message = when (throwable) {
-            is UnknownHostException -> stringResource(id = R.string.error_no_internet)
-            else -> throwable.localizedMessage ?: stringResource(id = R.string.error_refreshing_failed)
-        }
-        LaunchedEffect(throwable) {
-            snackbarHostState.showSnackbar(message)
-        }
+        ShowSnackbar(
+            snackbarHostState = snackbarHostState, key = throwable, message = when (throwable) {
+                is UnknownHostException -> stringResource(id = R.string.error_no_internet)
+                else -> throwable.localizedMessage
+                    ?: stringResource(id = R.string.error_refreshing_failed)
+            }
+        )
     }
     var isFirstItemVisible by rememberSaveable { mutableStateOf(true) }
     var showDialog by rememberSaveable { mutableStateOf(false) }
     if (showDialog) {
-        CreateProjectDialog(onConfirm = onCreateNewProject, onDismiss = {
-            showDialog = false
-        })
+        CreateProjectDialog(
+            createProjectResponse = createProjectResponse,
+            onCreateProject = { projectName ->
+                viewModel.createProject(projectName)
+            },
+            onDismiss = {
+                showDialog = it
+            })
+    } else {
+        createProjectResponse?.let { response ->
+            ShowSnackbar(
+                snackbarHostState = snackbarHostState,
+                key = response,
+                message = when (response.success) {
+                    true -> stringResource(id = R.string.project_created_successfully)
+                    false -> stringResource(
+                        id = R.string.error_generic,
+                        response.error ?: stringResource(id = R.string.project_created_error)
+                    )
+                }
+            )
+        }
     }
     Scaffold(
         scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
@@ -67,7 +94,9 @@ fun Dashboard(
                     Text(text = stringResource(id = R.string.label_welcome))
                 },
                 user = user,
-                onLogoutClick = onLogoutClick,
+                onLogoutClick = {
+                    onLogout(viewModel.logout())
+                },
             )
         },
         floatingActionButton = {
@@ -101,7 +130,10 @@ fun Dashboard(
         var isScrolling by remember { mutableStateOf(false) }
         SwipeToRefreshLayout(
             refreshingState = refreshState,
-            onRefresh = { onRefresh(isScrolling, isFirstItemVisible) },
+            onRefresh = {
+                if (!isScrolling && isFirstItemVisible)
+                    viewModel.refreshUser()
+            },
             refreshIndicator = {
                 if (!isScrolling && isFirstItemVisible)
                     Surface(elevation = 10.dp, shape = CircleShape) {
@@ -230,16 +262,19 @@ fun ProjectRow(
 @Composable
 private fun CreateProjectDialog(
     modifier: Modifier = Modifier,
-    onConfirm: (String) -> Unit,
-    onDismiss: () -> Unit
+    createProjectResponse: CreateProjectResponse?,
+    onCreateProject: (String) -> Unit,
+    onDismiss: (Boolean) -> Unit
 ) {
-    // TODO error handling
-    var name by rememberSaveable { mutableStateOf("") }
-    var onConfirmClick by rememberSaveable { mutableStateOf(false) }
+    var projectName by rememberSaveable { mutableStateOf("") }
+    var isCreateClicked by rememberSaveable { mutableStateOf(false) }
     Dialog(
-        onDismissRequest = { onDismiss() },
+        onDismissRequest = {
+            Log.i("AA", "On dismiss request")
+            onDismiss(false)
+        },
         properties =
-        if (onConfirmClick) {
+        if (isCreateClicked) {
             DialogProperties(
                 dismissOnBackPress = false,
                 dismissOnClickOutside = false
@@ -275,8 +310,8 @@ private fun CreateProjectDialog(
                 color = MaterialTheme.colors.onSurface
             )
             OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
+                value = projectName,
+                onValueChange = { projectName = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 8.dp, bottom = 8.dp),
@@ -293,22 +328,35 @@ private fun CreateProjectDialog(
                 TextButton(
                     modifier = Modifier
                         .padding(8.dp),
-                    onClick = { onDismiss() }) {
+                    onClick = { onDismiss(false) }) {
                     Text(text = stringResource(R.string.action_dialog_cancel))
                 }
                 TextButton(
                     modifier = Modifier
                         .padding(8.dp),
                     onClick = {
-                        onConfirmClick = !onConfirmClick
-                        onConfirm(name)
-                        // TODO dismiss after completion and error handling
-                        // onDismiss()
-                    }
+                        isCreateClicked = !isCreateClicked
+                        onCreateProject(projectName)
+                        createProjectResponse?.let {
+                            onDismiss(false)
+                        }
+                    },
+                    enabled = !isCreateClicked
                 ) {
                     Text(text = stringResource(R.string.action_dialog_create))
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ShowSnackbar(
+    snackbarHostState: SnackbarHostState,
+    key: Any,
+    message: String
+) {
+    LaunchedEffect(key1 = key) {
+        snackbarHostState.showSnackbar(message = message)
     }
 }

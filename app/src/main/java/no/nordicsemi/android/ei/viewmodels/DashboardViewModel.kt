@@ -2,6 +2,7 @@ package no.nordicsemi.android.ei.viewmodels
 
 import android.app.Application
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -21,6 +22,7 @@ import no.nordicsemi.android.ei.di.UserManager
 import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.repository.DashboardRepository
 import no.nordicsemi.android.ei.repository.UserDataRepository
+import no.nordicsemi.android.ei.service.param.CreateProjectResponse
 import javax.inject.Inject
 
 @HiltViewModel
@@ -39,6 +41,10 @@ class DashboardViewModel @Inject constructor(
 
     private var _error = MutableSharedFlow<Throwable>()
     val error: SharedFlow<Throwable> = _error.asSharedFlow()
+
+    private var _createProjectResponse = MutableSharedFlow<CreateProjectResponse>()
+    val createProjectResponse: SharedFlow<CreateProjectResponse> =
+        _createProjectResponse.asSharedFlow()
 
     private val repo: UserDataRepository
         get() = EntryPoints
@@ -61,12 +67,13 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
-    fun createProject(projectName:String) {
+    fun createProject(projectName: String) {
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope.launch { _error.emit(throwable) }
         }
         viewModelScope.launch(handler) {
-            dashboardRepository.createProject(repo.token, projectName)
+            val resp = dashboardRepository.createProject(repo.token, projectName)
+            _createProjectResponse.emit(resp)
         }
     }
 

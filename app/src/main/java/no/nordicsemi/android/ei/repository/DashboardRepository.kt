@@ -9,7 +9,6 @@ import javax.inject.Inject
 class DashboardRepository @Inject constructor(
     service: EiService
 ) : BaseRepository(service = service) {
-
     suspend fun createProject(token: String, projectName: String) = withContext(Dispatchers.IO) {
         service.createProject(
             jwt = token,
