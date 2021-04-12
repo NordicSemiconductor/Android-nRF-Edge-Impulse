@@ -1,10 +1,14 @@
 package no.nordicsemi.android.ei.ui
 
+import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -56,8 +60,8 @@ fun Dashboard(
     val snackbarHostState = remember { SnackbarHostState() }
     val user = viewModel.user
     val refreshState = viewModel.isRefreshing
+    val lazyListState = rememberLazyListState()
 
-    var isFirstItemVisible by rememberSaveable { mutableStateOf(true) }
     var isCreateProjectDialogVisible by rememberSaveable { mutableStateOf(false) }
 
     coroutineScope.launchWhenStarted {
@@ -93,6 +97,7 @@ fun Dashboard(
         }
     }
 
+    var isScrollingUp by remember { mutableStateOf(false) }
     Scaffold(
         scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
         topBar = {
@@ -108,21 +113,23 @@ fun Dashboard(
         },
         floatingActionButton = {
             CreateProjectFloatingActionButton(
-                isFirstItemVisible = isFirstItemVisible,
+                isScrollingUp = {
+                    isScrollingUp = lazyListState.isScrollingUp()
+                    isScrollingUp
+                },
                 onClick = {
                     isCreateProjectDialogVisible = !isCreateProjectDialogVisible
                 })
         }
     ) { innerPadding ->
-        var isScrolling by remember { mutableStateOf(false) }
         SwipeToRefreshLayout(
             refreshingState = refreshState,
             onRefresh = {
-                if (!isScrolling && isFirstItemVisible)
+                if (isScrollingUp)
                     viewModel.refreshUser()
             },
             refreshIndicator = {
-                if (!isScrolling && isFirstItemVisible)
+                if (isScrollingUp)
                     Surface(elevation = 10.dp, shape = CircleShape) {
                         CircularProgressIndicator(
                             modifier = Modifier
@@ -133,18 +140,49 @@ fun Dashboard(
                     }
             },
             content = {
-                ProjectsList(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
-                    projects = user.projects,
-                    isFirstItemVisible = {
-                        isFirstItemVisible = it
-                    },
-                    isScrolling = {
-                        isScrolling = it
+                user.projects.takeIf { it.isNotEmpty() }?.let { notEmptyProjects ->
+                    LazyColumn(
+                        modifier = Modifier.padding(innerPadding),
+                        contentPadding = PaddingValues(top = 72.dp, bottom = 36.dp),
+                        state = lazyListState
+                    ) {
+                        item {
+                            Text(
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                                text = stringResource(id = R.string.title_projects),
+                                color = MaterialTheme.colors.onSurface,
+                                style = MaterialTheme.typography.h6
+                            )
+                        }
+                        items(
+                            items = notEmptyProjects,
+                            key = { project -> project.id }
+                        ) { project ->
+                            ProjectRow(project = project)
+                            Divider(modifier = Modifier.width(Dp.Hairline))
+                        }
                     }
-                )
+                } ?: run {
+                    Column(
+                        modifier = Modifier.padding(innerPadding),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_project_diagram),
+                                contentDescription = null,
+                                modifier = Modifier.size(72.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = stringResource(R.string.label_no_projects),
+                                style = MaterialTheme.typography.h6
+                            )
+                        }
+                    }
+                }
             })
         if (isCreateProjectDialogVisible) {
             CreateProjectDialog(
@@ -257,35 +295,29 @@ fun ProjectRow(
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun CreateProjectFloatingActionButton(
-    isFirstItemVisible: Boolean = true,
+    isScrollingUp: @Composable () -> Boolean,
     onClick: () -> Unit
 ) {
-    if (isFirstItemVisible) {
-        ExtendedFloatingActionButton(
-            text = {
-                Text(text = stringResource(R.string.action_create_project))
-            },
-            onClick = onClick,
-            modifier = Modifier.padding(16.dp),
-            icon = {
-                Icon(
-                    Icons.Default.Add,
-                    contentDescription = null
+    FloatingActionButton(onClick = onClick) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = null
+            )
+            // Toggle the visibility of the content with animation.
+            AnimatedVisibility(visible = isScrollingUp()) {
+                Text(
+                    text = stringResource(R.string.action_create_project),
+                    modifier = Modifier
+                        .padding(start = 8.dp, top = 3.dp)
                 )
             }
-        )
-    } else {
-        FloatingActionButton(
-            onClick = onClick,
-            modifier = Modifier.padding(16.dp),
-            content = {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null
-                )
-            })
+        }
     }
 }
 
@@ -381,6 +413,24 @@ private fun CreateProjectDialog(
             }
         }
     }
+}
+
+@Composable
+private fun LazyListState.isScrollingUp(): Boolean {
+    var previousIndex by remember(this) { mutableStateOf(firstVisibleItemIndex) }
+    var previousScrollOffset by remember(this) { mutableStateOf(firstVisibleItemScrollOffset) }
+    return remember(this) {
+        derivedStateOf {
+            if (previousIndex != firstVisibleItemIndex) {
+                previousIndex > firstVisibleItemIndex
+            } else {
+                previousScrollOffset >= firstVisibleItemScrollOffset
+            }.also {
+                previousIndex = firstVisibleItemIndex
+                previousScrollOffset = firstVisibleItemScrollOffset
+            }
+        }
+    }.value
 }
 
 private fun showSnackbar(
