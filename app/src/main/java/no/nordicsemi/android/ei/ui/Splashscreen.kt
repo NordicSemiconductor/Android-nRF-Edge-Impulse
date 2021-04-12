@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,7 +38,8 @@ fun Splashscreen(
         progressMessage?.let { text ->
             Text(
                 text = text,
-                modifier = Modifier.offset(y = (-100).dp)
+                modifier = Modifier.offset(y = (-100).dp),
+                color = MaterialTheme.colors.onSurface
             )
         }
     }
