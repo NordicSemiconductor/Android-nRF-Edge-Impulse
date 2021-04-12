@@ -14,6 +14,6 @@
     <string name="action_dialog_cancel" tools:ignore="ButtonCase">CANCEL</string>
     <string name="action_dialog_create">CREATE</string>
 
-    <string name="project_created_successfully">Project created!</string>
+    <string name="project_created_successfully">Project %s created!</string>
     <string name="project_created_error">Error while creating a project!</string>
 </resources>
