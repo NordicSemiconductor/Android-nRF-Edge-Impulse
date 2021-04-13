@@ -1,6 +1,5 @@
 package no.nordicsemi.android.ei.ui
 
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.Image
@@ -67,12 +66,15 @@ fun Dashboard(
 ) {
     val context = LocalContext.current
     val coroutineScope = LocalLifecycleOwner.current.lifecycleScope
-    val snackbarHostState = remember { SnackbarHostState() }
+
     val user = viewModel.user
     val refreshState = viewModel.isRefreshing
+
+    val snackbarHostState = remember { SnackbarHostState() }
     val lazyListState = rememberLazyListState()
 
     var isCreateProjectDialogVisible by rememberSaveable { mutableStateOf(false) }
+    var isScrollingUp by remember { mutableStateOf(false) }
 
     coroutineScope.launchWhenStarted {
         viewModel.eventFlow.runCatching {
@@ -107,7 +109,6 @@ fun Dashboard(
         }
     }
 
-    var isScrollingUp by remember { mutableStateOf(false) }
     Scaffold(
         scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
         topBar = {
@@ -246,18 +247,20 @@ fun ProjectRow(
 private fun Collaborator(project: Project) {
     var startPadding = 0.dp
     val imageSize = 48.dp
-    var collaboratorCount = 1
-    Log.i("AA", "Project ${project.name} collaborators ${project.collaborators.size}")
+    val maxImages = when (project.collaborators.size) {
+        in 0..MAX_COLLABORATOR_IMAGES -> MAX_COLLABORATOR_IMAGES
+        else -> MAX_COLLABORATOR_IMAGES - 1
+    }
     Box {
-        for (collaborator in project.collaborators) {
+        for ((index, collaborator) in project.collaborators.take(MAX_COLLABORATOR_IMAGES).withIndex()) {
             Box(
                 modifier = Modifier
                     .padding(start = startPadding)
                     .requiredSize(imageSize)
                     .clip(CircleShape)
             ) {
-                // lets limit the images to max of 3 collaborators
-                if (collaboratorCount in 1..3) {
+                // lets limit the images to max collaborators
+                if (index in 0 until maxImages) {
                     CoilImage(
                         modifier = Modifier.requiredSize(imageSize),
                         data = if (collaborator.photo.isNotBlank()) {
@@ -293,7 +296,10 @@ private fun Collaborator(project: Project) {
                     )
                 } else {
                     Text(
-                        text = "$collaboratorCount+",
+                        text = when (project.collaborators.size - MAX_COLLABORATOR_IMAGES) {
+                            in 0..MAX_COLLABORATOR_IMAGES -> "${project.collaborators.size - MAX_COLLABORATOR_IMAGES + 1}"
+                            else -> "${MAX_COLLABORATORS}+"
+                        },
                         modifier = Modifier
                             .fillMaxHeight()
                             .fillMaxWidth()
@@ -306,8 +312,7 @@ private fun Collaborator(project: Project) {
                     )
                 }
             }
-            collaboratorCount += 1
-            startPadding += (imageSize / 3)
+            startPadding += (imageSize / MAX_COLLABORATOR_IMAGES)
         }
     }
 }
@@ -459,3 +464,6 @@ private fun showSnackbar(
         snackbarHostState.showSnackbar(message = message)
     }
 }
+
+private const val MAX_COLLABORATOR_IMAGES = 2
+private const val MAX_COLLABORATORS = 3

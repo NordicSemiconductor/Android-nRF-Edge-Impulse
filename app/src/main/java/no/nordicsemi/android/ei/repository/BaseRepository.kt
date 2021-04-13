@@ -7,6 +7,7 @@ import no.nordicsemi.android.ei.service.EiService
 abstract class BaseRepository(
     protected val service: EiService
 ) {
+
     suspend fun getCurrentUser(token: String) = withContext(Dispatchers.IO) {
         service.getCurrentUser(jwt = token)
     }

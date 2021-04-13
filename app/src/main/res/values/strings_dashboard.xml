@@ -16,4 +16,5 @@
 
     <string name="project_created_successfully">Project %s created!</string>
     <string name="project_created_error">Error while creating a project!</string>
+    <string name="label_collaborator_count">%d+</string>
 </resources>

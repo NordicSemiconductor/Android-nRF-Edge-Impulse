@@ -1,4 +1,3 @@
-
 package no.nordicsemi.android.ei.model
 
 data class Project(
