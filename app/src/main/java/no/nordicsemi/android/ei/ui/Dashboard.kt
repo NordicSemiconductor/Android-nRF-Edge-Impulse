@@ -465,5 +465,5 @@ private fun showSnackbar(
     }
 }
 
-private const val MAX_COLLABORATOR_IMAGES = 2
-private const val MAX_COLLABORATORS = 3
+private const val MAX_COLLABORATOR_IMAGES = 4
+private const val MAX_COLLABORATORS = 9
