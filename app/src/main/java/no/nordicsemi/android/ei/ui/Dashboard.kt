@@ -17,24 +17,33 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusOrder
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.lifecycleScope
@@ -46,6 +55,7 @@ import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.ui.layouts.SwipeToRefreshLayout
 import no.nordicsemi.android.ei.ui.layouts.UserAppBar
+import no.nordicsemi.android.ei.ui.theme.NordicMiddleGrey
 import no.nordicsemi.android.ei.viewmodels.DashboardViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Event
 import java.net.UnknownHostException
@@ -142,7 +152,7 @@ fun Dashboard(
             content = {
                 user.projects.takeIf { it.isNotEmpty() }?.let { notEmptyProjects ->
                     LazyColumn(
-                        modifier =  Modifier
+                        modifier = Modifier
                             .fillMaxSize()
                             .padding(innerPadding),
                         contentPadding = PaddingValues(top = 72.dp, bottom = 36.dp),
@@ -167,7 +177,7 @@ fun Dashboard(
                     }
                 } ?: run {
                     Column(
-                        modifier =  Modifier
+                        modifier = Modifier
                             .fillMaxSize()
                             .padding(innerPadding),
                         verticalArrangement = Arrangement.Center,
@@ -201,63 +211,6 @@ fun Dashboard(
 }
 
 @Composable
-fun ProjectsList(
-    modifier: Modifier = Modifier,
-    projects: List<Project>,
-    isScrolling: (Boolean) -> Unit,
-    isFirstItemVisible: (Boolean) -> Unit
-) {
-    projects.takeIf { it.isNotEmpty() }?.let { notEmptyProjects ->
-        val scrollState = rememberLazyListState()
-        LazyColumn(
-            modifier = modifier,
-            contentPadding = PaddingValues(top = 72.dp, bottom = 36.dp),
-            state = scrollState
-        ) {
-            item {
-                Text(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
-                    text = stringResource(id = R.string.title_projects),
-                    color = MaterialTheme.colors.onSurface,
-                    style = MaterialTheme.typography.h6
-                )
-            }
-            items(
-                items = notEmptyProjects,
-                key = { project -> project.id }
-            ) { project ->
-                ProjectRow(project = project)
-                Divider(modifier = Modifier.width(Dp.Hairline))
-            }
-            derivedStateOf {
-                isScrolling(scrollState.firstVisibleItemScrollOffset < -5)
-                isFirstItemVisible(scrollState.firstVisibleItemIndex == 0)
-            }
-        }
-    } ?: run {
-        Column(
-            modifier = modifier,
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_project_diagram),
-                    contentDescription = null,
-                    modifier = Modifier.size(72.dp)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = stringResource(R.string.label_no_projects),
-                    style = MaterialTheme.typography.h6
-                )
-            }
-        }
-    }
-}
-
-@Composable
 fun ProjectRow(
     modifier: Modifier = Modifier,
     project: Project
@@ -266,36 +219,96 @@ fun ProjectRow(
         modifier = modifier
             .background(MaterialTheme.colors.surface)
             .clickable { }
-            .padding(8.dp),
+            .padding(start = 16.dp, top = 8.dp, bottom = 8.dp, end = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        CoilImage(
-            data = project.logo ?: R.drawable.ic_project_diagram,
-            contentDescription = null,
-            modifier = Modifier
-                .padding(8.dp)
-                .size(24.dp),
-            error = {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_project_diagram),
-                    contentDescription = null
-                )
-            },
-            loading = {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_project_diagram),
-                    contentDescription = null,
-                    alpha = 0.1f
-                )
-            }
-        )
-        Spacer(modifier = Modifier.width(8.dp))
         Text(
-            modifier = Modifier.weight(1.0f),
-            text = project.name,
+            modifier = Modifier
+                .padding(top = 16.dp, bottom = 16.dp)
+                .weight(1.0f),
+            text = buildAnnotatedString {
+                append(project.owner)
+                append(" / ")
+                withStyle(style = SpanStyle(fontWeight = FontWeight.Medium)) {
+                    append(project.name)
+                }
+            },
+            fontSize = 18.sp,
             overflow = TextOverflow.Ellipsis,
             maxLines = 1
         )
+        Spacer(modifier = Modifier.width(16.dp))
+        Collaborator(project = project)
+    }
+}
+
+@Composable
+private fun Collaborator(project: Project) {
+    var startPadding = 0.dp
+    val imageSize = 48.dp
+    var collaboratorCount = 1
+    Log.i("AA", "Project ${project.name} collaborators ${project.collaborators.size}")
+    Box {
+        for (collaborator in project.collaborators) {
+            Box(
+                modifier = Modifier
+                    .padding(start = startPadding)
+                    .requiredSize(imageSize)
+                    .clip(CircleShape)
+            ) {
+                // lets limit the images to max of 3 collaborators
+                if (collaboratorCount in 1..3) {
+                    CoilImage(
+                        modifier = Modifier.requiredSize(imageSize),
+                        data = if (collaborator.photo.isNotBlank()) {
+                            collaborator.photo
+                        } else {
+                            Image(
+                                imageVector = Icons.Outlined.AccountCircle,
+                                modifier = Modifier.requiredSize(imageSize + 8.dp),
+                                contentDescription = null,
+                                contentScale = ContentScale.FillBounds
+                            )
+                        },
+                        contentDescription = null,
+                        error = {
+                            Image(
+                                imageVector = Icons.Outlined.AccountCircle,
+                                modifier = Modifier
+                                    .requiredSize(size = imageSize)
+                                    .background(color = MaterialTheme.colors.onSurface),
+                                contentDescription = null,
+                                contentScale = ContentScale.FillBounds
+                            )
+                        },
+                        loading = {
+                            Image(
+                                imageVector = Icons.Outlined.AccountCircle,
+                                modifier = Modifier.requiredSize(imageSize),
+                                contentDescription = null,
+                                alpha = 0.1f,
+                                contentScale = ContentScale.FillBounds
+                            )
+                        }
+                    )
+                } else {
+                    Text(
+                        text = "$collaboratorCount+",
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth()
+                            .background(color = NordicMiddleGrey)
+                            .padding(8.dp),
+                        color = Color.White,
+                        style = MaterialTheme.typography.h6,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1
+                    )
+                }
+            }
+            collaboratorCount += 1
+            startPadding += (imageSize / 3)
+        }
     }
 }
 
