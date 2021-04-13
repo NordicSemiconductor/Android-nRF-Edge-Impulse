@@ -142,7 +142,9 @@ fun Dashboard(
             content = {
                 user.projects.takeIf { it.isNotEmpty() }?.let { notEmptyProjects ->
                     LazyColumn(
-                        modifier = Modifier.padding(innerPadding),
+                        modifier =  Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                         contentPadding = PaddingValues(top = 72.dp, bottom = 36.dp),
                         state = lazyListState
                     ) {
@@ -165,7 +167,9 @@ fun Dashboard(
                     }
                 } ?: run {
                     Column(
-                        modifier = Modifier.padding(innerPadding),
+                        modifier =  Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
