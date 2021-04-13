@@ -4,16 +4,14 @@ import android.app.Activity
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.hilt.navigation.HiltViewModelFactory
-import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import no.nordicsemi.android.ei.account.AccountHelper
 import no.nordicsemi.android.ei.ui.Dashboard
 import no.nordicsemi.android.ei.ui.Splashscreen
+import no.nordicsemi.android.ei.viewmodels.DashboardViewModel
 import no.nordicsemi.android.ei.viewmodels.SplashscreenViewModel
-import no.nordicsemi.android.ei.viewmodels.UserViewModel
 import retrofit2.HttpException
 import java.net.HttpURLConnection
 import java.net.UnknownHostException
@@ -47,27 +45,14 @@ fun Navigation(
         }
 
         composable(Route.user) { backStackEntry ->
-            val viewModel: UserViewModel = viewModel(
+            val viewModel: DashboardViewModel = viewModel(
                 factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
             )
-            val error by viewModel.error
-                .flowWithLifecycle(LocalLifecycleOwner.current.lifecycle)
-                .collectAsState(initial = null)
             Dashboard(
-                user = viewModel.user,
-                refreshState = viewModel.isRefreshing,
-                error = error,
-                onRefresh = {
-                    viewModel.refreshUser()
-                },
-                onCreateNewProject = {
-
-                },
-                onLogoutClick = {
-                    viewModel.logout()
-                    navController.navigateUp()
-                }
-            )
+                viewModel = viewModel,
+            ) {
+                navController.navigateUp()
+            }
         }
     }
 }
@@ -108,7 +93,9 @@ fun Login(
                     AccountHelper.invalidateAuthToken(token, activity)
                     continue
                 } else {
-                    onProgressChanged(e.message() ?: activity.getString(R.string.error_obtaining_user_data_failed))
+                    onProgressChanged(
+                        e.message() ?: activity.getString(R.string.error_obtaining_user_data_failed)
+                    )
                 }
             }
             break

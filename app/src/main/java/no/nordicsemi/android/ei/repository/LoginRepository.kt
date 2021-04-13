@@ -7,15 +7,10 @@ import no.nordicsemi.android.ei.service.param.LoginRequest
 import javax.inject.Inject
 
 class LoginRepository @Inject constructor(
-    private val service: EiService
-) {
+    service: EiService
+) : BaseRepository(service = service) {
 
     suspend fun login(username: String, password: String) = withContext(Dispatchers.IO) {
         service.login(loginRequest = LoginRequest(username, password, null))
     }
-
-    suspend fun getCurrentUser(token: String) = withContext(Dispatchers.IO) {
-        service.getCurrentUser(jwt = token)
-    }
-
 }

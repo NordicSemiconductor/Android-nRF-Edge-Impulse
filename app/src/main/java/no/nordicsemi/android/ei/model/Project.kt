@@ -1,3 +1,4 @@
+
 package no.nordicsemi.android.ei.model
 
 data class Project(
@@ -7,4 +8,5 @@ data class Project(
     val created: String,
     val owner: String,
     val logo: String?,
+    val collaborators: List<Collaborator>
 )
