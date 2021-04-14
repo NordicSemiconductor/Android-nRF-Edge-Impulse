@@ -9,8 +9,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import no.nordicsemi.android.ei.account.AccountHelper
 import no.nordicsemi.android.ei.ui.Dashboard
+import no.nordicsemi.android.ei.ui.Project
 import no.nordicsemi.android.ei.ui.Splashscreen
 import no.nordicsemi.android.ei.viewmodels.DashboardViewModel
+import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import no.nordicsemi.android.ei.viewmodels.SplashscreenViewModel
 import retrofit2.HttpException
 import java.net.HttpURLConnection
@@ -31,7 +33,7 @@ fun Navigation(
                 viewModel = viewModel,
                 onProgressChanged = { progressMessage = it },
                 onLoggedIn = {
-                    navController.navigate(Route.user) {
+                    navController.navigate(Route.dashboard) {
                         popUpTo(Route.splashscreen) {
                             inclusive = true
                         }
@@ -44,15 +46,33 @@ fun Navigation(
             )
         }
 
-        composable(Route.user) { backStackEntry ->
+        composable(Route.dashboard) { backStackEntry ->
             val viewModel: DashboardViewModel = viewModel(
                 factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
             )
             Dashboard(
                 viewModel = viewModel,
-            ) {
-                navController.navigateUp()
-            }
+                onProjectSelected = {
+                    navController.navigate(Route.project)
+                },
+                onLogout = {
+                    navController.navigateUp()
+                }
+            )
+        }
+
+        composable(Route.project) { backStackEntry ->
+            val viewModel: ProjectViewModel = viewModel(
+                factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
+            )
+            Project(
+                viewModel = viewModel,
+                bottomNavigationScreens = listOf(
+                    BottomNavigationScreen.Devices,
+                    BottomNavigationScreen.DataAcquisition,
+                    BottomNavigationScreen.Deployment
+                )
+            )
         }
     }
 }

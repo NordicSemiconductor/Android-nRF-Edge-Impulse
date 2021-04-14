@@ -1,37 +1,36 @@
 package no.nordicsemi.android.ei
 
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.ui.graphics.vector.ImageVector
 
 /**
  * BottomNavigationScreen
  *
  * @param route Route
  * @param resourceId String resource for the bottom navigation bar item name
- * @param icon ImageVector for the icon
+ * @param drawableRes ImageVector for the icon
  */
 sealed class BottomNavigationScreen(
     val route: String,
     @StringRes val resourceId: Int,
-    val icon: ImageVector
+    @DrawableRes val drawableRes: Int
 ) {
     object Devices : BottomNavigationScreen(
         route = Route.devices,
         resourceId = R.string.label_devices,
-        icon = Icons.Default.CheckCircle
+        drawableRes = R.drawable.ic_devices
     )
 
     object DataAcquisition : BottomNavigationScreen(
         route = Route.dataAcquisition,
         resourceId = R.string.label_data_acquisition,
-        icon = Icons.Default.CheckCircle
+        drawableRes = R.drawable.ic_database
     )
 
     object Deployment : BottomNavigationScreen(
         route = Route.deployment,
         resourceId = R.string.label_deployment,
-        icon = Icons.Default.CheckCircle
+        //TODO find the correct edge impulse icon
+        drawableRes = R.drawable.ic_devices
     )
 }
