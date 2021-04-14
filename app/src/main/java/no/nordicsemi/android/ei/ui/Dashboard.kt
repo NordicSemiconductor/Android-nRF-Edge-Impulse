@@ -51,6 +51,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.R
+import no.nordicsemi.android.ei.model.Collaborator
 import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.ui.layouts.SwipeToRefreshLayout
 import no.nordicsemi.android.ei.ui.layouts.UserAppBar
@@ -239,20 +240,20 @@ fun ProjectRow(
             maxLines = 1
         )
         Spacer(modifier = Modifier.width(16.dp))
-        Collaborator(project = project)
+        Collaborator(collaborators = project.collaborators)
     }
 }
 
 @Composable
-private fun Collaborator(project: Project) {
+private fun Collaborator(collaborators: List<Collaborator>) {
     var startPadding = 0.dp
     val imageSize = 48.dp
-    val maxImages = when (project.collaborators.size) {
+    val maxImages = when (collaborators.size) {
         in 0..MAX_COLLABORATOR_IMAGES -> MAX_COLLABORATOR_IMAGES
         else -> MAX_COLLABORATOR_IMAGES - 1
     }
     Box {
-        for ((index, collaborator) in project.collaborators.take(MAX_COLLABORATOR_IMAGES).withIndex()) {
+        for ((index, collaborator) in collaborators.take(MAX_COLLABORATOR_IMAGES).withIndex()) {
             Box(
                 modifier = Modifier
                     .padding(start = startPadding)
@@ -296,8 +297,8 @@ private fun Collaborator(project: Project) {
                     )
                 } else {
                     Text(
-                        text = when (project.collaborators.size - MAX_COLLABORATOR_IMAGES) {
-                            in 0..MAX_COLLABORATOR_IMAGES -> "${project.collaborators.size - MAX_COLLABORATOR_IMAGES + 1}"
+                        text = when (collaborators.size - MAX_COLLABORATOR_IMAGES) {
+                            in 0..MAX_COLLABORATOR_IMAGES -> "${collaborators.size - MAX_COLLABORATOR_IMAGES + 1}"
                             else -> "${MAX_COLLABORATORS}+"
                         },
                         modifier = Modifier
