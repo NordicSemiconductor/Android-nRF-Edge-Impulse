@@ -63,7 +63,7 @@ import java.net.UnknownHostException
 @Composable
 fun Dashboard(
     viewModel: DashboardViewModel,
-    onProjectSelected: (Project) -> Unit,
+    onProjectSelected: (Unit) -> Unit,
     onLogout: (Unit) -> Unit
 ) {
     val context = LocalContext.current
@@ -174,7 +174,15 @@ fun Dashboard(
                             items = notEmptyProjects,
                             key = { project -> project.id }
                         ) { project ->
-                            ProjectRow(project = project, onProjectSelected = onProjectSelected)
+                            ProjectRow(
+                                project = project,
+                                onProjectSelected = {
+                                    onProjectSelected(
+                                        viewModel.selectProject(
+                                            project = project
+                                        )
+                                    )
+                                })
                             Divider(modifier = Modifier.width(Dp.Hairline))
                         }
                     }
@@ -217,13 +225,13 @@ fun Dashboard(
 fun ProjectRow(
     modifier: Modifier = Modifier,
     project: Project,
-    onProjectSelected: (Project) -> Unit
+    onProjectSelected: () -> Unit
 ) {
     Row(
         modifier = modifier
             .background(MaterialTheme.colors.surface)
             .clickable {
-                onProjectSelected(project)
+                onProjectSelected()
             }
             .padding(start = 16.dp, top = 8.dp, bottom = 8.dp, end = 16.dp),
         verticalAlignment = Alignment.CenterVertically

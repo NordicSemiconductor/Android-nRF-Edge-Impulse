@@ -12,7 +12,7 @@ interface UserComponent {
     @DefineComponent.Builder
     interface Builder {
         fun setUser(@BindsInstance user: User): Builder
-        fun setToken(@BindsInstance @JwtToken string: String): Builder
+        fun setToken(@BindsInstance string: String): Builder
         fun build(): UserComponent
     }
 }

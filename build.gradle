@@ -3,7 +3,8 @@ buildscript {
     ext {
         compose_version = '1.0.0-beta04'       // https://developer.android.com/jetpack/compose/setup
         kotlin_version = '1.4.32'              // https://developer.android.com/jetpack/compose/setup#configure_kotlin
-        hilt_dagger_version = '2.33-beta'      // https://developer.android.com/training/dependency-injection/hilt-android
+        hilt_dagger_version = '2.34.1-beta'
+        // https://developer.android.com/training/dependency-injection/hilt-android
         hilt_android_version = '1.0.0-beta01'
         lifecycle_version = '2.4.0-alpha01'    // https://developer.android.com/jetpack/androidx/releases/lifecycle
     }
