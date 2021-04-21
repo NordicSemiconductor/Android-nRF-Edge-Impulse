@@ -47,12 +47,11 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.lifecycleScope
 import dev.chrisbanes.accompanist.coil.CoilImage
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Collaborator
 import no.nordicsemi.android.ei.model.Project
+import no.nordicsemi.android.ei.showSnackbar
 import no.nordicsemi.android.ei.ui.layouts.SwipeToRefreshLayout
 import no.nordicsemi.android.ei.ui.layouts.UserAppBar
 import no.nordicsemi.android.ei.ui.theme.NordicMiddleGrey
@@ -466,16 +465,6 @@ private fun LazyListState.isScrollingUp(): Boolean {
             }
         }
     }.value
-}
-
-private fun showSnackbar(
-    coroutineScope: CoroutineScope,
-    snackbarHostState: SnackbarHostState,
-    message: String,
-) {
-    coroutineScope.launch {
-        snackbarHostState.showSnackbar(message = message)
-    }
 }
 
 private const val MAX_COLLABORATOR_IMAGES = 4

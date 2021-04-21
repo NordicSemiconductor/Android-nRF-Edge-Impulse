@@ -9,22 +9,52 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.compose.*
+import kotlinx.coroutines.flow.collect
 import no.nordicsemi.android.ei.BottomNavigationScreen
+import no.nordicsemi.android.ei.R
+import no.nordicsemi.android.ei.showSnackbar
 import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
+import no.nordicsemi.android.ei.viewmodels.event.Event
+import java.net.UnknownHostException
 
 @Composable
 fun Project(
     viewModel: ProjectViewModel,
     bottomNavigationScreens: List<BottomNavigationScreen>
 ) {
+    val context = LocalContext.current
+    val coroutineScope = LocalLifecycleOwner.current.lifecycleScope
     val navController = rememberNavController()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    coroutineScope.launchWhenStarted {
+        viewModel.eventFlow.runCatching {
+            this.collect {
+                when (it) {
+                    is Event.Error -> {
+                        showSnackbar(
+                            coroutineScope = coroutineScope,
+                            snackbarHostState = snackbarHostState,
+                            message = when (it.throwable) {
+                                is UnknownHostException -> context.getString(R.string.error_no_internet)
+                                else -> it.throwable.localizedMessage
+                                    ?: context.getString(R.string.error_refreshing_failed)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     Scaffold(
         scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
@@ -114,3 +144,6 @@ fun ProjectBottomNavigationBar(
         }
     }
 }
+
+val <T> T.exhaustive: T
+    get() = this

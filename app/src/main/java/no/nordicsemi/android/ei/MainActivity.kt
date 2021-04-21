@@ -3,15 +3,11 @@ package no.nordicsemi.android.ei
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
+import androidx.compose.material.SnackbarHostState
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.ui.theme.NordicTheme
 
 @AndroidEntryPoint
@@ -27,5 +23,15 @@ class MainActivity : AppCompatActivity() {
                 )
             }
         }
+    }
+}
+
+fun showSnackbar(
+    coroutineScope: CoroutineScope,
+    snackbarHostState: SnackbarHostState,
+    message: String,
+) {
+    coroutineScope.launch {
+        snackbarHostState.showSnackbar(message = message)
     }
 }
