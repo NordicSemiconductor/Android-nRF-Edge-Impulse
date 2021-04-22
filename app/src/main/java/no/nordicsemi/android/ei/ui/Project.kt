@@ -15,7 +15,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.HiltViewModelFactory
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.*
 import kotlinx.coroutines.flow.collect
@@ -87,8 +89,13 @@ fun Project(
             navController = navController,
             startDestination = BottomNavigationScreen.Devices.route
         ) {
-            composable(route = BottomNavigationScreen.Devices.route) {
-                Devices(modifier = Modifier.padding(paddingValues = innerPadding))
+            composable(route = BottomNavigationScreen.Devices.route) { backStackEntry ->
+                Devices(
+                    modifier = Modifier.padding(paddingValues = innerPadding),
+                    viewModel = viewModel(
+                        factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
+                    )
+                )
             }
             composable(route = BottomNavigationScreen.DataAcquisition.route) {
                 DataAcquisition(modifier = Modifier.padding(paddingValues = innerPadding))
