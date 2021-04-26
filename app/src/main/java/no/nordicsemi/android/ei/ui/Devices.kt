@@ -54,11 +54,23 @@ fun Devices(modifier: Modifier = Modifier, viewModel: DevicesViewModel) {
 
         when (scanning) {
             is Scanning -> {
-                items(items = scannerState.discoveredDevices, key = {
-                    it.device.address
-                }) {
-                    DiscoveredDeviceRow(device = it)
-                    Divider()
+                scannerState.discoveredDevices.takeIf { it.isNotEmpty() }?.let { isNotEmptyList ->
+                    items(items = isNotEmptyList, key = {
+                        it.device.address
+                    }) {
+                        DiscoveredDeviceRow(device = it)
+                        Divider()
+                    }
+                } ?: run {
+                    item {
+                        ShowScanningStoppedState(
+                            modifier = modifier,
+                            scannerState = scannerState.scanningState,
+                            startScanning = {
+                                viewModel.startScan()
+                            }
+                        )
+                    }
                 }
             }
             is ScanningStopped -> {
@@ -67,7 +79,7 @@ fun Devices(modifier: Modifier = Modifier, viewModel: DevicesViewModel) {
                         modifier = modifier,
                         scannerState = scannerState.scanningState,
                         startScanning = {
-                            //viewModel.startScan()
+                            viewModel.startScan()
                         }
                     )
                 }
