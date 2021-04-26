@@ -2,7 +2,7 @@
 <resources>
     <string name="label_scanner">Scanner</string>
     <string name="Unknown">Unknown</string>
-    <string name="label_no_devices_found">No Devices Found</string>
+    <string name="label_no_devices_connected">No devices connected yet.</string>
     <string name="label_scanning">Scanning for bluetooth devices…</string>
     <string name="label_bluetooth_disabled">Bluetooth disabled</string>
     <string name="label_location_permission_disabled"><![CDATA[From Android 6.0 Marshmallow onwards the application requires Location permission in order to scan for Bluetooth Low Energy devices.       \n\nThis is because Bluetooth LE beacons, for example iBeacons or Eddystone, may be used to determine the phone\'s and user\'s location. <b>nRF Edge Impulse</b> will not use this information in any way.</string>]]></string>

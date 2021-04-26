@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.ble.state.*
+import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.util.Utils.isBluetoothEnabled
 import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
 import java.util.*
@@ -35,6 +36,7 @@ fun Devices(modifier: Modifier = Modifier, viewModel: DevicesViewModel) {
     val listState = rememberLazyListState()
     val scannerState = viewModel.scannerState
     val scanning = scannerState.scanningState
+    val configuredDevices = viewModel.configuredDevices
 
     LazyColumn(modifier = modifier.fillMaxSize(), state = listState) {
         item {
@@ -44,6 +46,40 @@ fun Devices(modifier: Modifier = Modifier, viewModel: DevicesViewModel) {
                 style = MaterialTheme.typography.h6
             )
         }
+
+        configuredDevices.takeIf {
+            it.isNotEmpty()
+        }?.let { isNotEmptyList ->
+            items(items = isNotEmptyList, key = {
+                it.deviceId
+            }) {
+                ConfiguredDeviceRow(device = it)
+                Divider()
+            }
+        } ?: run {
+            item {
+                Column(
+                    modifier = modifier
+                        .fillMaxSize().padding(top = 16.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_devices),
+                            contentDescription = null,
+                            modifier = Modifier.size(72.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.label_no_devices_connected),
+                            style = MaterialTheme.typography.h6
+                        )
+                    }
+                }
+            }
+        }
+
         item {
             Text(
                 modifier = Modifier.padding(16.dp),
@@ -84,6 +120,41 @@ fun Devices(modifier: Modifier = Modifier, viewModel: DevicesViewModel) {
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun ConfiguredDeviceRow(device: Device) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(color = MaterialTheme.colors.surface)
+            .padding(16.dp)
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.ic_uart),
+            contentDescription = null,
+            modifier = Modifier
+                .size(40.dp)
+                .background(
+                    color = MaterialTheme.colors.primary,
+                    shape = CircleShape
+                )
+                .padding(8.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1.0f)) {
+            Text(
+                text = device.name,
+                color = MaterialTheme.colors.onSurface,
+                style = MaterialTheme.typography.body1
+            )
+            Text(
+                text = device.deviceId,
+                color = MaterialTheme.colors.onSurface,
+                style = MaterialTheme.typography.caption
+            )
         }
     }
 }

@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.collect
 import no.nordicsemi.android.ei.BottomNavigationScreen
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.showSnackbar
+import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
 import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Event
 import java.net.UnknownHostException
@@ -90,11 +91,12 @@ fun Project(
             startDestination = BottomNavigationScreen.Devices.route
         ) {
             composable(route = BottomNavigationScreen.Devices.route) { backStackEntry ->
+                val devicesViewModel: DevicesViewModel = viewModel(
+                    factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
+                )
                 Devices(
                     modifier = Modifier.padding(paddingValues = innerPadding),
-                    viewModel = viewModel(
-                        factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
-                    )
+                    viewModel = devicesViewModel
                 )
             }
             composable(route = BottomNavigationScreen.DataAcquisition.route) {

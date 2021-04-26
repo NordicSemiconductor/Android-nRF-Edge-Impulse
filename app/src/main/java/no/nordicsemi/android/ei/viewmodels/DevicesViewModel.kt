@@ -12,6 +12,9 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.LocationManager
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
 import androidx.lifecycle.AndroidViewModel
@@ -19,6 +22,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import no.nordicsemi.android.ei.ble.state.*
 import no.nordicsemi.android.ei.di.UserManager
+import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.repository.ProjectRepository
 import no.nordicsemi.android.ei.util.Utils.isBluetoothEnabled
 import no.nordicsemi.android.ei.util.Utils.isMarshMellowOrAbove
@@ -31,6 +35,9 @@ class DevicesViewModel @Inject constructor(
     private val userManager: UserManager,
     private val projectRepository: ProjectRepository
 ) : AndroidViewModel(context as Application) {
+
+    var configuredDevices: List<Device> by mutableStateOf(listOf())
+        private set
 
     val scannerState = ScannerState(updateScanningState())
 
@@ -88,7 +95,7 @@ class DevicesViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         stopScan(NotStarted)
-        unregisterBroadcastReceiver(application = getApplication())
+        unregisterBroadcastReceiver(context = getApplication())
     }
 
     private fun registerBroadcastReceiver(context: Context) {
@@ -104,10 +111,10 @@ class DevicesViewModel @Inject constructor(
         }
     }
 
-    private fun unregisterBroadcastReceiver(application: Application) {
-        application.unregisterReceiver(bluetoothStateChangedReceiver)
+    private fun unregisterBroadcastReceiver(context: Context) {
+        context.unregisterReceiver(bluetoothStateChangedReceiver)
         if (isMarshMellowOrAbove()) {
-            application.unregisterReceiver(locationProviderChangedReceiver)
+            context.unregisterReceiver(locationProviderChangedReceiver)
         }
     }
 
