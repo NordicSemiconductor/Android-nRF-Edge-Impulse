@@ -73,25 +73,6 @@ fun Devices(modifier: Modifier = Modifier, viewModel: DevicesViewModel) {
                 }
             }
         }
-
-        /*discoveredDevices.takeIf { it.isNotEmpty() }?.let { notEmptyDevices ->
-            items(items = notEmptyDevices, key = {
-                it.device.address
-            }) {
-                DiscoveredDeviceRow(device = it)
-                Divider()
-            }
-        } ?: run {
-            item {
-                ShowScannerState(
-                    modifier = modifier,
-                    scannerState = scannerState,
-                    onBluetoothEnabled = {
-                        if (it)
-                            viewModel.startScan()
-                    })
-            }
-        }*/
     }
 }
 
