@@ -94,7 +94,7 @@ class DevicesViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        stopScan(NotStarted)
+        stopScan()
         unregisterBroadcastReceiver(context = getApplication())
     }
 
