@@ -56,13 +56,16 @@ import no.nordicsemi.android.ei.ui.layouts.SwipeToRefreshLayout
 import no.nordicsemi.android.ei.ui.layouts.UserAppBar
 import no.nordicsemi.android.ei.ui.theme.NordicMiddleGrey
 import no.nordicsemi.android.ei.viewmodels.DashboardViewModel
-import no.nordicsemi.android.ei.viewmodels.event.Event
+import no.nordicsemi.android.ei.viewmodels.event.DismissDialog
+import no.nordicsemi.android.ei.viewmodels.event.Error
+import no.nordicsemi.android.ei.viewmodels.event.ProjectCreated
+import no.nordicsemi.android.ei.viewmodels.event.ProjectSelected
 import java.net.UnknownHostException
 
 @Composable
 fun Dashboard(
     viewModel: DashboardViewModel,
-    onProjectSelected: (Unit) -> Unit,
+    onProjectSelected: () -> Unit,
     onLogout: (Unit) -> Unit
 ) {
     val context = LocalContext.current
@@ -70,6 +73,7 @@ fun Dashboard(
 
     val user = viewModel.user
     val refreshState = viewModel.isRefreshing
+    val developmentKeysState = viewModel.isDownloadingDevelopmentKeys
 
     val snackbarHostState = remember { SnackbarHostState() }
     val lazyListState = rememberLazyListState()
@@ -79,28 +83,31 @@ fun Dashboard(
 
     coroutineScope.launchWhenStarted {
         viewModel.eventFlow.runCatching {
-            this.collect {
-                when (it) {
-                    is Event.DismissDialog -> {
+            this.collect { event ->
+                when (event) {
+                    is DismissDialog -> {
                         isCreateProjectDialogVisible = false
                     }
-                    is Event.ProjectCreated -> {
+                    is ProjectCreated -> {
                         showSnackbar(
                             coroutineScope = coroutineScope,
                             snackbarHostState = snackbarHostState,
                             message = context.getString(
                                 R.string.project_created_successfully,
-                                it.projectName
+                                event.projectName
                             )
                         )
                     }
-                    is Event.Error -> {
+                    is ProjectSelected -> {
+                        onProjectSelected()
+                    }
+                    is Error -> {
                         showSnackbar(
                             coroutineScope = coroutineScope,
                             snackbarHostState = snackbarHostState,
-                            message = when (it.throwable) {
+                            message = when (event.throwable) {
                                 is UnknownHostException -> context.getString(R.string.error_no_internet)
-                                else -> it.throwable.localizedMessage
+                                else -> event.throwable.localizedMessage
                                     ?: context.getString(R.string.error_refreshing_failed)
                             }
                         )
@@ -176,10 +183,8 @@ fun Dashboard(
                             ProjectRow(
                                 project = project,
                                 onProjectSelected = {
-                                    onProjectSelected(
-                                        viewModel.selectProject(
-                                            project = project
-                                        )
+                                    viewModel.selectProject(
+                                        project = project
                                     )
                                 })
                             Divider(modifier = Modifier.width(Dp.Hairline))
@@ -216,6 +221,10 @@ fun Dashboard(
                 onDismiss = {
                     isCreateProjectDialogVisible = false
                 })
+        }
+
+        if (developmentKeysState) {
+            ShowDownloadingDevelopmentKeysDialog()
         }
     }
 }
@@ -465,6 +474,55 @@ private fun LazyListState.isScrollingUp(): Boolean {
             }
         }
     }.value
+}
+
+@Composable
+private fun ShowDownloadingDevelopmentKeysDialog(
+    modifier: Modifier = Modifier,
+) {
+    Dialog(
+        onDismissRequest = {},
+        properties =
+        DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        )
+    ) {
+        Column(
+            modifier = modifier
+                .width(width = 280.dp)
+                .fillMaxWidth()
+                .background(MaterialTheme.colors.surface)
+                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .height(64.dp)
+                    .fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    modifier = Modifier.size(24.dp),
+                    painter = painterResource(id = R.drawable.ic_baseline_hourglass_top),
+                    contentDescription = null,
+                    tint = MaterialTheme.colors.onSurface
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = "Please wait",
+                    color = MaterialTheme.colors.onSurface,
+                    style = MaterialTheme.typography.h6
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            CircularProgressIndicator(modifier = Modifier.size(64.dp).align(Alignment.CenterHorizontally))
+            Spacer(modifier = Modifier.height(32.dp))
+            Text(
+                text = "Fetching development keys...",
+                color = MaterialTheme.colors.onSurface,
+                style = MaterialTheme.typography.body1
+            )
+        }
+    }
 }
 
 private const val MAX_COLLABORATOR_IMAGES = 4

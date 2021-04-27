@@ -19,11 +19,12 @@ import no.nordicsemi.android.ei.account.AccountHelper
 import no.nordicsemi.android.ei.di.ProjectManager
 import no.nordicsemi.android.ei.di.UserComponentEntryPoint
 import no.nordicsemi.android.ei.di.UserManager
+import no.nordicsemi.android.ei.model.DevelopmentKeys
 import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.repository.DashboardRepository
 import no.nordicsemi.android.ei.repository.UserDataRepository
-import no.nordicsemi.android.ei.viewmodels.event.Event
+import no.nordicsemi.android.ei.viewmodels.event.*
 import javax.inject.Inject
 
 @HiltViewModel
@@ -42,6 +43,9 @@ class DashboardViewModel @Inject constructor(
     var isRefreshing: Boolean by mutableStateOf(false)
         private set
 
+    var isDownloadingDevelopmentKeys: Boolean by mutableStateOf(false)
+        private set
+
     private val userDataRepo: UserDataRepository
         get() = EntryPoints
             .get(userManager.userComponent!!, UserComponentEntryPoint::class.java)
@@ -56,7 +60,7 @@ class DashboardViewModel @Inject constructor(
         isRefreshing = true
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope
-                .launch { eventChannel.send(Event.Error(throwable)) }
+                .launch { eventChannel.send(Error(throwable)) }
                 .also { isRefreshing = false }
         }
         viewModelScope.launch(handler) {
@@ -71,22 +75,51 @@ class DashboardViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     fun createProject(projectName: String) {
         val handler = CoroutineExceptionHandler { _, throwable ->
-            viewModelScope.launch { eventChannel.send(Event.Error(throwable)) }
+            viewModelScope.launch { eventChannel.send(Error(throwable)) }
         }
         viewModelScope.launch(handler) {
             val resp = dashboardRepository.createProject(userDataRepo.token, projectName)
-            eventChannel.send(Event.DismissDialog)
+            eventChannel.send(DismissDialog)
             eventChannel.send(
                 when (resp.success) {
-                    true -> Event.ProjectCreated(projectName = projectName)
-                    false -> Event.Error(Throwable(resp.error))
+                    true -> ProjectCreated(projectName = projectName)
+                    false -> Error(Throwable(resp.error))
                 }
             )
         }
     }
 
     fun selectProject(project: Project) {
-        projectManager.projectSelected(project)
+        getDevelopmentKeys(project = project)
+    }
+
+    private fun getDevelopmentKeys(project: Project) {
+        isDownloadingDevelopmentKeys = true
+        val handler = CoroutineExceptionHandler { _, throwable ->
+            viewModelScope
+                .launch { eventChannel.send(Error(throwable)) }
+                .also { isDownloadingDevelopmentKeys = false }
+        }
+        viewModelScope.launch(handler) {
+            val resp = dashboardRepository.developmentKeys(
+                token = userDataRepo.token,
+                projectId = project.id
+            )
+            eventChannel.send(
+                when (resp.success) {
+                    true -> {
+                        projectManager.projectSelected(
+                            project = project,
+                            keys = DevelopmentKeys(resp.apiKey, resp.hmacKey)
+                        )
+                        ProjectSelected
+                    }
+                    false -> Error(Throwable(resp.error))
+                }
+            )
+        }.also {
+            isDownloadingDevelopmentKeys = false
+        }
     }
 
     fun logout() {

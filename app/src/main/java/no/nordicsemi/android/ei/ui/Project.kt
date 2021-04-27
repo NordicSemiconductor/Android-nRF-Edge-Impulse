@@ -26,7 +26,7 @@ import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.showSnackbar
 import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
 import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
-import no.nordicsemi.android.ei.viewmodels.event.Event
+import no.nordicsemi.android.ei.viewmodels.event.Error
 import java.net.UnknownHostException
 
 @Composable
@@ -43,7 +43,7 @@ fun Project(
         viewModel.eventFlow.runCatching {
             this.collect {
                 when (it) {
-                    is Event.Error -> {
+                    is Error -> {
                         showSnackbar(
                             coroutineScope = coroutineScope,
                             snackbarHostState = snackbarHostState,
