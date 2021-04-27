@@ -508,7 +508,7 @@ private fun ShowDownloadingDevelopmentKeysDialog(
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
-                    text = "Please wait",
+                    text = stringResource(R.string.label_please_wait),
                     color = MaterialTheme.colors.onSurface,
                     style = MaterialTheme.typography.h6
                 )
@@ -517,7 +517,7 @@ private fun ShowDownloadingDevelopmentKeysDialog(
             CircularProgressIndicator(modifier = Modifier.size(64.dp).align(Alignment.CenterHorizontally))
             Spacer(modifier = Modifier.height(32.dp))
             Text(
-                text = "Fetching development keys...",
+                text = stringResource(R.string.label_fetching_development_keys),
                 color = MaterialTheme.colors.onSurface,
                 style = MaterialTheme.typography.body1
             )
