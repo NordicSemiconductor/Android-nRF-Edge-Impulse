@@ -4,7 +4,6 @@ import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.provider.Settings
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
@@ -46,7 +45,6 @@ fun Devices(
     val scannerState = viewModel.scannerState
     val scanning = scannerState.scanningState
     val swipeRefreshState = rememberSwipeRefreshState(refreshingState)
-    Log.i("AA", "Device count ${configuredDevices.size}")
 
     SwipeRefresh(
         state = swipeRefreshState,
