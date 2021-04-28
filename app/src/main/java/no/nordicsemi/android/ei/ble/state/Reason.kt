@@ -9,5 +9,5 @@ object NotStarted : Reason()
 object BluetoothDisabled : Reason()
 object LocationPermissionNotGranted : Reason()
 object LocationTurnedOff : Reason()
-data class Error(val throwable: Throwable) : Reason()
+data class Unknown(val throwable: Throwable) : Reason()
 

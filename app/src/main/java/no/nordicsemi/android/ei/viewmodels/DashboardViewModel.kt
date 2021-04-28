@@ -24,7 +24,10 @@ import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.repository.DashboardRepository
 import no.nordicsemi.android.ei.repository.UserDataRepository
-import no.nordicsemi.android.ei.viewmodels.event.*
+import no.nordicsemi.android.ei.viewmodels.event.Error
+import no.nordicsemi.android.ei.viewmodels.event.Event
+import no.nordicsemi.android.ei.viewmodels.event.ProjectCreated
+import no.nordicsemi.android.ei.viewmodels.event.ProjectSelected
 import javax.inject.Inject
 
 @HiltViewModel
@@ -66,8 +69,15 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch(handler) {
             dashboardRepository
                 .getCurrentUser(userDataRepo.token)
-                .apply { userManager.userLoggedIn(this, userDataRepo.token) }
-                .apply { user = this }
+                .apply {
+                    when (success) {
+                        true -> {
+                            userManager.userLoggedIn(this, userDataRepo.token)
+                            user = this
+                        }
+                        false -> throw Throwable(error)
+                    }
+                }
                 .also { isRefreshing = false }
         }
     }
@@ -78,14 +88,14 @@ class DashboardViewModel @Inject constructor(
             viewModelScope.launch { eventChannel.send(Error(throwable)) }
         }
         viewModelScope.launch(handler) {
-            val resp = dashboardRepository.createProject(userDataRepo.token, projectName)
-            eventChannel.send(DismissDialog)
-            eventChannel.send(
-                when (resp.success) {
-                    true -> ProjectCreated(projectName = projectName)
-                    false -> Error(Throwable(resp.error))
+            dashboardRepository
+                .createProject(userDataRepo.token, projectName)
+                .apply {
+                    when(success){
+                        true -> eventChannel.send(ProjectCreated(projectName = projectName))
+                        false -> throw Throwable(error)
+                    }
                 }
-            )
         }
     }
 
@@ -101,24 +111,23 @@ class DashboardViewModel @Inject constructor(
                 .also { isDownloadingDevelopmentKeys = false }
         }
         viewModelScope.launch(handler) {
-            val resp = dashboardRepository.developmentKeys(
+            dashboardRepository.developmentKeys(
                 token = userDataRepo.token,
                 projectId = project.id
-            )
-            eventChannel.send(
-                when (resp.success) {
+            ).apply {
+                when (success) {
                     true -> {
                         projectManager.projectSelected(
                             project = project,
-                            keys = DevelopmentKeys(resp.apiKey, resp.hmacKey)
+                            keys = DevelopmentKeys(apiKey = apiKey, hmacKey = hmacKey)
                         )
-                        ProjectSelected
+                        eventChannel.send(ProjectSelected)
                     }
-                    false -> Error(Throwable(resp.error))
+                    false -> throw Throwable(error)
                 }
-            )
-        }.also {
-            isDownloadingDevelopmentKeys = false
+            }.also {
+                isDownloadingDevelopmentKeys = false
+            }
         }
     }
 

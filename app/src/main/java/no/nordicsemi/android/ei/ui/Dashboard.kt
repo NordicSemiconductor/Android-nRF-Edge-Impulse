@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.lifecycleScope
-import dev.chrisbanes.accompanist.coil.CoilImage
+import com.google.accompanist.coil.rememberCoilPainter
 import kotlinx.coroutines.flow.collect
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Collaborator
@@ -56,7 +56,6 @@ import no.nordicsemi.android.ei.ui.layouts.SwipeToRefreshLayout
 import no.nordicsemi.android.ei.ui.layouts.UserAppBar
 import no.nordicsemi.android.ei.ui.theme.NordicMiddleGrey
 import no.nordicsemi.android.ei.viewmodels.DashboardViewModel
-import no.nordicsemi.android.ei.viewmodels.event.DismissDialog
 import no.nordicsemi.android.ei.viewmodels.event.Error
 import no.nordicsemi.android.ei.viewmodels.event.ProjectCreated
 import no.nordicsemi.android.ei.viewmodels.event.ProjectSelected
@@ -85,10 +84,8 @@ fun Dashboard(
         viewModel.eventFlow.runCatching {
             this.collect { event ->
                 when (event) {
-                    is DismissDialog -> {
-                        isCreateProjectDialogVisible = false
-                    }
                     is ProjectCreated -> {
+                        isCreateProjectDialogVisible = false
                         showSnackbar(
                             coroutineScope = coroutineScope,
                             snackbarHostState = snackbarHostState,
@@ -102,6 +99,7 @@ fun Dashboard(
                         onProjectSelected()
                     }
                     is Error -> {
+                        isCreateProjectDialogVisible = false
                         showSnackbar(
                             coroutineScope = coroutineScope,
                             snackbarHostState = snackbarHostState,
@@ -282,38 +280,22 @@ private fun Collaborator(collaborators: List<Collaborator>) {
             ) {
                 // lets limit the images to max collaborators
                 if (index in 0 until maxImages) {
-                    CoilImage(
-                        modifier = Modifier.requiredSize(imageSize),
-                        data = if (collaborator.photo.isNotBlank()) {
-                            collaborator.photo
-                        } else {
-                            Image(
-                                imageVector = Icons.Outlined.AccountCircle,
-                                modifier = Modifier.requiredSize(imageSize + 8.dp),
-                                contentDescription = null,
-                                contentScale = ContentScale.FillBounds
-                            )
-                        },
+                    Image(
+                        painter = rememberCoilPainter(
+                            request = if (collaborator.photo.isNotBlank()) {
+                                collaborator.photo
+                            } else {
+                                Image(
+                                    imageVector = Icons.Outlined.AccountCircle,
+                                    modifier = Modifier.requiredSize(imageSize + 8.dp),
+                                    contentDescription = null,
+                                    contentScale = ContentScale.FillBounds
+                                )
+                            },
+                            shouldRefetchOnSizeChange = { _, _ -> false },
+                        ),
                         contentDescription = null,
-                        error = {
-                            Image(
-                                imageVector = Icons.Outlined.AccountCircle,
-                                modifier = Modifier
-                                    .requiredSize(size = imageSize)
-                                    .background(color = MaterialTheme.colors.onSurface),
-                                contentDescription = null,
-                                contentScale = ContentScale.FillBounds
-                            )
-                        },
-                        loading = {
-                            Image(
-                                imageVector = Icons.Outlined.AccountCircle,
-                                modifier = Modifier.requiredSize(imageSize),
-                                contentDescription = null,
-                                alpha = 0.1f,
-                                contentScale = ContentScale.FillBounds
-                            )
-                        }
+                        modifier = Modifier.requiredSize(imageSize),
                     )
                 } else {
                     Text(

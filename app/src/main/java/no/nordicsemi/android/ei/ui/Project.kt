@@ -96,7 +96,12 @@ fun Project(
                 )
                 Devices(
                     modifier = Modifier.padding(paddingValues = innerPadding),
-                    viewModel = devicesViewModel
+                    viewModel = devicesViewModel,
+                    configuredDevices = viewModel.configuredDevices,
+                    refreshingState = viewModel.isRefreshing,
+                    onRefresh = {
+                        viewModel.listDevices(true)
+                    }
                 )
             }
             composable(route = BottomNavigationScreen.DataAcquisition.route) {

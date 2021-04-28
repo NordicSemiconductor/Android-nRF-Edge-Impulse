@@ -9,4 +9,5 @@
 
     <string name="error_generic">Error: %s!</string>
     <string name="error_Unknown">Unknown error!</string>
+    <string name="something_went_wrong">Something went wrong!</string>
 </resources>

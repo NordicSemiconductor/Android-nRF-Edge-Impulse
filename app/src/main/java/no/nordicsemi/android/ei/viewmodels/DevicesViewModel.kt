@@ -18,14 +18,22 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
 import androidx.lifecycle.AndroidViewModel
+import dagger.hilt.EntryPoints
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import no.nordicsemi.android.ei.ble.state.*
+import no.nordicsemi.android.ei.di.ProjectComponentEntryPoint
+import no.nordicsemi.android.ei.di.ProjectManager
+import no.nordicsemi.android.ei.di.UserComponentEntryPoint
 import no.nordicsemi.android.ei.di.UserManager
 import no.nordicsemi.android.ei.model.Device
+import no.nordicsemi.android.ei.repository.ProjectDataRepository
 import no.nordicsemi.android.ei.repository.ProjectRepository
 import no.nordicsemi.android.ei.util.Utils.isBluetoothEnabled
 import no.nordicsemi.android.ei.util.Utils.isMarshMellowOrAbove
+import no.nordicsemi.android.ei.viewmodels.event.Event
 import javax.inject.Inject
 
 
@@ -35,6 +43,18 @@ class DevicesViewModel @Inject constructor(
     private val userManager: UserManager,
     private val projectRepository: ProjectRepository
 ) : AndroidViewModel(context as Application) {
+    private val eventChannel = Channel<Event>(Channel.BUFFERED)
+    val eventFlow = eventChannel.receiveAsFlow()
+
+    private val projectManager: ProjectManager
+        get() = EntryPoints
+            .get(userManager.userComponent!!, UserComponentEntryPoint::class.java)
+            .getProjectManager()
+
+    private val projectDataRepository: ProjectDataRepository
+        get() = EntryPoints
+            .get(projectManager.projectComponent!!, ProjectComponentEntryPoint::class.java)
+            .projectDataRepository()
 
     var configuredDevices: List<Device> by mutableStateOf(listOf())
         private set
@@ -177,7 +197,7 @@ class DevicesViewModel @Inject constructor(
             is LocationTurnedOff -> {
                 scannerState.onLocationTurnedOff()
             }
-            is Error -> {
+            is Unknown -> {
                 //TODO Handle some other errors?
             }
         }

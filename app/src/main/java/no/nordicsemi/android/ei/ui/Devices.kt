@@ -4,6 +4,7 @@ import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
@@ -23,6 +24,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.ble.state.*
@@ -32,72 +35,97 @@ import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
 import java.util.*
 
 @Composable
-fun Devices(modifier: Modifier = Modifier, viewModel: DevicesViewModel) {
+fun Devices(
+    modifier: Modifier = Modifier,
+    viewModel: DevicesViewModel,
+    configuredDevices: List<Device>,
+    refreshingState:Boolean,
+    onRefresh: () -> Unit
+) {
     val listState = rememberLazyListState()
     val scannerState = viewModel.scannerState
     val scanning = scannerState.scanningState
-    val configuredDevices = viewModel.configuredDevices
+    val swipeRefreshState = rememberSwipeRefreshState(refreshingState)
+    Log.i("AA", "Device count ${configuredDevices.size}")
 
-    LazyColumn(modifier = modifier.fillMaxSize(), state = listState) {
-        item {
-            Text(
-                modifier = Modifier.padding(16.dp),
-                text = stringResource(R.string.label_devices),
-                style = MaterialTheme.typography.h6
-            )
-        }
-
-        configuredDevices.takeIf {
-            it.isNotEmpty()
-        }?.let { isNotEmptyList ->
-            items(items = isNotEmptyList, key = {
-                it.deviceId
-            }) {
-                ConfiguredDeviceRow(device = it)
-                Divider()
-            }
-        } ?: run {
+    SwipeRefresh(
+        state = swipeRefreshState,
+        onRefresh = { onRefresh() },
+    ) {
+        LazyColumn(modifier = modifier.fillMaxSize(), state = listState) {
             item {
-                Column(
-                    modifier = modifier
-                        .fillMaxSize().padding(top = 16.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_devices),
-                            contentDescription = null,
-                            modifier = Modifier.size(72.dp)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = stringResource(R.string.label_no_devices_connected),
-                            style = MaterialTheme.typography.h6
-                        )
+                Text(
+                    modifier = Modifier.padding(16.dp),
+                    text = stringResource(R.string.label_devices),
+                    style = MaterialTheme.typography.h6
+                )
+            }
+
+            configuredDevices.takeIf {
+                it.isNotEmpty()
+            }?.let { isNotEmptyList ->
+                items(items = isNotEmptyList, key = {
+                    it.deviceId
+                }) {
+                    ConfiguredDeviceRow(device = it)
+                    Divider()
+                }
+            } ?: run {
+                item {
+                    Column(
+                        modifier = modifier
+                            .fillMaxSize()
+                            .padding(top = 16.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_devices),
+                                contentDescription = null,
+                                modifier = Modifier.size(72.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = stringResource(R.string.label_no_devices_connected),
+                                style = MaterialTheme.typography.h6
+                            )
+                        }
                     }
                 }
             }
-        }
 
-        item {
-            Text(
-                modifier = Modifier.padding(16.dp),
-                text = stringResource(R.string.label_scanner),
-                style = MaterialTheme.typography.h6
-            )
-        }
+            item {
+                Text(
+                    modifier = Modifier.padding(16.dp),
+                    text = stringResource(R.string.label_scanner),
+                    style = MaterialTheme.typography.h6
+                )
+            }
 
-        when (scanning) {
-            is Scanning -> {
-                scannerState.discoveredDevices.takeIf { it.isNotEmpty() }?.let { isNotEmptyList ->
-                    items(items = isNotEmptyList, key = {
-                        it.device.address
-                    }) {
-                        DiscoveredDeviceRow(device = it)
-                        Divider()
+            when (scanning) {
+                is Scanning -> {
+                    scannerState.discoveredDevices.takeIf { it.isNotEmpty() }
+                        ?.let { isNotEmptyList ->
+                            items(items = isNotEmptyList, key = {
+                                it.device.address
+                            }) {
+                                DiscoveredDeviceRow(device = it)
+                                Divider()
+                            }
+                        } ?: run {
+                        item {
+                            ShowScanningStoppedState(
+                                modifier = modifier,
+                                scannerState = scannerState.scanningState,
+                                startScanning = {
+                                    viewModel.startScan()
+                                }
+                            )
+                        }
                     }
-                } ?: run {
+                }
+                is ScanningStopped -> {
                     item {
                         ShowScanningStoppedState(
                             modifier = modifier,
@@ -107,17 +135,6 @@ fun Devices(modifier: Modifier = Modifier, viewModel: DevicesViewModel) {
                             }
                         )
                     }
-                }
-            }
-            is ScanningStopped -> {
-                item {
-                    ShowScanningStoppedState(
-                        modifier = modifier,
-                        scannerState = scannerState.scanningState,
-                        startScanning = {
-                            viewModel.startScan()
-                        }
-                    )
                 }
             }
         }
@@ -255,8 +272,8 @@ fun ShowScanningStoppedState(
                         is LocationTurnedOff -> {
                             DisplayLocationTurnedOffInfo()
                         }
-                        is Error -> {
-                            (scannerState.reason as Error).throwable.localizedMessage
+                        is Unknown -> {
+                            (scannerState.reason as Unknown).throwable.localizedMessage
                         }
                         is NotStarted -> startScanning()
                     }
@@ -367,5 +384,5 @@ private fun Reason.toDrawable(): Int = when (this) {
     is BluetoothDisabled -> R.drawable.ic_bluetooth_disabled
     is LocationPermissionNotGranted -> R.drawable.ic_location_off
     is LocationTurnedOff -> R.drawable.ic_location_off
-    is Error -> R.drawable.ic_error
+    is Unknown -> R.drawable.ic_error
 }
