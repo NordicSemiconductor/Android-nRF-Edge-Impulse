@@ -32,7 +32,8 @@ import java.net.UnknownHostException
 @Composable
 fun Project(
     viewModel: ProjectViewModel,
-    bottomNavigationScreens: List<BottomNavigationScreen>
+    bottomNavigationScreens: List<BottomNavigationScreen>,
+    onBackPressed: () -> Unit
 ) {
     val context = LocalContext.current
     val coroutineScope = LocalLifecycleOwner.current.lifecycleScope
@@ -71,7 +72,9 @@ fun Project(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = {}) {
+                    IconButton(onClick = {
+                        onBackPressed()
+                    }) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = null

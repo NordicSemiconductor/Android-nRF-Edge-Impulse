@@ -71,7 +71,10 @@ fun Navigation(
                     BottomNavigationScreen.Devices,
                     BottomNavigationScreen.DataAcquisition,
                     BottomNavigationScreen.Deployment
-                )
+                ),
+                onBackPressed = {
+                    navController.popBackStack()
+                }
             )
         }
     }
