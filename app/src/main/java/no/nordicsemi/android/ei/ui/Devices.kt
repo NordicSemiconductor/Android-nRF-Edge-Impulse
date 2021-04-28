@@ -29,6 +29,7 @@ import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.ble.state.*
 import no.nordicsemi.android.ei.model.Device
+import no.nordicsemi.android.ei.ui.theme.NordicRed
 import no.nordicsemi.android.ei.util.Utils.isBluetoothEnabled
 import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
 import java.util.*
@@ -94,9 +95,11 @@ fun Devices(
             }
 
             item {
-                Row(modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
                     Text(
                         modifier = Modifier
                             .weight(weight = 1.0f),
@@ -156,10 +159,11 @@ fun ConfiguredDeviceRow(device: Device) {
         modifier = Modifier
             .fillMaxWidth()
             .background(color = MaterialTheme.colors.surface)
-            .padding(16.dp)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
-            painter = painterResource(id = R.drawable.ic_uart),
+            painter = painterResource(id = R.drawable.ic_devices),
             contentDescription = null,
             modifier = Modifier
                 .size(40.dp)
@@ -182,6 +186,15 @@ fun ConfiguredDeviceRow(device: Device) {
                 style = MaterialTheme.typography.caption
             )
         }
+        Spacer(modifier = Modifier.width(16.dp))
+        Surface(
+            modifier = Modifier
+                .size(8.dp),
+            //TODO Add green for connected devices
+            color = NordicRed,
+            shape = CircleShape
+        ) {}
+        Spacer(modifier = Modifier.padding(end = 8.dp))
     }
 }
 
@@ -204,8 +217,8 @@ fun DiscoveredDeviceRow(device: DiscoveredBluetoothDevice) {
                 )
                 .padding(8.dp)
         )
-        Spacer(modifier = Modifier.width(16.dp))
-        Column(modifier = Modifier.weight(1.0f)) {
+        Spacer(modifier = Modifier.width(width = 16.dp))
+        Column(modifier = Modifier.weight(weight = 1.0f)) {
             Text(
                 text = device.name,
                 color = MaterialTheme.colors.onSurface,
@@ -217,13 +230,13 @@ fun DiscoveredDeviceRow(device: DiscoveredBluetoothDevice) {
                 style = MaterialTheme.typography.caption
             )
         }
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(width = 16.dp))
         Image(
             painter = painterResource(id = getRssiRes((100.0f * (127.0f + device.rssi) / (127.0f + 20.0f)).toInt())),
             contentDescription = null,
             modifier = Modifier
-                .size(40.dp)
-                .padding(8.dp)
+                .size(size = 24.dp)
+                .align(alignment = Alignment.CenterVertically)
         )
     }
 }
