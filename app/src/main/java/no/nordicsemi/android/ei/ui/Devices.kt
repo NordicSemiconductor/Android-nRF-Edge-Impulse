@@ -38,7 +38,7 @@ fun Devices(
     modifier: Modifier = Modifier,
     viewModel: DevicesViewModel,
     configuredDevices: List<Device>,
-    refreshingState:Boolean,
+    refreshingState: Boolean,
     onRefresh: () -> Unit
 ) {
     val listState = rememberLazyListState()
@@ -94,11 +94,22 @@ fun Devices(
             }
 
             item {
-                Text(
-                    modifier = Modifier.padding(16.dp),
-                    text = stringResource(R.string.label_scanner),
-                    style = MaterialTheme.typography.h6
-                )
+                Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)) {
+                    Text(
+                        modifier = Modifier
+                            .weight(weight = 1.0f),
+                        text = stringResource(R.string.label_scanner),
+                        style = MaterialTheme.typography.h6
+                    )
+                    if (scanning == Scanning)
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .align(alignment = Alignment.CenterVertically)
+                        )
+                }
             }
 
             when (scanning) {
@@ -318,7 +329,8 @@ fun DisplayBluetoothDisabledInfo() {
     }) {
         Text(
             modifier = Modifier.padding(start = 16.dp, end = 16.dp),
-            text = stringResource(R.string.action_enable).toUpperCase(Locale.ROOT)
+            text = stringResource(R.string.action_enable).toUpperCase(Locale.ROOT),
+            style = MaterialTheme.typography.button
         )
     }
 }
@@ -346,7 +358,8 @@ fun DisplayLocationPermissionInfo(startScanning: () -> Unit) {
     }) {
         Text(
             modifier = Modifier.padding(start = 16.dp, end = 16.dp),
-            text = stringResource(R.string.action_location_permission).toUpperCase(Locale.ROOT)
+            text = stringResource(R.string.action_location_permission).toUpperCase(Locale.ROOT),
+            style = MaterialTheme.typography.button
         )
     }
 }
@@ -371,7 +384,8 @@ fun DisplayLocationTurnedOffInfo() {
     }) {
         Text(
             modifier = Modifier.padding(start = 16.dp, end = 16.dp),
-            text = stringResource(R.string.action_location_permission_settings).toUpperCase(Locale.ROOT)
+            text = stringResource(R.string.action_location_permission_settings).toUpperCase(Locale.ROOT),
+            style = MaterialTheme.typography.button
         )
     }
 }
