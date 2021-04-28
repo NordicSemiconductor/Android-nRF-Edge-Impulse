@@ -47,12 +47,13 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.coil.rememberCoilPainter
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.flow.collect
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Collaborator
 import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.showSnackbar
-import no.nordicsemi.android.ei.ui.layouts.SwipeToRefreshLayout
 import no.nordicsemi.android.ei.ui.layouts.UserAppBar
 import no.nordicsemi.android.ei.ui.theme.NordicMiddleGrey
 import no.nordicsemi.android.ei.viewmodels.DashboardViewModel
@@ -71,7 +72,7 @@ fun Dashboard(
     val coroutineScope = LocalLifecycleOwner.current.lifecycleScope
 
     val user = viewModel.user
-    val refreshState = viewModel.isRefreshing
+    val swipeRefreshState = rememberSwipeRefreshState(viewModel.isRefreshing)
     val developmentKeysState = viewModel.isDownloadingDevelopmentKeys
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -139,23 +140,9 @@ fun Dashboard(
                 })
         }
     ) { innerPadding ->
-        SwipeToRefreshLayout(
-            refreshingState = refreshState,
-            onRefresh = {
-                if (isScrollingUp)
-                    viewModel.refreshUser()
-            },
-            refreshIndicator = {
-                if (isScrollingUp)
-                    Surface(elevation = 10.dp, shape = CircleShape) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .padding(4.dp),
-                            strokeWidth = 2.dp,
-                        )
-                    }
-            },
+        SwipeRefresh(
+            state = swipeRefreshState,
+            onRefresh = { viewModel.refreshUser() },
             content = {
                 user.projects.takeIf { it.isNotEmpty() }?.let { notEmptyProjects ->
                     LazyColumn(
@@ -496,7 +483,11 @@ private fun ShowDownloadingDevelopmentKeysDialog(
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
-            CircularProgressIndicator(modifier = Modifier.size(64.dp).align(Alignment.CenterHorizontally))
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .size(64.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
             Spacer(modifier = Modifier.height(32.dp))
             Text(
                 text = stringResource(R.string.label_fetching_development_keys),
