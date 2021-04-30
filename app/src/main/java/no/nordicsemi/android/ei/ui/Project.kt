@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.collect
 import no.nordicsemi.android.ei.BottomNavigationScreen
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.showSnackbar
+import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel
 import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
 import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Error
@@ -107,8 +108,15 @@ fun Project(
                     }
                 )
             }
-            composable(route = BottomNavigationScreen.DataAcquisition.route) {
-                DataAcquisition(modifier = Modifier.padding(paddingValues = innerPadding))
+            composable(route = BottomNavigationScreen.DataAcquisition.route) { backStackEntry ->
+                val dataAcquisitionViewModel: DataAcquisitionViewModel = viewModel(
+                    factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
+                )
+                DataAcquisition(
+                    modifier = Modifier.padding(paddingValues = innerPadding),
+                    viewModel = dataAcquisitionViewModel,
+                    connectedDevices = viewModel.configuredDevices
+                )
             }
             composable(route = BottomNavigationScreen.Deployment.route) {
                 Deployment(modifier = Modifier.padding(paddingValues = innerPadding))

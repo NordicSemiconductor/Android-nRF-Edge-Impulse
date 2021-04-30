@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_record_new_data">Record New Data</string>
+    <string name="label_device">Device</string>
+    <string name="label_label">Label</string>
+    <string name="label_sensor">Sensor</string>
+    <string name="label_sample_length">Sample Length</string>
+</resources>
