@@ -5,4 +5,5 @@
     <string name="label_label">Label</string>
     <string name="label_sensor">Sensor</string>
     <string name="label_sample_length">Sample Length</string>
+    <string name="action_start_sampling">Start sampling</string>
 </resources>

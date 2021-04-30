@@ -28,6 +28,7 @@ import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Sensor
 import no.nordicsemi.android.ei.ui.theme.NordicGrass
 import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel
+import java.util.*
 
 @Composable
 fun DataAcquisition(
@@ -41,9 +42,11 @@ fun DataAcquisition(
     val selectedDevice = viewModel.selectedDevice
     val label = viewModel.label
     val selectedSensor = viewModel.selectedSensor
+    val selectedFrequency = viewModel.selectedFrequency
     var isDevicesMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var isSensorsMenuExpanded by rememberSaveable { mutableStateOf(false) }
-    var sampleLength by remember { mutableStateOf(10) }
+    var isFrequencyMenuExpanded by rememberSaveable { mutableStateOf(false) }
+    var sampleLength by remember { mutableStateOf(5000) }
 
     Column(
         modifier = modifier
@@ -58,7 +61,6 @@ fun DataAcquisition(
                 )
             }
         }
-
         Column {
             Text(
                 text = stringResource(R.string.title_record_new_data),
@@ -79,7 +81,9 @@ fun DataAcquisition(
                 },
                 leadingIcon = {
                     Icon(
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier
+                            .size(24.dp)
+                            .padding(4.dp),
                         painter = painterResource(id = R.drawable.ic_devices),
                         contentDescription = null
                     )
@@ -96,11 +100,9 @@ fun DataAcquisition(
                         )
                         if (isDevicesMenuExpanded)
                             ShowDevicesDropdown(
-                                configuredDevices = connectedDevices,
+                                connectedDevices = connectedDevices,
                                 onDeviceSelected = { device ->
                                     viewModel.onDeviceSelected(device)
-                                    device.sensors.takeIf { sensors -> sensors.isNotEmpty() }
-                                        ?.let { sensors -> viewModel.onSensorSelected(sensor = sensors[0]) }
                                     isDevicesMenuExpanded = false
                                 },
                                 onDismiss = {
@@ -113,11 +115,10 @@ fun DataAcquisition(
             )
             OutlinedTextField(
                 value = label,
-                onValueChange = { },
+                onValueChange = { viewModel.onLabelChanged(it) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp),
-                readOnly = true,
                 label = {
                     Text(
                         text = stringResource(R.string.label_label)
@@ -154,7 +155,7 @@ fun DataAcquisition(
                     )
                 },
                 trailingIcon = {
-                    IconButton(onClick = {
+                    IconButton(enabled = selectedDevice != null, onClick = {
                         focusRequester.requestFocus()
                         isSensorsMenuExpanded = true
                     }) {
@@ -182,12 +183,11 @@ fun DataAcquisition(
                 singleLine = true
             )
             OutlinedTextField(
-                value = sampleLength.toString(),
+                value = "$sampleLength ms",
                 onValueChange = {},
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp)
-                    .focusRequester(focusRequester = focusRequester),
+                    .padding(top = 16.dp),
                 enabled = selectedDevice != null,
                 readOnly = true,
                 label = {
@@ -206,8 +206,8 @@ fun DataAcquisition(
                     Row {
                         IconButton(
                             onClick = {
-                                focusRequester.requestFocus()
-                                sampleLength = sampleLength.inc()
+                                if (sampleLength.plus(SAMPLE_DELTA) <= MAX_SAMPLE_LENGTH)
+                                    sampleLength = sampleLength.plus(SAMPLE_DELTA)
                             },
                             enabled = selectedSensor != null
                         ) {
@@ -218,8 +218,8 @@ fun DataAcquisition(
                         }
                         IconButton(
                             onClick = {
-                                focusRequester.requestFocus()
-                                sampleLength = sampleLength.dec()
+                                if (sampleLength.minus(SAMPLE_DELTA) > MIN_SAMPLE_LENGTH)
+                                    sampleLength = sampleLength.minus(SAMPLE_DELTA)
                             },
                             enabled = selectedSensor != null
                         ) {
@@ -233,13 +233,73 @@ fun DataAcquisition(
                 },
                 singleLine = true
             )
+            OutlinedTextField(
+                value = selectedFrequency?.toString() ?: stringResource(id = R.string.empty),
+                onValueChange = { },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
+                    .focusRequester(focusRequester = focusRequester),
+                enabled = selectedSensor?.frequencies?.isNotEmpty() ?: false,
+                readOnly = true,
+                label = {
+                    Text(
+                        text = stringResource(R.string.label_frequency)
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        modifier = Modifier.size(24.dp),
+                        painter = painterResource(id = R.drawable.ic_waveform),
+                        contentDescription = null
+                    )
+                },
+                trailingIcon = {
+                    IconButton(
+                        enabled = selectedSensor?.frequencies?.isNotEmpty() ?: false,
+                        onClick = {
+                            focusRequester.requestFocus()
+                            isFrequencyMenuExpanded = true
+                        }) {
+                        Icon(
+                            modifier = Modifier.rotate(if (isFrequencyMenuExpanded) 180f else 0f),
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = null
+                        )
+                        if (isFrequencyMenuExpanded)
+                            selectedSensor?.let { sensor ->
+                                ShowFrequenciesDropdown(
+                                    frequencies = sensor.frequencies,
+                                    onFrequencySelected = { frequency ->
+                                        viewModel.onFrequencySelected(frequency)
+                                        isFrequencyMenuExpanded = false
+                                    }
+                                ) {
+                                    isFrequencyMenuExpanded = false
+                                    focusManager.clearFocus()
+                                }
+                            }
+
+                    }
+                },
+                singleLine = true
+            )
+            Spacer(modifier = Modifier.height(32.dp))
+            Button(modifier = Modifier.align(Alignment.CenterHorizontally),
+                enabled = selectedSensor != null,
+                onClick = { /*TODO*/ }) {
+                Text(
+                    text = stringResource(R.string.action_start_sampling).toUpperCase(Locale.ROOT),
+                    style = MaterialTheme.typography.button
+                )
+            }
         }
     }
 }
 
 @Composable
 private fun ShowDevicesDropdown(
-    configuredDevices: List<Device>,
+    connectedDevices: List<Device>,
     onDeviceSelected: (Device) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -251,7 +311,7 @@ private fun ShowDevicesDropdown(
             Log.i("AA", "Dismissed?")
             onDismiss()
         }) {
-        configuredDevices.forEach { device ->
+        connectedDevices.forEach { device ->
             DropdownMenuItem(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 onClick = { onDeviceSelected(device) }) {
@@ -296,3 +356,37 @@ private fun ShowSensorsDropdown(
         }
     }
 }
+
+@Composable
+private fun ShowFrequenciesDropdown(
+    frequencies: List<Number>,
+    onFrequencySelected: (Number) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    DropdownMenu(
+        modifier = Modifier
+            .fillMaxWidth(),
+        expanded = true,
+        onDismissRequest = {
+            Log.i("AA", "Dismissed?")
+            onDismiss()
+        }) {
+
+        frequencies.forEach { frequency ->
+            DropdownMenuItem(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally),
+                onClick = { onFrequencySelected(frequency) }) {
+                Text(
+                    modifier = Modifier.weight(1.0f),
+                    text = frequency.toString()
+                )
+            }
+        }
+    }
+}
+
+
+private const val MIN_SAMPLE_LENGTH = 0
+private const val SAMPLE_DELTA = 10
+private const val MAX_SAMPLE_LENGTH = 10000

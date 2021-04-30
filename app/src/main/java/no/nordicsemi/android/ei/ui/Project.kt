@@ -98,6 +98,7 @@ fun Project(
                 val devicesViewModel: DevicesViewModel = viewModel(
                     factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
                 )
+
                 Devices(
                     modifier = Modifier.padding(paddingValues = innerPadding),
                     viewModel = devicesViewModel,

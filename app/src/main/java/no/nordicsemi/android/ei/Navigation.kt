@@ -74,8 +74,7 @@ fun Navigation(
                 ),
                 onBackPressed = {
                     navController.popBackStack()
-                }
-            )
+                })
         }
     }
 }

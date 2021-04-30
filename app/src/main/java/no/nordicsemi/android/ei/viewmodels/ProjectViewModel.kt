@@ -48,7 +48,6 @@ class ProjectViewModel @Inject constructor(
             .get(projectManager.projectComponent!!, ProjectComponentEntryPoint::class.java)
             .projectDataRepository()
 
-
     var configuredDevices: List<Device> by mutableStateOf(listOf())
         private set
 

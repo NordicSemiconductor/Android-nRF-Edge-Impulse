@@ -20,9 +20,13 @@ class DataAcquisitionViewModel @Inject constructor() : ViewModel() {
         private set
     var selectedSensor: Sensor? by mutableStateOf(null)
         private set
+    var selectedFrequency: Number? by mutableStateOf(null)
+        private set
 
     fun onDeviceSelected(device: Device) {
         selectedDevice = device
+        device.sensors.takeIf { sensors -> sensors.isNotEmpty() }
+            ?.let { sensors -> onSensorSelected(sensor = sensors[0]) }
     }
 
     fun onLabelChanged(label: String) {
@@ -31,5 +35,15 @@ class DataAcquisitionViewModel @Inject constructor() : ViewModel() {
 
     fun onSensorSelected(sensor: Sensor) {
         this.selectedSensor = sensor
+        sensor.frequencies
+            .takeIf { frequencies ->
+                frequencies.isNotEmpty()
+            }?.let { frequencies ->
+                onFrequencySelected(frequency = frequencies[0])
+            } ?: run { selectedFrequency = null }
+    }
+
+    fun onFrequencySelected(frequency: Number) {
+        this.selectedFrequency = frequency
     }
 }
