@@ -1,7 +1,6 @@
 package no.nordicsemi.android.ei.ui
 
 import android.util.Log
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -104,7 +103,7 @@ fun DataAcquisition(
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun CreateSampleFloatingActionButton(onClick: () -> Unit) {
+fun RecordDataFloatingActionButton(onClick: () -> Unit) {
     // Toggle the visibility of the content with animation.
     FloatingActionButton(onClick = onClick) {
         Row(
@@ -115,13 +114,11 @@ fun CreateSampleFloatingActionButton(onClick: () -> Unit) {
                 imageVector = Icons.Default.Add,
                 contentDescription = null
             )
-            AnimatedVisibility(visible = true) {
-                Text(
-                    text = stringResource(R.string.action_record_new_data),
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                )
-            }
+            Text(
+                text = stringResource(R.string.action_record_new_data),
+                modifier = Modifier
+                    .padding(start = 8.dp)
+            )
         }
     }
 }
