@@ -1,6 +1,7 @@
 package no.nordicsemi.android.ei.repository
 
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import no.nordicsemi.android.ei.di.DefaultDispatcher
 import no.nordicsemi.android.ei.model.DevelopmentKeys
@@ -20,7 +21,7 @@ class ProjectRepository @Inject constructor(
         }
 
     suspend fun listSamples(projectId: Int, keys: DevelopmentKeys): ListSamplesResponse =
-        withContext(defaultDispatcher) {
+        withContext(Dispatchers.IO) {
             service.listSamples(projectId = projectId, apiKey = keys.apiKey)
         }
 }

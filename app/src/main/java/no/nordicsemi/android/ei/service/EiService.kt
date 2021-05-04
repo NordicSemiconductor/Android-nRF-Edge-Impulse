@@ -76,10 +76,7 @@ interface EiService {
     suspend fun listSamples(
         @Header("x-api-key") apiKey: String,
         @Path("projectId") projectId: Int,
-        @Query("category") category: String = "training",
-        @Query("limit") limit: Int = 5,
-        @Query("offset") offset: Int = 0,
-        @Query("excludeSensors") excludeSensors: Boolean = false
+        @Query("category") category: String = "training"
     ): ListSamplesResponse
 
     /**

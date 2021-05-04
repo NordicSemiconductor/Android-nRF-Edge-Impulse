@@ -24,16 +24,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.collect
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Device.Sensor
 import no.nordicsemi.android.ei.model.Sample
+import no.nordicsemi.android.ei.showSnackbar
 import no.nordicsemi.android.ei.ui.theme.NordicGrass
 import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel
+import no.nordicsemi.android.ei.viewmodels.event.Error
+import java.net.UnknownHostException
 import java.util.*
 
 @ExperimentalMaterialApi
@@ -45,9 +52,31 @@ fun DataAcquisition(
     connectedDevices: List<Device>,
     displayCreateSampleFab: (Boolean) -> Unit
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
     val samples = viewModel.samples
     displayCreateSampleFab(bottomSheetScaffoldState.bottomSheetState.isCollapsed)
+    LocalLifecycleOwner.current.lifecycleScope.launchWhenStarted {
+        viewModel.eventFlow.runCatching {
+            this.collect {
+                when (it) {
+                    is Error -> {
+                        showSnackbar(
+                            coroutineScope = coroutineScope,
+                            snackbarHostState = snackbarHostState,
+                            message = when (it.throwable) {
+                                is UnknownHostException -> context.getString(R.string.error_no_internet)
+                                else -> it.throwable.localizedMessage
+                                    ?: context.getString(R.string.error_refreshing_failed)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
     BottomSheetScaffold(
         modifier = modifier,
         scaffoldState = bottomSheetScaffoldState,
@@ -71,6 +100,7 @@ fun DataAcquisition(
         sheetElevation = 4.dp,
         sheetPeekHeight = 0.dp
     ) {
+        Log.i("AA", "Samples size: ${samples.size}")
         samples.takeIf {
             it.isNotEmpty()
         }?.let { notEmptyList ->
@@ -82,7 +112,10 @@ fun DataAcquisition(
             ) {
                 items(items = notEmptyList, key = {
                     it.id
-                }) { sample -> SampleRow(sample = sample) }
+                }) { sample ->
+                    CollectedDataRow(sample = sample)
+                    Divider()
+                }
             }
         } ?: run {
             Column(
@@ -124,7 +157,7 @@ fun RecordDataFloatingActionButton(onClick: () -> Unit) {
 }
 
 @Composable
-fun SampleRow(sample: Sample) {
+fun CollectedDataRow(sample: Sample) {
     Row(
         modifier = Modifier
             .fillMaxWidth()

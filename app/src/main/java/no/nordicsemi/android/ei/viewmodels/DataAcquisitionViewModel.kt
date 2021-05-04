@@ -47,8 +47,6 @@ class DataAcquisitionViewModel @Inject constructor(
         private set
     var samples: List<Sample> by mutableStateOf(listOf())
         private set
-    var pageCount: Int = pageCount()
-        private set
 
     val focusRequester = FocusRequester()
     var selectedDevice: Device? by mutableStateOf(null)
@@ -64,7 +62,7 @@ class DataAcquisitionViewModel @Inject constructor(
         listSamples()
     }
 
-    fun listSamples() {
+    private fun listSamples() {
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope.launch {
                 eventChannel.send(Error(throwable = throwable)).also { isRefreshing = false }
