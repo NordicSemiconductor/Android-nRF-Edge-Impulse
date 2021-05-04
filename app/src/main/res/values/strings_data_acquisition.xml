@@ -6,4 +6,6 @@
     <string name="label_sensor">Sensor</string>
     <string name="label_sample_length">Sample Length</string>
     <string name="action_start_sampling">Start sampling</string>
+    <string name="label_loading_collected_data">Loading collected data…</string>
+    <string name="action_record_new_data">RECORD NEW DATA</string>
 </resources>

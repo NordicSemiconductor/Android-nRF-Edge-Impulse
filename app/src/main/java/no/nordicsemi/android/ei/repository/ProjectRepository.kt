@@ -6,6 +6,7 @@ import no.nordicsemi.android.ei.di.DefaultDispatcher
 import no.nordicsemi.android.ei.model.DevelopmentKeys
 import no.nordicsemi.android.ei.service.EiService
 import no.nordicsemi.android.ei.service.param.ListDevicesResponse
+import no.nordicsemi.android.ei.service.param.ListSamplesResponse
 import javax.inject.Inject
 
 class ProjectRepository @Inject constructor(
@@ -16,5 +17,10 @@ class ProjectRepository @Inject constructor(
     suspend fun listDevices(projectId: Int, keys: DevelopmentKeys): ListDevicesResponse =
         withContext(defaultDispatcher) {
             service.listDevices(projectId = projectId, apiKey = keys.apiKey)
+        }
+
+    suspend fun listSamples(projectId: Int, keys: DevelopmentKeys): ListSamplesResponse =
+        withContext(defaultDispatcher) {
+            service.listSamples(projectId = projectId, apiKey = keys.apiKey)
         }
 }

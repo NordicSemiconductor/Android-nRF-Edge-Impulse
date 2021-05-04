@@ -315,7 +315,8 @@ private fun CreateProjectFloatingActionButton(
 ) {
     FloatingActionButton(onClick = onClick) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
@@ -326,7 +327,7 @@ private fun CreateProjectFloatingActionButton(
                 Text(
                     text = stringResource(R.string.action_create_project),
                     modifier = Modifier
-                        .padding(start = 8.dp, top = 3.dp)
+                        .padding(start = 8.dp)
                 )
             }
         }

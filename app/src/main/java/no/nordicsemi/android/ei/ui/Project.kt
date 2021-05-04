@@ -5,9 +5,8 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -20,9 +19,12 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.BottomNavigationScreen
 import no.nordicsemi.android.ei.R
+import no.nordicsemi.android.ei.Route
 import no.nordicsemi.android.ei.showSnackbar
 import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel
 import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
@@ -30,6 +32,7 @@ import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Error
 import java.net.UnknownHostException
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun Project(
     viewModel: ProjectViewModel,
@@ -37,11 +40,14 @@ fun Project(
     onBackPressed: () -> Unit
 ) {
     val context = LocalContext.current
-    val coroutineScope = LocalLifecycleOwner.current.lifecycleScope
+    val coroutineScope = rememberCoroutineScope()
     val navController = rememberNavController()
     val snackbarHostState = remember { SnackbarHostState() }
-
-    coroutineScope.launchWhenStarted {
+    val bottomSheetState = rememberBottomSheetState(initialValue = BottomSheetValue.Collapsed)
+    val bottomSheetScaffoldState =
+        rememberBottomSheetScaffoldState(bottomSheetState = bottomSheetState)
+    var isRecordNewDataFabVisible by rememberSaveable { mutableStateOf(false) }
+    LocalLifecycleOwner.current.lifecycleScope.launchWhenStarted {
         viewModel.eventFlow.runCatching {
             this.collect {
                 when (it) {
@@ -86,8 +92,26 @@ fun Project(
         bottomBar = {
             ProjectBottomNavigationBar(
                 navController = navController,
-                bottomNavigationScreens = bottomNavigationScreens
-            )
+                bottomNavigationScreens = bottomNavigationScreens,
+                onDataAcquisitionNotSelected = {
+                    if (it) {
+                        isRecordNewDataFabVisible = false
+                        hideBottomSheet(
+                            coroutineScope = coroutineScope,
+                            bottomSheetState = bottomSheetState
+                        )
+                    }
+                })
+        },
+        floatingActionButton = {
+            if (isRecordNewDataFabVisible && bottomSheetState.isCollapsed)
+                CreateSampleFloatingActionButton(onClick = {
+                    isRecordNewDataFabVisible = false
+                    showBottomSheet(
+                        coroutineScope = coroutineScope,
+                        bottomSheetState = bottomSheetState
+                    )
+                })
         }
     ) { innerPadding ->
         NavHost(
@@ -98,7 +122,6 @@ fun Project(
                 val devicesViewModel: DevicesViewModel = viewModel(
                     factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
                 )
-
                 Devices(
                     modifier = Modifier.padding(paddingValues = innerPadding),
                     viewModel = devicesViewModel,
@@ -115,8 +138,12 @@ fun Project(
                 )
                 DataAcquisition(
                     modifier = Modifier.padding(paddingValues = innerPadding),
+                    bottomSheetScaffoldState = bottomSheetScaffoldState,
                     viewModel = dataAcquisitionViewModel,
-                    connectedDevices = viewModel.configuredDevices
+                    connectedDevices = viewModel.configuredDevices,
+                    displayCreateSampleFab = {
+                        isRecordNewDataFabVisible = it
+                    }
                 )
             }
             composable(route = BottomNavigationScreen.Deployment.route) {
@@ -126,10 +153,12 @@ fun Project(
     }
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ProjectBottomNavigationBar(
     navController: NavController,
-    bottomNavigationScreens: List<BottomNavigationScreen>
+    bottomNavigationScreens: List<BottomNavigationScreen>,
+    onDataAcquisitionNotSelected: (Boolean) -> Unit
 ) {
     BottomNavigation(
         backgroundColor = MaterialTheme.colors.surface
@@ -154,6 +183,7 @@ fun ProjectBottomNavigationBar(
                 },
                 selected = currentRoute == screen.route,
                 onClick = {
+                    onDataAcquisitionNotSelected(screen.route != Route.dataAcquisition)
                     navController.navigate(screen.route) {
                         // Pop up to the start destination of the graph to
                         // avoid building up a large stack of destinations
@@ -168,6 +198,27 @@ fun ProjectBottomNavigationBar(
                 unselectedContentColor = LocalContentColor.current
             )
         }
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+private fun showBottomSheet(
+    coroutineScope: CoroutineScope,
+    bottomSheetState: BottomSheetState
+) {
+    coroutineScope.launch {
+        if (bottomSheetState.isCollapsed) bottomSheetState.expand()
+        else bottomSheetState.collapse()
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+private fun hideBottomSheet(
+    coroutineScope: CoroutineScope,
+    bottomSheetState: BottomSheetState
+) {
+    coroutineScope.launch {
+        if (bottomSheetState.isExpanded) bottomSheetState.collapse()
     }
 }
 
