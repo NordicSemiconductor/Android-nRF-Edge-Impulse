@@ -1,8 +1,8 @@
 package no.nordicsemi.android.ei.ui
 
 import android.util.Log
+import androidx.annotation.IntRange
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,14 +16,14 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Sensors
-import androidx.compose.material.icons.outlined.Label
-import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -31,7 +31,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.pagerTabIndicatorOffset
+import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+import no.nordicsemi.android.ei.HorizontalPagerTab.*
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Device.Sensor
@@ -43,6 +49,7 @@ import no.nordicsemi.android.ei.viewmodels.event.Error
 import java.net.UnknownHostException
 import java.util.*
 
+@OptIn(ExperimentalPagerApi::class)
 @ExperimentalMaterialApi
 @Composable
 fun DataAcquisition(
@@ -55,8 +62,16 @@ fun DataAcquisition(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    val listState = rememberLazyListState()
-    val samples = viewModel.samples
+    val trainingListState = rememberLazyListState()
+    val testingListState = rememberLazyListState()
+    val anomalyListState = rememberLazyListState()
+    val pages = remember {
+        listOf(
+            Training, Testing, Anomaly
+        )
+    }
+    val pagerState = rememberPagerState(pageCount = pages.size)
+
     displayCreateSampleFab(bottomSheetScaffoldState.bottomSheetState.isCollapsed)
     LocalLifecycleOwner.current.lifecycleScope.launchWhenStarted {
         viewModel.eventFlow.runCatching {
@@ -80,15 +95,6 @@ fun DataAcquisition(
     BottomSheetScaffold(
         modifier = modifier,
         scaffoldState = bottomSheetScaffoldState,
-        topBar = {
-            Text(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                text = stringResource(R.string.title_collected_data),
-                style = MaterialTheme.typography.h6
-            )
-        },
         sheetContent = {
             CreateSample(
                 modifier = modifier,
@@ -100,35 +106,71 @@ fun DataAcquisition(
         sheetElevation = 4.dp,
         sheetPeekHeight = 0.dp
     ) {
-        Log.i("AA", "Samples size: ${samples.size}")
-        samples.takeIf {
-            it.isNotEmpty()
-        }?.let { notEmptyList ->
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize(),
-                state = listState,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                items(items = notEmptyList, key = {
-                    it.id
-                }) { sample ->
-                    CollectedDataRow(sample = sample)
-                    Divider()
-                }
-            }
-        } ?: run {
-            Column(
-                modifier = modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .size(64.dp)
+        //TODO verify TabRow
+        TabRow(
+            // Selected tab is the current page
+            selectedTabIndex = pagerState.currentPage,
+            // Override the indicator, using the provided pagerTabIndicatorOffset modifier
+            indicator = { tabPositions ->
+                TabRowDefaults.Indicator(
+                    Modifier.pagerTabIndicatorOffset(pagerState, tabPositions)
                 )
-                Spacer(modifier = Modifier.size(16.dp))
-                Text(text = stringResource(R.string.label_loading_collected_data))
+            }
+        ) {
+            // Adds tabs for all of pages
+            pages.forEachIndexed { index, tab ->
+                Tab(
+                    text = { Text(stringResource(id = tab.title)) },
+                    selected = pagerState.currentPage == index,
+                    onClick = { coroutineScope.launch { pagerState.scrollToPage(index) } },
+                )
+            }
+        }
+        Text(
+            modifier = Modifier
+                .padding(paddingValues = it)
+                .padding(16.dp),
+            text = stringResource(id = R.string.title_collected_data),
+            style = MaterialTheme.typography.h6
+        )
+        //TODO display empty data message
+        HorizontalPager(state = pagerState) { page ->
+            when (page) {
+                0 -> viewModel.trainingSamples
+                1 -> viewModel.testingSamples
+                else -> viewModel.anomalySamples
+            }.takeIf {
+                it.isNotEmpty()
+            }?.let { notEmptyList ->
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    state = when (page) {
+                        0 -> trainingListState
+                        1 -> testingListState
+                        else -> anomalyListState
+                    }
+                ) {
+                    items(items = notEmptyList, key = {
+                        it.id
+                    }) { sample ->
+                        CollectedDataRow(sample = sample, page)
+                        Divider()
+                    }
+                }
+            } ?: run {
+                Column(
+                    modifier = modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .size(64.dp)
+                    )
+                    Spacer(modifier = Modifier.size(16.dp))
+                    Text(text = stringResource(R.string.label_loading_collected_data))
+                }
             }
         }
     }
@@ -157,7 +199,7 @@ fun RecordDataFloatingActionButton(onClick: () -> Unit) {
 }
 
 @Composable
-fun CollectedDataRow(sample: Sample) {
+fun CollectedDataRow(sample: Sample, @IntRange(from = 0, to = 2) page: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -165,8 +207,12 @@ fun CollectedDataRow(sample: Sample) {
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.ic_devices),
+        Icon(
+            imageVector = when (page) {
+                0 -> Icons.Outlined.ModelTraining
+                1 -> Icons.Outlined.Science
+                else -> Icons.Outlined.Psychology
+            },
             contentDescription = null,
             modifier = Modifier
                 .size(40.dp)
@@ -174,7 +220,8 @@ fun CollectedDataRow(sample: Sample) {
                     color = MaterialTheme.colors.primary,
                     shape = CircleShape
                 )
-                .padding(8.dp)
+                .padding(8.dp),
+            tint = Color.White
         )
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1.0f)) {

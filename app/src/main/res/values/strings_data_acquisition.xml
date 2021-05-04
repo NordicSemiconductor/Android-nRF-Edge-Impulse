@@ -5,7 +5,11 @@
     <string name="label_label">Label</string>
     <string name="label_sensor">Sensor</string>
     <string name="label_sample_length">Sample Length</string>
+    <string name="label_frequency">Frequency</string>
     <string name="action_start_sampling">Start sampling</string>
     <string name="label_loading_collected_data">Loading collected data…</string>
     <string name="action_record_new_data">RECORD NEW DATA</string>
+    <string name="title_testing">Testing</string>
+    <string name="title_anomaly">Anomaly</string>
+    <string name="title_training">Training</string>
 </resources>

@@ -76,7 +76,7 @@ interface EiService {
     suspend fun listSamples(
         @Header("x-api-key") apiKey: String,
         @Path("projectId") projectId: Int,
-        @Query("category") category: String = "training"
+        @Query("category") category: String
     ): ListSamplesResponse
 
     /**

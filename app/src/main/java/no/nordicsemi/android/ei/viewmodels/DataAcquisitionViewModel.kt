@@ -12,6 +12,8 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import no.nordicsemi.android.ei.HorizontalPagerTab
+import no.nordicsemi.android.ei.HorizontalPagerTab.*
 import no.nordicsemi.android.ei.di.ProjectComponentEntryPoint
 import no.nordicsemi.android.ei.di.ProjectManager
 import no.nordicsemi.android.ei.di.UserComponentEntryPoint
@@ -45,7 +47,11 @@ class DataAcquisitionViewModel @Inject constructor(
 
     var isRefreshing: Boolean by mutableStateOf(false)
         private set
-    var samples: List<Sample> by mutableStateOf(listOf())
+    var trainingSamples: List<Sample> by mutableStateOf(listOf())
+        private set
+    var testingSamples: List<Sample> by mutableStateOf(listOf())
+        private set
+    var anomalySamples: List<Sample> by mutableStateOf(listOf())
         private set
 
     val focusRequester = FocusRequester()
@@ -59,10 +65,12 @@ class DataAcquisitionViewModel @Inject constructor(
         private set
 
     init {
-        listSamples()
+        listSamples(Training)
+        listSamples(Testing)
+        listSamples(Anomaly)
     }
 
-    private fun listSamples() {
+    private fun listSamples(pagerTab: HorizontalPagerTab) {
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope.launch {
                 eventChannel.send(Error(throwable = throwable)).also { isRefreshing = false }
@@ -71,10 +79,19 @@ class DataAcquisitionViewModel @Inject constructor(
         viewModelScope.launch(handler) {
             projectRepository.listSamples(
                 projectId = projectDataRepository.project.id,
-                keys = projectDataRepository.developmentKeys
+                keys = projectDataRepository.developmentKeys,
+                category = when (pagerTab) {
+                    is Training -> "training"
+                    is Testing -> "testing"
+                    is Anomaly -> "anomaly"
+                }
             ).let { response ->
                 when (response.success) {
-                    true -> samples = response.samples
+                    true -> when (pagerTab) {
+                        is Training -> trainingSamples = response.samples
+                        is Testing -> testingSamples = response.samples
+                        is Anomaly -> anomalySamples = response.samples
+                    }
                     false -> eventChannel.send(Error(throwable = Throwable("Unknown error")))
                 }.also { isRefreshing = false }
             }
@@ -105,8 +122,8 @@ class DataAcquisitionViewModel @Inject constructor(
         this.selectedFrequency = frequency
     }
 
-    private fun pageCount(): Int = when (samples.size % 10) {
-        0 -> samples.size / 10
-        else -> samples.size % 10
+    private fun pageCount(): Int = when (trainingSamples.size % 10) {
+        0 -> trainingSamples.size / 10
+        else -> trainingSamples.size % 10
     }
 }

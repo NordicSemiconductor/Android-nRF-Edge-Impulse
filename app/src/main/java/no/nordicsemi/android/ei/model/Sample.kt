@@ -16,7 +16,7 @@ data class Sample(
     val deviceType: String,
     val sensors: List<Sensor>,
     val valuesCount: Int,
-    val totalLengthMs: Int,
+    val totalLengthMs: Number,
     val added: String,
     val boundingBoxes: List<BoundingBox>
 ) {

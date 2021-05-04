@@ -17,11 +17,15 @@ class ProjectRepository @Inject constructor(
 
     suspend fun listDevices(projectId: Int, keys: DevelopmentKeys): ListDevicesResponse =
         withContext(defaultDispatcher) {
-            service.listDevices(projectId = projectId, apiKey = keys.apiKey)
+            service.listDevices(apiKey = keys.apiKey, projectId = projectId)
         }
 
-    suspend fun listSamples(projectId: Int, keys: DevelopmentKeys): ListSamplesResponse =
+    suspend fun listSamples(
+        projectId: Int,
+        keys: DevelopmentKeys,
+        category: String
+    ): ListSamplesResponse =
         withContext(Dispatchers.IO) {
-            service.listSamples(projectId = projectId, apiKey = keys.apiKey)
+            service.listSamples(apiKey = keys.apiKey, projectId = projectId, category = category)
         }
 }
