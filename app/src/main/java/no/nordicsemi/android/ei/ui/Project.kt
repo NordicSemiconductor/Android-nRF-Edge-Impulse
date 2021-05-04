@@ -105,7 +105,7 @@ fun Project(
         },
         floatingActionButton = {
             if (isRecordNewDataFabVisible && bottomSheetState.isCollapsed)
-                CreateSampleFloatingActionButton(onClick = {
+                RecordDataFloatingActionButton(onClick = {
                     isRecordNewDataFabVisible = false
                     showBottomSheet(
                         coroutineScope = coroutineScope,
