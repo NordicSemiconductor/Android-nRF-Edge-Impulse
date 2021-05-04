@@ -51,7 +51,7 @@ interface EiService {
     ): DevelopmentKeysResponse
 
     /**
-     * Retrieve all the devices for a project. List all devices for this project. Devices get included
+     * Retrieve all the devices for a project. Devices get included
      * here if they connect to the remote management API or if they have sent data to the ingestion API
      * and had the device_id field set.
      *
@@ -64,5 +64,40 @@ interface EiService {
         @Header("x-api-key") apiKey: String,
         @Path("projectId") projectId: Int
     ): ListDevicesResponse
+
+    /**
+     * Retrieve all the samples for a project.
+     *
+     * @param apiKey       Token received during the login.
+     * @param projectId Project ID.
+     */
+    @Headers("Accept: application/json", "Content-Type: application/json")
+    @GET("api/{projectId}/raw-data")
+    suspend fun listSamples(
+        @Header("x-api-key") apiKey: String,
+        @Path("projectId") projectId: Int,
+        @Query("category") category: String = "training",
+        @Query("limit") limit: Int = 5,
+        @Query("offset") offset: Int = 0,
+        @Query("excludeSensors") excludeSensors: Boolean = false
+    ): ListSamplesResponse
+
+    /**
+     * Retrieve all the samples for a project.
+     *
+     * @param apiKey       Token received during the login.
+     * @param projectId Project ID.
+     */
+    @Headers("Accept: application/json", "Content-Type: application/json")
+    @GET("api/{projectId}/raw-data")
+    suspend fun listSamples(
+        @Header("x-api-key") apiKey: String,
+        @Path("projectId") projectId: Int,
+        @Query("category") category: String = "training",
+        @Query("limit") limit: Int = 100,
+        @Query("offset") offset: Int = 0,
+        @Query("excludeSensors") excludeSensors: Boolean = false,
+        @Query("labels") labels: String
+    ): ListSamplesResponse
 
 }
