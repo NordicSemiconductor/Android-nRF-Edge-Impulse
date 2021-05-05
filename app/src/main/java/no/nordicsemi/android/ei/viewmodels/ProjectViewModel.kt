@@ -73,7 +73,7 @@ class ProjectViewModel @Inject constructor(
             ).let { response ->
                 when (response.success) {
                     true -> configuredDevices = response.devices
-                    false -> eventChannel.send(Error(throwable = Throwable(response.error)))
+                    false -> throw Throwable(response.error)
                 }.also { isRefreshing = false }
             }
         }

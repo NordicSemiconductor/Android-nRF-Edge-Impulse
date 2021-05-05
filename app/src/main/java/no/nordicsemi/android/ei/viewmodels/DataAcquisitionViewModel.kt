@@ -92,7 +92,7 @@ class DataAcquisitionViewModel @Inject constructor(
                         is Testing -> testingSamples = response.samples
                         is Anomaly -> anomalySamples = response.samples
                     }
-                    false -> eventChannel.send(Error(throwable = Throwable("Unknown error")))
+                    false -> throw Throwable("Unknown error")
                 }.also { isRefreshing = false }
             }
         }
