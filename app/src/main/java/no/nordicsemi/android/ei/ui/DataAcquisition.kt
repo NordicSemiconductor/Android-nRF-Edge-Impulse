@@ -89,7 +89,6 @@ fun DataAcquisition(
         scaffoldState = bottomSheetScaffoldState,
         sheetContent = {
             CreateSample(
-                modifier = modifier,
                 viewModel = viewModel,
                 connectedDevices = connectedDevices
             )
@@ -98,13 +97,7 @@ fun DataAcquisition(
         sheetElevation = 4.dp,
         sheetPeekHeight = 0.dp
     ) {
-        Text(
-            modifier = Modifier
-                .padding(paddingValues = it)
-                .padding(16.dp),
-            text = stringResource(id = R.string.title_collected_data),
-            style = MaterialTheme.typography.h6
-        )
+
         //TODO display empty data message
         HorizontalPager(state = pagerState) { page ->
             when (page) {
@@ -213,7 +206,6 @@ fun CollectedDataRow(sample: Sample, @IntRange(from = 0, to = 2) page: Int) {
 
 @Composable
 fun CreateSample(
-    modifier: Modifier,
     viewModel: DataAcquisitionViewModel,
     connectedDevices: List<Device>
 ) {
@@ -228,8 +220,7 @@ fun CreateSample(
     var isFrequencyMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var sampleLength by remember { mutableStateOf(5000) }
     Column(
-        modifier = modifier
-            .padding(16.dp)
+        modifier = Modifier.padding(16.dp)
     ) {
         Text(
             text = stringResource(R.string.title_record_new_data),
