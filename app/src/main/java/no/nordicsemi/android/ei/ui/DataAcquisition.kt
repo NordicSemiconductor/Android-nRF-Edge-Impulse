@@ -33,11 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.pagerTabIndicatorOffset
-import com.google.accompanist.pager.rememberPagerState
+import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
-import no.nordicsemi.android.ei.HorizontalPagerTab.*
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Device.Sensor
@@ -55,6 +52,7 @@ import java.util.*
 fun DataAcquisition(
     modifier: Modifier,
     bottomSheetScaffoldState: BottomSheetScaffoldState,
+    pagerState : PagerState,
     viewModel: DataAcquisitionViewModel,
     connectedDevices: List<Device>,
     displayCreateSampleFab: (Boolean) -> Unit
@@ -65,12 +63,6 @@ fun DataAcquisition(
     val trainingListState = rememberLazyListState()
     val testingListState = rememberLazyListState()
     val anomalyListState = rememberLazyListState()
-    val pages = remember {
-        listOf(
-            Training, Testing, Anomaly
-        )
-    }
-    val pagerState = rememberPagerState(pageCount = pages.size)
 
     displayCreateSampleFab(bottomSheetScaffoldState.bottomSheetState.isCollapsed)
     LocalLifecycleOwner.current.lifecycleScope.launchWhenStarted {
@@ -106,26 +98,6 @@ fun DataAcquisition(
         sheetElevation = 4.dp,
         sheetPeekHeight = 0.dp
     ) {
-        //TODO verify TabRow
-        TabRow(
-            // Selected tab is the current page
-            selectedTabIndex = pagerState.currentPage,
-            // Override the indicator, using the provided pagerTabIndicatorOffset modifier
-            indicator = { tabPositions ->
-                TabRowDefaults.Indicator(
-                    Modifier.pagerTabIndicatorOffset(pagerState, tabPositions)
-                )
-            }
-        ) {
-            // Adds tabs for all of pages
-            pages.forEachIndexed { index, tab ->
-                Tab(
-                    text = { Text(stringResource(id = tab.title)) },
-                    selected = pagerState.currentPage == index,
-                    onClick = { coroutineScope.launch { pagerState.scrollToPage(index) } },
-                )
-            }
-        }
         Text(
             modifier = Modifier
                 .padding(paddingValues = it)

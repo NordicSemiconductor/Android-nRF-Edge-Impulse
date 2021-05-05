@@ -1,12 +1,12 @@
 package no.nordicsemi.android.ei.ui
 
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -19,19 +19,22 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.*
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.PagerState
+import com.google.accompanist.pager.pagerTabIndicatorOffset
+import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import no.nordicsemi.android.ei.BottomNavigationScreen
+import no.nordicsemi.android.ei.*
 import no.nordicsemi.android.ei.R
-import no.nordicsemi.android.ei.Route
-import no.nordicsemi.android.ei.showSnackbar
 import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel
 import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
 import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Error
 import java.net.UnknownHostException
 
+@ExperimentalPagerApi
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun Project(
@@ -47,6 +50,13 @@ fun Project(
     val bottomSheetScaffoldState =
         rememberBottomSheetScaffoldState(bottomSheetState = bottomSheetState)
     var isRecordNewDataFabVisible by rememberSaveable { mutableStateOf(false) }
+    var showDataAcquisitionTitle by rememberSaveable { mutableStateOf(false) }
+    val pages = remember {
+        listOf(
+            HorizontalPagerTab.Training, HorizontalPagerTab.Testing, HorizontalPagerTab.Anomaly
+        )
+    }
+    val pagerState = rememberPagerState(pageCount = pages.size)
     LocalLifecycleOwner.current.lifecycleScope.launchWhenStarted {
         viewModel.eventFlow.runCatching {
             this.collect {
@@ -71,23 +81,12 @@ fun Project(
         scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = viewModel.project.name,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        onBackPressed()
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = null
-                        )
-                    }
-                })
+                projectName = viewModel.project.name,
+                pages = pages,
+                pagerState = pagerState,
+                showDataAcquisitionTitle = showDataAcquisitionTitle,
+                onBackPressed = onBackPressed
+            )
         },
         bottomBar = {
             ProjectBottomNavigationBar(
@@ -95,11 +94,14 @@ fun Project(
                 bottomNavigationScreens = bottomNavigationScreens,
                 onDataAcquisitionNotSelected = {
                     if (it) {
+                        showDataAcquisitionTitle = false
                         isRecordNewDataFabVisible = false
                         hideBottomSheet(
                             coroutineScope = coroutineScope,
                             bottomSheetState = bottomSheetState
                         )
+                    } else {
+                        showDataAcquisitionTitle = true
                     }
                 })
         },
@@ -139,6 +141,7 @@ fun Project(
                 DataAcquisition(
                     modifier = Modifier.padding(paddingValues = innerPadding),
                     bottomSheetScaffoldState = bottomSheetScaffoldState,
+                    pagerState = pagerState,
                     viewModel = dataAcquisitionViewModel,
                     connectedDevices = viewModel.configuredDevices,
                     displayCreateSampleFab = {
@@ -153,9 +156,87 @@ fun Project(
     }
 }
 
+@ExperimentalPagerApi
+@Composable
+private fun TopAppBar(
+    projectName: String,
+    pages: List<HorizontalPagerTab>,
+    pagerState: PagerState,
+    showDataAcquisitionTitle: Boolean,
+    onBackPressed: () -> Unit
+) {
+    val coroutineScope = rememberCoroutineScope()
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth(),
+        color = MaterialTheme.colors.primarySurface,
+        elevation = AppBarDefaults.TopAppBarElevation
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(start = 16.dp, end = 16.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .height(56.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = {
+                    onBackPressed()
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = null
+                    )
+                }
+                Spacer(modifier = Modifier.width(32.dp))
+                Text(
+                    text = projectName,
+                    style = MaterialTheme.typography.h6,
+                    color = MaterialTheme.colors.onPrimary,
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1
+                )
+            }
+            if (showDataAcquisitionTitle)
+                Row(
+                    modifier = Modifier
+                        .height(56.dp),
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    TabRow(
+                        // Selected tab is the current page
+                        selectedTabIndex = pagerState.currentPage,
+                        // Override the indicator, using the provided pagerTabIndicatorOffset modifier
+                        indicator = { tabPositions ->
+                            TabRowDefaults.Indicator(
+                                Modifier.pagerTabIndicatorOffset(pagerState, tabPositions)
+                            )
+                        }
+                    ) {
+                        // Adds tabs for all of pages
+                        pages.forEachIndexed { index, tab ->
+                            Tab(
+                                text = { Text(stringResource(id = tab.title)) },
+                                selected = pagerState.currentPage == index,
+                                onClick = {
+                                    coroutineScope.launch {
+                                        pagerState.scrollToPage(
+                                            index
+                                        )
+                                    }
+                                },
+                            )
+                        }
+                    }
+                }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ProjectBottomNavigationBar(
+private fun ProjectBottomNavigationBar(
     navController: NavController,
     bottomNavigationScreens: List<BottomNavigationScreen>,
     onDataAcquisitionNotSelected: (Boolean) -> Unit
