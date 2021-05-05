@@ -1,11 +1,11 @@
 package no.nordicsemi.android.ei.ui
 
 import android.util.Log
-import androidx.annotation.IntRange
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -16,7 +16,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Sensors
-import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.outlined.Label
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -35,6 +36,8 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.flow.collect
+import no.nordicsemi.android.ei.HorizontalPagerTab
+import no.nordicsemi.android.ei.HorizontalPagerTab.*
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Device.Sensor
@@ -52,7 +55,7 @@ import java.util.*
 fun DataAcquisition(
     modifier: Modifier,
     bottomSheetScaffoldState: BottomSheetScaffoldState,
-    pagerState : PagerState,
+    pagerState: PagerState,
     viewModel: DataAcquisitionViewModel,
     connectedDevices: List<Device>,
     displayCreateSampleFab: (Boolean) -> Unit
@@ -101,40 +104,83 @@ fun DataAcquisition(
         //TODO display empty data message
         HorizontalPager(state = pagerState) { page ->
             when (page) {
-                0 -> viewModel.trainingSamples
-                1 -> viewModel.testingSamples
-                else -> viewModel.anomalySamples
-            }.takeIf {
-                it.isNotEmpty()
-            }?.let { notEmptyList ->
-                LazyColumn(
+                0 -> CollectedDataList(
+                    viewModel.trainingSamples,
+                    trainingListState,
+                    Training,
+                    viewModel.isRefreshingTrainingData
+                )
+                1 -> CollectedDataList(
+                    viewModel.trainingSamples,
+                    testingListState,
+                    Testing,
+                    viewModel.isRefreshingTestData
+                )
+                else -> CollectedDataList(
+                    viewModel.anomalySamples,
+                    anomalyListState,
+                    Anomaly,
+                    viewModel.isRefreshingAnomalyData
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+private fun CollectedDataList(
+    samples: List<Sample>,
+    listState: LazyListState,
+    tab: HorizontalPagerTab,
+    isRefreshing: Boolean = false
+) {
+    samples.takeIf {
+        it.isNotEmpty()
+    }?.let { notEmptyList ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize(),
+            state = listState
+        ) {
+            items(items = notEmptyList, key = {
+                it.id
+            }) { sample ->
+                CollectedDataRow(sample = sample, tab)
+                Divider()
+            }
+        }
+    } ?: run {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (isRefreshing) {
+                CircularProgressIndicator(
                     modifier = Modifier
-                        .fillMaxSize(),
-                    state = when (page) {
-                        0 -> trainingListState
-                        1 -> testingListState
-                        else -> anomalyListState
+                        .size(64.dp)
+                )
+                Spacer(modifier = Modifier.size(16.dp))
+                Text(
+                    text = when (tab) {
+                        is Training -> stringResource(R.string.label_loading_collected_data)
+                        is Testing -> stringResource(R.string.label_loading_collected_data)
+                        is Anomaly -> stringResource(R.string.label_loading_collected_data)
                     }
-                ) {
-                    items(items = notEmptyList, key = {
-                        it.id
-                    }) { sample ->
-                        CollectedDataRow(sample = sample, page)
-                        Divider()
-                    }
-                }
-            } ?: run {
-                Column(
-                    modifier = modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .size(64.dp)
+                )
+            } else {
+                CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
+                    Icon(
+                        imageVector = tab.emptyListIcon,
+                        contentDescription = null,
+                        modifier = Modifier.size(72.dp)
                     )
-                    Spacer(modifier = Modifier.size(16.dp))
-                    Text(text = stringResource(R.string.label_loading_collected_data))
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = stringResource(R.string.label_no_collected_data_yet),
+                        style = MaterialTheme.typography.h6
+                    )
                 }
             }
         }
@@ -164,7 +210,7 @@ fun RecordDataFloatingActionButton(onClick: () -> Unit) {
 }
 
 @Composable
-fun CollectedDataRow(sample: Sample, @IntRange(from = 0, to = 2) page: Int) {
+fun CollectedDataRow(sample: Sample, tab: HorizontalPagerTab) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -173,11 +219,7 @@ fun CollectedDataRow(sample: Sample, @IntRange(from = 0, to = 2) page: Int) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            imageVector = when (page) {
-                0 -> Icons.Outlined.ModelTraining
-                1 -> Icons.Outlined.Science
-                else -> Icons.Outlined.Psychology
-            },
+            imageVector = tab.rowIcon,
             contentDescription = null,
             modifier = Modifier
                 .size(40.dp)
