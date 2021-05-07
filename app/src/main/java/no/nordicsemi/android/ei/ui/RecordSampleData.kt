@@ -3,7 +3,9 @@ package no.nordicsemi.android.ei.ui
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -45,7 +47,6 @@ fun RecordSample(
     var isSensorsMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var isFrequencyMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var sampleLength by remember { mutableStateOf(5000) }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -67,10 +68,11 @@ fun RecordSample(
             )
         }
     ) {
+        val scrollState = rememberScrollState()
         Column(
             modifier = Modifier
-                .fillMaxSize()
                 .padding(16.dp)
+                .verticalScroll(state = scrollState),
         ) {
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
