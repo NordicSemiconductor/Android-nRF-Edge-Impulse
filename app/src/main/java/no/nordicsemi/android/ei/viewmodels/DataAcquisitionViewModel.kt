@@ -5,7 +5,6 @@ import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.focus.FocusRequester
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.EntryPoints
@@ -21,7 +20,6 @@ import no.nordicsemi.android.ei.di.ProjectComponentEntryPoint
 import no.nordicsemi.android.ei.di.ProjectManager
 import no.nordicsemi.android.ei.di.UserComponentEntryPoint
 import no.nordicsemi.android.ei.di.UserManager
-import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Sample
 import no.nordicsemi.android.ei.repository.ProjectDataRepository
 import no.nordicsemi.android.ei.repository.ProjectRepository
@@ -60,16 +58,6 @@ class DataAcquisitionViewModel @Inject constructor(
     var testingSamples: List<Sample> by mutableStateOf(listOf())
         private set
     var anomalySamples: List<Sample> by mutableStateOf(listOf())
-        private set
-
-    val focusRequester = FocusRequester()
-    var selectedDevice: Device? by mutableStateOf(null)
-        private set
-    var label: String by mutableStateOf("")
-        private set
-    var selectedSensor: Device.Sensor? by mutableStateOf(null)
-        private set
-    var selectedFrequency: Number? by mutableStateOf(null)
         private set
 
     init {
@@ -128,34 +116,5 @@ class DataAcquisitionViewModel @Inject constructor(
                 }
             }
         }
-    }
-
-    fun onDeviceSelected(device: Device) {
-        selectedDevice = device
-        device.sensors.takeIf { sensors -> sensors.isNotEmpty() }
-            ?.let { sensors -> onSensorSelected(sensor = sensors[0]) }
-    }
-
-    fun onLabelChanged(label: String) {
-        this.label = label
-    }
-
-    fun onSensorSelected(sensor: Device.Sensor) {
-        this.selectedSensor = sensor
-        sensor.frequencies
-            .takeIf { frequencies ->
-                frequencies.isNotEmpty()
-            }?.let { frequencies ->
-                onFrequencySelected(frequency = frequencies[0])
-            } ?: run { selectedFrequency = null }
-    }
-
-    fun onFrequencySelected(frequency: Number) {
-        this.selectedFrequency = frequency
-    }
-
-    private fun pageCount(): Int = when (trainingSamples.size % 10) {
-        0 -> trainingSamples.size / 10
-        else -> trainingSamples.size % 10
     }
 }

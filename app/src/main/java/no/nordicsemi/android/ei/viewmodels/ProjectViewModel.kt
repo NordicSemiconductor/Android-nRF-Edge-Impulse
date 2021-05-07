@@ -3,6 +3,7 @@ package no.nordicsemi.android.ei.viewmodels
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.focus.FocusRequester
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.EntryPoints
@@ -53,6 +54,15 @@ class ProjectViewModel @Inject constructor(
 
     val project
         get() = projectDataRepository.project
+    val focusRequester = FocusRequester()
+    var selectedDevice: Device? by mutableStateOf(null)
+        private set
+    var label: String by mutableStateOf("")
+        private set
+    var selectedSensor: Device.Sensor? by mutableStateOf(null)
+        private set
+    var selectedFrequency: Number? by mutableStateOf(null)
+        private set
 
     init {
         listDevices()
@@ -77,5 +87,29 @@ class ProjectViewModel @Inject constructor(
                 }.also { isRefreshing = false }
             }
         }
+    }
+
+    fun onDeviceSelected(device: Device) {
+        selectedDevice = device
+        device.sensors.takeIf { sensors -> sensors.isNotEmpty() }
+            ?.let { sensors -> onSensorSelected(sensor = sensors[0]) }
+    }
+
+    fun onLabelChanged(label: String) {
+        this.label = label
+    }
+
+    fun onSensorSelected(sensor: Device.Sensor) {
+        this.selectedSensor = sensor
+        sensor.frequencies
+            .takeIf { frequencies ->
+                frequencies.isNotEmpty()
+            }?.let { frequencies ->
+                onFrequencySelected(frequency = frequencies[0])
+            } ?: run { selectedFrequency = null }
+    }
+
+    fun onFrequencySelected(frequency: Number) {
+        this.selectedFrequency = frequency
     }
 }

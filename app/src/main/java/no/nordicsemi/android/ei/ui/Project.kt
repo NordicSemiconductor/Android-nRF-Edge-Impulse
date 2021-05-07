@@ -2,6 +2,7 @@ package no.nordicsemi.android.ei.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
+import androidx.compose.material.ModalBottomSheetValue.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
@@ -43,27 +44,38 @@ fun Project(
     onBackPressed: () -> Unit
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
     val navController = rememberNavController()
     val snackbarHostState = remember { SnackbarHostState() }
-    val bottomSheetState = rememberBottomSheetState(initialValue = BottomSheetValue.Collapsed)
-    val bottomSheetScaffoldState =
-        rememberBottomSheetScaffoldState(bottomSheetState = bottomSheetState)
-    var isRecordNewDataFabVisible by rememberSaveable { mutableStateOf(false) }
-    var showDataAcquisitionTitle by rememberSaveable { mutableStateOf(false) }
     val pages = remember {
         listOf(
             HorizontalPagerTab.Training, HorizontalPagerTab.Testing, HorizontalPagerTab.Anomaly
         )
     }
     val pagerState = rememberPagerState(pageCount = pages.size)
+    var currentState by rememberSaveable { mutableStateOf(Hidden) }
+    var targetState by rememberSaveable { mutableStateOf(Hidden) }
+    val modalBottomSheetState = rememberModalBottomSheetState(
+        initialValue = Hidden,
+        confirmStateChange = {
+            it != HalfExpanded
+        }
+    )
+    val connectedDevice = viewModel.configuredDevices
+    var isRecordNewDataFabVisible by rememberSaveable { mutableStateOf(false) }
+    var showDataAcquisitionTitle by rememberSaveable { mutableStateOf(false) }
+
+    if (targetState == HalfExpanded) {
+        hideBottomSheet(scope, modalBottomSheetState)
+        targetState = Hidden
+    }
     LocalLifecycleOwner.current.lifecycleScope.launchWhenStarted {
         viewModel.eventFlow.runCatching {
             this.collect {
                 when (it) {
                     is Error -> {
                         showSnackbar(
-                            coroutineScope = coroutineScope,
+                            coroutineScope = scope,
                             snackbarHostState = snackbarHostState,
                             message = when (it.throwable) {
                                 is UnknownHostException -> context.getString(R.string.error_no_internet)
@@ -76,81 +88,103 @@ fun Project(
             }
         }
     }
-
-    Scaffold(
-        scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
-        topBar = {
-            TopAppBar(
-                projectName = viewModel.project.name,
-                pages = pages,
-                pagerState = pagerState,
-                showDataAcquisitionTitle = showDataAcquisitionTitle,
-                onBackPressed = onBackPressed
-            )
-        },
-        bottomBar = {
-            ProjectBottomNavigationBar(
-                navController = navController,
-                bottomNavigationScreens = bottomNavigationScreens,
-                onDataAcquisitionNotSelected = {
-                    if (it) {
-                        showDataAcquisitionTitle = false
-                        isRecordNewDataFabVisible = false
-                        hideBottomSheet(
-                            coroutineScope = coroutineScope,
-                            bottomSheetState = bottomSheetState
-                        )
-                    } else {
-                        showDataAcquisitionTitle = true
-                    }
-                })
-        },
-        floatingActionButton = {
-            if (isRecordNewDataFabVisible && bottomSheetState.isCollapsed)
-                RecordDataFloatingActionButton(onClick = {
-                    isRecordNewDataFabVisible = false
-                    showBottomSheet(
-                        coroutineScope = coroutineScope,
-                        bottomSheetState = bottomSheetState
+    ModalBottomSheetLayout(
+        sheetState = modalBottomSheetState,
+        sheetContent = {
+            RecordSample(
+                connectedDevices = connectedDevice,
+                focusRequester = viewModel.focusRequester,
+                selectedDevice = viewModel.selectedDevice,
+                onDeviceSelected = { viewModel.onDeviceSelected(device = it) },
+                label = viewModel.label,
+                onLabelChanged = { viewModel.onLabelChanged(label = it) },
+                selectedSensor = viewModel.selectedSensor,
+                onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
+                selectedFrequency = viewModel.selectedFrequency,
+                onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) },
+                onCloseClicked = {
+                    hideBottomSheet(
+                        scope = scope,
+                        modalBottomSheetState = modalBottomSheetState
                     )
-                })
-        }
-    ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = BottomNavigationScreen.Devices.route
-        ) {
-            composable(route = BottomNavigationScreen.Devices.route) { backStackEntry ->
-                val devicesViewModel: DevicesViewModel = viewModel(
-                    factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
-                )
-                Devices(
-                    modifier = Modifier.padding(paddingValues = innerPadding),
-                    viewModel = devicesViewModel,
-                    configuredDevices = viewModel.configuredDevices,
-                    refreshingState = viewModel.isRefreshing,
-                    onRefresh = {
-                        viewModel.listDevices(true)
-                    }
-                )
-            }
-            composable(route = BottomNavigationScreen.DataAcquisition.route) { backStackEntry ->
-                val dataAcquisitionViewModel: DataAcquisitionViewModel = viewModel(
-                    factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
-                )
-                DataAcquisition(
-                    modifier = Modifier.padding(paddingValues = innerPadding),
-                    bottomSheetScaffoldState = bottomSheetScaffoldState,
+                }
+            )
+        }) {
+        Scaffold(
+            scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
+            topBar = {
+                ProjectTopAppBar(
+                    projectName = viewModel.project.name,
+                    pages = pages,
                     pagerState = pagerState,
-                    viewModel = dataAcquisitionViewModel,
-                    connectedDevices = viewModel.configuredDevices,
-                    displayCreateSampleFab = {
-                        isRecordNewDataFabVisible = it
-                    }
+                    showDataAcquisitionTitle = showDataAcquisitionTitle,
+                    onBackPressed = onBackPressed
                 )
+            },
+            bottomBar = {
+                ProjectBottomNavigationBar(
+                    navController = navController,
+                    bottomNavigationScreens = bottomNavigationScreens,
+                    onDataAcquisitionNotSelected = {
+                        if (it) {
+                            showDataAcquisitionTitle = false
+                            isRecordNewDataFabVisible = false
+                            hideBottomSheet(
+                                scope = scope,
+                                modalBottomSheetState = modalBottomSheetState
+                            )
+                        } else {
+                            showDataAcquisitionTitle = true
+                        }
+                    })
+            },
+            floatingActionButton = {
+                if (isRecordNewDataFabVisible)
+                    RecordDataFloatingActionButton(onClick = {
+                        isRecordNewDataFabVisible = false
+                        showBottomSheet(
+                            scope = scope,
+                            modalBottomSheetState = modalBottomSheetState
+                        )
+                    })
             }
-            composable(route = BottomNavigationScreen.Deployment.route) {
-                Deployment(modifier = Modifier.padding(paddingValues = innerPadding))
+        ) { innerPadding ->
+            NavHost(
+                navController = navController,
+                startDestination = BottomNavigationScreen.Devices.route
+            ) {
+                composable(route = BottomNavigationScreen.Devices.route) { backStackEntry ->
+                    val devicesViewModel: DevicesViewModel = viewModel(
+                        factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
+                    )
+                    Devices(
+                        modifier = Modifier.padding(paddingValues = innerPadding),
+                        viewModel = devicesViewModel,
+                        configuredDevices = connectedDevice,
+                        refreshingState = viewModel.isRefreshing,
+                        onRefresh = {
+                            viewModel.listDevices(true)
+                        }
+                    )
+                }
+                composable(route = BottomNavigationScreen.DataAcquisition.route) { backStackEntry ->
+                    val dataAcquisitionViewModel: DataAcquisitionViewModel = viewModel(
+                        factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
+                    )
+                    if (!modalBottomSheetState.isVisible) {
+                        isRecordNewDataFabVisible = true
+                    }
+                    DataAcquisition(
+                        connectedDevice = viewModel.configuredDevices,
+                        modalBottomSheetState = modalBottomSheetState,
+                        pagerState = pagerState,
+                        pages = pages,
+                        viewModel = dataAcquisitionViewModel
+                    )
+                }
+                composable(route = BottomNavigationScreen.Deployment.route) {
+                    Deployment(modifier = Modifier.padding(paddingValues = innerPadding))
+                }
             }
         }
     }
@@ -158,7 +192,7 @@ fun Project(
 
 @ExperimentalPagerApi
 @Composable
-private fun TopAppBar(
+private fun ProjectTopAppBar(
     projectName: String,
     pages: List<HorizontalPagerTab>,
     pagerState: PagerState,
@@ -284,23 +318,25 @@ private fun ProjectBottomNavigationBar(
 
 @OptIn(ExperimentalMaterialApi::class)
 private fun showBottomSheet(
-    coroutineScope: CoroutineScope,
-    bottomSheetState: BottomSheetState
+    scope: CoroutineScope,
+    modalBottomSheetState: ModalBottomSheetState
 ) {
-    coroutineScope.launch {
-        if (bottomSheetState.isCollapsed) bottomSheetState.expand()
-        else bottomSheetState.collapse()
+    scope.launch {
+        if (!modalBottomSheetState.isVisible) {
+            modalBottomSheetState.animateTo(Expanded)
+        }
     }
 }
 
 @OptIn(ExperimentalMaterialApi::class)
 private fun hideBottomSheet(
-    coroutineScope: CoroutineScope,
-    bottomSheetState: BottomSheetState
+    scope: CoroutineScope,
+    modalBottomSheetState: ModalBottomSheetState
 ) {
-    coroutineScope.launch {
-        if (bottomSheetState.isExpanded) bottomSheetState.collapse()
-    }
+    if (modalBottomSheetState.isVisible)
+        scope.launch {
+            modalBottomSheetState.hide()
+        }
 }
 
 val <T> T.exhaustive: T

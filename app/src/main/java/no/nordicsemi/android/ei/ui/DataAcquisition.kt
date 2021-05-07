@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -42,12 +41,11 @@ import java.net.UnknownHostException
 @ExperimentalMaterialApi
 @Composable
 fun DataAcquisition(
-    modifier: Modifier,
-    bottomSheetScaffoldState: BottomSheetScaffoldState,
+    connectedDevice: List<Device>,
+    modalBottomSheetState: ModalBottomSheetState,
     pagerState: PagerState,
-    viewModel: DataAcquisitionViewModel,
-    connectedDevices: List<Device>,
-    displayCreateSampleFab: (Boolean) -> Unit
+    pages: List<HorizontalPagerTab>,
+    viewModel: DataAcquisitionViewModel
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -56,7 +54,6 @@ fun DataAcquisition(
     val testingListState = rememberLazyListState()
     val anomalyListState = rememberLazyListState()
 
-    displayCreateSampleFab(bottomSheetScaffoldState.bottomSheetState.isCollapsed)
     LocalLifecycleOwner.current.lifecycleScope.launchWhenStarted {
         viewModel.eventFlow.runCatching {
             this.collect {
@@ -76,42 +73,26 @@ fun DataAcquisition(
             }
         }
     }
-    BottomSheetScaffold(
-        modifier = modifier,
-        scaffoldState = bottomSheetScaffoldState,
-        sheetContent = {
-            RecordSample(
-                viewModel = viewModel,
-                connectedDevices = connectedDevices
+    HorizontalPager(state = pagerState) { page ->
+        when (page) {
+            0 -> CollectedDataList(
+                viewModel.trainingSamples,
+                trainingListState,
+                pages[page],
+                viewModel.isRefreshingTrainingData
             )
-        },
-        sheetShape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp),
-        sheetElevation = 4.dp,
-        sheetPeekHeight = 0.dp
-    ) {
-
-        //TODO display empty data message
-        HorizontalPager(state = pagerState) { page ->
-            when (page) {
-                0 -> CollectedDataList(
-                    viewModel.trainingSamples,
-                    trainingListState,
-                    Training,
-                    viewModel.isRefreshingTrainingData
-                )
-                1 -> CollectedDataList(
-                    viewModel.trainingSamples,
-                    testingListState,
-                    Testing,
-                    viewModel.isRefreshingTestData
-                )
-                else -> CollectedDataList(
-                    viewModel.anomalySamples,
-                    anomalyListState,
-                    Anomaly,
-                    viewModel.isRefreshingAnomalyData
-                )
-            }
+            1 -> CollectedDataList(
+                viewModel.trainingSamples,
+                testingListState,
+                pages[page],
+                viewModel.isRefreshingTestData
+            )
+            else -> CollectedDataList(
+                viewModel.anomalySamples,
+                anomalyListState,
+                pages[page],
+                viewModel.isRefreshingAnomalyData
+            )
         }
     }
 }
