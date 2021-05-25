@@ -8,7 +8,7 @@ buildscript {
         // https://developer.android.com/training/dependency-injection/hilt-android
         hilt_android_version = '1.0.0'
         lifecycle_version = '2.4.0-alpha01'    // https://developer.android.com/jetpack/androidx/releases/lifecycle
-        accompanist_version = '0.9.0'
+        accompanist_version = '0.10.0'
     }
     repositories {
         google()

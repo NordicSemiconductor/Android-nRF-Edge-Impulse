@@ -69,11 +69,6 @@ fun Navigation(
             )
             Project(
                 viewModel = viewModel,
-                bottomNavigationScreens = listOf(
-                    BottomNavigationScreen.Devices,
-                    BottomNavigationScreen.DataAcquisition,
-                    BottomNavigationScreen.Deployment
-                ),
                 onBackPressed = {
                     navController.popBackStack()
                 })

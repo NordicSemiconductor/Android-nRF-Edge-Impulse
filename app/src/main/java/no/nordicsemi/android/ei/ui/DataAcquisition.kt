@@ -42,7 +42,6 @@ import java.net.UnknownHostException
 @Composable
 fun DataAcquisition(
     connectedDevice: List<Device>,
-    modalBottomSheetState: ModalBottomSheetState,
     pagerState: PagerState,
     pages: List<HorizontalPagerTab>,
     viewModel: DataAcquisitionViewModel
