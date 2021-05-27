@@ -24,6 +24,14 @@ sealed class HorizontalPagerTab(
     val rowIcon: ImageVector,
     val emptyListIcon: ImageVector
 ) {
+    companion object {
+        fun indexed(index: Int) = when (index) {
+            0 -> Training
+            1 -> Testing
+            else -> Anomaly
+        }
+    }
+
     object Training : HorizontalPagerTab(
         title = R.string.title_training,
         category = R.string.param_category_training,

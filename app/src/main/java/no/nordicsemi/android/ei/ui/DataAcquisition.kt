@@ -33,6 +33,7 @@ import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Sample
 import no.nordicsemi.android.ei.showSnackbar
+import no.nordicsemi.android.ei.util.exhaustive
 import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Error
 import java.net.UnknownHostException
@@ -43,7 +44,6 @@ import java.net.UnknownHostException
 fun DataAcquisition(
     connectedDevice: List<Device>,
     pagerState: PagerState,
-    pages: List<HorizontalPagerTab>,
     viewModel: DataAcquisitionViewModel
 ) {
     val context = LocalContext.current
@@ -68,31 +68,33 @@ fun DataAcquisition(
                             }
                         )
                     }
+                    else -> {}
                 }
             }
         }
     }
     HorizontalPager(state = pagerState) { page ->
-        when (page) {
-            0 -> CollectedDataList(
-                viewModel.trainingSamples,
-                trainingListState,
-                pages[page],
-                viewModel.isRefreshingTrainingData
+        val tab = HorizontalPagerTab.indexed(page)
+        when (tab) {
+            is Training -> CollectedDataList(
+                samples = viewModel.trainingSamples,
+                listState = trainingListState,
+                tab = tab,
+                isRefreshing = viewModel.isRefreshingTrainingData
             )
-            1 -> CollectedDataList(
-                viewModel.trainingSamples,
-                testingListState,
-                pages[page],
-                viewModel.isRefreshingTestData
+            is Testing -> CollectedDataList(
+                samples = viewModel.testingSamples,
+                listState = testingListState,
+                tab = tab,
+                isRefreshing = viewModel.isRefreshingTestData
             )
-            else -> CollectedDataList(
-                viewModel.anomalySamples,
-                anomalyListState,
-                pages[page],
-                viewModel.isRefreshingAnomalyData
+            is Anomaly -> CollectedDataList(
+                samples = viewModel.anomalySamples,
+                listState = anomalyListState,
+                tab = tab,
+                isRefreshing = viewModel.isRefreshingAnomalyData
             )
-        }
+        }.exhaustive
     }
 }
 

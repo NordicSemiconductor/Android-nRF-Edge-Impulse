@@ -13,3 +13,6 @@ object Utils {
         BluetoothAdapter.getDefaultAdapter()?.isEnabled ?: false
 
 }
+
+val <T> T.exhaustive: T
+    get() = this

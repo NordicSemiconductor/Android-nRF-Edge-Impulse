@@ -1,22 +1,22 @@
 package no.nordicsemi.android.ei.ui
 
 import android.content.res.Configuration.*
-import androidx.compose.foundation.layout.*
+import android.util.Log
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material.*
 import androidx.compose.material.ModalBottomSheetValue.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -30,22 +30,21 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
-import com.google.accompanist.pager.pagerTabIndicatorOffset
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.*
 import no.nordicsemi.android.ei.R
-import no.nordicsemi.android.ei.model.Device
+import no.nordicsemi.android.ei.ui.layouts.TabTopAppBar
 import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel
 import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
 import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Error
 import java.net.UnknownHostException
 
-@ExperimentalPagerApi
 @OptIn(ExperimentalMaterialApi::class)
+@ExperimentalPagerApi
 @Composable
 fun Project(
     viewModel: ProjectViewModel,
@@ -53,67 +52,72 @@ fun Project(
 ) {
     val isLargeScreen =
         LocalConfiguration.current.screenLayout and SCREENLAYOUT_SIZE_MASK >= SCREENLAYOUT_SIZE_LARGE
-    var dataAcquisitionSelected by rememberSaveable { mutableStateOf(false) }
+    var selectedScreen: BottomNavigationScreen by rememberSaveable { mutableStateOf(BottomNavigationScreen.Devices) }
     if (isLargeScreen) {
         LargeScreen(
             viewModel = viewModel,
-            dataAcquisitionSelected = dataAcquisitionSelected,
-            onDataAcquisitionSelected = {
-                dataAcquisitionSelected = it
-            },
+            selectedScreen = selectedScreen,
+            onScreenChanged = { selectedScreen = it },
             onBackPressed = onBackPressed
         )
     } else {
         SmallScreen(
             viewModel = viewModel,
-            dataAcquisitionSelected = dataAcquisitionSelected,
-            onDataAcquisitionSelected = {
-                dataAcquisitionSelected = it
+            selectedScreen = selectedScreen,
+            onScreenChanged = {
+                Log.d("AAAA", "Screen changed to: ${it.route}")
+                selectedScreen = it
             },
             onBackPressed = onBackPressed
         )
     }
 }
 
-
 @OptIn(ExperimentalMaterialApi::class)
 @ExperimentalPagerApi
 @Composable
 private fun LargeScreen(
     viewModel: ProjectViewModel,
-    dataAcquisitionSelected: Boolean,
-    onDataAcquisitionSelected: (Boolean) -> Unit,
+    selectedScreen: BottomNavigationScreen,
+    onScreenChanged: (BottomNavigationScreen) -> Unit,
     onBackPressed: () -> Unit
 ) {
     var isDialogVisible by rememberSaveable { mutableStateOf(false) }
     ProjectContent(
         viewModel = viewModel,
         scope = rememberCoroutineScope(),
-        showDataAcquisitionTitle = dataAcquisitionSelected,
-        onDataAcquisitionSelected = {
-            onDataAcquisitionSelected(it)
-        },
-        showFab = dataAcquisitionSelected && !isDialogVisible,
-        onClick = {
-            isDialogVisible = true
-        },
+        selectedScreen = selectedScreen,
+        onScreenChanged = onScreenChanged,
+        isFabVisible = selectedScreen.shouldFabBeVisible && !isDialogVisible,
+        onFabClicked = { isDialogVisible = true },
         onBackPressed = onBackPressed
     )
-    if (isDialogVisible) {
-        ShowDialog(
-            configuredDevices = viewModel.configuredDevices,
-            focusRequester = viewModel.focusRequester,
-            selectedDevice = viewModel.selectedDevice,
-            onDeviceSelected = { viewModel.onDeviceSelected(device = it) },
-            label = viewModel.label,
-            onLabelChanged = { viewModel.onLabelChanged(label = it) },
-            selectedSensor = viewModel.selectedSensor,
-            onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
-            selectedFrequency = viewModel.selectedFrequency,
-            onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) },
-            dismiss = {
-                isDialogVisible = false
-            })
+    if (isDialogVisible) when (selectedScreen) {
+        BottomNavigationScreen.DataAcquisition -> {
+            Dialog(
+                onDismissRequest = { isDialogVisible = false },
+                properties = DialogProperties(
+                    dismissOnBackPress = false,
+                    dismissOnClickOutside = false
+                ),
+                content = {
+                    RecordSampleLargeScreen(
+                        connectedDevices = viewModel.configuredDevices,
+                        focusRequester = viewModel.focusRequester,
+                        selectedDevice = viewModel.selectedDevice,
+                        onDeviceSelected = { viewModel.onDeviceSelected(it) },
+                        label = viewModel.label,
+                        onLabelChanged = { viewModel.onLabelChanged(it) },
+                        selectedSensor = viewModel.selectedSensor,
+                        onSensorSelected = { viewModel.onSensorSelected(it) },
+                        selectedFrequency = viewModel.selectedFrequency,
+                        onFrequencySelected = { viewModel.onFrequencySelected(it) },
+                        onDismiss = { isDialogVisible = false }
+                    )
+                }
+            )
+        }
+        else -> {}
     }
 }
 
@@ -122,8 +126,8 @@ private fun LargeScreen(
 @Composable
 private fun SmallScreen(
     viewModel: ProjectViewModel,
-    dataAcquisitionSelected: Boolean,
-    onDataAcquisitionSelected: (Boolean) -> Unit,
+    selectedScreen: BottomNavigationScreen,
+    onScreenChanged: (BottomNavigationScreen) -> Unit,
     onBackPressed: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -153,67 +157,24 @@ private fun SmallScreen(
                     )
                 }
             )
-        }) {
+        }
+    ) {
         ProjectContent(
             viewModel = viewModel,
             scope = scope,
-            showDataAcquisitionTitle = dataAcquisitionSelected,
-            onDataAcquisitionSelected = {
-                onDataAcquisitionSelected(it)
-            },
-            showFab = dataAcquisitionSelected && !modalBottomSheetState.isVisible,
-            onClick = {
+            selectedScreen = selectedScreen,
+            onScreenChanged = onScreenChanged,
+            isFabVisible = selectedScreen.shouldFabBeVisible && !modalBottomSheetState.isVisible,
+            onFabClicked = {
                 showBottomSheet(
-                    isLandsScape = isLandscape,
                     scope = scope,
-                    modalBottomSheetState = modalBottomSheetState
+                    modalBottomSheetState = modalBottomSheetState,
+                    isLandsScape = isLandscape,
                 )
             },
             onBackPressed = onBackPressed
         )
-
     }
-}
-
-
-@Composable
-@OptIn(ExperimentalMaterialApi::class)
-private fun ShowDialog(
-    configuredDevices: List<Device>,
-    focusRequester: FocusRequester,
-    selectedDevice: Device?,
-    onDeviceSelected: (Device) -> Unit,
-    label: String,
-    onLabelChanged: (String) -> Unit,
-    selectedSensor: Device.Sensor?,
-    onSensorSelected: (Device.Sensor) -> Unit,
-    selectedFrequency: Number?,
-    onFrequencySelected: (Number) -> Unit,
-    dismiss: () -> Unit
-) {
-    Dialog(
-        onDismissRequest = {
-            dismiss()
-        },
-        properties = DialogProperties(
-            dismissOnBackPress = false,
-            dismissOnClickOutside = false
-        ), content = {
-            RecordSampleLargeScreen(
-                connectedDevices = configuredDevices,
-                focusRequester = focusRequester,
-                selectedDevice = selectedDevice,
-                onDeviceSelected = { onDeviceSelected(it) },
-                label = label,
-                onLabelChanged = { onLabelChanged(it) },
-                selectedSensor = selectedSensor,
-                onSensorSelected = { onSensorSelected(it) },
-                selectedFrequency = selectedFrequency,
-                onFrequencySelected = { onFrequencySelected(it) },
-                onDismiss = dismiss
-            )
-        }
-    )
 }
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -222,21 +183,21 @@ private fun ShowDialog(
 private fun ProjectContent(
     viewModel: ProjectViewModel,
     scope: CoroutineScope,
-    showDataAcquisitionTitle: Boolean,
-    onDataAcquisitionSelected: (Boolean) -> Unit,
-    showFab: Boolean,
-    onClick: () -> Unit,
+    selectedScreen: BottomNavigationScreen,
+    onScreenChanged: (BottomNavigationScreen) -> Unit,
+    isFabVisible: Boolean,
+    onFabClicked: () -> Unit,
     onBackPressed: () -> Unit
 ) {
     val context = LocalContext.current
     val navController = rememberNavController()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val pages = remember {
-        listOf(
-            HorizontalPagerTab.Training, HorizontalPagerTab.Testing, HorizontalPagerTab.Anomaly
-        )
+
+    navController.addOnDestinationChangedListener { _, destination, _ ->
+        Log.d("AAAA", "Dest changed to ${destination.route}")
+        onScreenChanged(BottomNavigationScreen.fromNav(destination))
     }
-    val pagerState = rememberPagerState(pageCount = pages.size)
+    val snackbarHostState = remember { SnackbarHostState() }
+    val pagerState = rememberPagerState(pageCount = 3)
 
     LocalLifecycleOwner.current.lifecycleScope.launchWhenStarted {
         viewModel.eventFlow.runCatching {
@@ -253,6 +214,7 @@ private fun ProjectContent(
                             }
                         )
                     }
+                    else -> {}
                 }
             }
         }
@@ -262,25 +224,21 @@ private fun ProjectContent(
         scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
         topBar = {
             ProjectTopAppBar(
+                modifier = Modifier.fillMaxWidth(),
                 projectName = viewModel.project.name,
-                pages = pages,
+                selectedScreen = selectedScreen,
                 pagerState = pagerState,
-                isDataAcquisitionSelected = showDataAcquisitionTitle,
-                onBackPressed = onBackPressed
+                onBackPressed = onBackPressed,
             )
         },
         bottomBar = {
-            ProjectBottomNavigationBar(
+            ProjectBottomNavigation(
                 navController = navController,
-                onDataAcquisitionSelected = {
-                    onDataAcquisitionSelected(it)
-                })
+            )
         },
         floatingActionButton = {
-            if (showFab)
-                RecordDataFloatingActionButton(onClick = {
-                    onClick()
-                })
+            if (isFabVisible)
+                RecordDataFloatingActionButton(onClick = onFabClicked)
         }
     ) { innerPadding ->
         NavHost(
@@ -296,9 +254,7 @@ private fun ProjectContent(
                     viewModel = devicesViewModel,
                     configuredDevices = viewModel.configuredDevices,
                     refreshingState = viewModel.isRefreshing,
-                    onRefresh = {
-                        viewModel.listDevices(true)
-                    }
+                    onRefresh = { viewModel.listDevices(true) }
                 )
             }
             composable(route = BottomNavigationScreen.DataAcquisition.route) { backStackEntry ->
@@ -308,7 +264,6 @@ private fun ProjectContent(
                 DataAcquisition(
                     connectedDevice = viewModel.configuredDevices,
                     pagerState = pagerState,
-                    pages = pages,
                     viewModel = dataAcquisitionViewModel
                 )
             }
@@ -322,103 +277,66 @@ private fun ProjectContent(
 @ExperimentalPagerApi
 @Composable
 private fun ProjectTopAppBar(
+    modifier: Modifier = Modifier,
     projectName: String,
-    pages: List<HorizontalPagerTab>,
+    selectedScreen: BottomNavigationScreen,
     pagerState: PagerState,
-    isDataAcquisitionSelected: Boolean,
     onBackPressed: () -> Unit
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth(),
-        color = MaterialTheme.colors.primarySurface,
-        elevation = AppBarDefaults.TopAppBarElevation
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(start = 16.dp, end = 16.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .height(56.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = {
-                    onBackPressed()
-                }) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = null
-                    )
-                }
-                Spacer(modifier = Modifier.width(32.dp))
-                Text(
-                    text = projectName,
-                    style = MaterialTheme.typography.h6,
-                    color = MaterialTheme.colors.onPrimary,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1
-                )
-            }
-            if (isDataAcquisitionSelected)
-                Row(
-                    modifier = Modifier
-                        .height(56.dp),
-                    verticalAlignment = Alignment.Bottom
-                ) {
-                    TabRow(
-                        // Selected tab is the current page
-                        selectedTabIndex = pagerState.currentPage,
-                        // Override the indicator, using the provided pagerTabIndicatorOffset modifier
-                        indicator = { tabPositions ->
-                            TabRowDefaults.Indicator(
-                                Modifier.pagerTabIndicatorOffset(pagerState, tabPositions)
-                            )
-                        }
-                    ) {
-                        // Adds tabs for all of pages
-                        pages.forEachIndexed { index, tab ->
-                            Tab(
-                                text = { Text(stringResource(id = tab.title)) },
-                                selected = pagerState.currentPage == index,
-                                onClick = {
-                                    coroutineScope.launch {
-                                        pagerState.scrollToPage(
-                                            index
-                                        )
-                                    }
-                                },
-                            )
-                        }
+    val tabs = listOf(
+        HorizontalPagerTab.Training,
+        HorizontalPagerTab.Testing,
+        HorizontalPagerTab.Anomaly
+    )
+    when (selectedScreen) {
+        BottomNavigationScreen.DataAcquisition -> {
+            TabTopAppBar(
+                title = { Text(text = projectName) },
+                tabs = tabs.map { stringResource(id = it.title) },
+                pagerState = pagerState,
+                modifier = modifier,
+                navigationIcon = {
+                    IconButton(onClick = onBackPressed) {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowBack,
+                            contentDescription = null
+                        )
                     }
                 }
+            )
+        }
+        else -> {
+            TopAppBar(
+                title = { Text(text = projectName) },
+                modifier = modifier,
+                navigationIcon = {
+                    IconButton(onClick = onBackPressed) {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowBack,
+                            contentDescription = null
+                        )
+                    }
+                }
+            )
         }
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
-private fun ProjectBottomNavigationBar(
+private fun ProjectBottomNavigation(
     navController: NavController,
-    onDataAcquisitionSelected: (Boolean) -> Unit
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: Route.devices
-    val bottomNavigationScreens = remember {
-        listOf(
-            BottomNavigationScreen.Devices,
-            BottomNavigationScreen.DataAcquisition,
-            BottomNavigationScreen.Deployment
-        )
-    }
+    val screens =  listOf(
+        BottomNavigationScreen.Devices,
+        BottomNavigationScreen.DataAcquisition,
+        BottomNavigationScreen.Deployment
+    )
     BottomNavigation(
         backgroundColor = MaterialTheme.colors.surface
     ) {
-        bottomNavigationScreens.forEach { screen ->
-            if(currentRoute == screen.route){
-                onDataAcquisitionSelected(screen.route == Route.dataAcquisition)
-            }
+        screens.forEach { screen ->
             BottomNavigationItem(
                 icon = {
                     Icon(
@@ -430,9 +348,7 @@ private fun ProjectBottomNavigationBar(
                     )
                 },
                 label = {
-                    Text(
-                        text = stringResource(id = screen.resourceId)
-                    )
+                    Text(text = stringResource(id = screen.resourceId))
                 },
                 selected = currentRoute == screen.route,
                 onClick = {
@@ -457,12 +373,22 @@ private fun ProjectBottomNavigationBar(
 
 @OptIn(ExperimentalMaterialApi::class)
 private fun showBottomSheet(
-    isLandsScape: Boolean,
     scope: CoroutineScope,
     modalBottomSheetState: ModalBottomSheetState,
-    targetValue: ModalBottomSheetValue = if (isLandsScape) {
-        Expanded
-    } else HalfExpanded
+    isLandsScape: Boolean,
+) {
+    showBottomSheet(
+        scope = scope,
+        modalBottomSheetState = modalBottomSheetState,
+        targetValue = if (isLandsScape) Expanded else HalfExpanded
+    )
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+private fun showBottomSheet(
+    scope: CoroutineScope,
+    modalBottomSheetState: ModalBottomSheetState,
+    targetValue: ModalBottomSheetValue
 ) {
     scope.launch {
         modalBottomSheetState.animateTo(targetValue = targetValue)
@@ -478,6 +404,3 @@ private fun hideBottomSheet(
         modalBottomSheetState.hide()
     }
 }
-
-val <T> T.exhaustive: T
-    get() = this
