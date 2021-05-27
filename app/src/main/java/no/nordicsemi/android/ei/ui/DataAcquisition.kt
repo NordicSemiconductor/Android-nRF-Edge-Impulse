@@ -39,7 +39,6 @@ import no.nordicsemi.android.ei.viewmodels.event.Error
 import java.net.UnknownHostException
 
 @OptIn(ExperimentalPagerApi::class)
-@ExperimentalMaterialApi
 @Composable
 fun DataAcquisition(
     connectedDevice: List<Device>,

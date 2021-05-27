@@ -6,14 +6,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material.SnackbarHostState
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.ui.theme.NordicTheme
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-    @ExperimentalCoroutinesApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {

@@ -1,7 +1,6 @@
 package no.nordicsemi.android.ei.ui
 
 import android.content.res.Configuration.*
-import android.util.Log
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
@@ -43,8 +42,6 @@ import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Error
 import java.net.UnknownHostException
 
-@OptIn(ExperimentalMaterialApi::class)
-@ExperimentalPagerApi
 @Composable
 fun Project(
     viewModel: ProjectViewModel,
@@ -64,17 +61,12 @@ fun Project(
         SmallScreen(
             viewModel = viewModel,
             selectedScreen = selectedScreen,
-            onScreenChanged = {
-                Log.d("AAAA", "Screen changed to: ${it.route}")
-                selectedScreen = it
-            },
+            onScreenChanged = { selectedScreen = it },
             onBackPressed = onBackPressed
         )
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
-@ExperimentalPagerApi
 @Composable
 private fun LargeScreen(
     viewModel: ProjectViewModel,
@@ -122,7 +114,6 @@ private fun LargeScreen(
 }
 
 @OptIn(ExperimentalMaterialApi::class)
-@ExperimentalPagerApi
 @Composable
 private fun SmallScreen(
     viewModel: ProjectViewModel,
@@ -177,8 +168,7 @@ private fun SmallScreen(
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
-@ExperimentalPagerApi
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 private fun ProjectContent(
     viewModel: ProjectViewModel,
@@ -191,9 +181,8 @@ private fun ProjectContent(
 ) {
     val context = LocalContext.current
     val navController = rememberNavController()
-
+    // TODO: Check why this listener is called twice
     navController.addOnDestinationChangedListener { _, destination, _ ->
-        Log.d("AAAA", "Dest changed to ${destination.route}")
         onScreenChanged(BottomNavigationScreen.fromNav(destination))
     }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -274,7 +263,7 @@ private fun ProjectContent(
     }
 }
 
-@ExperimentalPagerApi
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 private fun ProjectTopAppBar(
     modifier: Modifier = Modifier,

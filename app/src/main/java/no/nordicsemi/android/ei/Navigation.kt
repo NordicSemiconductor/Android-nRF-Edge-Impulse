@@ -19,7 +19,6 @@ import retrofit2.HttpException
 import java.net.HttpURLConnection
 import java.net.UnknownHostException
 
-@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun Navigation(
     onError: () -> Unit = {},
