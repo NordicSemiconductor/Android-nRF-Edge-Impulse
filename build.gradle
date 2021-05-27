@@ -1,13 +1,17 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     ext {
+        // https://developer.android.com/jetpack/androidx/releases/compose
         compose_version = '1.0.0-beta07'
-        // https://developer.android.com/jetpack/compose/setup
-        kotlin_version = '1.4.32'              // https://developer.android.com/jetpack/compose/setup#configure_kotlin
-        hilt_dagger_version = '2.35.1'
+        // https://developer.android.com/jetpack/compose/setup#configure_kotlin
+        kotlin_version = '1.4.32'
+        // https://github.com/google/dagger/releases
+        hilt_dagger_version = '2.36'
         // https://developer.android.com/training/dependency-injection/hilt-android
         hilt_android_version = '1.0.0'
-        lifecycle_version = '2.4.0-alpha01'    // https://developer.android.com/jetpack/androidx/releases/lifecycle
+        // https://developer.android.com/jetpack/androidx/releases/lifecycle
+        lifecycle_version = '2.4.0-alpha01'
+        // https://github.com/google/accompanist/releases
         accompanist_version = '0.10.0'
     }
     repositories {
