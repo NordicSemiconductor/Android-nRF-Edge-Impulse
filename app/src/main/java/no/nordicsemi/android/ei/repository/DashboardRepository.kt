@@ -13,13 +13,10 @@ class DashboardRepository @Inject constructor(
 ) : BaseRepository(service = service, defaultDispatcher = defaultDispatcher) {
 
     suspend fun createProject(token: String, projectName: String) = withContext(defaultDispatcher) {
-        service.createProject(
-            jwt = token,
-            createProjectRequest = CreateProjectRequest(projectName = projectName)
-        )
+        service.createProject(jwt = token, createProjectRequest = CreateProjectRequest(projectName))
     }
 
     suspend fun developmentKeys(token: String, projectId: Int) = withContext(defaultDispatcher) {
-        service.developmentKeys(token, projectId)
+        service.developmentKeys(jwt = token, projectId = projectId)
     }
 }

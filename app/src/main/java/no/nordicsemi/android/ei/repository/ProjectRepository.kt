@@ -14,17 +14,11 @@ class ProjectRepository @Inject constructor(
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher
 ) {
 
-    suspend fun listDevices(projectId: Int, keys: DevelopmentKeys): ListDevicesResponse =
-        withContext(defaultDispatcher) {
-            service.listDevices(apiKey = keys.apiKey, projectId = projectId)
-        }
+    suspend fun listDevices(projectId: Int, keys: DevelopmentKeys) = withContext(defaultDispatcher) {
+        service.listDevices(apiKey = keys.apiKey, projectId = projectId)
+    }
 
-    suspend fun listSamples(
-        projectId: Int,
-        keys: DevelopmentKeys,
-        category: String
-    ): ListSamplesResponse =
-        withContext(defaultDispatcher) {
-            service.listSamples(apiKey = keys.apiKey, projectId = projectId, category = category)
-        }
+    suspend fun listSamples(projectId: Int, keys: DevelopmentKeys, category: String) = withContext(defaultDispatcher) {
+        service.listSamples(apiKey = keys.apiKey, projectId = projectId, category = category)
+    }
 }

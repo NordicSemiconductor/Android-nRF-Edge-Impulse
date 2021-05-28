@@ -1,6 +1,5 @@
 package no.nordicsemi.android.ei.ui
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -75,29 +74,28 @@ fun DataAcquisition(
     HorizontalPager(state = pagerState) { page ->
         val tab = HorizontalPagerTab.indexed(page)
         when (tab) {
-            is Training -> CollectedDataList(
+            Training -> CollectedDataList(
                 samples = viewModel.trainingSamples,
                 listState = trainingListState,
                 tab = tab,
-                isRefreshing = viewModel.isRefreshingTrainingData
+                isRefreshing = viewModel.isRefreshing
             )
-            is Testing -> CollectedDataList(
+            Testing -> CollectedDataList(
                 samples = viewModel.testingSamples,
                 listState = testingListState,
                 tab = tab,
-                isRefreshing = viewModel.isRefreshingTestData
+                isRefreshing = viewModel.isRefreshing
             )
-            is Anomaly -> CollectedDataList(
+            Anomaly -> CollectedDataList(
                 samples = viewModel.anomalySamples,
                 listState = anomalyListState,
                 tab = tab,
-                isRefreshing = viewModel.isRefreshingAnomalyData
+                isRefreshing = viewModel.isRefreshing
             )
         }.exhaustive
     }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun CollectedDataList(
     samples: List<Sample>,
@@ -105,18 +103,20 @@ private fun CollectedDataList(
     tab: HorizontalPagerTab,
     isRefreshing: Boolean = false
 ) {
-    samples.takeIf {
-        it.isNotEmpty()
-    }?.let { notEmptyList ->
+    samples.takeIf { it.isNotEmpty() }?.let { notEmptyList ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize(),
             state = listState
         ) {
-            items(items = notEmptyList, key = {
-                it.id
-            }) { sample ->
-                CollectedDataRow(sample = sample, tab)
+            items(
+                items = notEmptyList,
+                key = { it.id }
+            ) { sample ->
+                CollectedDataRow(
+                    sample = sample,
+                    tab = tab
+                )
                 Divider()
             }
         }
@@ -134,9 +134,9 @@ private fun CollectedDataList(
                 Spacer(modifier = Modifier.size(16.dp))
                 Text(
                     text = when (tab) {
-                        is Training -> stringResource(R.string.label_loading_collected_data)
-                        is Testing -> stringResource(R.string.label_loading_collected_data)
-                        is Anomaly -> stringResource(R.string.label_loading_collected_data)
+                        Training -> stringResource(R.string.label_loading_collected_data)
+                        Testing -> stringResource(R.string.label_loading_collected_data)
+                        Anomaly -> stringResource(R.string.label_loading_collected_data)
                     }
                 )
             } else {
@@ -157,13 +157,13 @@ private fun CollectedDataList(
     }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun RecordDataFloatingActionButton(onClick: () -> Unit) {
     // Toggle the visibility of the content with animation.
     FloatingActionButton(onClick = onClick) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier
+                .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(

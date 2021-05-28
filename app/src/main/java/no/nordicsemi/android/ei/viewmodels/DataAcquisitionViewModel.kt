@@ -3,6 +3,7 @@ package no.nordicsemi.android.ei.viewmodels
 import android.app.Application
 import android.content.Context
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
@@ -23,6 +24,7 @@ import no.nordicsemi.android.ei.di.UserManager
 import no.nordicsemi.android.ei.model.Sample
 import no.nordicsemi.android.ei.repository.ProjectDataRepository
 import no.nordicsemi.android.ei.repository.ProjectRepository
+import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.viewmodels.event.Error
 import no.nordicsemi.android.ei.viewmodels.event.Event
 import javax.inject.Inject
@@ -47,17 +49,13 @@ class DataAcquisitionViewModel @Inject constructor(
             .get(projectManager.projectComponent!!, ProjectComponentEntryPoint::class.java)
             .projectDataRepository()
 
-    var isRefreshingTrainingData: Boolean by mutableStateOf(false)
+    var isRefreshing: Boolean by mutableStateOf(false)
         private set
-    var isRefreshingTestData: Boolean by mutableStateOf(false)
+    var trainingSamples = mutableStateListOf<Sample>()
         private set
-    var isRefreshingAnomalyData: Boolean by mutableStateOf(false)
+    var testingSamples = mutableStateListOf<Sample>()
         private set
-    var trainingSamples: List<Sample> by mutableStateOf(listOf())
-        private set
-    var testingSamples: List<Sample> by mutableStateOf(listOf())
-        private set
-    var anomalySamples: List<Sample> by mutableStateOf(listOf())
+    var anomalySamples = mutableStateListOf<Sample>()
         private set
 
     init {
@@ -67,25 +65,14 @@ class DataAcquisitionViewModel @Inject constructor(
     }
 
     private fun listSamples(pagerTab: HorizontalPagerTab, swipedToRefresh: Boolean = false) {
+        isRefreshing = swipedToRefresh
         val context = getApplication() as Context
-        val category = when (pagerTab) {
-            is Training -> {
-                isRefreshingTrainingData = swipedToRefresh
-                context.getString(pagerTab.category)
-            }
-            is Testing -> {
-                isRefreshingTestData = swipedToRefresh
-                context.getString(pagerTab.category)
-            }
-            is Anomaly -> {
-                isRefreshingAnomalyData = swipedToRefresh
-                context.getString(pagerTab.category)
-            }
-        }
+        val category = context.getString(pagerTab.category)
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope.launch {
-                eventChannel.send(Error(throwable = throwable))
-                    .also { isRefreshingTrainingData = false }
+                eventChannel
+                    .send(Error(throwable))
+                    .also { isRefreshing = false }
             }
         }
         viewModelScope.launch(handler) {
@@ -94,26 +81,17 @@ class DataAcquisitionViewModel @Inject constructor(
                 keys = projectDataRepository.developmentKeys,
                 category = category
             ).let { response ->
-                when (response.success) {
-                    true -> when (pagerTab) {
-                        is Training -> trainingSamples = response.samples
-                        is Testing -> testingSamples = response.samples
-                        is Anomaly -> anomalySamples = response.samples
-                    }
-                    false -> throw Throwable("Unknown error")
-                }.also {
-                    when (pagerTab) {
-                        is Training -> {
-                            isRefreshingTrainingData = false
-                        }
-                        is Testing -> {
-                            isRefreshingTestData = false
-                        }
-                        is Anomaly -> {
-                            isRefreshingAnomalyData = false
-                        }
-                    }
+                guard(response.success) {
+                    throw Throwable(response.error)
                 }
+                when (pagerTab) {
+                    Training -> trainingSamples
+                    Testing -> testingSamples
+                    Anomaly -> anomalySamples
+                }.apply {
+                    clear()
+                    addAll(response.samples)
+                }.also { isRefreshing = false }
             }
         }
     }

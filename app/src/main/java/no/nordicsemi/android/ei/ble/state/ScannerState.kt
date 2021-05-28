@@ -2,32 +2,33 @@ package no.nordicsemi.android.ei.ble.state
 
 import android.bluetooth.le.ScanResult
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
+import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.*
+import kotlin.math.max
 
 /**
  * ScannerState that holds the current scanning state and the list of discovered devices.
  */
-class ScannerState(state: ScanningState = ScanningStopped(NotStarted)) {
-    var scanningState: ScanningState by mutableStateOf(state)
+class ScannerState(
+    initialState: ScanningState = ScanningState.Stopped(Reason.NotStarted)
+) {
+    var scanningState: ScanningState by mutableStateOf(initialState)
         private set
 
-    var discoveredDevices: List<DiscoveredBluetoothDevice> by mutableStateOf(listOf())
+    var discoveredDevices = mutableStateListOf<DiscoveredBluetoothDevice>()
         private set
 
     fun onDeviceFound(scanResult: ScanResult) {
         discoveredDevices.find {
             it.device == scanResult.device
         }?.let {
-            it.rssi = when {
-                scanResult.rssi <= -128 -> -128
-                else -> scanResult.rssi
-            }
-            it.name = scanResult.scanRecord?.deviceName ?: "Unknown"
+            it.rssi = max(-128, scanResult.rssi)
+            it.name = scanResult.scanRecord?.deviceName
         } ?: run {
-            discoveredDevices =
-                discoveredDevices + scanResult.toDiscoveredBluetoothDevice()
+            discoveredDevices.add(scanResult.toDiscoveredBluetoothDevice())
         }
     }
 
@@ -35,38 +36,37 @@ class ScannerState(state: ScanningState = ScanningStopped(NotStarted)) {
      * Invoked when scanning has been started
      */
     fun onScanningStarted() {
-        clearDiscoveredDevices()
-        scanningState = Scanning
+        scanningState = ScanningState.Started
     }
 
     fun onScanningNotStarted() {
+        scanningState = ScanningState.Stopped(Reason.NotStarted)
         clearDiscoveredDevices()
-        scanningState = ScanningStopped(NotStarted)
     }
 
     fun onBluetoothDisabled() {
-        scanningState = ScanningStopped(BluetoothDisabled)
+        scanningState = ScanningState.Stopped(Reason.BluetoothDisabled)
         clearDiscoveredDevices()
     }
 
     fun onLocationPermissionNotGranted() {
-        scanningState = ScanningStopped(LocationPermissionNotGranted)
+        scanningState = ScanningState.Stopped(Reason.LocationPermissionNotGranted)
         clearDiscoveredDevices()
     }
 
     fun onLocationTurnedOff() {
-        scanningState = ScanningStopped(LocationTurnedOff)
+        scanningState = ScanningState.Stopped(Reason.LocationTurnedOff)
         clearDiscoveredDevices()
     }
 
     private fun clearDiscoveredDevices() {
-        discoveredDevices = discoveredDevices - discoveredDevices
+        discoveredDevices.clear()
     }
 }
 
 private fun ScanResult.toDiscoveredBluetoothDevice(): DiscoveredBluetoothDevice {
     return DiscoveredBluetoothDevice(
-        name = scanRecord?.deviceName ?: "Unknown",
+        name = scanRecord?.deviceName,
         rssi = rssi,
         device = device
     )
