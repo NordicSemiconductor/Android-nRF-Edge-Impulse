@@ -27,4 +27,15 @@ class ProjectRepository @Inject constructor(
         withContext(defaultDispatcher) {
             service.listSamples(apiKey = keys.apiKey, projectId = projectId, category = category)
         }
+
+    suspend fun listSamples(
+        projectId: Int,
+        keys: DevelopmentKeys,
+        category: String,
+        offset: Int,
+        limit: Int
+    ): ListSamplesResponse =
+        withContext(defaultDispatcher) {
+            service.listSamples(apiKey = keys.apiKey, projectId = projectId, category = category, offset = offset, limit = limit)
+        }
 }

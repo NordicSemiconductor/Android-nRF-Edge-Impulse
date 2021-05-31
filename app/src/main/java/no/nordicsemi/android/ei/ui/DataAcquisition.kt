@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
@@ -23,9 +22,15 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import androidx.paging.LoadState
+import androidx.paging.PagingData
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.items
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import no.nordicsemi.android.ei.HorizontalPagerTab
 import no.nordicsemi.android.ei.HorizontalPagerTab.*
@@ -67,7 +72,8 @@ fun DataAcquisition(
                             }
                         )
                     }
-                    else -> {}
+                    else -> {
+                    }
                 }
             }
         }
@@ -76,22 +82,19 @@ fun DataAcquisition(
         val tab = HorizontalPagerTab.indexed(page)
         when (tab) {
             is Training -> CollectedDataList(
-                samples = viewModel.trainingSamples,
-                listState = trainingListState,
-                tab = tab,
-                isRefreshing = viewModel.isRefreshingTrainingData
+                state = trainingListState,
+                pagingDataFlow = viewModel.trainingSamples,
+                tab = tab
             )
             is Testing -> CollectedDataList(
-                samples = viewModel.testingSamples,
-                listState = testingListState,
-                tab = tab,
-                isRefreshing = viewModel.isRefreshingTestData
+                state = testingListState,
+                pagingDataFlow = viewModel.testingSamples,
+                tab = tab
             )
             is Anomaly -> CollectedDataList(
-                samples = viewModel.anomalySamples,
-                listState = anomalyListState,
-                tab = tab,
-                isRefreshing = viewModel.isRefreshingAnomalyData
+                state = anomalyListState,
+                pagingDataFlow = viewModel.anomalySamples,
+                tab = tab
             )
         }.exhaustive
     }
@@ -100,24 +103,47 @@ fun DataAcquisition(
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun CollectedDataList(
-    samples: List<Sample>,
-    listState: LazyListState,
-    tab: HorizontalPagerTab,
-    isRefreshing: Boolean = false
+    state: LazyListState,
+    pagingDataFlow: Flow<PagingData<Sample>>,
+    tab: HorizontalPagerTab
 ) {
-    samples.takeIf {
-        it.isNotEmpty()
-    }?.let { notEmptyList ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize(),
-            state = listState
-        ) {
-            items(items = notEmptyList, key = {
-                it.id
-            }) { sample ->
-                CollectedDataRow(sample = sample, tab)
+    val samples: LazyPagingItems<Sample> = pagingDataFlow.collectAsLazyPagingItems()
+    samples.takeIf { lazyPagingItems ->
+        lazyPagingItems.itemCount > 0
+    }?.let { lazyPagingItems ->
+        LazyColumn(contentPadding = PaddingValues(bottom = 56.dp), state = state) {
+            items(lazyPagingItems) { sample ->
+                CollectedDataRow(sample = sample!!, tab = tab)
                 Divider()
+            }
+
+            lazyPagingItems.apply {
+                when {
+                    loadState.refresh is LoadState.Loading -> {
+                        item {
+                            Loading(modifier = Modifier.fillParentMaxSize())
+                        }
+                    }
+                    loadState.append is LoadState.Loading -> {
+                        item { LoadingItem() }
+                    }
+                    loadState.refresh is LoadState.Error -> {
+                        val e = lazyPagingItems.loadState.refresh as LoadState.Error
+                        item {
+                            ErrorItem(
+                                message = e.error.localizedMessage!!,
+                                modifier = Modifier.fillParentMaxSize(),
+                                onClickRetry = { retry() }
+                            )
+                        }
+                    }
+                    loadState.refresh is LoadState.Error -> {
+                        val e = lazyPagingItems.loadState.refresh as LoadState.Error
+                        item {
+                            ErrorItem(message = e.toString(), onClickRetry = { retry() })
+                        }
+                    }
+                }
             }
         }
     } ?: run {
@@ -126,36 +152,22 @@ private fun CollectedDataList(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (isRefreshing) {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .size(64.dp)
+            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
+                Icon(
+                    imageVector = tab.emptyListIcon,
+                    contentDescription = null,
+                    modifier = Modifier.size(72.dp)
                 )
-                Spacer(modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = when (tab) {
-                        is Training -> stringResource(R.string.label_loading_collected_data)
-                        is Testing -> stringResource(R.string.label_loading_collected_data)
-                        is Anomaly -> stringResource(R.string.label_loading_collected_data)
-                    }
+                    text = stringResource(R.string.label_no_collected_data_yet),
+                    style = MaterialTheme.typography.h6
                 )
-            } else {
-                CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
-                    Icon(
-                        imageVector = tab.emptyListIcon,
-                        contentDescription = null,
-                        modifier = Modifier.size(72.dp)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = stringResource(R.string.label_no_collected_data_yet),
-                        style = MaterialTheme.typography.h6
-                    )
-                }
             }
         }
     }
 }
+
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -212,6 +224,53 @@ fun CollectedDataRow(sample: Sample, tab: HorizontalPagerTab) {
                 color = MaterialTheme.colors.onSurface,
                 style = MaterialTheme.typography.caption
             )
+        }
+    }
+}
+
+@Composable
+private fun Loading(
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        CircularProgressIndicator(modifier = Modifier.size(56.dp))
+    }
+}
+
+@Composable
+private fun LoadingItem() {
+    CircularProgressIndicator(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .wrapContentWidth(Alignment.CenterHorizontally)
+    )
+}
+
+@Composable
+private fun ErrorItem(
+    message: String,
+    modifier: Modifier = Modifier,
+    onClickRetry: () -> Unit
+) {
+    Row(
+        modifier = modifier.padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = message,
+            maxLines = 1,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.h6,
+            color = Color.Red
+        )
+        OutlinedButton(onClick = onClickRetry) {
+            Text(text = stringResource(R.string.try_again))
         }
     }
 }

@@ -2,19 +2,19 @@ package no.nordicsemi.android.ei.viewmodels
 
 import android.app.Application
 import android.content.Context
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import dagger.hilt.EntryPoints
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.launch
-import no.nordicsemi.android.ei.HorizontalPagerTab
 import no.nordicsemi.android.ei.HorizontalPagerTab.*
 import no.nordicsemi.android.ei.di.ProjectComponentEntryPoint
 import no.nordicsemi.android.ei.di.ProjectManager
@@ -36,7 +36,6 @@ class DataAcquisitionViewModel @Inject constructor(
 
     private val eventChannel = Channel<Event>(Channel.BUFFERED)
     val eventFlow = eventChannel.receiveAsFlow()
-
     private val projectManager: ProjectManager
         get() = EntryPoints
             .get(userManager.userComponent!!, UserComponentEntryPoint::class.java)
@@ -47,74 +46,43 @@ class DataAcquisitionViewModel @Inject constructor(
             .get(projectManager.projectComponent!!, ProjectComponentEntryPoint::class.java)
             .projectDataRepository()
 
-    var isRefreshingTrainingData: Boolean by mutableStateOf(false)
-        private set
-    var isRefreshingTestData: Boolean by mutableStateOf(false)
-        private set
-    var isRefreshingAnomalyData: Boolean by mutableStateOf(false)
-        private set
-    var trainingSamples: List<Sample> by mutableStateOf(listOf())
-        private set
-    var testingSamples: List<Sample> by mutableStateOf(listOf())
-        private set
-    var anomalySamples: List<Sample> by mutableStateOf(listOf())
-        private set
+    private val project = projectDataRepository.project
+    private val keys = projectDataRepository.developmentKeys
 
-    init {
-        listSamples(Training)
-        listSamples(Testing)
-        listSamples(Anomaly)
-    }
+    val trainingSamples: Flow<PagingData<Sample>> =
+        Pager(PagingConfig(pageSize = PAGE_SIZE, prefetchDistance = 2)) {
+            SamplePagingSource(
+                project,
+                keys,
+                context.getString(Training.category),
+                projectRepository
+            )
+        }.flow.cachedIn(viewModelScope)
+            .catch { e -> eventChannel.send(element = Error(Throwable(e))) }
 
-    private fun listSamples(pagerTab: HorizontalPagerTab, swipedToRefresh: Boolean = false) {
-        val context = getApplication() as Context
-        val category = when (pagerTab) {
-            is Training -> {
-                isRefreshingTrainingData = swipedToRefresh
-                context.getString(pagerTab.category)
-            }
-            is Testing -> {
-                isRefreshingTestData = swipedToRefresh
-                context.getString(pagerTab.category)
-            }
-            is Anomaly -> {
-                isRefreshingAnomalyData = swipedToRefresh
-                context.getString(pagerTab.category)
-            }
-        }
-        val handler = CoroutineExceptionHandler { _, throwable ->
-            viewModelScope.launch {
-                eventChannel.send(Error(throwable = throwable))
-                    .also { isRefreshingTrainingData = false }
-            }
-        }
-        viewModelScope.launch(handler) {
-            projectRepository.listSamples(
-                projectId = projectDataRepository.project.id,
-                keys = projectDataRepository.developmentKeys,
-                category = category
-            ).let { response ->
-                when (response.success) {
-                    true -> when (pagerTab) {
-                        is Training -> trainingSamples = response.samples
-                        is Testing -> testingSamples = response.samples
-                        is Anomaly -> anomalySamples = response.samples
-                    }
-                    false -> throw Throwable("Unknown error")
-                }.also {
-                    when (pagerTab) {
-                        is Training -> {
-                            isRefreshingTrainingData = false
-                        }
-                        is Testing -> {
-                            isRefreshingTestData = false
-                        }
-                        is Anomaly -> {
-                            isRefreshingAnomalyData = false
-                        }
-                    }
-                }
-            }
-        }
+    var testingSamples: Flow<PagingData<Sample>> =
+        Pager(PagingConfig(pageSize = PAGE_SIZE, prefetchDistance = 2)) {
+            SamplePagingSource(
+                project,
+                keys,
+                context.getString(Testing.category),
+                projectRepository
+            )
+        }.flow.cachedIn(viewModelScope)
+            .catch { e -> eventChannel.send(element = Error(Throwable(e))) }
+
+    var anomalySamples: Flow<PagingData<Sample>> =
+        Pager(PagingConfig(pageSize = PAGE_SIZE, prefetchDistance = 2)) {
+            SamplePagingSource(
+                project,
+                keys,
+                context.getString(Anomaly.category),
+                projectRepository
+            )
+        }.flow.cachedIn(viewModelScope)
+            .catch { e -> eventChannel.send(element = Error(Throwable(e))) }
+
+    companion object {
+        const val PAGE_SIZE = 50
     }
 }

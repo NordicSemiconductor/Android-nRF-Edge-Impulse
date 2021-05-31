@@ -91,10 +91,8 @@ interface EiService {
         @Header("x-api-key") apiKey: String,
         @Path("projectId") projectId: Int,
         @Query("category") category: String = "training",
-        @Query("limit") limit: Int = 100,
-        @Query("offset") offset: Int = 0,
-        @Query("excludeSensors") excludeSensors: Boolean = false,
-        @Query("labels") labels: String
+        @Query("limit") limit: Int,
+        @Query("offset") offset: Int,
     ): ListSamplesResponse
 
 }

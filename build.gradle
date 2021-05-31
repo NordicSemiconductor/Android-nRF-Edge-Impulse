@@ -13,13 +13,15 @@ buildscript {
         lifecycle_version = '2.4.0-alpha01'
         // https://github.com/google/accompanist/releases
         accompanist_version = '0.10.0'
+
+        paging_version = '3.0.0'
     }
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.0.0-beta02'
+        classpath 'com.android.tools.build:gradle:7.0.0-beta03'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "com.google.dagger:hilt-android-gradle-plugin:$hilt_dagger_version"
 
