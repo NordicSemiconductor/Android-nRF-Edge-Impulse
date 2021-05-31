@@ -79,17 +79,17 @@ fun DataAcquisition(
     HorizontalPager(state = pagerState) { page ->
         val tab = HorizontalPagerTab.indexed(page)
         when (tab) {
-            is Training -> CollectedDataList(
+            Training -> CollectedDataList(
                 state = trainingListState,
                 pagingDataFlow = viewModel.trainingSamples,
                 tab = tab
             )
-            is Testing -> CollectedDataList(
+            Testing -> CollectedDataList(
                 state = testingListState,
                 pagingDataFlow = viewModel.testingSamples,
                 tab = tab
             )
-            is Anomaly -> CollectedDataList(
+            Anomaly -> CollectedDataList(
                 state = anomalyListState,
                 pagingDataFlow = viewModel.anomalySamples,
                 tab = tab
