@@ -7,7 +7,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.HiltViewModelFactory
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
-import com.google.accompanist.pager.ExperimentalPagerApi
 import no.nordicsemi.android.ei.account.AccountHelper
 import no.nordicsemi.android.ei.ui.Dashboard
 import no.nordicsemi.android.ei.ui.Project
@@ -70,7 +69,8 @@ fun Navigation(
                 viewModel = viewModel,
                 onBackPressed = {
                     navController.popBackStack()
-                })
+                }
+            )
         }
     }
 }

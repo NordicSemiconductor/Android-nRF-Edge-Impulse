@@ -1,6 +1,7 @@
 package no.nordicsemi.android.ei.viewmodels
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.focus.FocusRequester
@@ -20,6 +21,7 @@ import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.repository.ProjectDataRepository
 import no.nordicsemi.android.ei.repository.ProjectRepository
 import no.nordicsemi.android.ei.repository.UserDataRepository
+import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.viewmodels.event.Error
 import no.nordicsemi.android.ei.viewmodels.event.Event
 import javax.inject.Inject
@@ -49,7 +51,7 @@ class ProjectViewModel @Inject constructor(
             .get(projectManager.projectComponent!!, ProjectComponentEntryPoint::class.java)
             .projectDataRepository()
 
-    var configuredDevices: List<Device> by mutableStateOf(listOf())
+    var configuredDevices = mutableStateListOf<Device>()
         private set
 
     val project
@@ -73,7 +75,9 @@ class ProjectViewModel @Inject constructor(
             isRefreshing = true
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope.launch {
-                eventChannel.send(Error(throwable = throwable)).also { isRefreshing = false }
+                eventChannel
+                    .send(Error(throwable = throwable))
+                    .also { isRefreshing = false }
             }
         }
         viewModelScope.launch(handler) {
@@ -81,18 +85,21 @@ class ProjectViewModel @Inject constructor(
                 projectId = projectDataRepository.project.id,
                 keys = projectDataRepository.developmentKeys
             ).let { response ->
-                when (response.success) {
-                    true -> configuredDevices = response.devices
-                    false -> throw Throwable(response.error)
-                }.also { isRefreshing = false }
-            }
+                guard (response.success) {
+                    throw Throwable(response.error)
+                }
+                configuredDevices.apply {
+                    clear()
+                    addAll(response.devices)
+                }
+            }.also { isRefreshing = false }
         }
     }
 
     fun onDeviceSelected(device: Device) {
         selectedDevice = device
-        device.sensors.takeIf { sensors -> sensors.isNotEmpty() }
-            ?.let { sensors -> onSensorSelected(sensor = sensors[0]) }
+        device.sensors.firstOrNull()
+            ?.let { onSensorSelected(sensor = it) }
     }
 
     fun onLabelChanged(label: String) {
@@ -101,12 +108,9 @@ class ProjectViewModel @Inject constructor(
 
     fun onSensorSelected(sensor: Device.Sensor) {
         this.selectedSensor = sensor
-        sensor.frequencies
-            .takeIf { frequencies ->
-                frequencies.isNotEmpty()
-            }?.let { frequencies ->
-                onFrequencySelected(frequency = frequencies[0])
-            } ?: run { selectedFrequency = null }
+        sensor.frequencies.firstOrNull()
+                ?.let { onFrequencySelected(frequency = it) }
+                ?: run { selectedFrequency = null }
     }
 
     fun onFrequencySelected(frequency: Number) {

@@ -5,8 +5,6 @@ import kotlinx.coroutines.withContext
 import no.nordicsemi.android.ei.di.DefaultDispatcher
 import no.nordicsemi.android.ei.model.DevelopmentKeys
 import no.nordicsemi.android.ei.service.EiService
-import no.nordicsemi.android.ei.service.param.ListDevicesResponse
-import no.nordicsemi.android.ei.service.param.ListSamplesResponse
 import javax.inject.Inject
 
 class ProjectRepository @Inject constructor(
@@ -14,18 +12,9 @@ class ProjectRepository @Inject constructor(
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher
 ) {
 
-    suspend fun listDevices(projectId: Int, keys: DevelopmentKeys): ListDevicesResponse =
+    suspend fun listDevices(projectId: Int, keys: DevelopmentKeys) =
         withContext(defaultDispatcher) {
             service.listDevices(apiKey = keys.apiKey, projectId = projectId)
-        }
-
-    suspend fun listSamples(
-        projectId: Int,
-        keys: DevelopmentKeys,
-        category: String
-    ): ListSamplesResponse =
-        withContext(defaultDispatcher) {
-            service.listSamples(apiKey = keys.apiKey, projectId = projectId, category = category)
         }
 
     suspend fun listSamples(
@@ -34,8 +23,13 @@ class ProjectRepository @Inject constructor(
         category: String,
         offset: Int,
         limit: Int
-    ): ListSamplesResponse =
-        withContext(defaultDispatcher) {
-            service.listSamples(apiKey = keys.apiKey, projectId = projectId, category = category, offset = offset, limit = limit)
-        }
+    ) = withContext(defaultDispatcher) {
+        service.listSamples(
+            apiKey = keys.apiKey,
+            projectId = projectId,
+            category = category,
+            offset = offset,
+            limit = limit
+        )
+    }
 }

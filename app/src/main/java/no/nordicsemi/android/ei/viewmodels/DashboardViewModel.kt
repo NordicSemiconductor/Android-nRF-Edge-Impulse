@@ -24,6 +24,8 @@ import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.repository.DashboardRepository
 import no.nordicsemi.android.ei.repository.UserDataRepository
+import no.nordicsemi.android.ei.service.param.developmentKeys
+import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.viewmodels.event.Error
 import no.nordicsemi.android.ei.viewmodels.event.Event
 import no.nordicsemi.android.ei.viewmodels.event.ProjectCreated
@@ -69,14 +71,12 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch(handler) {
             dashboardRepository
                 .getCurrentUser(userDataRepo.token)
-                .apply {
-                    when (success) {
-                        true -> {
-                            userManager.userLoggedIn(this, userDataRepo.token)
-                            user = this
-                        }
-                        false -> throw Throwable(error)
+                .let { response ->
+                    guard(response.success) {
+                        throw Throwable(response.error)
                     }
+                    userManager.userLoggedIn(response, userDataRepo.token)
+                    user = response
                 }
                 .also { isRefreshing = false }
         }
@@ -85,16 +85,20 @@ class DashboardViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     fun createProject(projectName: String) {
         val handler = CoroutineExceptionHandler { _, throwable ->
-            viewModelScope.launch { eventChannel.send(Error(throwable)) }
+            viewModelScope.launch {
+                eventChannel.send(Error(throwable))
+            }
         }
         viewModelScope.launch(handler) {
             dashboardRepository
-                .createProject(userDataRepo.token, projectName)
-                .apply {
-                    when(success){
-                        true -> eventChannel.send(ProjectCreated(projectName = projectName))
-                        false -> throw Throwable(error)
+                .createProject(
+                    token = userDataRepo.token,
+                    projectName = projectName
+                ).let { response ->
+                    guard(response.success) {
+                        throw Throwable(response.error)
                     }
+                    eventChannel.send(ProjectCreated(projectName))
                 }
         }
     }
@@ -114,20 +118,16 @@ class DashboardViewModel @Inject constructor(
             dashboardRepository.developmentKeys(
                 token = userDataRepo.token,
                 projectId = project.id
-            ).apply {
-                when (success) {
-                    true -> {
-                        projectManager.projectSelected(
-                            project = project,
-                            keys = DevelopmentKeys(apiKey = apiKey, hmacKey = hmacKey)
-                        )
-                        eventChannel.send(ProjectSelected)
-                    }
-                    false -> throw Throwable(error)
+            ).let { response ->
+                guard(response.success) {
+                    throw Throwable(response.error)
                 }
-            }.also {
-                isDownloadingDevelopmentKeys = false
-            }
+                projectManager.projectSelected(
+                    project = project,
+                    keys = response.developmentKeys()
+                )
+                eventChannel.send(ProjectSelected(project))
+            }.also { isDownloadingDevelopmentKeys = false }
         }
     }
 

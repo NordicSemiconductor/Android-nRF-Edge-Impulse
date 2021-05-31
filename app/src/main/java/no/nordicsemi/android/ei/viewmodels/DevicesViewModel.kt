@@ -24,6 +24,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import no.nordicsemi.android.ei.ble.state.*
+import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.*
 import no.nordicsemi.android.ei.di.ProjectComponentEntryPoint
 import no.nordicsemi.android.ei.di.ProjectManager
 import no.nordicsemi.android.ei.di.UserComponentEntryPoint
@@ -33,9 +34,9 @@ import no.nordicsemi.android.ei.repository.ProjectDataRepository
 import no.nordicsemi.android.ei.repository.ProjectRepository
 import no.nordicsemi.android.ei.util.Utils.isBluetoothEnabled
 import no.nordicsemi.android.ei.util.Utils.isMarshMellowOrAbove
+import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.viewmodels.event.Event
 import javax.inject.Inject
-
 
 @HiltViewModel
 class DevicesViewModel @Inject constructor(
@@ -63,18 +64,18 @@ class DevicesViewModel @Inject constructor(
 
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
-            super.onScanResult(callbackType, result)
-            if (isBluetoothEnabled())
-                result?.let { scanResult ->
-                    scannerState.onDeviceFound(scanResult = scanResult)
-                }
+            result?.takeIf { isBluetoothEnabled() }?.let { scanResult ->
+                scannerState.onDeviceFound(scanResult = scanResult)
+            }
         }
     }
 
     private val bluetoothStateChangedReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            val currentState =
-                intent?.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.STATE_OFF)
+            val currentState = intent?.getIntExtra(
+                BluetoothAdapter.EXTRA_STATE,
+                BluetoothAdapter.STATE_OFF
+            )
             val previousState = intent?.getIntExtra(
                 BluetoothAdapter.EXTRA_PREVIOUS_STATE,
                 BluetoothAdapter.STATE_OFF
@@ -84,8 +85,9 @@ class DevicesViewModel @Inject constructor(
                     startScan()
                 }
                 BluetoothAdapter.STATE_TURNING_OFF, BluetoothAdapter.STATE_OFF -> {
-                    if (previousState != BluetoothAdapter.STATE_TURNING_OFF && previousState != BluetoothAdapter.STATE_OFF) {
-                        stopScan(BluetoothDisabled)
+                    if (previousState != BluetoothAdapter.STATE_TURNING_OFF &&
+                        previousState != BluetoothAdapter.STATE_OFF) {
+                        stopScan(Reason.BluetoothDisabled)
                     }
                 }
             }
@@ -96,19 +98,15 @@ class DevicesViewModel @Inject constructor(
         override fun onReceive(context: Context?, intent: Intent?) {
             context?.let {
                 when (isLocationEnabled(it)) {
-                    true -> {
-                        startScan()
-                    }
-                    false -> {
-                        stopScan(LocationTurnedOff)
-                    }
+                    true -> startScan()
+                    false -> stopScan(Reason.LocationTurnedOff)
                 }
             }
         }
     }
 
     init {
-        registerBroadcastReceiver(context = context)
+        registerBroadcastReceiver(context)
         startScan()
     }
 
@@ -139,22 +137,22 @@ class DevicesViewModel @Inject constructor(
     }
 
     fun startScan() {
-        if (!isBluetoothEnabled()) {
+        guard(isBluetoothEnabled()) {
             scannerState.onBluetoothDisabled()
             return
         }
 
-        if (!isLocationPermissionGranted(context = getApplication())) {
+        guard(isLocationPermissionGranted(context = getApplication())) {
             scannerState.onLocationPermissionNotGranted()
             return
         }
 
-        if (!isLocationEnabled(context = getApplication())) {
+        guard(isLocationEnabled(context = getApplication())) {
             scannerState.onLocationTurnedOff()
             return
         }
 
-        if (scannerState.scanningState == Scanning) {
+        guard(scannerState.scanningState != ScanningState.Started) {
             return
         }
 
@@ -164,40 +162,26 @@ class DevicesViewModel @Inject constructor(
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .setReportDelay(0)
             .build()
-        BluetoothAdapter.getDefaultAdapter().bluetoothLeScanner?.let {
+        BluetoothAdapter.getDefaultAdapter().bluetoothLeScanner?.apply {
             scannerState.onScanningStarted()
-            it.startScan(null, scanSettings, scanCallback)
+            startScan(null, scanSettings, scanCallback)
         }
     }
 
     private fun stopScan() {
-        BluetoothAdapter.getDefaultAdapter().bluetoothLeScanner?.let {
-            if (scannerState.scanningState == Scanning) {
-                it.stopScan(scanCallback)
-            }
-        }
+        BluetoothAdapter.getDefaultAdapter().bluetoothLeScanner
+            ?.takeIf { scannerState.scanningState == ScanningState.Started }
+            ?.apply { stopScan(scanCallback) }
     }
 
     private fun stopScan(reason: Reason) {
-        BluetoothAdapter.getDefaultAdapter().bluetoothLeScanner?.let {
-            if (scannerState.scanningState == Scanning) {
-                it.stopScan(scanCallback)
-            }
-        }
+        stopScan()
         when (reason) {
-            is NotStarted -> {
-                scannerState.onScanningNotStarted()
-            }
-            is BluetoothDisabled -> {
-                scannerState.onBluetoothDisabled()
-            }
-            is LocationPermissionNotGranted -> {
-                scannerState.onLocationPermissionNotGranted()
-            }
-            is LocationTurnedOff -> {
-                scannerState.onLocationTurnedOff()
-            }
-            is Unknown -> {
+            is Reason.NotStarted -> scannerState.onScanningNotStarted()
+            is Reason.BluetoothDisabled -> scannerState.onBluetoothDisabled()
+            is Reason.LocationPermissionNotGranted -> scannerState.onLocationPermissionNotGranted()
+            is Reason.LocationTurnedOff -> scannerState.onLocationTurnedOff()
+            is Reason.Unknown -> {
                 //TODO Handle some other errors?
             }
         }
@@ -207,33 +191,32 @@ class DevicesViewModel @Inject constructor(
         if (isMarshMellowOrAbove()) {
             if (isLocationPermissionGranted(context = getApplication())) {
                 if (isLocationEnabled(context = getApplication())) {
-                    ScanningStopped(NotStarted)
+                    ScanningState.Stopped(Reason.NotStarted)
                 } else {
-                    ScanningStopped(reason = LocationTurnedOff)
+                    ScanningState.Stopped(Reason.LocationTurnedOff)
                 }
             } else {
-                ScanningStopped(reason = LocationPermissionNotGranted)
+                ScanningState.Stopped(Reason.LocationPermissionNotGranted)
             }
         } else {
-            ScanningStopped(reason = NotStarted)
+            ScanningState.Stopped(Reason.NotStarted)
         }
     } else {
-        ScanningStopped(reason = BluetoothDisabled)
+        ScanningState.Stopped(Reason.BluetoothDisabled)
     }
 
     companion object {
 
-        private fun isLocationEnabled(context: Context): Boolean = if (isMarshMellowOrAbove()) {
-            val locationManager = context.getSystemService(LocationManager::class.java)
-            LocationManagerCompat.isLocationEnabled(locationManager)
-        } else {
-            true
-        }
+        private fun isLocationEnabled(context: Context) =
+            !isMarshMellowOrAbove() || LocationManagerCompat.isLocationEnabled(
+                context.getSystemService(LocationManager::class.java)
+            )
 
-        private fun isLocationPermissionGranted(context: Context): Boolean =
+        private fun isLocationPermissionGranted(context: Context) =
             ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
+
     }
 }

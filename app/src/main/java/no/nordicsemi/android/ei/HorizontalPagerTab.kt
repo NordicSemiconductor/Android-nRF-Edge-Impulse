@@ -18,12 +18,34 @@ import androidx.compose.ui.graphics.vector.ImageVector
  * @param rowIcon       ImageVector to use for rows
  * @param emptyListIcon ImageVector to use when no data is available
  */
-sealed class HorizontalPagerTab(
+enum class HorizontalPagerTab(
     @StringRes val title: Int,
     @StringRes val category: Int,
     val rowIcon: ImageVector,
     val emptyListIcon: ImageVector
 ) {
+
+    Training(
+        title = R.string.title_training,
+        category = R.string.param_category_training,
+        rowIcon = Icons.Outlined.ModelTraining,
+        emptyListIcon = Icons.Filled.ModelTraining
+    ),
+
+    Testing(
+        title = R.string.title_testing,
+        category = R.string.param_category_testing,
+        rowIcon = Icons.Outlined.Science,
+        emptyListIcon = Icons.Filled.Science
+    ),
+
+    Anomaly(
+        title = R.string.title_anomaly,
+        category = R.string.param_category_anomaly,
+        rowIcon = Icons.Outlined.Psychology,
+        emptyListIcon = Icons.Filled.Psychology
+    );
+
     companion object {
         fun indexed(index: Int) = when (index) {
             0 -> Training
@@ -31,25 +53,4 @@ sealed class HorizontalPagerTab(
             else -> Anomaly
         }
     }
-
-    object Training : HorizontalPagerTab(
-        title = R.string.title_training,
-        category = R.string.param_category_training,
-        rowIcon = Icons.Outlined.ModelTraining,
-        emptyListIcon = Icons.Filled.ModelTraining
-    )
-
-    object Testing : HorizontalPagerTab(
-        title = R.string.title_testing,
-        category = R.string.param_category_testing,
-        rowIcon = Icons.Outlined.Science,
-        emptyListIcon = Icons.Filled.Science
-    )
-
-    object Anomaly : HorizontalPagerTab(
-        title = R.string.title_anomaly,
-        category = R.string.param_category_anomaly,
-        rowIcon = Icons.Outlined.Psychology,
-        emptyListIcon = Icons.Filled.Psychology
-    )
 }

@@ -1,6 +1,5 @@
 package no.nordicsemi.android.ei.ui
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -72,8 +71,7 @@ fun DataAcquisition(
                             }
                         )
                     }
-                    else -> {
-                    }
+                    else -> {}
                 }
             }
         }
@@ -100,7 +98,6 @@ fun DataAcquisition(
     }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun CollectedDataList(
     state: LazyListState,
@@ -168,14 +165,13 @@ private fun CollectedDataList(
     }
 }
 
-
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun RecordDataFloatingActionButton(onClick: () -> Unit) {
     // Toggle the visibility of the content with animation.
     FloatingActionButton(onClick = onClick) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier
+                .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(

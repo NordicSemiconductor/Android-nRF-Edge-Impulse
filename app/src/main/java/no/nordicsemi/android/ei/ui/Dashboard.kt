@@ -65,7 +65,7 @@ import java.net.UnknownHostException
 @Composable
 fun Dashboard(
     viewModel: DashboardViewModel,
-    onProjectSelected: () -> Unit,
+    onProjectSelected: (Project) -> Unit,
     onLogout: (Unit) -> Unit
 ) {
     val context = LocalContext.current
@@ -97,7 +97,7 @@ fun Dashboard(
                         )
                     }
                     is ProjectSelected -> {
-                        onProjectSelected()
+                        onProjectSelected(event.project)
                     }
                     is Error -> {
                         isCreateProjectDialogVisible = false
@@ -171,7 +171,8 @@ fun Dashboard(
                                     viewModel.selectProject(
                                         project = project
                                     )
-                                })
+                                }
+                            )
                             Divider(modifier = Modifier.width(Dp.Hairline))
                         }
                     }
@@ -205,7 +206,8 @@ fun Dashboard(
                 },
                 onDismiss = {
                     isCreateProjectDialogVisible = false
-                })
+                }
+            )
         }
 
         if (developmentKeysState) {
@@ -347,13 +349,10 @@ private fun CreateProjectDialog(
     val keyboardController = LocalSoftwareKeyboardController.current
     Dialog(
         onDismissRequest = onDismiss,
-        properties =
-        if (isCreateClicked) {
-            DialogProperties(
-                dismissOnBackPress = false,
-                dismissOnClickOutside = false
-            )
-        } else DialogProperties()
+        properties = DialogProperties(
+                        dismissOnBackPress = !isCreateClicked,
+                        dismissOnClickOutside = !isCreateClicked
+                     )
     ) {
         Column(
             modifier = modifier

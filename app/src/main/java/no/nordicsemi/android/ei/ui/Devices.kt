@@ -28,6 +28,7 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.ble.state.*
+import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.*
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.ui.theme.NordicRed
 import no.nordicsemi.android.ei.util.Utils.isBluetoothEnabled
@@ -44,14 +45,18 @@ fun Devices(
 ) {
     val listState = rememberLazyListState()
     val scannerState = viewModel.scannerState
-    val scanning = scannerState.scanningState
+    val scanningState = scannerState.scanningState
     val swipeRefreshState = rememberSwipeRefreshState(refreshingState)
 
     SwipeRefresh(
+        modifier = modifier,
         state = swipeRefreshState,
         onRefresh = { onRefresh() },
     ) {
-        LazyColumn(modifier = modifier.fillMaxSize(), state = listState) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            state = listState
+        ) {
             item {
                 Text(
                     modifier = Modifier.padding(16.dp),
@@ -60,12 +65,11 @@ fun Devices(
                 )
             }
 
-            configuredDevices.takeIf {
-                it.isNotEmpty()
-            }?.let { isNotEmptyList ->
-                items(items = isNotEmptyList, key = {
-                    it.deviceId
-                }) {
+            configuredDevices.takeIf { it.isNotEmpty() }?.let { isNotEmptyList ->
+                items(
+                    items = isNotEmptyList,
+                    key = { it.deviceId }
+                ) {
                     ConfiguredDeviceRow(device = it)
                     Divider()
                 }
@@ -102,21 +106,22 @@ fun Devices(
                 ) {
                     Text(
                         modifier = Modifier
-                            .weight(weight = 1.0f),
+                            .weight(1.0f),
                         text = stringResource(R.string.label_scanner),
                         style = MaterialTheme.typography.h6
                     )
-                    if (scanning == Scanning)
+                    if (scanningState == ScanningState.Started) {
                         CircularProgressIndicator(
                             modifier = Modifier
                                 .size(24.dp)
-                                .align(alignment = Alignment.CenterVertically)
+                                .align(Alignment.CenterVertically)
                         )
+                    }
                 }
             }
 
-            when (scanning) {
-                is Scanning -> {
+            when (scanningState) {
+                is ScanningState.Started -> {
                     scannerState.discoveredDevices.takeIf { it.isNotEmpty() }
                         ?.let { isNotEmptyList ->
                             items(items = isNotEmptyList, key = {
@@ -129,7 +134,7 @@ fun Devices(
                         item {
                             ShowScanningStoppedState(
                                 modifier = modifier,
-                                scannerState = scannerState.scanningState,
+                                scanningState = scannerState.scanningState,
                                 startScanning = {
                                     viewModel.startScan()
                                 }
@@ -137,11 +142,11 @@ fun Devices(
                         }
                     }
                 }
-                is ScanningStopped -> {
+                is ScanningState.Stopped -> {
                     item {
                         ShowScanningStoppedState(
                             modifier = modifier,
-                            scannerState = scannerState.scanningState,
+                            scanningState = scanningState,
                             startScanning = {
                                 viewModel.startScan()
                             }
@@ -220,7 +225,7 @@ fun DiscoveredDeviceRow(device: DiscoveredBluetoothDevice) {
         Spacer(modifier = Modifier.width(width = 16.dp))
         Column(modifier = Modifier.weight(weight = 1.0f)) {
             Text(
-                text = device.name,
+                text = device.name ?: stringResource(id = R.string.unknown),
                 color = MaterialTheme.colors.onSurface,
                 style = MaterialTheme.typography.body1
             )
@@ -253,7 +258,7 @@ private fun getRssiRes(rssi: Int): Int = when (rssi) {
 @Composable
 fun ShowScanningStoppedState(
     modifier: Modifier,
-    scannerState: ScanningState,
+    scanningState: ScanningState,
     startScanning: () -> Unit
 ) {
     Column(
@@ -266,38 +271,34 @@ fun ShowScanningStoppedState(
         CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
             Icon(
                 painter = painterResource(
-                    id = when (scannerState) {
-                        is Scanning -> {
-                            R.drawable.ic_bluetooth_searching
-                        }
-                        is ScanningStopped -> {
-                            scannerState.reason.toDrawable()
-                        }
+                    id = when (scanningState) {
+                        is ScanningState.Started -> R.drawable.ic_bluetooth_searching
+                        is ScanningState.Stopped -> scanningState.reason.toDrawable()
                     }
                 ),
                 contentDescription = null,
                 modifier = Modifier.size(72.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
-            when (scannerState) {
-                is Scanning -> {
+            when (scanningState) {
+                is ScanningState.Started -> {
                     DisplayScanningInfo()
                 }
-                is ScanningStopped -> {
-                    when (scannerState.reason) {
-                        is BluetoothDisabled -> {
+                is ScanningState.Stopped -> {
+                    when (val reason = scanningState.reason) {
+                        is Reason.BluetoothDisabled -> {
                             DisplayBluetoothDisabledInfo()
                         }
-                        is LocationPermissionNotGranted -> {
+                        is Reason.LocationPermissionNotGranted -> {
                             DisplayLocationPermissionInfo(startScanning = startScanning)
                         }
-                        is LocationTurnedOff -> {
+                        is Reason.LocationTurnedOff -> {
                             DisplayLocationTurnedOffInfo()
                         }
-                        is Unknown -> {
-                            (scannerState.reason as Unknown).throwable.localizedMessage
+                        is Reason.Unknown -> {
+                            reason.throwable.localizedMessage
                         }
-                        is NotStarted -> startScanning()
+                        is Reason.NotStarted -> startScanning()
                     }
                 }
 
@@ -335,11 +336,13 @@ fun DisplayBluetoothDisabledInfo() {
         style = MaterialTheme.typography.body1
     )
     Spacer(modifier = Modifier.height(32.dp))
-    Button(onClick = {
-        if (!isBluetoothEnabled()) {
-            launcher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+    Button(
+        onClick = {
+            if (!isBluetoothEnabled()) {
+                launcher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+            }
         }
-    }) {
+    ) {
         Text(
             modifier = Modifier.padding(start = 16.dp, end = 16.dp),
             text = stringResource(R.string.action_enable).toUpperCase(Locale.ROOT),
@@ -366,9 +369,12 @@ fun DisplayLocationPermissionInfo(startScanning: () -> Unit) {
         style = MaterialTheme.typography.body1
     )
     Spacer(modifier = Modifier.height(32.dp))
-    Button(modifier = Modifier.defaultMinSize(minHeight = 36.dp), onClick = {
-        launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-    }) {
+    Button(
+        modifier = Modifier.defaultMinSize(minHeight = 36.dp),
+        onClick = {
+            launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    ) {
         Text(
             modifier = Modifier.padding(start = 16.dp, end = 16.dp),
             text = stringResource(R.string.action_location_permission).toUpperCase(Locale.ROOT),
@@ -392,9 +398,12 @@ fun DisplayLocationTurnedOffInfo() {
         style = MaterialTheme.typography.body1
     )
     Spacer(modifier = Modifier.height(32.dp))
-    Button(modifier = Modifier.defaultMinSize(minHeight = 36.dp), onClick = {
-        launcher.launch(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-    }) {
+    Button(
+        modifier = Modifier.defaultMinSize(minHeight = 36.dp),
+        onClick = {
+            launcher.launch(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+        }
+    ) {
         Text(
             modifier = Modifier.padding(start = 16.dp, end = 16.dp),
             text = stringResource(R.string.action_location_permission_settings).toUpperCase(Locale.ROOT),
@@ -405,9 +414,9 @@ fun DisplayLocationTurnedOffInfo() {
 
 @DrawableRes
 private fun Reason.toDrawable(): Int = when (this) {
-    is NotStarted -> R.drawable.ic_bluetooth_disabled
-    is BluetoothDisabled -> R.drawable.ic_bluetooth_disabled
-    is LocationPermissionNotGranted -> R.drawable.ic_location_off
-    is LocationTurnedOff -> R.drawable.ic_location_off
-    is Unknown -> R.drawable.ic_error
+    is Reason.NotStarted -> R.drawable.ic_bluetooth_disabled
+    is Reason.BluetoothDisabled -> R.drawable.ic_bluetooth_disabled
+    is Reason.LocationPermissionNotGranted -> R.drawable.ic_location_off
+    is Reason.LocationTurnedOff -> R.drawable.ic_location_off
+    is Reason.Unknown -> R.drawable.ic_error
 }

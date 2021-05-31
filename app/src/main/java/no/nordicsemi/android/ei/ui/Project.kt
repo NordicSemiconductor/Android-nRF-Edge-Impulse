@@ -1,6 +1,7 @@
 package no.nordicsemi.android.ei.ui
 
 import android.content.res.Configuration.*
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
@@ -239,7 +240,9 @@ private fun ProjectContent(
                     factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
                 )
                 Devices(
-                    modifier = Modifier.padding(paddingValues = innerPadding),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues = innerPadding),
                     viewModel = devicesViewModel,
                     configuredDevices = viewModel.configuredDevices,
                     refreshingState = viewModel.isRefreshing,
@@ -281,7 +284,7 @@ private fun ProjectTopAppBar(
         BottomNavigationScreen.DataAcquisition -> {
             TabTopAppBar(
                 title = { Text(text = projectName) },
-                tabs = tabs.map { stringResource(id = it.title) },
+                tabs = tabs.map { stringResource(it.title) },
                 pagerState = pagerState,
                 modifier = modifier,
                 navigationIcon = {

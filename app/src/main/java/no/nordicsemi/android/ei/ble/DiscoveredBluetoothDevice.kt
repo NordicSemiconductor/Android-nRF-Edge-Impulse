@@ -9,7 +9,7 @@ import android.bluetooth.BluetoothDevice
  * </p>
  */
 data class DiscoveredBluetoothDevice(
-    var name: String = "Unknown",
+    var name: String?,
     var rssi: Int,
     val device: BluetoothDevice
 )
