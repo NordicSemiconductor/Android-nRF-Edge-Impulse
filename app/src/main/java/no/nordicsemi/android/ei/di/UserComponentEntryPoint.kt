@@ -8,4 +8,6 @@ import no.nordicsemi.android.ei.repository.UserDataRepository
 @InstallIn(UserComponent::class)
 interface UserComponentEntryPoint {
     fun userDataRepository(): UserDataRepository
+
+    fun getProjectManager(): ProjectManager
 }

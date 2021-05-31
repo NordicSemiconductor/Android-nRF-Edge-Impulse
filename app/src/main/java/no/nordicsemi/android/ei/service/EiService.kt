@@ -1,11 +1,7 @@
 package no.nordicsemi.android.ei.service
 
 import no.nordicsemi.android.ei.model.User
-import no.nordicsemi.android.ei.service.param.LoginRequest
-import no.nordicsemi.android.ei.service.param.LoginResponse
-import no.nordicsemi.android.ei.service.param.DevelopmentKeysResponse
-import no.nordicsemi.android.ei.service.param.CreateProjectRequest
-import no.nordicsemi.android.ei.service.param.CreateProjectResponse
+import no.nordicsemi.android.ei.service.param.*
 import retrofit2.http.*
 
 interface EiService {
@@ -53,5 +49,50 @@ interface EiService {
         @Header("x-jwt-token") jwt: String,
         @Path("projectId") projectId: Int
     ): DevelopmentKeysResponse
+
+    /**
+     * Retrieve all the devices for a project. Devices get included
+     * here if they connect to the remote management API or if they have sent data to the ingestion API
+     * and had the device_id field set.
+     *
+     * @param apiKey       Token received during the login.
+     * @param projectId Project ID.
+     */
+    @Headers("Accept: application/json", "Content-Type: application/json")
+    @GET("api/{projectId}/devices")
+    suspend fun listDevices(
+        @Header("x-api-key") apiKey: String,
+        @Path("projectId") projectId: Int
+    ): ListDevicesResponse
+
+    /**
+     * Retrieve all the samples for a project.
+     *
+     * @param apiKey       Token received during the login.
+     * @param projectId Project ID.
+     */
+    @Headers("Accept: application/json", "Content-Type: application/json")
+    @GET("api/{projectId}/raw-data")
+    suspend fun listSamples(
+        @Header("x-api-key") apiKey: String,
+        @Path("projectId") projectId: Int,
+        @Query("category") category: String
+    ): ListSamplesResponse
+
+    /**
+     * Retrieve all the samples for a project.
+     *
+     * @param apiKey       Token received during the login.
+     * @param projectId Project ID.
+     */
+    @Headers("Accept: application/json", "Content-Type: application/json")
+    @GET("api/{projectId}/raw-data")
+    suspend fun listSamples(
+        @Header("x-api-key") apiKey: String,
+        @Path("projectId") projectId: Int,
+        @Query("category") category: String = "training",
+        @Query("limit") limit: Int,
+        @Query("offset") offset: Int,
+    ): ListSamplesResponse
 
 }

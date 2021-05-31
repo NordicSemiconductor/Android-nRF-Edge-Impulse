@@ -20,7 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import dev.chrisbanes.accompanist.coil.CoilImage
+import com.google.accompanist.coil.rememberCoilPainter
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.User
 
@@ -113,16 +113,13 @@ fun UserAppBar(
                         .aspectRatio(1.0f),
                     shape = CircleShape,
                 ) {
-                    CoilImage(
-                        data = user.photo ?: Image(Icons.Filled.AccountCircle, contentDescription = null, alpha = 0.1f),
+                    Image(
+                        painter = rememberCoilPainter(
+                            request = user.photo ?: Image(Icons.Filled.AccountCircle, contentDescription = null, alpha = 0.1f),
+                            shouldRefetchOnSizeChange = { _, _ -> false },
+                        ),
                         contentDescription = stringResource(R.string.content_description_user_image),
                         alignment = Alignment.Center,
-                        error = {
-                            Image(Icons.Filled.AccountCircle, contentDescription = null, alpha = 0.1f)
-                        },
-                        loading = {
-                            Image(Icons.Filled.AccountCircle, contentDescription = null, alpha = 0.1f)
-                        }
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))

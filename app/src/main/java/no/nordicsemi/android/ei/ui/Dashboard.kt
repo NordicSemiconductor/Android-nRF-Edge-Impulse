@@ -46,30 +46,34 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.lifecycleScope
-import dev.chrisbanes.accompanist.coil.CoilImage
-import kotlinx.coroutines.CoroutineScope
+import com.google.accompanist.coil.rememberCoilPainter
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Collaborator
 import no.nordicsemi.android.ei.model.Project
-import no.nordicsemi.android.ei.ui.layouts.SwipeToRefreshLayout
+import no.nordicsemi.android.ei.showSnackbar
 import no.nordicsemi.android.ei.ui.layouts.UserAppBar
 import no.nordicsemi.android.ei.ui.theme.NordicMiddleGrey
 import no.nordicsemi.android.ei.viewmodels.DashboardViewModel
-import no.nordicsemi.android.ei.viewmodels.event.Event
+import no.nordicsemi.android.ei.viewmodels.event.Error
+import no.nordicsemi.android.ei.viewmodels.event.ProjectCreated
+import no.nordicsemi.android.ei.viewmodels.event.ProjectSelected
 import java.net.UnknownHostException
 
 @Composable
 fun Dashboard(
     viewModel: DashboardViewModel,
+    onProjectSelected: (Project) -> Unit,
     onLogout: (Unit) -> Unit
 ) {
     val context = LocalContext.current
     val coroutineScope = LocalLifecycleOwner.current.lifecycleScope
 
     val user = viewModel.user
-    val refreshState = viewModel.isRefreshing
+    val swipeRefreshState = rememberSwipeRefreshState(viewModel.isRefreshing)
+    val developmentKeysState = viewModel.isDownloadingDevelopmentKeys
 
     val snackbarHostState = remember { SnackbarHostState() }
     val lazyListState = rememberLazyListState()
@@ -79,28 +83,30 @@ fun Dashboard(
 
     coroutineScope.launchWhenStarted {
         viewModel.eventFlow.runCatching {
-            this.collect {
-                when (it) {
-                    is Event.DismissDialog -> {
+            this.collect { event ->
+                when (event) {
+                    is ProjectCreated -> {
                         isCreateProjectDialogVisible = false
-                    }
-                    is Event.ProjectCreated -> {
                         showSnackbar(
                             coroutineScope = coroutineScope,
                             snackbarHostState = snackbarHostState,
                             message = context.getString(
                                 R.string.project_created_successfully,
-                                it.projectName
+                                event.projectName
                             )
                         )
                     }
-                    is Event.Error -> {
+                    is ProjectSelected -> {
+                        onProjectSelected(event.project)
+                    }
+                    is Error -> {
+                        isCreateProjectDialogVisible = false
                         showSnackbar(
                             coroutineScope = coroutineScope,
                             snackbarHostState = snackbarHostState,
-                            message = when (it.throwable) {
+                            message = when (event.throwable) {
                                 is UnknownHostException -> context.getString(R.string.error_no_internet)
-                                else -> it.throwable.localizedMessage
+                                else -> event.throwable.localizedMessage
                                     ?: context.getString(R.string.error_refreshing_failed)
                             }
                         )
@@ -134,23 +140,9 @@ fun Dashboard(
                 })
         }
     ) { innerPadding ->
-        SwipeToRefreshLayout(
-            refreshingState = refreshState,
-            onRefresh = {
-                if (isScrollingUp)
-                    viewModel.refreshUser()
-            },
-            refreshIndicator = {
-                if (isScrollingUp)
-                    Surface(elevation = 10.dp, shape = CircleShape) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .padding(4.dp),
-                            strokeWidth = 2.dp,
-                        )
-                    }
-            },
+        SwipeRefresh(
+            state = swipeRefreshState,
+            onRefresh = { viewModel.refreshUser() },
             content = {
                 user.projects.takeIf { it.isNotEmpty() }?.let { notEmptyProjects ->
                     LazyColumn(
@@ -173,7 +165,14 @@ fun Dashboard(
                             items = notEmptyProjects,
                             key = { project -> project.id }
                         ) { project ->
-                            ProjectRow(project = project)
+                            ProjectRow(
+                                project = project,
+                                onProjectSelected = {
+                                    viewModel.selectProject(
+                                        project = project
+                                    )
+                                }
+                            )
                             Divider(modifier = Modifier.width(Dp.Hairline))
                         }
                     }
@@ -207,7 +206,12 @@ fun Dashboard(
                 },
                 onDismiss = {
                     isCreateProjectDialogVisible = false
-                })
+                }
+            )
+        }
+
+        if (developmentKeysState) {
+            ShowDownloadingDevelopmentKeysDialog()
         }
     }
 }
@@ -215,12 +219,15 @@ fun Dashboard(
 @Composable
 fun ProjectRow(
     modifier: Modifier = Modifier,
-    project: Project
+    project: Project,
+    onProjectSelected: () -> Unit
 ) {
     Row(
         modifier = modifier
             .background(MaterialTheme.colors.surface)
-            .clickable { }
+            .clickable {
+                onProjectSelected()
+            }
             .padding(start = 16.dp, top = 8.dp, bottom = 8.dp, end = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -262,38 +269,22 @@ private fun Collaborator(collaborators: List<Collaborator>) {
             ) {
                 // lets limit the images to max collaborators
                 if (index in 0 until maxImages) {
-                    CoilImage(
-                        modifier = Modifier.requiredSize(imageSize),
-                        data = if (collaborator.photo.isNotBlank()) {
-                            collaborator.photo
-                        } else {
-                            Image(
-                                imageVector = Icons.Outlined.AccountCircle,
-                                modifier = Modifier.requiredSize(imageSize + 8.dp),
-                                contentDescription = null,
-                                contentScale = ContentScale.FillBounds
-                            )
-                        },
+                    Image(
+                        painter = rememberCoilPainter(
+                            request = if (collaborator.photo.isNotBlank()) {
+                                collaborator.photo
+                            } else {
+                                Image(
+                                    imageVector = Icons.Outlined.AccountCircle,
+                                    modifier = Modifier.requiredSize(imageSize + 8.dp),
+                                    contentDescription = null,
+                                    contentScale = ContentScale.FillBounds
+                                )
+                            },
+                            shouldRefetchOnSizeChange = { _, _ -> false },
+                        ),
                         contentDescription = null,
-                        error = {
-                            Image(
-                                imageVector = Icons.Outlined.AccountCircle,
-                                modifier = Modifier
-                                    .requiredSize(size = imageSize)
-                                    .background(color = MaterialTheme.colors.onSurface),
-                                contentDescription = null,
-                                contentScale = ContentScale.FillBounds
-                            )
-                        },
-                        loading = {
-                            Image(
-                                imageVector = Icons.Outlined.AccountCircle,
-                                modifier = Modifier.requiredSize(imageSize),
-                                contentDescription = null,
-                                alpha = 0.1f,
-                                contentScale = ContentScale.FillBounds
-                            )
-                        }
+                        modifier = Modifier.requiredSize(imageSize),
                     )
                 } else {
                     Text(
@@ -326,7 +317,8 @@ private fun CreateProjectFloatingActionButton(
 ) {
     FloatingActionButton(onClick = onClick) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
@@ -337,7 +329,7 @@ private fun CreateProjectFloatingActionButton(
                 Text(
                     text = stringResource(R.string.action_create_project),
                     modifier = Modifier
-                        .padding(start = 8.dp, top = 3.dp)
+                        .padding(start = 8.dp)
                 )
             }
         }
@@ -357,13 +349,10 @@ private fun CreateProjectDialog(
     val keyboardController = LocalSoftwareKeyboardController.current
     Dialog(
         onDismissRequest = onDismiss,
-        properties =
-        if (isCreateClicked) {
-            DialogProperties(
-                dismissOnBackPress = false,
-                dismissOnClickOutside = false
-            )
-        } else DialogProperties()
+        properties = DialogProperties(
+                        dismissOnBackPress = !isCreateClicked,
+                        dismissOnClickOutside = !isCreateClicked
+                     )
     ) {
         Column(
             modifier = modifier
@@ -456,13 +445,56 @@ private fun LazyListState.isScrollingUp(): Boolean {
     }.value
 }
 
-private fun showSnackbar(
-    coroutineScope: CoroutineScope,
-    snackbarHostState: SnackbarHostState,
-    message: String,
+@Composable
+private fun ShowDownloadingDevelopmentKeysDialog(
+    modifier: Modifier = Modifier,
 ) {
-    coroutineScope.launch {
-        snackbarHostState.showSnackbar(message = message)
+    Dialog(
+        onDismissRequest = {},
+        properties =
+        DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        )
+    ) {
+        Column(
+            modifier = modifier
+                .width(width = 280.dp)
+                .fillMaxWidth()
+                .background(MaterialTheme.colors.surface)
+                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .height(64.dp)
+                    .fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    modifier = Modifier.size(24.dp),
+                    painter = painterResource(id = R.drawable.ic_baseline_hourglass_top),
+                    contentDescription = null,
+                    tint = MaterialTheme.colors.onSurface
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = stringResource(R.string.label_please_wait),
+                    color = MaterialTheme.colors.onSurface,
+                    style = MaterialTheme.typography.h6
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .size(64.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
+            Spacer(modifier = Modifier.height(32.dp))
+            Text(
+                text = stringResource(R.string.label_fetching_development_keys),
+                color = MaterialTheme.colors.onSurface,
+                style = MaterialTheme.typography.body1
+            )
+        }
     }
 }
 
