@@ -19,4 +19,5 @@
     <string name="param_category_training">training</string>
     <string name="param_category_testing">testing</string>
     <string name="param_category_anomaly">anomaly</string>
+    <string name="try_again">Try again</string>
 </resources>
