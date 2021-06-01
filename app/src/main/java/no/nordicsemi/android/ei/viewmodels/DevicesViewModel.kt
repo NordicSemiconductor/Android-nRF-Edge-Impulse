@@ -12,10 +12,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.LocationManager
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
 import androidx.lifecycle.AndroidViewModel
@@ -64,7 +61,7 @@ class DevicesViewModel @Inject constructor(
     var configuredDevices = mutableStateListOf<Device>()
         private set
 
-    val scannerState = ScannerState(updateScanningState())
+    val scannerState = ScannerState(ScanningState.Initializing)
 
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
@@ -160,8 +157,8 @@ class DevicesViewModel @Inject constructor(
             return
         }
 
-        //TODO add a scan filter
-        //val scanFilter = ScanFilter.Builder().build()
+        // TODO Add a scan filter
+        // val scanFilter = ScanFilter.Builder().build()
         val scanSettings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .setReportDelay(0)
@@ -185,24 +182,6 @@ class DevicesViewModel @Inject constructor(
             is Reason.LocationPermissionNotGranted -> scannerState.onLocationPermissionNotGranted()
             is Reason.LocationTurnedOff -> scannerState.onLocationTurnedOff()
         }
-    }
-
-    private fun updateScanningState(): ScanningState = if (isBluetoothEnabled()) {
-        if (isMarshMellowOrAbove()) {
-            if (isLocationPermissionGranted(context = getApplication())) {
-                if (isLocationEnabled(context = getApplication())) {
-                    ScanningState.Started
-                } else {
-                    ScanningState.Stopped(Reason.LocationTurnedOff)
-                }
-            } else {
-                ScanningState.Stopped(Reason.LocationPermissionNotGranted)
-            }
-        } else {
-            ScanningState.Started
-        }
-    } else {
-        ScanningState.Stopped(Reason.BluetoothDisabled)
     }
 
     companion object {
