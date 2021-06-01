@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="label_scanner">Scanner</string>
+    <string name="label_scanner">Add Device</string>
     <string name="unknown">Unknown</string>
     <string name="label_no_devices_connected">No devices connected</string>
     <string name="label_scanning">Scanning for bluetooth devices…</string>
