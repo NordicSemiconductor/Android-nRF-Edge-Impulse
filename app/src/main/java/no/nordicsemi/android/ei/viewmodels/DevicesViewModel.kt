@@ -23,8 +23,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
-import no.nordicsemi.android.ei.ble.state.*
-import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.*
+import no.nordicsemi.android.ei.ble.state.ScannerState
+import no.nordicsemi.android.ei.ble.state.ScanningState
+import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.Reason
 import no.nordicsemi.android.ei.di.ProjectComponentEntryPoint
 import no.nordicsemi.android.ei.di.ProjectManager
 import no.nordicsemi.android.ei.di.UserComponentEntryPoint
@@ -177,13 +178,9 @@ class DevicesViewModel @Inject constructor(
     private fun stopScan(reason: Reason) {
         stopScan()
         when (reason) {
-            is Reason.NotStarted -> scannerState.onScanningNotStarted()
             is Reason.BluetoothDisabled -> scannerState.onBluetoothDisabled()
             is Reason.LocationPermissionNotGranted -> scannerState.onLocationPermissionNotGranted()
             is Reason.LocationTurnedOff -> scannerState.onLocationTurnedOff()
-            is Reason.Unknown -> {
-                //TODO Handle some other errors?
-            }
         }
     }
 
@@ -191,7 +188,7 @@ class DevicesViewModel @Inject constructor(
         if (isMarshMellowOrAbove()) {
             if (isLocationPermissionGranted(context = getApplication())) {
                 if (isLocationEnabled(context = getApplication())) {
-                    ScanningState.Stopped(Reason.NotStarted)
+                    ScanningState.Started
                 } else {
                     ScanningState.Stopped(Reason.LocationTurnedOff)
                 }
@@ -199,7 +196,7 @@ class DevicesViewModel @Inject constructor(
                 ScanningState.Stopped(Reason.LocationPermissionNotGranted)
             }
         } else {
-            ScanningState.Stopped(Reason.NotStarted)
+            ScanningState.Started
         }
     } else {
         ScanningState.Stopped(Reason.BluetoothDisabled)

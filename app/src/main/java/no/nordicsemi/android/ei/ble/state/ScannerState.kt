@@ -13,7 +13,7 @@ import kotlin.math.max
  * ScannerState that holds the current scanning state and the list of discovered devices.
  */
 class ScannerState(
-    initialState: ScanningState = ScanningState.Stopped(Reason.NotStarted)
+    initialState: ScanningState = ScanningState.Stopped(Reason.LocationPermissionNotGranted)
 ) {
     var scanningState: ScanningState by mutableStateOf(initialState)
         private set
@@ -37,11 +37,6 @@ class ScannerState(
      */
     fun onScanningStarted() {
         scanningState = ScanningState.Started
-    }
-
-    fun onScanningNotStarted() {
-        scanningState = ScanningState.Stopped(Reason.NotStarted)
-        clearDiscoveredDevices()
     }
 
     fun onBluetoothDisabled() {
