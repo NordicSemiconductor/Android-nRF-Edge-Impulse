@@ -51,11 +51,13 @@ class DashboardViewModel @Inject constructor(
     var isDownloadingDevelopmentKeys: Boolean by mutableStateOf(false)
         private set
 
+    // TODO This needs to be fixed: Possible NPE when switching back to the app.
     private val userDataRepo: UserDataRepository
         get() = EntryPoints
             .get(userManager.userComponent!!, UserComponentEntryPoint::class.java)
             .userDataRepository()
 
+    // TODO This needs to be fixed: Possible NPE when switching back to the app.
     private val projectManager: ProjectManager
         get() = EntryPoints
             .get(userManager.userComponent!!, UserComponentEntryPoint::class.java)

@@ -38,6 +38,7 @@ class ProjectViewModel @Inject constructor(
     var isRefreshing: Boolean by mutableStateOf(false)
         private set
 
+    // TODO This needs to be fixed: NPE when switching back to the app.
     private val userComponentEntryPoint: UserComponentEntryPoint
         get() = EntryPoints.get(userManager.userComponent!!, UserComponentEntryPoint::class.java)
 
@@ -47,6 +48,7 @@ class ProjectViewModel @Inject constructor(
     private val projectManager: ProjectManager
         get() = userComponentEntryPoint.getProjectManager()
 
+    // TODO This needs to be fixed: Possible NPE when switching back to the app.
     private val projectDataRepository: ProjectDataRepository
         get() = EntryPoints
             .get(projectManager.projectComponent!!, ProjectComponentEntryPoint::class.java)

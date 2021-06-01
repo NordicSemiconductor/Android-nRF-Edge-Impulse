@@ -48,11 +48,13 @@ class DevicesViewModel @Inject constructor(
     private val eventChannel = Channel<Event>(Channel.BUFFERED)
     val eventFlow = eventChannel.receiveAsFlow()
 
+    // TODO This needs to be fixed: Possible NPE when switching back to the app.
     private val projectManager: ProjectManager
         get() = EntryPoints
             .get(userManager.userComponent!!, UserComponentEntryPoint::class.java)
             .getProjectManager()
 
+    // TODO This needs to be fixed: Possible NPE when switching back to the app.
     private val projectDataRepository: ProjectDataRepository
         get() = EntryPoints
             .get(projectManager.projectComponent!!, ProjectComponentEntryPoint::class.java)
