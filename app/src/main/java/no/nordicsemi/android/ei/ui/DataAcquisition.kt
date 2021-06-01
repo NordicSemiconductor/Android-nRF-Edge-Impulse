@@ -6,8 +6,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -148,28 +146,6 @@ private fun CollectedDataList(
             text = stringResource(R.string.label_no_collected_data_yet),
             modifier = Modifier.fillMaxSize()
         )
-}
-
-@Composable
-fun RecordDataFloatingActionButton(onClick: () -> Unit) {
-    // Toggle the visibility of the content with animation.
-    FloatingActionButton(onClick = onClick) {
-        Row(
-            modifier = Modifier
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = null
-            )
-            Text(
-                text = stringResource(R.string.action_record_new_data),
-                modifier = Modifier
-                    .padding(start = 8.dp)
-            )
-        }
-    }
 }
 
 @Composable

@@ -1,16 +1,15 @@
 package no.nordicsemi.android.ei.ui
 
 import android.content.res.Configuration.*
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.ModalBottomSheetValue.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -372,6 +371,28 @@ private fun ProjectBottomNavigation(
                 },
                 selectedContentColor = MaterialTheme.colors.primaryVariant,
                 unselectedContentColor = LocalContentColor.current
+            )
+        }
+    }
+}
+
+@Composable
+fun RecordDataFloatingActionButton(onClick: () -> Unit) {
+    // Toggle the visibility of the content with animation.
+    FloatingActionButton(onClick = onClick) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = null
+            )
+            Text(
+                text = stringResource(R.string.action_record_new_data),
+                modifier = Modifier
+                    .padding(start = 8.dp)
             )
         }
     }
