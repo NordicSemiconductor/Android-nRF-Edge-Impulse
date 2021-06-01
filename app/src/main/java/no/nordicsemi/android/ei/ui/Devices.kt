@@ -185,7 +185,7 @@ fun ConfiguredDeviceRow(device: Device) {
         Spacer(modifier = Modifier.width(16.dp))
         Surface(
             modifier = Modifier
-                .padding(end = 16.dp)
+                .padding(end = 8.dp)
                 .size(8.dp),
             //TODO Add green for connected devices
             color = NordicRed,
