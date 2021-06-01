@@ -54,7 +54,6 @@ fun DataAcquisition(
     val snackbarHostState = remember { SnackbarHostState() }
     val trainingListState = rememberLazyListState()
     val testingListState = rememberLazyListState()
-    val anomalyListState = rememberLazyListState()
 
     LocalLifecycleOwner.current.lifecycleScope.launchWhenStarted {
         viewModel.eventFlow.runCatching {
@@ -87,11 +86,6 @@ fun DataAcquisition(
             Testing -> CollectedDataList(
                 state = testingListState,
                 pagingDataFlow = viewModel.testingSamples,
-                tab = tab
-            )
-            Anomaly -> CollectedDataList(
-                state = anomalyListState,
-                pagingDataFlow = viewModel.anomalySamples,
                 tab = tab
             )
         }.exhaustive
