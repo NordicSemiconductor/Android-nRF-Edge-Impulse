@@ -4,7 +4,7 @@ buildscript {
         // https://developer.android.com/jetpack/androidx/releases/compose
         compose_version = '1.0.0-beta07'
         // https://developer.android.com/jetpack/compose/setup#configure_kotlin
-        kotlin_version = '1.5.10'
+        kotlin_version = '1.4.32'
         // https://github.com/google/dagger/releases
         hilt_dagger_version = '2.36'
         // https://developer.android.com/training/dependency-injection/hilt-android
