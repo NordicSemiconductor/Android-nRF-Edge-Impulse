@@ -7,6 +7,8 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -14,8 +16,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -174,7 +176,9 @@ fun ConfiguredDeviceRow(device: Device) {
         }
         Spacer(modifier = Modifier.width(16.dp))
         Surface(
-            modifier = Modifier.padding(end = 16.dp).size(8.dp),
+            modifier = Modifier
+                .padding(end = 16.dp)
+                .size(8.dp),
             //TODO Add green for connected devices
             color = NordicRed,
             shape = CircleShape
@@ -232,22 +236,6 @@ private fun getRssiRes(rssi: Int): Int = when (rssi) {
     in 41..60 -> R.drawable.ic_signal_2_bar
     in 61..80 -> R.drawable.ic_signal_3_bar
     else -> R.drawable.ic_signal_4_bar
-}
-
-@Composable
-fun ScanningStoppedInfo(
-    modifier: Modifier,
-    reason: Reason,
-    onScanningStarted: () -> Unit
-) = when (reason) {
-    is Reason.BluetoothDisabled -> BluetoothDisabledInfo(modifier)
-    is Reason.LocationTurnedOff -> LocationTurnedOffInfo(modifier)
-    is Reason.LocationPermissionNotGranted -> {
-        LocationPermissionInfo(
-            modifier = modifier,
-            onScanningStarted = onScanningStarted
-        )
-    }
 }
 
 @Composable
@@ -310,6 +298,22 @@ fun NoDevicesInRangeInfo(
 }
 
 @Composable
+fun ScanningStoppedInfo(
+    modifier: Modifier,
+    reason: Reason,
+    onScanningStarted: () -> Unit
+) = when (reason) {
+    is Reason.BluetoothDisabled -> BluetoothDisabledInfo(modifier)
+    is Reason.LocationTurnedOff -> LocationTurnedOffInfo(modifier)
+    is Reason.LocationPermissionNotGranted -> {
+        LocationPermissionInfo(
+            modifier = modifier,
+            onScanningStarted = onScanningStarted
+        )
+    }
+}
+
+@Composable
 fun BluetoothDisabledInfo(
     modifier: Modifier = Modifier
 ) {
@@ -346,6 +350,7 @@ fun BluetoothDisabledInfo(
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun LocationPermissionInfo(
     modifier: Modifier = Modifier,
@@ -355,6 +360,7 @@ fun LocationPermissionInfo(
         modifier = modifier,
         icon = R.drawable.ic_location_off
     ) {
+        var showRationale by rememberSaveable { mutableStateOf(false) }
         val launcher = rememberLauncherForActivityResult(
             ActivityResultContracts.RequestPermission()
         ) { isGranted ->
@@ -368,7 +374,6 @@ fun LocationPermissionInfo(
         )
         Spacer(modifier = Modifier.height(32.dp))
         Button(
-            modifier = Modifier.defaultMinSize(minHeight = 36.dp),
             onClick = {
                 launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             }
@@ -378,11 +383,24 @@ fun LocationPermissionInfo(
                 style = MaterialTheme.typography.button
             )
         }
-        Spacer(modifier = Modifier.height(32.dp))
-        Text(
-            text = stringResource(id = R.string.location_permission_info),
-            style = MaterialTheme.typography.body1
-        )
+        Spacer(modifier = Modifier.height(16.dp))
+        AnimatedVisibility(visible = !showRationale) {
+            Button(
+                onClick = { showRationale = true }
+            ) {
+                Text(
+                    text = stringResource(R.string.action_show_location_rationale).toUpperCase(Locale.US),
+                    style = MaterialTheme.typography.button
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        AnimatedVisibility(visible = showRationale) {
+            Text(
+                text = stringResource(id = R.string.location_permission_info),
+                style = MaterialTheme.typography.body1
+            )
+        }
     }
 }
 
@@ -404,7 +422,6 @@ fun LocationTurnedOffInfo(
         )
         Spacer(modifier = Modifier.height(32.dp))
         Button(
-            modifier = Modifier.defaultMinSize(minHeight = 36.dp),
             onClick = {
                 launcher.launch(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
             }
