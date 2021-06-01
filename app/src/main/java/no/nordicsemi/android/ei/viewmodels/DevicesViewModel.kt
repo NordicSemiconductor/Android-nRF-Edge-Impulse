@@ -13,6 +13,7 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
@@ -23,8 +24,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
-import no.nordicsemi.android.ei.ble.state.*
-import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.*
+import no.nordicsemi.android.ei.ble.state.ScannerState
+import no.nordicsemi.android.ei.ble.state.ScanningState
+import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.Reason
 import no.nordicsemi.android.ei.di.ProjectComponentEntryPoint
 import no.nordicsemi.android.ei.di.ProjectManager
 import no.nordicsemi.android.ei.di.UserComponentEntryPoint
@@ -47,17 +49,19 @@ class DevicesViewModel @Inject constructor(
     private val eventChannel = Channel<Event>(Channel.BUFFERED)
     val eventFlow = eventChannel.receiveAsFlow()
 
+    // TODO This needs to be fixed: Possible NPE when switching back to the app.
     private val projectManager: ProjectManager
         get() = EntryPoints
             .get(userManager.userComponent!!, UserComponentEntryPoint::class.java)
             .getProjectManager()
 
+    // TODO This needs to be fixed: Possible NPE when switching back to the app.
     private val projectDataRepository: ProjectDataRepository
         get() = EntryPoints
             .get(projectManager.projectComponent!!, ProjectComponentEntryPoint::class.java)
             .projectDataRepository()
 
-    var configuredDevices: List<Device> by mutableStateOf(listOf())
+    var configuredDevices = mutableStateListOf<Device>()
         private set
 
     val scannerState = ScannerState(updateScanningState())
@@ -177,13 +181,9 @@ class DevicesViewModel @Inject constructor(
     private fun stopScan(reason: Reason) {
         stopScan()
         when (reason) {
-            is Reason.NotStarted -> scannerState.onScanningNotStarted()
             is Reason.BluetoothDisabled -> scannerState.onBluetoothDisabled()
             is Reason.LocationPermissionNotGranted -> scannerState.onLocationPermissionNotGranted()
             is Reason.LocationTurnedOff -> scannerState.onLocationTurnedOff()
-            is Reason.Unknown -> {
-                //TODO Handle some other errors?
-            }
         }
     }
 
@@ -191,7 +191,7 @@ class DevicesViewModel @Inject constructor(
         if (isMarshMellowOrAbove()) {
             if (isLocationPermissionGranted(context = getApplication())) {
                 if (isLocationEnabled(context = getApplication())) {
-                    ScanningState.Stopped(Reason.NotStarted)
+                    ScanningState.Started
                 } else {
                     ScanningState.Stopped(Reason.LocationTurnedOff)
                 }
@@ -199,7 +199,7 @@ class DevicesViewModel @Inject constructor(
                 ScanningState.Stopped(Reason.LocationPermissionNotGranted)
             }
         } else {
-            ScanningState.Stopped(Reason.NotStarted)
+            ScanningState.Started
         }
     } else {
         ScanningState.Stopped(Reason.BluetoothDisabled)

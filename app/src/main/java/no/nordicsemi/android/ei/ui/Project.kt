@@ -243,10 +243,11 @@ private fun ProjectContent(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues = innerPadding),
-                    viewModel = devicesViewModel,
                     configuredDevices = viewModel.configuredDevices,
                     refreshingState = viewModel.isRefreshing,
-                    onRefresh = { viewModel.listDevices(true) }
+                    onRefresh = { viewModel.listDevices(true) },
+                    scannerState = devicesViewModel.scannerState,
+                    onScannerStarted = { devicesViewModel.startScan() }
                 )
             }
             composable(route = BottomNavigationScreen.DataAcquisition.route) { backStackEntry ->
