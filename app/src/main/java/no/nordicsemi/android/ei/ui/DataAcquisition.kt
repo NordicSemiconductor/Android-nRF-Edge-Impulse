@@ -5,17 +5,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
@@ -34,11 +33,13 @@ import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import no.nordicsemi.android.ei.HorizontalPagerTab
-import no.nordicsemi.android.ei.HorizontalPagerTab.*
+import no.nordicsemi.android.ei.HorizontalPagerTab.Testing
+import no.nordicsemi.android.ei.HorizontalPagerTab.Training
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Sample
 import no.nordicsemi.android.ei.showSnackbar
+import no.nordicsemi.android.ei.ui.layouts.InfoLayout
 import no.nordicsemi.android.ei.util.exhaustive
 import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Error
@@ -121,7 +122,7 @@ private fun CollectedDataList(
                         }
                     }
                     loadState.append is LoadState.Loading -> {
-                        item { LoadingItem() }
+                        item { LoadingItem(modifier = Modifier.fillMaxWidth()) }
                     }
                     loadState.refresh is LoadState.Error -> {
                         val e = lazyPagingItems.loadState.refresh as LoadState.Error
@@ -142,26 +143,11 @@ private fun CollectedDataList(
                 }
             }
         }
-    } ?: run {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
-                Icon(
-                    imageVector = tab.emptyListIcon,
-                    contentDescription = null,
-                    modifier = Modifier.size(72.dp)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = stringResource(R.string.label_no_collected_data_yet),
-                    style = MaterialTheme.typography.h6
-                )
-            }
-        }
-    }
+    } ?: InfoLayout(
+            iconPainter = rememberVectorPainter(tab.emptyListIcon),
+            text = stringResource(R.string.label_no_collected_data_yet),
+            modifier = Modifier.fillMaxSize()
+        )
 }
 
 @Composable
@@ -239,10 +225,11 @@ private fun Loading(
 }
 
 @Composable
-private fun LoadingItem() {
+private fun LoadingItem(
+    modifier: Modifier = Modifier
+) {
     CircularProgressIndicator(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .padding(16.dp)
             .wrapContentWidth(Alignment.CenterHorizontally)
     )
