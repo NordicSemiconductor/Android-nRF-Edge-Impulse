@@ -13,6 +13,7 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
@@ -60,7 +61,7 @@ class DevicesViewModel @Inject constructor(
             .get(projectManager.projectComponent!!, ProjectComponentEntryPoint::class.java)
             .projectDataRepository()
 
-    var configuredDevices: List<Device> by mutableStateOf(listOf())
+    var configuredDevices = mutableStateListOf<Device>()
         private set
 
     val scannerState = ScannerState(updateScanningState())
