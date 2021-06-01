@@ -25,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
@@ -47,12 +48,19 @@ fun Devices(
     onScannerStarted: () -> Unit
 ) {
     val scanningState = scannerState.scanningState
-    val swipeRefreshState = rememberSwipeRefreshState(refreshingState)
 
     SwipeRefresh(
-        modifier = modifier,
-        state = swipeRefreshState,
+        state = rememberSwipeRefreshState(refreshingState),
         onRefresh = onRefresh,
+        modifier = modifier,
+        // TODO After Compose is stable, try removing this and swiping in Scanner tab.
+        // Those 3 properties below copy the default values from SwipeRefresh.
+        // Without them, the Scanner page crashes when devices are displayed and Swipe is used.
+        indicator = { s, trigger ->
+            SwipeRefreshIndicator(s, trigger)
+        },
+        indicatorAlignment = Alignment.TopCenter,
+        indicatorPadding = PaddingValues(0.dp)
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
