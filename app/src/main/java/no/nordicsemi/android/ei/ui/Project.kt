@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -284,7 +285,7 @@ private fun ProjectTopAppBar(
     when (selectedScreen) {
         BottomNavigationScreen.DataAcquisition -> {
             TabTopAppBar(
-                title = { Text(text = projectName) },
+                title = { Title(text = projectName) },
                 tabs = tabs.map { stringResource(it.title) },
                 pagerState = pagerState,
                 modifier = modifier,
@@ -300,7 +301,7 @@ private fun ProjectTopAppBar(
         }
         else -> {
             TopAppBar(
-                title = { Text(text = projectName) },
+                title = { Title(text = projectName) },
                 modifier = modifier,
                 navigationIcon = {
                     IconButton(onClick = onBackPressed) {
@@ -313,6 +314,19 @@ private fun ProjectTopAppBar(
             )
         }
     }
+}
+
+@Composable
+private fun Title(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = text,
+        modifier = modifier.padding(end = 16.dp),
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+    )
 }
 
 @Composable
