@@ -19,6 +19,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.paging.LoadState
@@ -99,13 +101,16 @@ private fun CollectedDataList(
     tab: HorizontalPagerTab
 ) {
     val samples: LazyPagingItems<Sample> = pagingDataFlow.collectAsLazyPagingItems()
-    samples.takeIf { lazyPagingItems ->
-        lazyPagingItems.itemCount > 0
-    }?.let { lazyPagingItems ->
-        LazyColumn(contentPadding = PaddingValues(bottom = 56.dp), state = state) {
-            items(lazyPagingItems) { sample ->
-                CollectedDataRow(sample = sample!!, tab = tab)
-                Divider()
+    samples.takeIf { it.itemCount > 0 }?.let { lazyPagingItems ->
+        LazyColumn(
+            contentPadding = PaddingValues(bottom = 56.dp),
+            state = state
+        ) {
+            items(lazyPagingItems) {
+                it?.let { sample ->
+                    CollectedDataRow(sample)
+                    Divider()
+                }
             }
 
             lazyPagingItems.apply {
@@ -182,7 +187,7 @@ fun RecordDataFloatingActionButton(onClick: () -> Unit) {
 }
 
 @Composable
-fun CollectedDataRow(sample: Sample, tab: HorizontalPagerTab) {
+fun CollectedDataRow(sample: Sample) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -190,31 +195,33 @@ fun CollectedDataRow(sample: Sample, tab: HorizontalPagerTab) {
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = tab.rowIcon,
-            contentDescription = null,
-            modifier = Modifier
-                .size(40.dp)
-                .background(
-                    color = MaterialTheme.colors.primary,
-                    shape = CircleShape
-                )
-                .padding(8.dp),
-            tint = Color.White
+        Text(
+            text = sample.filename,
+            modifier = Modifier.weight(0.5f),
+            color = MaterialTheme.colors.onSurface,
+            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.body1,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
-        Spacer(modifier = Modifier.width(16.dp))
-        Column(modifier = Modifier.weight(1.0f)) {
-            Text(
-                text = sample.filename,
-                color = MaterialTheme.colors.onSurface,
-                style = MaterialTheme.typography.body1
-            )
-            Text(
-                text = sample.added,
-                color = MaterialTheme.colors.onSurface,
-                style = MaterialTheme.typography.caption
-            )
-        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = sample.label,
+            modifier = Modifier.weight(0.4f),
+            color = MaterialTheme.colors.onSurface,
+            style = MaterialTheme.typography.body1,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = "${sample.totalLengthMs.toInt() / 1000}s",
+            modifier = Modifier.weight(0.1f),
+            color = MaterialTheme.colors.onSurface,
+            style = MaterialTheme.typography.body1,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

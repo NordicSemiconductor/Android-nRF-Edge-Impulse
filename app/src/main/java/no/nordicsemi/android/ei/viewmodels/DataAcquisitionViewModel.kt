@@ -72,17 +72,6 @@ class DataAcquisitionViewModel @Inject constructor(
         }.flow.cachedIn(viewModelScope)
             .catch { e -> eventChannel.send(element = Error(Throwable(e))) }
 
-    var anomalySamples: Flow<PagingData<Sample>> =
-        Pager(PagingConfig(pageSize = PAGE_SIZE, prefetchDistance = 2)) {
-            SamplePagingSource(
-                project,
-                keys,
-                context.getString(Anomaly.category),
-                projectRepository
-            )
-        }.flow.cachedIn(viewModelScope)
-            .catch { e -> eventChannel.send(element = Error(Throwable(e))) }
-
     companion object {
         const val PAGE_SIZE = 50
     }

@@ -280,7 +280,6 @@ private fun ProjectTopAppBar(
     val tabs = listOf(
         HorizontalPagerTab.Training,
         HorizontalPagerTab.Testing,
-        HorizontalPagerTab.Anomaly
     )
     when (selectedScreen) {
         BottomNavigationScreen.DataAcquisition -> {
