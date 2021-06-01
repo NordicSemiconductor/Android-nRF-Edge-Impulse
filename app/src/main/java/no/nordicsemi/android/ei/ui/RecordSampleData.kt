@@ -24,7 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Device
-import no.nordicsemi.android.ei.model.Device.Sensor
+import no.nordicsemi.android.ei.model.Sensor
 import no.nordicsemi.android.ei.ui.theme.NordicGrass
 import java.util.*
 

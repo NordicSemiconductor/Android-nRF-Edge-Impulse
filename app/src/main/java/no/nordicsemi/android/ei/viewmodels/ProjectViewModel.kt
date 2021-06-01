@@ -18,6 +18,7 @@ import no.nordicsemi.android.ei.di.ProjectManager
 import no.nordicsemi.android.ei.di.UserComponentEntryPoint
 import no.nordicsemi.android.ei.di.UserManager
 import no.nordicsemi.android.ei.model.Device
+import no.nordicsemi.android.ei.model.Sensor
 import no.nordicsemi.android.ei.repository.ProjectDataRepository
 import no.nordicsemi.android.ei.repository.ProjectRepository
 import no.nordicsemi.android.ei.repository.UserDataRepository
@@ -61,7 +62,7 @@ class ProjectViewModel @Inject constructor(
         private set
     var label: String by mutableStateOf("")
         private set
-    var selectedSensor: Device.Sensor? by mutableStateOf(null)
+    var selectedSensor: Sensor? by mutableStateOf(null)
         private set
     var selectedFrequency: Number? by mutableStateOf(null)
         private set
@@ -106,7 +107,7 @@ class ProjectViewModel @Inject constructor(
         this.label = label
     }
 
-    fun onSensorSelected(sensor: Device.Sensor) {
+    fun onSensorSelected(sensor: Sensor) {
         this.selectedSensor = sensor
         sensor.frequencies.firstOrNull()
                 ?.let { onFrequencySelected(frequency = it) }
