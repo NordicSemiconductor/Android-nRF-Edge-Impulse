@@ -10,10 +10,4 @@ data class Device(
     val sensors: List<Sensor>,
     val remote_mgmt_connected: Boolean,
     val supportsSnapshotStreaming: Boolean
-) {
-    inner class Sensor(
-        val name: String,
-        val maxSampleLengths: Int,
-        val frequencies: List<Number>
-    )
-}
+)
