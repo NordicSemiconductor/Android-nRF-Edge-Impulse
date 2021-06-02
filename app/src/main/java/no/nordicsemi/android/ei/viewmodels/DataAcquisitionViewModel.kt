@@ -50,7 +50,7 @@ class DataAcquisitionViewModel @Inject constructor(
     private val project = projectDataRepository.project
     private val keys = projectDataRepository.developmentKeys
 
-    val trainingSamples: Flow<PagingData<Sample>> =
+    val trainingSamples =
         Pager(PagingConfig(pageSize = PAGE_SIZE, prefetchDistance = 2)) {
             SamplePagingSource(
                 project,
@@ -58,10 +58,11 @@ class DataAcquisitionViewModel @Inject constructor(
                 context.getString(Training.category),
                 projectRepository
             )
-        }.flow.cachedIn(viewModelScope)
-            .catch { e -> eventChannel.send(element = Error(Throwable(e))) }
+        }.flow.cachedIn(viewModelScope).catch {
+            e -> eventChannel.send(element = Error(Throwable(e)))
+        }
 
-    var testingSamples: Flow<PagingData<Sample>> =
+    var testingSamples =
         Pager(PagingConfig(pageSize = PAGE_SIZE, prefetchDistance = 2)) {
             SamplePagingSource(
                 project,
@@ -69,19 +70,9 @@ class DataAcquisitionViewModel @Inject constructor(
                 context.getString(Testing.category),
                 projectRepository
             )
-        }.flow.cachedIn(viewModelScope)
-            .catch { e -> eventChannel.send(element = Error(Throwable(e))) }
-
-    var anomalySamples: Flow<PagingData<Sample>> =
-        Pager(PagingConfig(pageSize = PAGE_SIZE, prefetchDistance = 2)) {
-            SamplePagingSource(
-                project,
-                keys,
-                context.getString(Anomaly.category),
-                projectRepository
-            )
-        }.flow.cachedIn(viewModelScope)
-            .catch { e -> eventChannel.send(element = Error(Throwable(e))) }
+        }.flow.cachedIn(viewModelScope).catch {
+            e -> eventChannel.send(element = Error(Throwable(e)))
+        }
 
     companion object {
         const val PAGE_SIZE = 50
