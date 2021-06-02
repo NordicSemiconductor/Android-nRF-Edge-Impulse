@@ -15,7 +15,6 @@ import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.repository.LoginRepository
 import no.nordicsemi.android.ei.viewmodels.state.LoginState
 import no.nordicsemi.android.ei.viewmodels.state.LoginState.*
-import java.net.UnknownHostException
 import javax.inject.Inject
 
 @HiltViewModel
@@ -31,11 +30,7 @@ class LoginViewModel @Inject constructor(
         val context = getApplication() as Context
         state = InProgress
         val handler = CoroutineExceptionHandler { _, throwable ->
-            val message = when (throwable) {
-                is UnknownHostException -> context.getString(R.string.error_no_internet)
-                else -> throwable.localizedMessage
-            }
-            state = Error(message)
+            state = Error(throwable)
         }
         viewModelScope.launch(handler) {
             repo.login(username, password).let { response ->
@@ -43,7 +38,7 @@ class LoginViewModel @Inject constructor(
                     state = LoggedIn(username, password, token, authTokenType)
                 } ?: run {
                     val message = response.error ?: context.getString(R.string.error_invalid_token)
-                    state = Error(message)
+                    state = Error(Throwable(message))
                 }
             }
         }

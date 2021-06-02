@@ -1,7 +1,10 @@
 package no.nordicsemi.android.ei.ui
 
 import android.content.res.Configuration.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material.*
 import androidx.compose.material.ModalBottomSheetValue.*
 import androidx.compose.material.icons.Icons
@@ -9,7 +12,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -36,12 +38,13 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.*
 import no.nordicsemi.android.ei.R
+import no.nordicsemi.android.ei.ui.layouts.CollapsibleFloatingActionButton
 import no.nordicsemi.android.ei.ui.layouts.TabTopAppBar
+import no.nordicsemi.android.ei.util.asMessage
 import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel
 import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
 import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Error
-import java.net.UnknownHostException
 
 @Composable
 fun Project(
@@ -197,11 +200,7 @@ private fun ProjectContent(
                         showSnackbar(
                             coroutineScope = scope,
                             snackbarHostState = snackbarHostState,
-                            message = when (it.throwable) {
-                                is UnknownHostException -> context.getString(R.string.error_no_internet)
-                                else -> it.throwable.localizedMessage
-                                    ?: context.getString(R.string.error_refreshing_failed)
-                            }
+                            message = it.throwable.asMessage(context, context.getString(R.string.error_refreshing_failed))
                         )
                     }
                     else -> {}
@@ -227,8 +226,14 @@ private fun ProjectContent(
             )
         },
         floatingActionButton = {
-            if (isFabVisible)
-                RecordDataFloatingActionButton(onClick = onFabClicked)
+            if (isFabVisible) {
+                CollapsibleFloatingActionButton(
+                    imageVector = Icons.Default.Add,
+                    text = stringResource(id = R.string.content_decription_close_record_new_data),
+                    expanded = { false },
+                    onClick = onFabClicked
+                )
+            }
         }
     ) { innerPadding ->
         NavHost(
@@ -257,7 +262,8 @@ private fun ProjectContent(
                 DataAcquisition(
                     connectedDevice = viewModel.configuredDevices,
                     pagerState = pagerState,
-                    viewModel = dataAcquisitionViewModel
+                    viewModel = dataAcquisitionViewModel,
+                    snackbarHostState = snackbarHostState,
                 )
             }
             composable(route = BottomNavigationScreen.Deployment.route) {
@@ -371,28 +377,6 @@ private fun ProjectBottomNavigation(
                 },
                 selectedContentColor = MaterialTheme.colors.primaryVariant,
                 unselectedContentColor = LocalContentColor.current
-            )
-        }
-    }
-}
-
-@Composable
-fun RecordDataFloatingActionButton(onClick: () -> Unit) {
-    // Toggle the visibility of the content with animation.
-    FloatingActionButton(onClick = onClick) {
-        Row(
-            modifier = Modifier
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = null
-            )
-            Text(
-                text = stringResource(R.string.action_record_new_data),
-                modifier = Modifier
-                    .padding(start = 8.dp)
             )
         }
     }

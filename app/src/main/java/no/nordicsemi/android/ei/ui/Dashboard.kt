@@ -54,7 +54,9 @@ import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Collaborator
 import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.showSnackbar
+import no.nordicsemi.android.ei.ui.layouts.CollapsibleFloatingActionButton
 import no.nordicsemi.android.ei.ui.layouts.UserAppBar
+import no.nordicsemi.android.ei.ui.layouts.isScrollingUp
 import no.nordicsemi.android.ei.ui.theme.NordicMiddleGrey
 import no.nordicsemi.android.ei.viewmodels.DashboardViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Error
@@ -79,7 +81,6 @@ fun Dashboard(
     val lazyListState = rememberLazyListState()
 
     var isCreateProjectDialogVisible by rememberSaveable { mutableStateOf(false) }
-    var isScrollingUp by remember { mutableStateOf(false) }
 
     coroutineScope.launchWhenStarted {
         viewModel.eventFlow.runCatching {
@@ -130,14 +131,14 @@ fun Dashboard(
             )
         },
         floatingActionButton = {
-            CreateProjectFloatingActionButton(
-                isScrollingUp = {
-                    isScrollingUp = lazyListState.isScrollingUp()
-                    isScrollingUp
-                },
+            CollapsibleFloatingActionButton(
+                imageVector = Icons.Default.Add,
+                text = stringResource(R.string.action_create_project),
+                expanded = { lazyListState.isScrollingUp() },
                 onClick = {
                     isCreateProjectDialogVisible = !isCreateProjectDialogVisible
-                })
+                }
+            )
         }
     ) { innerPadding ->
         SwipeRefresh(
@@ -328,8 +329,7 @@ private fun CreateProjectFloatingActionButton(
             AnimatedVisibility(visible = isScrollingUp()) {
                 Text(
                     text = stringResource(R.string.action_create_project),
-                    modifier = Modifier
-                        .padding(start = 8.dp)
+                    modifier = Modifier.padding(start = 8.dp)
                 )
             }
         }
@@ -425,24 +425,6 @@ private fun CreateProjectDialog(
             }
         }
     }
-}
-
-@Composable
-private fun LazyListState.isScrollingUp(): Boolean {
-    var previousIndex by remember(this) { mutableStateOf(firstVisibleItemIndex) }
-    var previousScrollOffset by remember(this) { mutableStateOf(firstVisibleItemScrollOffset) }
-    return remember(this) {
-        derivedStateOf {
-            if (previousIndex != firstVisibleItemIndex) {
-                previousIndex > firstVisibleItemIndex
-            } else {
-                previousScrollOffset >= firstVisibleItemScrollOffset
-            }.also {
-                previousIndex = firstVisibleItemIndex
-                previousScrollOffset = firstVisibleItemScrollOffset
-            }
-        }
-    }.value
 }
 
 @Composable

@@ -16,6 +16,7 @@ import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import no.nordicsemi.android.ei.viewmodels.SplashscreenViewModel
 import retrofit2.HttpException
 import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
 @Composable
@@ -106,6 +107,8 @@ fun Login(
                 onLoggedIn(token)
             } catch (e: UnknownHostException) {
                 onProgressChanged(activity.getString(R.string.error_no_internet))
+            } catch (e: SocketTimeoutException) {
+                onProgressChanged(activity.getString(R.string.error_timeout))
             } catch (e: HttpException) {
                 if (e.code() == HttpURLConnection.HTTP_MOVED_TEMP) {
                     AccountHelper.invalidateAuthToken(token, activity)
