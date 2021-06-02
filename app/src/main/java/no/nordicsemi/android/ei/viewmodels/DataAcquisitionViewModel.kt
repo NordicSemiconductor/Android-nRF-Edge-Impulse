@@ -6,24 +6,20 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
-import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import dagger.hilt.EntryPoints
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
-import no.nordicsemi.android.ei.HorizontalPagerTab.*
+import no.nordicsemi.android.ei.HorizontalPagerTab.Testing
+import no.nordicsemi.android.ei.HorizontalPagerTab.Training
 import no.nordicsemi.android.ei.di.ProjectComponentEntryPoint
 import no.nordicsemi.android.ei.di.ProjectManager
 import no.nordicsemi.android.ei.di.UserComponentEntryPoint
 import no.nordicsemi.android.ei.di.UserManager
-import no.nordicsemi.android.ei.model.Sample
 import no.nordicsemi.android.ei.repository.ProjectDataRepository
 import no.nordicsemi.android.ei.repository.ProjectRepository
-import no.nordicsemi.android.ei.viewmodels.event.Error
 import no.nordicsemi.android.ei.viewmodels.event.Event
 import javax.inject.Inject
 
@@ -51,30 +47,26 @@ class DataAcquisitionViewModel @Inject constructor(
     private val keys = projectDataRepository.developmentKeys
 
     val trainingSamples =
-        Pager(PagingConfig(pageSize = PAGE_SIZE, prefetchDistance = 2)) {
+        Pager(PagingConfig(pageSize = PAGE_SIZE, prefetchDistance = 10)) {
             SamplePagingSource(
                 project,
                 keys,
                 context.getString(Training.category),
                 projectRepository
             )
-        }.flow.cachedIn(viewModelScope).catch {
-            e -> eventChannel.send(element = Error(Throwable(e)))
-        }
+        }.flow.cachedIn(viewModelScope)
 
     var testingSamples =
-        Pager(PagingConfig(pageSize = PAGE_SIZE, prefetchDistance = 2)) {
+        Pager(PagingConfig(pageSize = PAGE_SIZE, prefetchDistance = 10)) {
             SamplePagingSource(
                 project,
                 keys,
                 context.getString(Testing.category),
                 projectRepository
             )
-        }.flow.cachedIn(viewModelScope).catch {
-            e -> eventChannel.send(element = Error(Throwable(e)))
-        }
+        }.flow.cachedIn(viewModelScope)
 
     companion object {
-        const val PAGE_SIZE = 50
+        const val PAGE_SIZE = 30
     }
 }

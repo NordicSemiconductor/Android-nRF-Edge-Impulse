@@ -9,5 +9,5 @@ sealed class LoginState {
         val token: String,
         val tokenType: String
     ): LoginState()
-    data class Error(val message: String): LoginState()
+    data class Error(val error: Throwable): LoginState()
 }

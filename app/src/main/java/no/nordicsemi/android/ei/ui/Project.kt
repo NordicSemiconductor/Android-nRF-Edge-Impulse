@@ -37,11 +37,11 @@ import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.*
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ui.layouts.TabTopAppBar
+import no.nordicsemi.android.ei.util.asMessage
 import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel
 import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
 import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Error
-import java.net.UnknownHostException
 
 @Composable
 fun Project(
@@ -197,11 +197,7 @@ private fun ProjectContent(
                         showSnackbar(
                             coroutineScope = scope,
                             snackbarHostState = snackbarHostState,
-                            message = when (it.throwable) {
-                                is UnknownHostException -> context.getString(R.string.error_no_internet)
-                                else -> it.throwable.localizedMessage
-                                    ?: context.getString(R.string.error_refreshing_failed)
-                            }
+                            message = it.throwable.asMessage(context, context.getString(R.string.error_refreshing_failed))
                         )
                     }
                     else -> {}
@@ -257,7 +253,8 @@ private fun ProjectContent(
                 DataAcquisition(
                     connectedDevice = viewModel.configuredDevices,
                     pagerState = pagerState,
-                    viewModel = dataAcquisitionViewModel
+                    viewModel = dataAcquisitionViewModel,
+                    snackbarHostState = snackbarHostState,
                 )
             }
             composable(route = BottomNavigationScreen.Deployment.route) {

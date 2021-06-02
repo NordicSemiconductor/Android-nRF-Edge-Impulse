@@ -6,20 +6,19 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.lifecycleScope
 import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
@@ -29,65 +28,43 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import no.nordicsemi.android.ei.HorizontalPagerTab
 import no.nordicsemi.android.ei.HorizontalPagerTab.Testing
 import no.nordicsemi.android.ei.HorizontalPagerTab.Training
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Sample
-import no.nordicsemi.android.ei.showSnackbar
 import no.nordicsemi.android.ei.ui.layouts.InfoLayout
+import no.nordicsemi.android.ei.util.asMessage
 import no.nordicsemi.android.ei.util.exhaustive
 import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel
-import no.nordicsemi.android.ei.viewmodels.event.Error
-import java.net.UnknownHostException
+import java.util.*
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun DataAcquisition(
     connectedDevice: List<Device>,
     pagerState: PagerState,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     viewModel: DataAcquisitionViewModel
 ) {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
     val trainingListState = rememberLazyListState()
     val testingListState = rememberLazyListState()
 
-    LocalLifecycleOwner.current.lifecycleScope.launchWhenStarted {
-        viewModel.eventFlow.runCatching {
-            this.collect {
-                when (it) {
-                    is Error -> {
-                        showSnackbar(
-                            coroutineScope = coroutineScope,
-                            snackbarHostState = snackbarHostState,
-                            message = when (it.throwable) {
-                                is UnknownHostException -> context.getString(R.string.error_no_internet)
-                                else -> it.throwable.localizedMessage
-                                    ?: context.getString(R.string.error_refreshing_failed)
-                            }
-                        )
-                    }
-                    else -> {}
-                }
-            }
-        }
-    }
     HorizontalPager(state = pagerState) { page ->
         val tab = HorizontalPagerTab.indexed(page)
         when (tab) {
             Training -> CollectedDataList(
                 state = trainingListState,
                 pagingDataFlow = viewModel.trainingSamples,
-                tab = tab
+                tab = tab,
+                snackbarHostState = snackbarHostState,
             )
             Testing -> CollectedDataList(
                 state = testingListState,
                 pagingDataFlow = viewModel.testingSamples,
-                tab = tab
+                tab = tab,
+                snackbarHostState = snackbarHostState,
             )
         }.exhaustive
     }
@@ -97,13 +74,14 @@ fun DataAcquisition(
 private fun CollectedDataList(
     state: LazyListState,
     pagingDataFlow: Flow<PagingData<Sample>>,
-    tab: HorizontalPagerTab
+    tab: HorizontalPagerTab,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     val samples: LazyPagingItems<Sample> = pagingDataFlow.collectAsLazyPagingItems()
-    samples.takeIf { it.itemCount > 0 }?.let { lazyPagingItems ->
+    samples.let { lazyPagingItems ->
         LazyColumn(
-            contentPadding = PaddingValues(bottom = 56.dp),
-            state = state
+            state = state,
+            contentPadding = PaddingValues(bottom = 144.dp)
         ) {
             items(lazyPagingItems) {
                 it?.let { sample ->
@@ -115,43 +93,52 @@ private fun CollectedDataList(
             lazyPagingItems.apply {
                 when {
                     loadState.refresh is LoadState.Loading -> {
-                        item {
-                            Loading(modifier = Modifier.fillParentMaxSize())
-                        }
+                        item { LoadingIndicator(modifier = Modifier.fillParentMaxSize()) }
                     }
                     loadState.append is LoadState.Loading -> {
-                        item { LoadingItem(modifier = Modifier.fillMaxWidth()) }
+                        item { LoadingIndicator() }
                     }
                     loadState.refresh is LoadState.Error -> {
                         val e = lazyPagingItems.loadState.refresh as LoadState.Error
                         item {
-                            ErrorItem(
-                                message = e.error.localizedMessage!!,
+                            Error(
+                                message = e.error.asMessage(),
                                 modifier = Modifier.fillParentMaxSize(),
                                 onClickRetry = { retry() }
                             )
                         }
                     }
-                    loadState.refresh is LoadState.Error -> {
-                        val e = lazyPagingItems.loadState.refresh as LoadState.Error
+                    loadState.append is LoadState.Error -> {
+                        val e = lazyPagingItems.loadState.append as LoadState.Error
                         item {
-                            ErrorItem(message = e.toString(), onClickRetry = { retry() })
+                            ErrorItem(
+                                message = e.error.asMessage(),
+                                onClickRetry = { retry() }
+                            )
+                        }
+                    }
+                    loadState.refresh is LoadState.NotLoading -> {
+                        item {
+                            InfoLayout(
+                                iconPainter = rememberVectorPainter(tab.emptyListIcon),
+                                text = stringResource(R.string.label_no_collected_data_yet),
+                                modifier = Modifier.fillParentMaxSize()
+                            )
                         }
                     }
                 }
             }
         }
-    } ?: InfoLayout(
-            iconPainter = rememberVectorPainter(tab.emptyListIcon),
-            text = stringResource(R.string.label_no_collected_data_yet),
-            modifier = Modifier.fillMaxSize()
-        )
+    }
 }
 
 @Composable
-fun CollectedDataRow(sample: Sample) {
+fun CollectedDataRow(
+    sample: Sample,
+    modifier: Modifier = Modifier
+) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(color = MaterialTheme.colors.surface)
             .padding(16.dp),
@@ -188,27 +175,39 @@ fun CollectedDataRow(sample: Sample) {
 }
 
 @Composable
-private fun Loading(
+private fun LoadingIndicator(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier,
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        CircularProgressIndicator(modifier = Modifier.size(56.dp))
+        CircularProgressIndicator()
     }
 }
 
 @Composable
-private fun LoadingItem(
-    modifier: Modifier = Modifier
+private fun Error(
+    message: String,
+    modifier: Modifier = Modifier,
+    onClickRetry: () -> Unit
 ) {
-    CircularProgressIndicator(
-        modifier = modifier
-            .padding(16.dp)
-            .wrapContentWidth(Alignment.CenterHorizontally)
-    )
+    InfoLayout(
+        iconPainter = rememberVectorPainter(image = Icons.Outlined.ErrorOutline),
+        modifier = modifier,
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.h6
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onClickRetry) {
+            Text(text = stringResource(R.string.action_try_again).toUpperCase(Locale.US))
+        }
+    }
 }
 
 @Composable
@@ -218,19 +217,32 @@ private fun ErrorItem(
     onClickRetry: () -> Unit
 ) {
     Row(
-        modifier = modifier.padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = message,
-            maxLines = 1,
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.h6,
-            color = Color.Red
-        )
-        OutlinedButton(onClick = onClickRetry) {
-            Text(text = stringResource(R.string.try_again))
+        CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
+            Icon(
+                painter = rememberVectorPainter(image = Icons.Filled.Error),
+                contentDescription = null,
+                modifier = Modifier.size(36.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                text = message,
+                style = MaterialTheme.typography.body1,
+                modifier = Modifier.weight(1.0f),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Button(onClick = onClickRetry) {
+                Text(
+                    text = stringResource(R.string.action_try_again).toUpperCase(Locale.US),
+                    style = MaterialTheme.typography.button,
+                )
+            }
         }
     }
 }
