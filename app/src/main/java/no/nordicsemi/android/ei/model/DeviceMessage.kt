@@ -1,35 +1,22 @@
 package no.nordicsemi.android.ei.model
 
-//TODO make Message a sealed interface when compose supports kotlin 1.5.10
-abstract class DeviceMessage
+import no.nordicsemi.android.ei.model.Direction.Send
+import no.nordicsemi.android.ei.model.Type.WebSocket
 
-data class Hello(
-    val version: Int = 3,
-    val apiKey: String = "ei_1234",
-    val deviceId: String = "01:23:45:67:89:AA",
-    val deviceType: String = "NRF5340_DK",
-    val connection: String = "ip",
-    val sensors: List<Sensor> = listOf(
-        Sensor(
-            name = "Accelerometer",
-            maxSampleLengths = 60000,
-            frequencies = listOf(62.5, 100)
-        ),
-        Sensor(
-            name = "Microphone",
-            maxSampleLengths = 4000,
-            frequencies = listOf(16000)
-        )
-    ),
-    val supportsSnapshotStreaming: Boolean = false
-) : DeviceMessage()
+abstract class DeviceMessage {
+    abstract val type: Type
+}
 
-data class Success(val hello: Boolean) : DeviceMessage()
+data class WebSocketMessage(
+    val direction: Direction = Send,
+    val address: String = "wss://studio.edgeimpulse.com",
+    val message: Message
+) : DeviceMessage() {
+    override val type: Type = WebSocket
+}
 
-data class Error(val hello: Boolean, val error: String = "Unknown error!") : DeviceMessage()
-
-data class SampleRequest(
-    val label: String,
-    val length: Int = 1000,
-    val path: String = "/api/training/data"
-) : DeviceMessage()
+data class ConfigureMessage(
+    val message: Message
+) : DeviceMessage() {
+    override val type: Type = Type.Configure
+}
