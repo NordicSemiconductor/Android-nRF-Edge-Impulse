@@ -1,6 +1,5 @@
 package no.nordicsemi.android.ei.ui
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -79,18 +78,20 @@ fun RecordSampleLargeScreen(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(
-                        onClick = { onDismiss() }) {
+                        onClick = { onDismiss() }
+                    ) {
                         Text(
-                            text = stringResource(R.string.action_dialog_cancel).toUpperCase(Locale.ROOT),
+                            text = stringResource(R.string.action_dialog_cancel).toUpperCase(Locale.US),
                             style = MaterialTheme.typography.button
                         )
                     }
                     Spacer(modifier = Modifier.width(32.dp))
                     TextButton(
                         enabled = selectedSensor != null,
-                        onClick = { /*TODO implement start sampling*/ }) {
+                        onClick = { /*TODO implement start sampling*/ }
+                    ) {
                         Text(
-                            text = stringResource(R.string.action_start_sampling).toUpperCase(Locale.ROOT),
+                            text = stringResource(R.string.action_start_sampling).toUpperCase(Locale.US),
                             style = MaterialTheme.typography.button
                         )
                     }
@@ -118,18 +119,15 @@ fun RecordSampleSmallScreen(
     Scaffold(
         modifier = Modifier.wrapContentHeight(),
         topBar = {
-            TopAppBar(title = {
-                Text(
-                    text = stringResource(R.string.title_record_new_data)
-                )
-            },
+            TopAppBar(
+                title = {
+                    Text(text = stringResource(R.string.title_record_new_data))
+                },
                 navigationIcon = {
-                    IconButton(onClick = { onCloseClicked() }) {
+                    IconButton(onClick = onCloseClicked) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(
-                                id = R.string.content_decription_close_record_new_data
-                            )
+                            contentDescription = null
                         )
                     }
                 })
@@ -163,9 +161,10 @@ fun RecordSampleSmallScreen(
             ) {
                 Button(
                     enabled = selectedSensor != null,
-                    onClick = { /*TODO implement start sampling*/ }) {
+                    onClick = { /*TODO implement start sampling*/ }
+                ) {
                     Text(
-                        text = stringResource(R.string.action_start_sampling).toUpperCase(Locale.ROOT),
+                        text = stringResource(R.string.action_start_sampling).toUpperCase(Locale.US),
                         style = MaterialTheme.typography.button
                     )
                 }
@@ -203,9 +202,7 @@ private fun RecordSampleContent(
             .focusRequester(focusRequester = focusRequester),
         readOnly = true,
         label = {
-            Text(
-                text = stringResource(R.string.label_device)
-            )
+            Text(text = stringResource(R.string.label_device))
         },
         leadingIcon = {
             Icon(
@@ -217,16 +214,18 @@ private fun RecordSampleContent(
             )
         },
         trailingIcon = {
-            IconButton(onClick = {
-                focusRequester.requestFocus()
-                isDevicesMenuExpanded = true
-            }) {
+            IconButton(
+                onClick = {
+                    focusRequester.requestFocus()
+                    isDevicesMenuExpanded = true
+                }
+            ) {
                 Icon(
                     modifier = Modifier.rotate(if (isDevicesMenuExpanded) 180f else 0f),
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = null
                 )
-                if (isDevicesMenuExpanded)
+                if (isDevicesMenuExpanded) {
                     ShowDevicesDropdown(
                         connectedDevices = connectedDevices,
                         onDeviceSelected = { device ->
@@ -236,7 +235,9 @@ private fun RecordSampleContent(
                         onDismiss = {
                             isDevicesMenuExpanded = false
                             focusManager.clearFocus()
-                        })
+                        }
+                    )
+                }
             }
         },
         singleLine = true
@@ -248,9 +249,7 @@ private fun RecordSampleContent(
             .fillMaxWidth()
             .padding(top = 16.dp),
         label = {
-            Text(
-                text = stringResource(R.string.label_label)
-            )
+            Text(text = stringResource(R.string.label_label))
         },
         leadingIcon = {
             Icon(
@@ -271,9 +270,7 @@ private fun RecordSampleContent(
         enabled = selectedDevice != null,
         readOnly = true,
         label = {
-            Text(
-                text = stringResource(R.string.label_sensor)
-            )
+            Text(text = stringResource(R.string.label_sensor))
         },
         leadingIcon = {
             Icon(
@@ -283,16 +280,19 @@ private fun RecordSampleContent(
             )
         },
         trailingIcon = {
-            IconButton(enabled = selectedDevice != null, onClick = {
-                focusRequester.requestFocus()
-                isSensorsMenuExpanded = true
-            }) {
+            IconButton(
+                enabled = selectedDevice != null,
+                onClick = {
+                    focusRequester.requestFocus()
+                    isSensorsMenuExpanded = true
+                }
+            ) {
                 Icon(
                     modifier = Modifier.rotate(if (isSensorsMenuExpanded) 180f else 0f),
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = null
                 )
-                if (isSensorsMenuExpanded)
+                if (isSensorsMenuExpanded) {
                     selectedDevice?.let { device ->
                         ShowSensorsDropdown(
                             sensors = device.sensors,
@@ -303,8 +303,10 @@ private fun RecordSampleContent(
                             onDismiss = {
                                 isSensorsMenuExpanded = false
                                 focusManager.clearFocus()
-                            })
+                            }
+                        )
                     }
+                }
 
             }
         },
@@ -319,9 +321,7 @@ private fun RecordSampleContent(
         enabled = selectedDevice != null,
         readOnly = true,
         label = {
-            Text(
-                text = stringResource(R.string.label_sample_length)
-            )
+            Text(text = stringResource(R.string.label_sample_length))
         },
         leadingIcon = {
             Icon(
@@ -334,8 +334,8 @@ private fun RecordSampleContent(
             Row {
                 IconButton(
                     onClick = {
-                        if (sampleLength.plus(SAMPLE_DELTA) <= MAX_SAMPLE_LENGTH)
-                            sampleLength = sampleLength.plus(SAMPLE_DELTA)
+                        if (sampleLength + SAMPLE_DELTA <= MAX_SAMPLE_LENGTH)
+                            sampleLength += SAMPLE_DELTA
                     },
                     enabled = selectedSensor != null
                 ) {
@@ -346,8 +346,8 @@ private fun RecordSampleContent(
                 }
                 IconButton(
                     onClick = {
-                        if (sampleLength.minus(SAMPLE_DELTA) > MIN_SAMPLE_LENGTH)
-                            sampleLength = sampleLength.minus(SAMPLE_DELTA)
+                        if (sampleLength - SAMPLE_DELTA > MIN_SAMPLE_LENGTH)
+                            sampleLength -= SAMPLE_DELTA
                     },
                     enabled = selectedSensor != null
                 ) {
@@ -371,9 +371,7 @@ private fun RecordSampleContent(
         enabled = selectedSensor?.frequencies?.isNotEmpty() ?: false,
         readOnly = true,
         label = {
-            Text(
-                text = stringResource(R.string.label_frequency)
-            )
+            Text(text = stringResource(R.string.label_frequency))
         },
         leadingIcon = {
             Icon(
@@ -388,13 +386,14 @@ private fun RecordSampleContent(
                 onClick = {
                     focusRequester.requestFocus()
                     isFrequencyMenuExpanded = true
-                }) {
+                }
+            ) {
                 Icon(
                     modifier = Modifier.rotate(if (isFrequencyMenuExpanded) 180f else 0f),
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = null
                 )
-                if (isFrequencyMenuExpanded)
+                if (isFrequencyMenuExpanded) {
                     selectedSensor?.let { sensor ->
                         ShowFrequenciesDropdown(
                             frequencies = sensor.frequencies,
@@ -407,6 +406,7 @@ private fun RecordSampleContent(
                             focusManager.clearFocus()
                         }
                     }
+                }
 
             }
         },
@@ -424,14 +424,13 @@ private fun ShowDevicesDropdown(
         modifier = Modifier
             .fillMaxWidth(),
         expanded = true,
-        onDismissRequest = {
-            Log.i("AA", "Dismissed?")
-            onDismiss()
-        }) {
+        onDismissRequest = onDismiss
+    ) {
         connectedDevices.forEach { device ->
             DropdownMenuItem(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
-                onClick = { onDeviceSelected(device) }) {
+                onClick = { onDeviceSelected(device) }
+            ) {
                 Text(
                     modifier = Modifier.weight(1.0f),
                     text = device.name
@@ -457,14 +456,13 @@ private fun ShowSensorsDropdown(
         modifier = Modifier
             .fillMaxWidth(),
         expanded = true,
-        onDismissRequest = {
-            Log.i("AA", "Dismissed?")
-            onDismiss()
-        }) {
+        onDismissRequest = onDismiss
+    ) {
         sensors.forEach { sensor ->
             DropdownMenuItem(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
-                onClick = { onSensorSelected(sensor) }) {
+                onClick = { onSensorSelected(sensor) }
+            ) {
                 Text(
                     modifier = Modifier.weight(1.0f),
                     text = sensor.name
@@ -484,16 +482,14 @@ private fun ShowFrequenciesDropdown(
         modifier = Modifier
             .fillMaxWidth(),
         expanded = true,
-        onDismissRequest = {
-            Log.i("AA", "Dismissed?")
-            onDismiss()
-        }) {
-
+        onDismissRequest = onDismiss
+    ) {
         frequencies.forEach { frequency ->
             DropdownMenuItem(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally),
-                onClick = { onFrequencySelected(frequency) }) {
+                onClick = { onFrequencySelected(frequency) }
+            ) {
                 Text(
                     modifier = Modifier.weight(1.0f),
                     text = frequency.toString()
