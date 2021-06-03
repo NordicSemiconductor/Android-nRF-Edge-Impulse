@@ -1,5 +1,6 @@
 package no.nordicsemi.android.ei.ui
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -71,6 +72,7 @@ fun DataAcquisition(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun CollectedDataList(
     modifier: Modifier = Modifier,
@@ -87,6 +89,33 @@ private fun CollectedDataList(
             state = state,
             contentPadding = PaddingValues(bottom = 144.dp)
         ) {
+            if (lazyPagingItems.itemCount > 0) {
+                stickyHeader {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colors.background)
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.label_col_sample_name),
+                            modifier = Modifier.weight(0.5f),
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            text = stringResource(id = R.string.label_col_label),
+                            modifier = Modifier.weight(0.5f),
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            text = stringResource(id = R.string.label_col_length),
+                            modifier = Modifier.width(60.dp),
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                    Divider()
+                }
+            }
             items(lazyPagingItems) {
                 it?.let { sample ->
                     CollectedDataRow(sample)
@@ -124,7 +153,7 @@ private fun CollectedDataList(
                     loadState.refresh is LoadState.NotLoading -> {
                         if (lazyPagingItems.itemCount == 0) item {
                             InfoLayout(
-                                iconPainter = rememberVectorPainter(tab.emptyListIcon),
+                                iconPainter = rememberVectorPainter(tab.icon),
                                 text = stringResource(R.string.label_no_collected_data_yet),
                                 modifier = Modifier.fillParentMaxSize()
                             )
@@ -160,7 +189,7 @@ fun CollectedDataRow(
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = sample.label,
-            modifier = Modifier.weight(0.4f),
+            modifier = Modifier.weight(0.5f),
             color = MaterialTheme.colors.onSurface,
             style = MaterialTheme.typography.body1,
             maxLines = 1,
@@ -169,7 +198,7 @@ fun CollectedDataRow(
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = "${sample.totalLengthMs.toInt() / 1000}s",
-            modifier = Modifier.weight(0.1f),
+            modifier = Modifier.width(60.dp),
             color = MaterialTheme.colors.onSurface,
             style = MaterialTheme.typography.body1,
             maxLines = 1,

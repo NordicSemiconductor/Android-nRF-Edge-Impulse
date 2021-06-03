@@ -15,12 +15,14 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -48,6 +50,7 @@ import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel
 import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
 import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Error
+import java.util.*
 
 @Composable
 fun Project(
@@ -303,7 +306,18 @@ private fun ProjectTopAppBar(
         BottomNavigationScreen.DataAcquisition -> {
             TabTopAppBar(
                 title = { Title(text = projectName) },
-                tabs = tabs.map { stringResource(it.title) },
+                tabs = tabs.map {
+                    val text = @Composable {
+                        Text(text = stringResource(id = it.title).toUpperCase(Locale.US))
+                    }
+                    val icon = @Composable {
+                        Icon(
+                            painter = rememberVectorPainter(image = it.icon),
+                            contentDescription = null
+                        )
+                    }
+                    text to icon
+                },
                 pagerState = pagerState,
                 modifier = modifier,
                 navigationIcon = {

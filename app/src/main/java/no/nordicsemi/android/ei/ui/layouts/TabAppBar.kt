@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun TabTopAppBar(
     title: @Composable () -> Unit,
-    tabs: List<String>,
+    tabs: List<Pair<@Composable () -> Unit, (@Composable () -> Unit)?>>,
     modifier: Modifier = Modifier,
     pagerState: PagerState? = null,
     navigationIcon: @Composable (() -> Unit)? = null,
@@ -92,7 +92,7 @@ private fun TabAppBar(
     contentPadding: PaddingValues,
     shape: Shape,
     modifier: Modifier = Modifier,
-    tabs: List<String>,
+    tabs: List<Pair<@Composable () -> Unit, (@Composable () -> Unit)?>>,
     pagerState: PagerState? = null,
     content: @Composable RowScope.() -> Unit
 ) {
@@ -103,11 +103,7 @@ private fun TabAppBar(
         shape = shape,
         modifier = modifier
     ) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .height(TabAppBarHeight)
-        ) {
+        Column {
             Row(
                 Modifier
                     .padding(contentPadding)
@@ -117,40 +113,35 @@ private fun TabAppBar(
                 content = content
             )
             val selectedTabIndex = pagerState?.currentPage ?: 0
-            Row(
-                Modifier
-                    .height(56.dp),
-                verticalAlignment = Alignment.Bottom,
-            ) {
-                TabRow(
-                    // Selected tab is the current page
-                    selectedTabIndex = selectedTabIndex,
-                    // Override the indicator, using the provided pagerTabIndicatorOffset modifier
-                    indicator = { tabPositions ->
-                        pagerState?.let {
-                            TabRowDefaults.Indicator(
-                                Modifier.pagerTabIndicatorOffset(pagerState, tabPositions)
-                            )
-                        } ?: run {
-                            TabRowDefaults.Indicator(
-                                Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex])
-                            )
-                        }
-                    }
-                ) {
-                    // Adds tabs for all of pages
-                    val coroutineScope = rememberCoroutineScope()
-                    tabs.forEachIndexed { index, tab ->
-                        Tab(
-                            text = { Text(text = tab) },
-                            selected = pagerState?.currentPage == index,
-                            onClick = {
-                                coroutineScope.launch {
-                                    pagerState?.scrollToPage(index)
-                                }
-                            },
+            TabRow(
+                // Selected tab is the current page
+                selectedTabIndex = selectedTabIndex,
+                // Override the indicator, using the provided pagerTabIndicatorOffset modifier
+                indicator = { tabPositions ->
+                    pagerState?.let {
+                        TabRowDefaults.Indicator(
+                            Modifier.pagerTabIndicatorOffset(pagerState, tabPositions)
+                        )
+                    } ?: run {
+                        TabRowDefaults.Indicator(
+                            Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex])
                         )
                     }
+                }
+            ) {
+                // Adds tabs for all of pages
+                val coroutineScope = rememberCoroutineScope()
+                tabs.forEachIndexed { index, tab ->
+                    Tab(
+                        text = tab.first,
+                        icon = tab.second,
+                        selected = pagerState?.currentPage == index,
+                        onClick = {
+                            coroutineScope.launch {
+                                pagerState?.scrollToPage(index)
+                            }
+                        },
+                    )
                 }
             }
         }
@@ -158,7 +149,6 @@ private fun TabAppBar(
 }
 
 private val AppBarHeight = 56.dp
-private val TabAppBarHeight = AppBarHeight * 2
 // TODO: this should probably be part of the touch target of the start and end icons, clarify this
 private val AppBarHorizontalPadding = 4.dp
 // Start inset for the title when there is no navigation icon provided
