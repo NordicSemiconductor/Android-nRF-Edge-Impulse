@@ -2,6 +2,7 @@ package no.nordicsemi.android.ei.websocket
 
 import okhttp3.*
 import okio.ByteString
+import okio.ByteString.Companion.toByteString
 import javax.inject.Inject
 
 /**
@@ -22,9 +23,7 @@ class EiWebSocketListener @Inject constructor(
     }
 
     fun send(data: ByteArray) {
-
-        //TODO send data not yet implemented
-        //webSocket.send(data)
+        webSocket.send(data.toByteString(0, data.size))
     }
 
     /**
