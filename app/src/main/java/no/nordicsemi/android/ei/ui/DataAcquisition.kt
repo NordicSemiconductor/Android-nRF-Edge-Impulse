@@ -42,13 +42,17 @@ import java.util.*
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun DataAcquisition(
+    modifier: Modifier = Modifier,
     connectedDevice: List<Device>,
     pagerState: PagerState,
     listStates: List<LazyListState>,
     viewModel: DataAcquisitionViewModel,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
-    HorizontalPager(state = pagerState) { page ->
+    HorizontalPager(
+        modifier = modifier,
+        state = pagerState
+    ) { page ->
         val tab = HorizontalPagerTab.indexed(page)
         when (tab) {
             Training -> CollectedDataList(
@@ -69,6 +73,7 @@ fun DataAcquisition(
 
 @Composable
 private fun CollectedDataList(
+    modifier: Modifier = Modifier,
     state: LazyListState,
     pagingDataFlow: Flow<PagingData<Sample>>,
     tab: HorizontalPagerTab,
@@ -77,6 +82,8 @@ private fun CollectedDataList(
     val samples: LazyPagingItems<Sample> = pagingDataFlow.collectAsLazyPagingItems()
     samples.let { lazyPagingItems ->
         LazyColumn(
+            modifier = modifier
+                .fillMaxSize(),
             state = state,
             contentPadding = PaddingValues(bottom = 144.dp)
         ) {
@@ -115,7 +122,7 @@ private fun CollectedDataList(
                         }
                     }
                     loadState.refresh is LoadState.NotLoading -> {
-                        item {
+                        if (lazyPagingItems.itemCount == 0) item {
                             InfoLayout(
                                 iconPainter = rememberVectorPainter(tab.emptyListIcon),
                                 text = stringResource(R.string.label_no_collected_data_yet),

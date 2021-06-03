@@ -269,6 +269,9 @@ private fun ProjectContent(
                     factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
                 )
                 DataAcquisition(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues = innerPadding),
                     connectedDevice = viewModel.configuredDevices,
                     pagerState = pagerState,
                     listStates = listStates,
