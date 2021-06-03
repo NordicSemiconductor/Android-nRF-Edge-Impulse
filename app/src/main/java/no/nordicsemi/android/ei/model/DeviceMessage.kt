@@ -1,7 +1,8 @@
 package no.nordicsemi.android.ei.model
 
 //TODO make Message a sealed interface when compose supports kotlin 1.5.10
-interface DeviceMessage
+abstract class DeviceMessage
+
 data class Hello(
     val version: Int = 3,
     val apiKey: String = "ei_1234",
@@ -20,15 +21,15 @@ data class Hello(
             frequencies = listOf(16000)
         )
     ),
-    val supportSnapshotStreaming: Boolean = false
-) : DeviceMessage
+    val supportsSnapshotStreaming: Boolean = false
+) : DeviceMessage()
 
-data class Success(val hello: Boolean) : DeviceMessage
+data class Success(val hello: Boolean) : DeviceMessage()
 
-data class Error(val hello: Boolean, val error: String = "Unknown error!") : DeviceMessage
+data class Error(val hello: Boolean, val error: String = "Unknown error!") : DeviceMessage()
 
 data class SampleRequest(
     val label: String,
     val length: Int = 1000,
     val path: String = "/api/training/data"
-) : DeviceMessage
+) : DeviceMessage()
