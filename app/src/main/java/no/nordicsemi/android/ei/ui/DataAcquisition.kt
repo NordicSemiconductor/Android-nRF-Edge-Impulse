@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
@@ -45,23 +44,21 @@ import java.util.*
 fun DataAcquisition(
     connectedDevice: List<Device>,
     pagerState: PagerState,
+    listStates: List<LazyListState>,
+    viewModel: DataAcquisitionViewModel,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
-    viewModel: DataAcquisitionViewModel
 ) {
-    val trainingListState = rememberLazyListState()
-    val testingListState = rememberLazyListState()
-
     HorizontalPager(state = pagerState) { page ->
         val tab = HorizontalPagerTab.indexed(page)
         when (tab) {
             Training -> CollectedDataList(
-                state = trainingListState,
+                state = listStates[page],
                 pagingDataFlow = viewModel.trainingSamples,
                 tab = tab,
                 snackbarHostState = snackbarHostState,
             )
             Testing -> CollectedDataList(
-                state = testingListState,
+                state = listStates[page],
                 pagingDataFlow = viewModel.testingSamples,
                 tab = tab,
                 snackbarHostState = snackbarHostState,

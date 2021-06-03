@@ -1,10 +1,12 @@
 package no.nordicsemi.android.ei.ui
 
 import android.content.res.Configuration.*
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.ModalBottomSheetValue.*
 import androidx.compose.material.icons.Icons
@@ -40,6 +42,7 @@ import no.nordicsemi.android.ei.*
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ui.layouts.CollapsibleFloatingActionButton
 import no.nordicsemi.android.ei.ui.layouts.TabTopAppBar
+import no.nordicsemi.android.ei.ui.layouts.isScrollingUp
 import no.nordicsemi.android.ei.util.asMessage
 import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel
 import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
@@ -95,23 +98,22 @@ private fun LargeScreen(
                 properties = DialogProperties(
                     dismissOnBackPress = false,
                     dismissOnClickOutside = false
-                ),
-                content = {
-                    RecordSampleLargeScreen(
-                        connectedDevices = viewModel.configuredDevices,
-                        focusRequester = viewModel.focusRequester,
-                        selectedDevice = viewModel.selectedDevice,
-                        onDeviceSelected = { viewModel.onDeviceSelected(it) },
-                        label = viewModel.label,
-                        onLabelChanged = { viewModel.onLabelChanged(it) },
-                        selectedSensor = viewModel.selectedSensor,
-                        onSensorSelected = { viewModel.onSensorSelected(it) },
-                        selectedFrequency = viewModel.selectedFrequency,
-                        onFrequencySelected = { viewModel.onFrequencySelected(it) },
-                        onDismiss = { isDialogVisible = false }
-                    )
-                }
-            )
+                )
+            ) {
+                RecordSampleLargeScreen(
+                    connectedDevices = viewModel.configuredDevices,
+                    focusRequester = viewModel.focusRequester,
+                    selectedDevice = viewModel.selectedDevice,
+                    onDeviceSelected = { viewModel.onDeviceSelected(it) },
+                    label = viewModel.label,
+                    onLabelChanged = { viewModel.onLabelChanged(it) },
+                    selectedSensor = viewModel.selectedSensor,
+                    onSensorSelected = { viewModel.onSensorSelected(it) },
+                    selectedFrequency = viewModel.selectedFrequency,
+                    onFrequencySelected = { viewModel.onFrequencySelected(it) },
+                    onDismiss = { isDialogVisible = false }
+                )
+            }
         }
         else -> {}
     }
@@ -159,7 +161,7 @@ private fun SmallScreen(
             scope = scope,
             selectedScreen = selectedScreen,
             onScreenChanged = onScreenChanged,
-            isFabVisible = selectedScreen.shouldFabBeVisible && !modalBottomSheetState.isVisible,
+            isFabVisible = selectedScreen.shouldFabBeVisible,// && !modalBottomSheetState.isVisible,
             onFabClicked = {
                 showBottomSheet(
                     scope = scope,
@@ -172,7 +174,7 @@ private fun SmallScreen(
     }
 }
 
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalPagerApi::class, ExperimentalAnimationApi::class)
 @Composable
 private fun ProjectContent(
     viewModel: ProjectViewModel,
@@ -190,7 +192,11 @@ private fun ProjectContent(
         onScreenChanged(BottomNavigationScreen.fromNav(destination))
     }
     val snackbarHostState = remember { SnackbarHostState() }
-    val pagerState = rememberPagerState(pageCount = 3)
+
+    val pagerState = rememberPagerState(pageCount = 2)
+    val trainingListState = rememberLazyListState()
+    val testingListState = rememberLazyListState()
+    val listStates = listOf(trainingListState, testingListState)
 
     LocalLifecycleOwner.current.lifecycleScope.launchWhenStarted {
         viewModel.eventFlow.runCatching {
@@ -229,8 +235,11 @@ private fun ProjectContent(
             if (isFabVisible) {
                 CollapsibleFloatingActionButton(
                     imageVector = Icons.Default.Add,
-                    text = stringResource(id = R.string.content_decription_close_record_new_data),
-                    expanded = { false },
+                    text = stringResource(id = R.string.action_record_new_data),
+                    expanded = {
+                        val currentListState = listStates[pagerState.currentPage]
+                        currentListState.isScrollingUp()
+                    },
                     onClick = onFabClicked
                 )
             }
@@ -262,6 +271,7 @@ private fun ProjectContent(
                 DataAcquisition(
                     connectedDevice = viewModel.configuredDevices,
                     pagerState = pagerState,
+                    listStates = listStates,
                     viewModel = dataAcquisitionViewModel,
                     snackbarHostState = snackbarHostState,
                 )
