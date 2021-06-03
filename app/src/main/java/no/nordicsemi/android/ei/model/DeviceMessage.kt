@@ -1,15 +1,15 @@
 package no.nordicsemi.android.ei.model
 
-import no.nordicsemi.android.ei.model.Direction.Send
-import no.nordicsemi.android.ei.model.Type.CONFIGURE
-import no.nordicsemi.android.ei.model.Type.WEBSOCKET
+import no.nordicsemi.android.ei.model.Direction.SEND
+import no.nordicsemi.android.ei.model.Method.POST
+import no.nordicsemi.android.ei.model.Type.*
 
 abstract class DeviceMessage {
     abstract val type: Type
 }
 
 data class WebSocketMessage(
-    val direction: Direction = Send,
+    val direction: Direction = SEND,
     val address: String = "wss://studio.edgeimpulse.com",
     val message: Message
 ) : DeviceMessage() {
@@ -23,7 +23,9 @@ data class ConfigureMessage(
 }
 
 data class SendDataMessage(
+    val address: String = "https://ingestion.edgeimpulse.com/api/training/data",
+    val method: Method = POST,
     val message: Message
 ) : DeviceMessage() {
-    override val type = CONFIGURE
+    override val type = HTTP
 }

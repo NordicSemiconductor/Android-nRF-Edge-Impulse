@@ -8,6 +8,10 @@ import com.google.gson.annotations.SerializedName
 enum class Type {
     @SerializedName("ws")
     WEBSOCKET,
+
     @SerializedName("configure")
-    CONFIGURE
+    CONFIGURE,
+
+    @SerializedName("http")
+    HTTP
 }

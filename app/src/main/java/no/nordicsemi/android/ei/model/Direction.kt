@@ -7,7 +7,8 @@ import com.google.gson.annotations.SerializedName
  */
 enum class Direction {
     @SerializedName("rx")
-    Receive,
+    RECEIVE,
+
     @SerializedName("tx")
-    Send
+    SEND
 }
