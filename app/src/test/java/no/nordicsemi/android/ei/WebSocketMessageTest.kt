@@ -8,7 +8,7 @@ import no.nordicsemi.android.ei.model.Direction.Receive
 import no.nordicsemi.android.ei.util.MessageTypeAdapter
 import org.junit.Test
 
-class DeviceMessageTest {
+class WebSocketMessageTest {
 
     private val gson =
         GsonBuilder()
@@ -44,7 +44,7 @@ class DeviceMessageTest {
                             "    }\n" +
                             "}"
         val actualResult =
-            JsonParser.parseString(gson.toJson(DeviceMessage(message = Hello())))
+            JsonParser.parseString(gson.toJson(WebSocketMessage(message = Hello())))
         val expectedResult = JsonParser.parseString(jsonString).asJsonObject
         assertThat(expectedResult == actualResult).isTrue()
     }
@@ -73,7 +73,7 @@ class DeviceMessageTest {
         val actualResult =
             JsonParser.parseString(
                 gson.toJson(
-                    DeviceMessage(
+                    WebSocketMessage(
                         direction = Receive,
                         message = Success(hello = true)
                     )
@@ -116,7 +116,7 @@ class DeviceMessageTest {
         val actualResult =
             JsonParser.parseString(
                 gson.toJson(
-                    DeviceMessage(
+                    WebSocketMessage(
                         direction = Receive,
                         message = Error(
                             hello = false,
