@@ -28,8 +28,16 @@ data class Success(val hello: Boolean) : Message()
 
 data class Error(val hello: Boolean, val error: String = "Unknown error!") : Message()
 
+data class Configure(
+    val apiKey: String = "ei_123456",
+    val address: String = "wss://studio.edgeimpulse.com"
+) : Message()
+
 data class SampleRequest(
     val label: String,
     val length: Int = 1000,
-    val path: String = "/api/training/data"
+    val path: String = "/api/training/data",
+    val hmacKey: String = "e561ff...",
+    val interval: Int = 10,
+    val sensor: String = "Accelerometer"
 ) : Message()

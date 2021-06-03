@@ -19,30 +19,30 @@ class WebSocketMessageTest {
 
     @Test
     fun initialHandshakeValidator_ReturnsTrue() {
-        val jsonString =    "{\n" +
-                            "    \"type\": \"ws\",\n" +
-                            "    \"direction\": \"tx\",\n" +
-                            "    \"address\": \"wss://studio.edgeimpulse.com\",\n" +
-                            "    \"message\": {\n" +
-                            "        \"hello\": {\n" +
-                            "            \"version\": 3,\n" +
-                            "            \"apiKey\": \"ei_1234\",\n" +
-                            "            \"deviceId\": \"01:23:45:67:89:AA\",\n" +
-                            "            \"deviceType\": \"NRF5340_DK\",\n" +
-                            "            \"connection\": \"ip\",\n" +
-                            "            \"sensors\": [{\n" +
-                            "                \"name\": \"Accelerometer\",\n" +
-                            "                \"maxSampleLengthS\": 60000,\n" +
-                            "                \"frequencies\": [ 62.5, 100 ]\n" +
-                            "            }, {\n" +
-                            "                \"name\": \"Microphone\",\n" +
-                            "                \"maxSampleLengthS\": 4000,\n" +
-                            "                \"frequencies\": [ 16000 ]\n" +
-                            "            }],\n" +
-                            "            \"supportsSnapshotStreaming\": false\n" +
-                            "        }\n" +
-                            "    }\n" +
-                            "}"
+        val jsonString = "{\n" +
+                "    \"type\": \"ws\",\n" +
+                "    \"direction\": \"tx\",\n" +
+                "    \"address\": \"wss://studio.edgeimpulse.com\",\n" +
+                "    \"message\": {\n" +
+                "        \"hello\": {\n" +
+                "            \"version\": 3,\n" +
+                "            \"apiKey\": \"ei_1234\",\n" +
+                "            \"deviceId\": \"01:23:45:67:89:AA\",\n" +
+                "            \"deviceType\": \"NRF5340_DK\",\n" +
+                "            \"connection\": \"ip\",\n" +
+                "            \"sensors\": [{\n" +
+                "                \"name\": \"Accelerometer\",\n" +
+                "                \"maxSampleLengthS\": 60000,\n" +
+                "                \"frequencies\": [ 62.5, 100 ]\n" +
+                "            }, {\n" +
+                "                \"name\": \"Microphone\",\n" +
+                "                \"maxSampleLengthS\": 4000,\n" +
+                "                \"frequencies\": [ 16000 ]\n" +
+                "            }],\n" +
+                "            \"supportsSnapshotStreaming\": false\n" +
+                "        }\n" +
+                "    }\n" +
+                "}"
         val actualResult =
             JsonParser.parseString(gson.toJson(WebSocketMessage(message = Hello())))
         val expectedResult = JsonParser.parseString(jsonString).asJsonObject
@@ -51,9 +51,9 @@ class WebSocketMessageTest {
 
     @Test
     fun initialHandshakeServerSuccessValidator_ReturnsTrue() {
-        val jsonString =    "{\n" +
-                            "    \"hello\": true\n" +
-                            "}"
+        val jsonString = "{\n" +
+                "    \"hello\": true\n" +
+                "}"
         val actualResult =
             JsonParser.parseString(gson.toJson(Success(hello = true)))
         val expectedResult = JsonParser.parseString(jsonString).asJsonObject
@@ -62,14 +62,14 @@ class WebSocketMessageTest {
 
     @Test
     fun initialHandshakeServerSuccessDeviceMessageValidator_ReturnsTrue() {
-        val jsonString =    "{\n" +
-                            "    \"type\": \"ws\",\n" +
-                            "    \"direction\": \"rx\",\n" +
-                            "    \"address\": \"wss://studio.edgeimpulse.com\",\n" +
-                            "    \"message\": {\n" +
-                            "        \"hello\": true\n" +
-                            "    }\n" +
-                            "}"
+        val jsonString = "{\n" +
+                "    \"type\": \"ws\",\n" +
+                "    \"direction\": \"rx\",\n" +
+                "    \"address\": \"wss://studio.edgeimpulse.com\",\n" +
+                "    \"message\": {\n" +
+                "        \"hello\": true\n" +
+                "    }\n" +
+                "}"
         val actualResult =
             JsonParser.parseString(
                 gson.toJson(
@@ -85,10 +85,10 @@ class WebSocketMessageTest {
 
     @Test
     fun initialHandshakeServerErrorValidator_ReturnsTrue() {
-        val jsonString =    "{\n" +
-                            "    \"hello\": false,\n" +
-                            "    \"error\": \"API key is not correct, or a similar message\"\n" +
-                            "}"
+        val jsonString = "{\n" +
+                "    \"hello\": false,\n" +
+                "    \"error\": \"API key is not correct, or a similar message\"\n" +
+                "}"
         val actualResult =
             JsonParser.parseString(
                 gson.toJson(
@@ -104,15 +104,15 @@ class WebSocketMessageTest {
 
     @Test
     fun initialHandshakeServerErrorDeviceMessageValidator_ReturnsTrue() {
-        val jsonString =    "{\n" +
-                            "    \"type\": \"ws\",\n" +
-                            "    \"direction\": \"rx\",\n" +
-                            "    \"address\": \"wss://studio.edgeimpulse.com\",\n" +
-                            "    \"message\": {\n" +
-                            "    \"hello\": false,\n" +
-                            "    \"error\": \"API key is not correct, or a similar message\"\n" +
-                            "    }\n" +
-                            "}"
+        val jsonString = "{\n" +
+                "    \"type\": \"ws\",\n" +
+                "    \"direction\": \"rx\",\n" +
+                "    \"address\": \"wss://studio.edgeimpulse.com\",\n" +
+                "    \"message\": {\n" +
+                "    \"hello\": false,\n" +
+                "    \"error\": \"API key is not correct, or a similar message\"\n" +
+                "    }\n" +
+                "}"
         val actualResult =
             JsonParser.parseString(
                 gson.toJson(
@@ -122,6 +122,48 @@ class WebSocketMessageTest {
                             hello = false,
                             error = "API key is not correct, or a similar message"
                         )
+                    )
+                )
+            )
+        val expectedResult = JsonParser.parseString(jsonString).asJsonObject
+        assertThat(expectedResult == actualResult).isTrue()
+    }
+
+    @Test
+    fun configureMessageValidator_ReturnsTrue() {
+        val jsonString = "{\n" +
+                "    \"type\": \"configure\",\n" +
+                "    \"message\": {\n" +
+                "        \"apiKey\": \"ei_123456\",\n" +
+                "        \"address\": \"wss://studio.edgeimpulse.com\"\n" +
+                "    }\n" +
+                "}"
+        val actualResult =
+            JsonParser.parseString(
+                gson.toJson(
+                    ConfigureMessage(
+                        message = Configure()
+                    )
+                )
+            )
+        val expectedResult = JsonParser.parseString(jsonString).asJsonObject
+        assertThat(expectedResult == actualResult).isTrue()
+    }
+
+    @Test
+    fun sampleRequestMessageValidator_ReturnsTrue() {
+        val jsonString = "{\n" +
+                "    \"type\": \"configure\",\n" +
+                "    \"message\": {\n" +
+                "        \"apiKey\": \"ei_123456\",\n" +
+                "        \"address\": \"wss://studio.edgeimpulse.com\"\n" +
+                "    }\n" +
+                "}"
+        val actualResult =
+            JsonParser.parseString(
+                gson.toJson(
+                    ConfigureMessage(
+                        message = Configure()
                     )
                 )
             )

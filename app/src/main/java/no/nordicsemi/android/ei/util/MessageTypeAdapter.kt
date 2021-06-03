@@ -18,7 +18,7 @@ class MessageTypeAdapter : JsonSerializer<Message>, JsonDeserializer<Message> {
                     deviceMessage.add("hello", context?.serialize(message))
                     deviceMessage
                 }
-                is Success, is Error -> {
+                is Success, is Error, is Configure -> {
                     context?.serialize(message)!!
                 }
                 is SampleRequest -> {
