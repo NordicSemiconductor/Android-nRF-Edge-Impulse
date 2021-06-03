@@ -5,9 +5,9 @@ import com.google.gson.annotations.SerializedName
 /**
  * Direction
  */
-enum class Direction {
-    @SerializedName("rx")
-    Receive,
-    @SerializedName("tx")
-    Send
+enum class Type {
+    @SerializedName("ws")
+    WebSocket,
+    @SerializedName("configure")
+    Configure
 }

@@ -13,19 +13,19 @@ class MessageTypeAdapter : JsonSerializer<Message>, JsonDeserializer<Message> {
     ): JsonElement {
         val deviceMessage = JsonObject()
         return src?.let { message ->
-            when (message.deviceMessage) {
+            when (message) {
                 is Hello -> {
-                    deviceMessage.add("hello", context?.serialize(message.deviceMessage))
+                    deviceMessage.add("hello", context?.serialize(message))
                     deviceMessage
                 }
                 is Success -> {
-                    context?.serialize(message.deviceMessage)!!
+                    context?.serialize(message)!!
                 }
                 is Error -> {
-                    context?.serialize(message.deviceMessage)!!
+                    context?.serialize(message)!!
                 }
                 is SampleRequest -> {
-                    deviceMessage.add("sample", context?.serialize(message.deviceMessage))
+                    deviceMessage.add("sample", context?.serialize(message))
                     deviceMessage
                 }
                 else -> {
