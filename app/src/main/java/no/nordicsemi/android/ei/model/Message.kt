@@ -5,10 +5,10 @@ abstract class Message
 
 data class Hello(
     val version: Int = 3,
-    val apiKey: String = "ei_1234",
-    val deviceId: String = "01:23:45:67:89:AA",
-    val deviceType: String = "NRF5340_DK",
-    val connection: String = "ip",
+    val apiKey: String,
+    val deviceId: String,
+    val deviceType: String,
+    val connection: String,
     val sensors: List<Sensor> = listOf(
         Sensor(
             name = "Accelerometer",
@@ -29,8 +29,8 @@ data class Success(val hello: Boolean) : Message()
 data class Error(val hello: Boolean, val error: String = "Unknown error!") : Message()
 
 data class Configure(
-    val apiKey: String = "ei_123456",
-    val address: String = "wss://studio.edgeimpulse.com"
+    val apiKey: String,
+    val address: String
 ) : Message()
 
 data class SampleRequest(

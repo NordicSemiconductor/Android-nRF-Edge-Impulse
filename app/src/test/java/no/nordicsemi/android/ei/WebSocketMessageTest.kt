@@ -4,10 +4,15 @@ import com.google.common.truth.Truth.assertThat
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
 import no.nordicsemi.android.ei.model.*
-import no.nordicsemi.android.ei.model.Direction.Receive
+import no.nordicsemi.android.ei.model.Direction.RECEIVE
 import no.nordicsemi.android.ei.util.MessageTypeAdapter
 import org.junit.Test
 
+/**
+ * WebSocketMessageTest
+ *
+ * Tests are based on the default values provided in the proposed https://gist.github.com/janjongboom/17a6a1036eb9639531752db1a7dce864#initial-handshake
+ */
 class WebSocketMessageTest {
 
     private val gson =
@@ -44,7 +49,17 @@ class WebSocketMessageTest {
                 "    }\n" +
                 "}"
         val actualResult =
-            JsonParser.parseString(gson.toJson(WebSocketMessage(message = Hello())))
+            JsonParser.parseString(
+                gson.toJson(
+                    WebSocketMessage(
+                        message = Hello(
+                            apiKey = "ei_1234",
+                            deviceId = "01:23:45:67:89:AA",
+                            deviceType = "NRF5340_DK", connection = "ip",
+                        )
+                    )
+                )
+            )
         val expectedResult = JsonParser.parseString(jsonString).asJsonObject
         assertThat(expectedResult == actualResult).isTrue()
     }
@@ -74,7 +89,7 @@ class WebSocketMessageTest {
             JsonParser.parseString(
                 gson.toJson(
                     WebSocketMessage(
-                        direction = Receive,
+                        direction = RECEIVE,
                         message = Success(hello = true)
                     )
                 )
@@ -117,7 +132,7 @@ class WebSocketMessageTest {
             JsonParser.parseString(
                 gson.toJson(
                     WebSocketMessage(
-                        direction = Receive,
+                        direction = RECEIVE,
                         message = Error(
                             hello = false,
                             error = "API key is not correct, or a similar message"
@@ -142,7 +157,10 @@ class WebSocketMessageTest {
             JsonParser.parseString(
                 gson.toJson(
                     ConfigureMessage(
-                        message = Configure()
+                        message = Configure(
+                            apiKey = "ei_123456",
+                            address = "wss://studio.edgeimpulse.com"
+                        )
                     )
                 )
             )
@@ -152,31 +170,62 @@ class WebSocketMessageTest {
 
     @Test
     fun sampleRequestMessageValidator_ReturnsTrue() {
-        val jsonString =    "{\n" +
-                            "    \"type\": \"ws\",\n" +
-                            "    \"direction\": \"rx\",\n" +
-                            "    \"address\": \"wss://studio.edgeimpulse.com\",\n" +
-                            "    \"message\": {\n" +
-                            "        \"sample\": {\n" +
-                            "            \"label\": \"wave\",\n" +
-                            "            \"length\": 10000,\n" +
-                            "            \"path\": \"/api/training/data\",\n" +
-                            "            \"hmacKey\": \"e561ff...\",\n" +
-                            "            \"interval\": 10,\n" +
-                            "            \"sensor\": \"Accelerometer\"\n" +
-                            "        }\n" +
-                            "    }\n" +
-                            "}"
+        val jsonString = "{\n" +
+                "    \"type\": \"ws\",\n" +
+                "    \"direction\": \"rx\",\n" +
+                "    \"address\": \"wss://studio.edgeimpulse.com\",\n" +
+                "    \"message\": {\n" +
+                "        \"sample\": {\n" +
+                "            \"label\": \"wave\",\n" +
+                "            \"length\": 10000,\n" +
+                "            \"path\": \"/api/training/data\",\n" +
+                "            \"hmacKey\": \"e561ff...\",\n" +
+                "            \"interval\": 10,\n" +
+                "            \"sensor\": \"Accelerometer\"\n" +
+                "        }\n" +
+                "    }\n" +
+                "}"
         val actualResult =
             JsonParser.parseString(
                 gson.toJson(
                     WebSocketMessage(
-                        direction = Receive,
-                        message = SampleRequest()
+                        direction = RECEIVE,
+                        message = SampleRequest(
+                            label = "wave",
+                            length = 10000,
+                            path = "/api/training/data",
+                            hmacKey = "e561ff...",
+                            interval = 10,
+                            sensor = "Accelerometer"
+                        )
                     )
                 )
             )
         val expectedResult = JsonParser.parseString(jsonString).asJsonObject
         assertThat(expectedResult == actualResult).isTrue()
+    }
+
+    @Test
+    fun sendDataMessageValidator_ReturnsTrue() {
+        //TODO need some sample data
+        /*val jsonString = "{\n" +
+                "    \"type\": \"http\",\n" +
+                "    \"address\": \"https://ingestion.edgeimpulse.com/api/training/data\",\n" +
+                "    \"method\": \"POST\",\n" +
+                "    \"headers\": {\n" +
+                "        \"x-api-key\": \"ei_12389211\",\n" +
+                "        \"x-label\": \"wave\",\n" +
+                "        \"x-allow-duplicates\": \"0\"\n" +
+                "    },\n" +
+                "    \"body\": \"base64 representation of the payload\"\n" +
+                "}"
+        val actualResult =
+            JsonParser.parseString(
+                gson.toJson(
+                    SendDataMessage(body = "base64 representation of the payload".toByteArray())
+                )
+            )
+        val expectedResult = JsonParser.parseString(jsonString).asJsonObject
+        assertThat(expectedResult == actualResult).isTrue()*/
     }
 }
