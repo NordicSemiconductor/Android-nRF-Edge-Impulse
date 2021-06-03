@@ -19,13 +19,13 @@ enum class HorizontalPagerTab(
     val icon: ImageVector
 ) {
 
-    Training(
+    TRAINING(
         title = R.string.title_training,
         category = R.string.param_category_training,
         icon = Icons.Filled.ModelTraining
     ),
 
-    Testing(
+    TESTING(
         title = R.string.title_testing,
         category = R.string.param_category_testing,
         icon = Icons.Filled.Science
@@ -33,8 +33,8 @@ enum class HorizontalPagerTab(
 
     companion object {
         fun indexed(index: Int) = when (index) {
-            0 -> Training
-            else -> Testing
+            0 -> TRAINING
+            else -> TESTING
         }
     }
 }

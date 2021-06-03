@@ -7,7 +7,7 @@ import com.google.gson.annotations.SerializedName
  */
 enum class Type {
     @SerializedName("ws")
-    WebSocket,
+    WEBSOCKET,
     @SerializedName("configure")
-    Configure
+    CONFIGURE
 }

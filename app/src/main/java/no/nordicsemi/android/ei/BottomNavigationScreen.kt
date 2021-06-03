@@ -17,21 +17,21 @@ enum class BottomNavigationScreen(
     @DrawableRes val drawableRes: Int,
     val shouldFabBeVisible: Boolean,
 ) {
-    Devices(
+    DEVICES(
         route = Route.devices,
         resourceId = R.string.label_devices,
         drawableRes = R.drawable.ic_devices,
         shouldFabBeVisible = false
     ),
 
-    DataAcquisition(
+    DATA_ACQUISITION(
         route = Route.dataAcquisition,
         resourceId = R.string.label_data_acquisition,
         drawableRes = R.drawable.ic_database,
         shouldFabBeVisible = true
     ),
 
-    Deployment(
+    DEPLOYMENT(
         route = Route.deployment,
         resourceId = R.string.label_deployment,
         //TODO find the correct edge impulse icon
@@ -41,9 +41,9 @@ enum class BottomNavigationScreen(
 
     companion object {
         fun fromNav(navDestination: NavDestination) = when (navDestination.route) {
-            Devices.route -> Devices
-            DataAcquisition.route -> DataAcquisition
-            Deployment.route -> Deployment
+            DEVICES.route -> DEVICES
+            DATA_ACQUISITION.route -> DATA_ACQUISITION
+            DEPLOYMENT.route -> DEPLOYMENT
             else -> throw IllegalArgumentException("$navDestination.route is not a valid route")
         }
     }

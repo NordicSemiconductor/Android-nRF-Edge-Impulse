@@ -22,7 +22,6 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -59,7 +58,7 @@ fun Project(
 ) {
     val isLargeScreen =
         LocalConfiguration.current.screenLayout and SCREENLAYOUT_SIZE_MASK >= SCREENLAYOUT_SIZE_LARGE
-    var selectedScreen: BottomNavigationScreen by rememberSaveable { mutableStateOf(BottomNavigationScreen.Devices) }
+    var selectedScreen: BottomNavigationScreen by rememberSaveable { mutableStateOf(BottomNavigationScreen.DEVICES) }
     if (isLargeScreen) {
         LargeScreen(
             viewModel = viewModel,
@@ -95,7 +94,7 @@ private fun LargeScreen(
         onBackPressed = onBackPressed
     )
     if (isDialogVisible) when (selectedScreen) {
-        BottomNavigationScreen.DataAcquisition -> {
+        BottomNavigationScreen.DATA_ACQUISITION -> {
             Dialog(
                 onDismissRequest = { isDialogVisible = false },
                 properties = DialogProperties(
@@ -250,9 +249,9 @@ private fun ProjectContent(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = BottomNavigationScreen.Devices.route
+            startDestination = BottomNavigationScreen.DEVICES.route
         ) {
-            composable(route = BottomNavigationScreen.Devices.route) { backStackEntry ->
+            composable(route = BottomNavigationScreen.DEVICES.route) { backStackEntry ->
                 val devicesViewModel: DevicesViewModel = viewModel(
                     factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
                 )
@@ -267,7 +266,7 @@ private fun ProjectContent(
                     onScannerStarted = { devicesViewModel.startScan() }
                 )
             }
-            composable(route = BottomNavigationScreen.DataAcquisition.route) { backStackEntry ->
+            composable(route = BottomNavigationScreen.DATA_ACQUISITION.route) { backStackEntry ->
                 val dataAcquisitionViewModel: DataAcquisitionViewModel = viewModel(
                     factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
                 )
@@ -282,7 +281,7 @@ private fun ProjectContent(
                     snackbarHostState = snackbarHostState,
                 )
             }
-            composable(route = BottomNavigationScreen.Deployment.route) {
+            composable(route = BottomNavigationScreen.DEPLOYMENT.route) {
                 Deployment(modifier = Modifier.padding(paddingValues = innerPadding))
             }
         }
@@ -299,11 +298,11 @@ private fun ProjectTopAppBar(
     onBackPressed: () -> Unit
 ) {
     val tabs = listOf(
-        HorizontalPagerTab.Training,
-        HorizontalPagerTab.Testing,
+        HorizontalPagerTab.TRAINING,
+        HorizontalPagerTab.TESTING,
     )
     when (selectedScreen) {
-        BottomNavigationScreen.DataAcquisition -> {
+        BottomNavigationScreen.DATA_ACQUISITION -> {
             TabTopAppBar(
                 title = { Title(text = projectName) },
                 tabs = tabs.map {
@@ -367,9 +366,9 @@ private fun ProjectBottomNavigation(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: Route.devices
     val screens =  listOf(
-        BottomNavigationScreen.Devices,
-        BottomNavigationScreen.DataAcquisition,
-        BottomNavigationScreen.Deployment
+        BottomNavigationScreen.DEVICES,
+        BottomNavigationScreen.DATA_ACQUISITION,
+        BottomNavigationScreen.DEPLOYMENT
     )
     BottomNavigation(
         backgroundColor = MaterialTheme.colors.surface

@@ -12,8 +12,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
-import no.nordicsemi.android.ei.HorizontalPagerTab.Testing
-import no.nordicsemi.android.ei.HorizontalPagerTab.Training
+import no.nordicsemi.android.ei.HorizontalPagerTab.TESTING
+import no.nordicsemi.android.ei.HorizontalPagerTab.TRAINING
 import no.nordicsemi.android.ei.di.ProjectComponentEntryPoint
 import no.nordicsemi.android.ei.di.ProjectManager
 import no.nordicsemi.android.ei.di.UserComponentEntryPoint
@@ -51,7 +51,7 @@ class DataAcquisitionViewModel @Inject constructor(
             SamplePagingSource(
                 project,
                 keys,
-                context.getString(Training.category),
+                context.getString(TRAINING.category),
                 projectRepository
             )
         }.flow.cachedIn(viewModelScope)
@@ -61,7 +61,7 @@ class DataAcquisitionViewModel @Inject constructor(
             SamplePagingSource(
                 project,
                 keys,
-                context.getString(Testing.category),
+                context.getString(TESTING.category),
                 projectRepository
             )
         }.flow.cachedIn(viewModelScope)

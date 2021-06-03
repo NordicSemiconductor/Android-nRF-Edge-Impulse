@@ -29,8 +29,8 @@ import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.flow.Flow
 import no.nordicsemi.android.ei.HorizontalPagerTab
-import no.nordicsemi.android.ei.HorizontalPagerTab.Testing
-import no.nordicsemi.android.ei.HorizontalPagerTab.Training
+import no.nordicsemi.android.ei.HorizontalPagerTab.TESTING
+import no.nordicsemi.android.ei.HorizontalPagerTab.TRAINING
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Sample
@@ -56,13 +56,13 @@ fun DataAcquisition(
     ) { page ->
         val tab = HorizontalPagerTab.indexed(page)
         when (tab) {
-            Training -> CollectedDataList(
+            TRAINING -> CollectedDataList(
                 state = listStates[page],
                 pagingDataFlow = viewModel.trainingSamples,
                 tab = tab,
                 snackbarHostState = snackbarHostState,
             )
-            Testing -> CollectedDataList(
+            TESTING -> CollectedDataList(
                 state = listStates[page],
                 pagingDataFlow = viewModel.testingSamples,
                 tab = tab,
