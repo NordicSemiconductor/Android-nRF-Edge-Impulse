@@ -152,18 +152,27 @@ class WebSocketMessageTest {
 
     @Test
     fun sampleRequestMessageValidator_ReturnsTrue() {
-        val jsonString = "{\n" +
-                "    \"type\": \"configure\",\n" +
-                "    \"message\": {\n" +
-                "        \"apiKey\": \"ei_123456\",\n" +
-                "        \"address\": \"wss://studio.edgeimpulse.com\"\n" +
-                "    }\n" +
-                "}"
+        val jsonString =    "{\n" +
+                            "    \"type\": \"ws\",\n" +
+                            "    \"direction\": \"rx\",\n" +
+                            "    \"address\": \"wss://studio.edgeimpulse.com\",\n" +
+                            "    \"message\": {\n" +
+                            "        \"sample\": {\n" +
+                            "            \"label\": \"wave\",\n" +
+                            "            \"length\": 10000,\n" +
+                            "            \"path\": \"/api/training/data\",\n" +
+                            "            \"hmacKey\": \"e561ff...\",\n" +
+                            "            \"interval\": 10,\n" +
+                            "            \"sensor\": \"Accelerometer\"\n" +
+                            "        }\n" +
+                            "    }\n" +
+                            "}"
         val actualResult =
             JsonParser.parseString(
                 gson.toJson(
-                    ConfigureMessage(
-                        message = Configure()
+                    WebSocketMessage(
+                        direction = Receive,
+                        message = SampleRequest()
                     )
                 )
             )

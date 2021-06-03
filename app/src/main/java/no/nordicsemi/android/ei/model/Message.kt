@@ -34,8 +34,8 @@ data class Configure(
 ) : Message()
 
 data class SampleRequest(
-    val label: String,
-    val length: Int = 1000,
+    val label: String = "wave",
+    val length: Int = 10000,
     val path: String = "/api/training/data",
     val hmacKey: String = "e561ff...",
     val interval: Int = 10,
