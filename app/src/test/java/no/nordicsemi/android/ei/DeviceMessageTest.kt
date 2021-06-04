@@ -13,7 +13,7 @@ import org.junit.Test
  *
  * Tests are based on the default values provided in the proposed https://gist.github.com/janjongboom/17a6a1036eb9639531752db1a7dce864#initial-handshake
  */
-class WebSocketMessageTest {
+class DeviceMessageTest {
 
     private val gson =
         GsonBuilder()
