@@ -88,7 +88,7 @@ class ProjectViewModel @Inject constructor(
                 projectId = projectDataRepository.project.id,
                 keys = projectDataRepository.developmentKeys
             ).let { response ->
-                guard (response.success) {
+                guard(response.success) {
                     throw Throwable(response.error)
                 }
                 configuredDevices.apply {
@@ -112,8 +112,8 @@ class ProjectViewModel @Inject constructor(
     fun onSensorSelected(sensor: Sensor) {
         this.selectedSensor = sensor
         sensor.frequencies.firstOrNull()
-                ?.let { onFrequencySelected(frequency = it) }
-                ?: run { selectedFrequency = null }
+            ?.let { onFrequencySelected(frequency = it) }
+            ?: run { selectedFrequency = null }
     }
 
     fun onFrequencySelected(frequency: Number) {
