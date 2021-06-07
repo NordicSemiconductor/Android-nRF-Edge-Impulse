@@ -2,7 +2,7 @@
 buildscript {
     ext {
         // https://developer.android.com/jetpack/androidx/releases/compose
-        compose_version = '1.0.0-beta07'
+        compose_version = '1.0.0-beta08'
         // https://developer.android.com/jetpack/compose/setup#configure_kotlin
         kotlin_version = '1.4.32'
         // https://github.com/google/dagger/releases
