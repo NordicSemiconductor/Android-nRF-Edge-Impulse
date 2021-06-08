@@ -55,7 +55,20 @@ class DeviceMessageTest {
                         message = Hello(
                             apiKey = "ei_1234",
                             deviceId = "01:23:45:67:89:AA",
-                            deviceType = "NRF5340_DK", connection = "ip",
+                            deviceType = "NRF5340_DK",
+                            connection = "ip",
+                            sensors = listOf(
+                                Sensor(
+                                    name = "Accelerometer",
+                                    maxSampleLengths = 60000,
+                                    frequencies = listOf(62.5, 100)
+                                ),
+                                Sensor(
+                                    name = "Microphone",
+                                    maxSampleLengths = 4000,
+                                    frequencies = listOf(16000)
+                                )
+                            )
                         )
                     )
                 )
