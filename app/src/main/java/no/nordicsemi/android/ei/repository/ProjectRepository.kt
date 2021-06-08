@@ -5,10 +5,12 @@ import kotlinx.coroutines.withContext
 import no.nordicsemi.android.ei.di.DefaultDispatcher
 import no.nordicsemi.android.ei.model.DevelopmentKeys
 import no.nordicsemi.android.ei.service.EiService
+import no.nordicsemi.android.ei.websocket.WebSocketManager
 import javax.inject.Inject
 
 class ProjectRepository @Inject constructor(
     private val service: EiService,
+    val webSocketManager: WebSocketManager,
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher
 ) {
 
