@@ -79,6 +79,10 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0'
     // Paging 3 - https://developer.android.com/jetpack/androidx/releases/paging
     implementation 'androidx.paging:paging-compose:1.0.0-alpha10'
+    // BLE Library - https://github.com/NordicSemiconductor/Android-BLE-Library/releases
+    // implementation 'no.nordicsemi.android:ble-ktx:2.3.0'
+    implementation project(":ble")
+    implementation project(":ble-ktx")
 
     testImplementation 'junit:junit:4.13.2'
     testImplementation "com.google.truth:truth:1.1.3"

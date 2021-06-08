@@ -7,3 +7,8 @@ dependencyResolutionManagement {
 }
 rootProject.name = "nRF Edge Impulse"
 include ':app'
+
+// TODO: Remove when BLE Library is published
+include ':ble', ':ble-ktx'
+project(':ble').projectDir = file('../Android-BLE-Library/ble')
+project(':ble-ktx').projectDir = file('../Android-BLE-Library/ble-ktx')
