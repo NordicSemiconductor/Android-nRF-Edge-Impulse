@@ -5,9 +5,9 @@ import com.google.gson.annotations.SerializedName
 
 data class Headers(
     @SerializedName("x-api-key")
-    val xApiKey: String = "ei_12389211",
+    val xApiKey: String,
     @SerializedName("x-label")
-    val xLabel: String = "wave",
+    val xLabel: String,
     @IntRange(from = 0, to = 1)
     @SerializedName("x-allow-duplicates")
     val xAllowDuplicates: Int = 0

@@ -26,7 +26,7 @@ data class ConfigureMessage(
 data class SendDataMessage(
     val address: String = "https://ingestion.edgeimpulse.com/api/training/data",
     val method: Method = POST,
-    val headers: Headers = Headers(),
+    val headers: Headers,
     val body: ByteArray
 ) : DeviceMessage() {
     override val type = HTTP
