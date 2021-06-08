@@ -9,18 +9,7 @@ data class Hello(
     val deviceId: String,
     val deviceType: String,
     val connection: String,
-    val sensors: List<Sensor> = listOf(
-        Sensor(
-            name = "Accelerometer",
-            maxSampleLengths = 60000,
-            frequencies = listOf(62.5, 100)
-        ),
-        Sensor(
-            name = "Microphone",
-            maxSampleLengths = 4000,
-            frequencies = listOf(16000)
-        )
-    ),
+    val sensors: List<Sensor>,
     val supportsSnapshotStreaming: Boolean = false
 ) : Message()
 
