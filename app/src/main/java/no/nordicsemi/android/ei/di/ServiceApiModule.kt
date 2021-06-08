@@ -49,5 +49,4 @@ object ServiceApiModule {
     fun provideWebSocketRequest(): Request = Request.Builder()
         .url("wss://remote-mgmt.edgeimpulse.com")
         .build()
-
 }
