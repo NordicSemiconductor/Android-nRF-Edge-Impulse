@@ -10,7 +10,7 @@ buildscript {
         // https://developer.android.com/training/dependency-injection/hilt-android
         hilt_android_version = '1.0.0'
         // https://github.com/google/accompanist/releases
-        accompanist_version = '0.10.0'
+        accompanist_version = '0.11.1'
     }
     repositories {
         google()
