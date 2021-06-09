@@ -1,5 +1,6 @@
 package no.nordicsemi.android.ei.websocket
 
+import com.google.gson.JsonObject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -9,7 +10,6 @@ import kotlinx.coroutines.withContext
 import no.nordicsemi.android.ei.di.DefaultDispatcher
 import no.nordicsemi.android.ei.websocket.WebSocketEvent.*
 import okhttp3.*
-import okio.ByteString.Companion.toByteString
 import javax.inject.Inject
 
 /**
@@ -77,8 +77,8 @@ class WebSocketManager @Inject constructor(
             })
     }
 
-    suspend fun send(deviceId: String, data: ByteArray) = withContext(defaultDispatcher) {
-        webSockets[deviceId]?.send(data.toByteString()) ?: false
+    suspend fun send(deviceId: String, json: JsonObject) = withContext(defaultDispatcher) {
+        webSockets[deviceId]?.send(text = json.toString()) ?: false
     }
 
     //TODO verify reasoning
