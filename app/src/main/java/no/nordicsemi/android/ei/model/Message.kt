@@ -1,7 +1,6 @@
 package no.nordicsemi.android.ei.model
 
-//TODO make Message a sealed interface when compose supports kotlin 1.5.10
-abstract class Message
+sealed class Message
 
 data class Hello(
     val version: Int = 3,
