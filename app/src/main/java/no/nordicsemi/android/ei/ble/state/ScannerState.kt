@@ -28,7 +28,7 @@ class ScannerState(
             it.rssi = max(-128, scanResult.rssi)
             it.name = scanResult.scanRecord?.deviceName
         } ?: run {
-            discoveredDevices.add(scanResult.toDiscoveredBluetoothDevice())
+            discoveredDevices += scanResult.toDiscoveredBluetoothDevice()
         }
     }
 
