@@ -238,7 +238,7 @@ private fun Error(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = onClickRetry) {
-            Text(text = stringResource(R.string.action_try_again).toUpperCase(Locale.US))
+            Text(text = stringResource(R.string.action_try_again).uppercase(Locale.US))
         }
     }
 }
@@ -272,7 +272,7 @@ private fun ErrorItem(
             Spacer(modifier = Modifier.width(16.dp))
             Button(onClick = onClickRetry) {
                 Text(
-                    text = stringResource(R.string.action_try_again).toUpperCase(Locale.US),
+                    text = stringResource(R.string.action_try_again).uppercase(Locale.US),
                     style = MaterialTheme.typography.button,
                 )
             }

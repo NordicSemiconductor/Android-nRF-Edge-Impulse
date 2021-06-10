@@ -36,7 +36,7 @@ fun CollapsibleFloatingActionButton(
             // Toggle the visibility of the content with animation.
             AnimatedVisibility(visible = expanded()) {
                 Text(
-                    text = text.toUpperCase(Locale.US),
+                    text = text.uppercase(Locale.US),
                     modifier = Modifier.padding(start = 8.dp)
                 )
             }

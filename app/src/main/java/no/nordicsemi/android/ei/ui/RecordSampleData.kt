@@ -81,7 +81,7 @@ fun RecordSampleLargeScreen(
                         onClick = { onDismiss() }
                     ) {
                         Text(
-                            text = stringResource(R.string.action_dialog_cancel).toUpperCase(Locale.US),
+                            text = stringResource(R.string.action_dialog_cancel).uppercase(Locale.US),
                             style = MaterialTheme.typography.button
                         )
                     }
@@ -91,7 +91,7 @@ fun RecordSampleLargeScreen(
                         onClick = { /*TODO implement start sampling*/ }
                     ) {
                         Text(
-                            text = stringResource(R.string.action_start_sampling).toUpperCase(Locale.US),
+                            text = stringResource(R.string.action_start_sampling).uppercase(Locale.US),
                             style = MaterialTheme.typography.button
                         )
                     }
@@ -164,7 +164,7 @@ fun RecordSampleSmallScreen(
                     onClick = { /*TODO implement start sampling*/ }
                 ) {
                     Text(
-                        text = stringResource(R.string.action_start_sampling).toUpperCase(Locale.US),
+                        text = stringResource(R.string.action_start_sampling).uppercase(Locale.US),
                         style = MaterialTheme.typography.button
                     )
                 }

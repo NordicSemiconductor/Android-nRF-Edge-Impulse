@@ -142,7 +142,7 @@ fun BluetoothDisabledInfo(
             }
         ) {
             Text(
-                text = stringResource(R.string.action_enable).toUpperCase(Locale.US),
+                text = stringResource(R.string.action_enable).uppercase(Locale.US),
                 style = MaterialTheme.typography.button
             )
         }
@@ -178,7 +178,7 @@ fun LocationPermissionInfo(
             }
         ) {
             Text(
-                text = stringResource(R.string.action_location_permission).toUpperCase(Locale.US),
+                text = stringResource(R.string.action_location_permission).uppercase(Locale.US),
                 style = MaterialTheme.typography.button
             )
         }
@@ -188,8 +188,9 @@ fun LocationPermissionInfo(
                 onClick = { showRationale = true }
             ) {
                 Text(
-                    text = stringResource(R.string.action_show_location_rationale).toUpperCase(
-                        Locale.US),
+                    text = stringResource(R.string.action_show_location_rationale).uppercase(
+                        Locale.US
+                    ),
                     style = MaterialTheme.typography.button
                 )
             }
@@ -228,7 +229,7 @@ fun LocationTurnedOffInfo(
         ) {
             Text(
                 text = stringResource(R.string.action_location_permission_settings)
-                    .toUpperCase(Locale.US),
+                    .uppercase(Locale.US),
                 style = MaterialTheme.typography.button
             )
         }

@@ -307,7 +307,7 @@ private fun ProjectTopAppBar(
                 title = { Title(text = projectName) },
                 tabs = tabs.map {
                     val text = @Composable {
-                        Text(text = stringResource(id = it.title).toUpperCase(Locale.US))
+                        Text(text = stringResource(id = it.title).uppercase(Locale.US))
                     }
                     val icon = @Composable {
                         Icon(
