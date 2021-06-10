@@ -170,9 +170,12 @@ class DevicesViewModel @Inject constructor(
     }
 
     private fun stopScan() {
-        BluetoothAdapter.getDefaultAdapter().bluetoothLeScanner
-            ?.takeIf { scannerState.scanningState == ScanningState.Started }
-            ?.apply { stopScan(scanCallback) }
+        guard(scannerState.scanningState == ScanningState.Started) {
+            return
+        }
+        BluetoothAdapter.getDefaultAdapter().bluetoothLeScanner?.apply {
+            stopScan(scanCallback)
+        }
     }
 
     private fun stopScan(reason: Reason) {

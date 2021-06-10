@@ -3,6 +3,7 @@ package no.nordicsemi.android.ei.ui
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -25,8 +26,9 @@ import no.nordicsemi.android.ei.ble.state.ScanningState
 import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.Reason
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.ui.layouts.*
-import no.nordicsemi.android.ei.ui.theme.NordicRed
 import no.nordicsemi.android.ei.util.exhaustive
+import no.nordicsemi.android.ei.viewmodels.state.DeviceState
+import no.nordicsemi.android.ei.viewmodels.state.indicatorColor
 
 @Composable
 fun Devices(
@@ -65,12 +67,16 @@ fun Devices(
                 )
             }
 
-            configuredDevices.takeIf { it.isNotEmpty() }?.let { isNotEmptyList ->
+            configuredDevices.takeIf { it.isNotEmpty() }?.let { configuredDevices ->
                 items(
-                    items = isNotEmptyList,
+                    items = configuredDevices,
                     key = { it.deviceId }
-                ) {
-                    ConfiguredDeviceRow(device = it)
+                ) { configuredDevice ->
+                    ConfiguredDeviceRow(
+                        device = configuredDevice,
+                        state = DeviceState.IN_RANGE,
+                        onDeviceClicked = { },
+                    )
                     Divider()
                 }
             } ?: item {
@@ -107,16 +113,28 @@ fun Devices(
                 is ScanningState.Initializing -> {}
                 is ScanningState.Started -> {
                     scannerState.discoveredDevices
-                        .takeIf { it.isNotEmpty() }
-                        ?.let { isNotEmptyList ->
+                        // Filter only devices that have not been configured.
+                        .filter { discoveredDevice ->
+                            configuredDevices.find { configuredDevice ->
+                                configuredDevice.deviceId == discoveredDevice.device.address
+                            } == null
+                        }
+                        // Display only if at least one was found.
+                        .takeIf { it.isNotEmpty() }?.let { discoveredDevices ->
                             items(
-                                items = isNotEmptyList,
+                                items = discoveredDevices,
                                 key = { it.device.address }
-                            ) {
-                                DiscoveredDeviceRow(device = it)
+                            ) {  discoveredDevice ->
+                                DiscoveredDeviceRow(
+                                    device = discoveredDevice,
+                                    isConnecting = discoveredDevice.device.address.endsWith("D9"),
+                                    onDeviceClicked = {  },
+                                )
                                 Divider()
                             }
-                        } ?: item {
+                        }
+                        // Else, show a placeholder.
+                        ?: item {
                             NoDevicesInRangeInfo(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -141,11 +159,19 @@ fun Devices(
 }
 
 @Composable
-fun ConfiguredDeviceRow(device: Device) {
+fun ConfiguredDeviceRow(
+    device: Device,
+    state: DeviceState,
+    onDeviceClicked: (Device) -> Unit,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(color = MaterialTheme.colors.surface)
+            .clickable(
+                enabled = state == DeviceState.IN_RANGE,
+                onClick = { onDeviceClicked(device) },
+            )
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -174,24 +200,42 @@ fun ConfiguredDeviceRow(device: Device) {
             )
         }
         Spacer(modifier = Modifier.width(16.dp))
-        Surface(
-            modifier = Modifier
-                .padding(end = 8.dp)
-                .size(8.dp),
-            //TODO Add green for connected devices
-            color = NordicRed,
-            shape = CircleShape
-        ) {}
+        when (state) {
+            DeviceState.CONNECTING -> {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .align(Alignment.CenterVertically)
+                )
+            }
+            else -> {
+                Surface(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .padding(8.dp),
+                    color = state.indicatorColor(),
+                    shape = CircleShape
+                ) {}
+            }
+        }
     }
 }
 
 @Composable
-fun DiscoveredDeviceRow(device: DiscoveredBluetoothDevice) {
+fun DiscoveredDeviceRow(
+    device: DiscoveredBluetoothDevice,
+    isConnecting: Boolean,
+    onDeviceClicked: (DiscoveredBluetoothDevice) -> Unit,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(color = MaterialTheme.colors.surface)
-            .padding(16.dp)
+            .clickable(
+                enabled = !isConnecting,
+                onClick = { onDeviceClicked(device) },
+            )
+            .padding(16.dp),
     ) {
         Image(
             painter = painterResource(id = R.drawable.ic_uart),
@@ -218,13 +262,21 @@ fun DiscoveredDeviceRow(device: DiscoveredBluetoothDevice) {
             )
         }
         Spacer(modifier = Modifier.width(width = 16.dp))
-        Image(
-            painter = painterResource(id = getRssiRes(device.rssiAsPercent())),
-            contentDescription = null,
-            modifier = Modifier
-                .size(24.dp)
-                .align(Alignment.CenterVertically)
-        )
+        if (isConnecting) {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .size(24.dp)
+                    .align(Alignment.CenterVertically)
+            )
+        } else {
+            Image(
+                painter = painterResource(id = getRssiRes(device.rssiAsPercent())),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(24.dp)
+                    .align(Alignment.CenterVertically)
+            )
+        }
     }
 }
 
