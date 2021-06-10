@@ -263,7 +263,7 @@ private fun ProjectContent(
                     refreshingState = viewModel.isRefreshing,
                     onRefresh = { viewModel.listDevices(true) },
                     scannerState = devicesViewModel.scannerState,
-                    onScannerStarted = { devicesViewModel.startScan() }
+                    onScannerStarted = { devicesViewModel.startScan() },
                 )
             }
             composable(route = BottomNavigationScreen.DATA_ACQUISITION.route) { backStackEntry ->
@@ -277,7 +277,10 @@ private fun ProjectContent(
                     connectedDevice = viewModel.configuredDevices,
                     pagerState = pagerState,
                     listStates = listStates,
-                    viewModel = dataAcquisitionViewModel,
+                    samples = listOf(
+                        dataAcquisitionViewModel.trainingSamples,
+                        dataAcquisitionViewModel.testingSamples,
+                    ),
                     snackbarHostState = snackbarHostState,
                 )
             }

@@ -29,15 +29,11 @@ import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.flow.Flow
 import no.nordicsemi.android.ei.HorizontalPagerTab
-import no.nordicsemi.android.ei.HorizontalPagerTab.TESTING
-import no.nordicsemi.android.ei.HorizontalPagerTab.TRAINING
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Sample
 import no.nordicsemi.android.ei.ui.layouts.InfoLayout
 import no.nordicsemi.android.ei.util.asMessage
-import no.nordicsemi.android.ei.util.exhaustive
-import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel
 import java.util.*
 
 @OptIn(ExperimentalPagerApi::class)
@@ -47,28 +43,19 @@ fun DataAcquisition(
     connectedDevice: List<Device>,
     pagerState: PagerState,
     listStates: List<LazyListState>,
-    viewModel: DataAcquisitionViewModel,
+    samples: List<Flow<PagingData<Sample>>>,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     HorizontalPager(
         modifier = modifier,
         state = pagerState
     ) { page ->
-        val tab = HorizontalPagerTab.indexed(page)
-        when (tab) {
-            TRAINING -> CollectedDataList(
-                state = listStates[page],
-                pagingDataFlow = viewModel.trainingSamples,
-                tab = tab,
-                snackbarHostState = snackbarHostState,
-            )
-            TESTING -> CollectedDataList(
-                state = listStates[page],
-                pagingDataFlow = viewModel.testingSamples,
-                tab = tab,
-                snackbarHostState = snackbarHostState,
-            )
-        }.exhaustive
+        CollectedDataList(
+            state = listStates[page],
+            pagingDataFlow = samples[page],
+            tab = HorizontalPagerTab.indexed(page),
+            snackbarHostState = snackbarHostState,
+        )
     }
 }
 
