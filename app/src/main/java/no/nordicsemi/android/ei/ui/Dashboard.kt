@@ -1,13 +1,10 @@
 package no.nordicsemi.android.ei.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -304,32 +301,6 @@ private fun Collaborator(collaborators: List<Collaborator>) {
                 }
             }
             startPadding += (imageSize / MAX_COLLABORATOR_IMAGES)
-        }
-    }
-}
-
-@OptIn(ExperimentalAnimationApi::class)
-@Composable
-private fun CreateProjectFloatingActionButton(
-    isScrollingUp: @Composable () -> Boolean,
-    onClick: () -> Unit
-) {
-    FloatingActionButton(onClick = onClick) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = null
-            )
-            // Toggle the visibility of the content with animation.
-            AnimatedVisibility(visible = isScrollingUp()) {
-                Text(
-                    text = stringResource(R.string.action_create_project),
-                    modifier = Modifier.padding(start = 8.dp)
-                )
-            }
         }
     }
 }
