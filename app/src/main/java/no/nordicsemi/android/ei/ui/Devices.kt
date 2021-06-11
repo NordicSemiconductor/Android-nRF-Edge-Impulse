@@ -76,8 +76,8 @@ fun Devices(
                 ) { configuredDevice ->
                     ConfiguredDeviceRow(
                         device = configuredDevice,
-                        state = DeviceState.IN_RANGE,
-                        onDeviceClicked = { },
+                        state = DeviceState.IN_RANGE, // TODO implement
+                        onDeviceClicked = { }, // TODO implement
                     )
                     Divider()
                 }
@@ -130,13 +130,13 @@ fun Devices(
                             ) { discoveredDevice ->
                                 DiscoveredDeviceRow(
                                     device = discoveredDevice,
-                                    isConnecting = discoveredDevice.device.address.endsWith("D9"),
-                                    onDeviceClicked = { connect(it.device) }
+                                    isConnecting = discoveredDevice.device.address.endsWith("01"), // TODO implement
+                                    onDeviceClicked = { connect(it.device) }, // TODO implement
                                 )
                                 Divider()
                             }
                         }
-                    // Else, show a placeholder.
+                        // Else, show a placeholder.
                         ?: item {
                             NoDevicesInRangeInfo(
                                 modifier = Modifier

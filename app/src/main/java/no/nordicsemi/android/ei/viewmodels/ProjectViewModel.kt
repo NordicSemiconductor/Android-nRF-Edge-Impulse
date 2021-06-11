@@ -47,7 +47,29 @@ class ProjectViewModel @Inject constructor(
     @IODispatcher private val ioDispatcher: CoroutineDispatcher
 ) : AndroidViewModel(context as Application) {
 
+    /** The channel for emitting one-time events. */
+    private val eventChannel = Channel<Event>(Channel.BUFFERED)
+    /** The flow that emits events. */
+    val eventFlow = eventChannel.receiveAsFlow()
+
+    /** The project associated with the View Model. */
+    val project
+        get() = projectDataRepository.project
+
+    /** Project development keys. */
+    private val keys
+        get() = projectDataRepository.developmentKeys
+
+    /** A map of device managers. */
     var commsManagers = mutableMapOf<BluetoothDevice, CommsManager>()
+        private set
+
+    /** A list of configured devices obtained from the service. */
+    var configuredDevices = mutableStateListOf<Device>()
+        private set
+
+    /** Whether the list of configured devices is refreshing. */
+    var isRefreshing: Boolean by mutableStateOf(false)
         private set
 
     private val gson = GsonBuilder()
@@ -55,12 +77,6 @@ class ProjectViewModel @Inject constructor(
         .disableHtmlEscaping()
         .setPrettyPrinting()
         .create()
-
-    private val eventChannel = Channel<Event>(Channel.BUFFERED)
-    val eventFlow = eventChannel.receiveAsFlow()
-
-    var isRefreshing: Boolean by mutableStateOf(false)
-        private set
 
     // TODO This needs to be fixed: NPE when switching back to the app.
     private val userComponentEntryPoint: UserComponentEntryPoint
@@ -78,13 +94,7 @@ class ProjectViewModel @Inject constructor(
             .get(projectManager.projectComponent!!, ProjectComponentEntryPoint::class.java)
             .projectDataRepository()
 
-    var configuredDevices = mutableStateListOf<Device>()
-        private set
-
-    val project
-        get() = projectDataRepository.project
-    val keys
-        get() = projectDataRepository.developmentKeys
+    // ---- Fields used for Recording New Sample --------------
     val focusRequester = FocusRequester()
     var selectedDevice: Device? by mutableStateOf(null)
         private set
@@ -95,11 +105,26 @@ class ProjectViewModel @Inject constructor(
     var selectedFrequency: Number? by mutableStateOf(null)
         private set
 
+    // ---- Implementation ------------------------------------
     init {
-        listDevices()
+        // When the view model is created, load the configured devices from the service.
+        listDevices(swipedToRefresh = false)
     }
 
-    fun listDevices(swipedToRefresh: Boolean = false) {
+    /**
+     * Lists configured devices from the service.
+     *
+     * Calling this method will display the swipe to refresh indicator.
+     */
+    fun listDevices() {
+        listDevices(swipedToRefresh = true)
+    }
+
+    /**
+     * Lists configured devices from the service.
+     * @param swipedToRefresh Should the refresh indicator be displayed.
+     */
+    private fun listDevices(swipedToRefresh: Boolean = false) {
         if (swipedToRefresh)
             isRefreshing = true
         val handler = CoroutineExceptionHandler { _, throwable ->

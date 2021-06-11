@@ -270,7 +270,7 @@ private fun ProjectContent(
                         .padding(paddingValues = innerPadding),
                     configuredDevices = viewModel.configuredDevices,
                     refreshingState = viewModel.isRefreshing,
-                    onRefresh = { viewModel.listDevices(true) },
+                    onRefresh = { viewModel.listDevices() },
                     scannerState = devicesViewModel.scannerState,
                     onScannerStarted = { devicesViewModel.startScan() },
                     connect = { viewModel.connect(device = it) }
