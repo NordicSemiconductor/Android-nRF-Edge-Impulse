@@ -58,7 +58,11 @@ fun Project(
 ) {
     val isLargeScreen =
         LocalConfiguration.current.screenLayout and SCREENLAYOUT_SIZE_MASK >= SCREENLAYOUT_SIZE_LARGE
-    var selectedScreen: BottomNavigationScreen by rememberSaveable { mutableStateOf(BottomNavigationScreen.DEVICES) }
+    var selectedScreen: BottomNavigationScreen by rememberSaveable {
+        mutableStateOf(
+            BottomNavigationScreen.DEVICES
+        )
+    }
     if (isLargeScreen) {
         LargeScreen(
             viewModel = viewModel,
@@ -117,7 +121,8 @@ private fun LargeScreen(
                 )
             }
         }
-        else -> {}
+        else -> {
+        }
     }
 }
 
@@ -208,10 +213,14 @@ private fun ProjectContent(
                         showSnackbar(
                             coroutineScope = scope,
                             snackbarHostState = snackbarHostState,
-                            message = it.throwable.asMessage(context, context.getString(R.string.error_refreshing_failed))
+                            message = it.throwable.asMessage(
+                                context,
+                                context.getString(R.string.error_refreshing_failed)
+                            )
                         )
                     }
-                    else -> {}
+                    else -> {
+                    }
                 }
             }
         }
@@ -264,6 +273,7 @@ private fun ProjectContent(
                     onRefresh = { viewModel.listDevices(true) },
                     scannerState = devicesViewModel.scannerState,
                     onScannerStarted = { devicesViewModel.startScan() },
+                    connect = { viewModel.connect(device = it) }
                 )
             }
             composable(route = BottomNavigationScreen.DATA_ACQUISITION.route) { backStackEntry ->
@@ -368,7 +378,7 @@ private fun ProjectBottomNavigation(
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: Route.devices
-    val screens =  listOf(
+    val screens = listOf(
         BottomNavigationScreen.DEVICES,
         BottomNavigationScreen.DATA_ACQUISITION,
         BottomNavigationScreen.DEPLOYMENT

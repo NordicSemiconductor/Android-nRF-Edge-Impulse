@@ -30,11 +30,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility(JavaVersion.VERSION_11)
+        targetCompatibility(JavaVersion.VERSION_11)
     }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '11'
         useIR = true
         // This is required so that Result<T> can be used as return type.
         // http://rustyrazorblade.com/post/2018/2018-12-06-kotlin-result/
@@ -77,6 +77,8 @@ dependencies {
     implementation 'androidx.preference:preference-ktx:1.1.1'
     // https://github.com/Kotlin/kotlinx.coroutines/releases
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0'
+    // https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.0'
     // Paging 3 - https://developer.android.com/jetpack/androidx/releases/paging
     implementation 'androidx.paging:paging-compose:1.0.0-alpha10'
     // BLE Library - https://github.com/NordicSemiconductor/Android-BLE-Library/releases

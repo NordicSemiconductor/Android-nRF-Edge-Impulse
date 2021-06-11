@@ -1,5 +1,6 @@
 package no.nordicsemi.android.ei.ui
 
+import android.bluetooth.BluetoothDevice
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -37,7 +38,8 @@ fun Devices(
     refreshingState: Boolean,
     onRefresh: () -> Unit,
     scannerState: ScannerState,
-    onScannerStarted: () -> Unit
+    onScannerStarted: () -> Unit,
+    connect: (BluetoothDevice) -> Unit
 ) {
     val scanningState = scannerState.scanningState
 
@@ -110,7 +112,8 @@ fun Devices(
             }
 
             when (scanningState) {
-                is ScanningState.Initializing -> {}
+                is ScanningState.Initializing -> {
+                }
                 is ScanningState.Started -> {
                     scannerState.discoveredDevices
                         // Filter only devices that have not been configured.
@@ -124,16 +127,16 @@ fun Devices(
                             items(
                                 items = discoveredDevices,
                                 key = { it.device.address }
-                            ) {  discoveredDevice ->
+                            ) { discoveredDevice ->
                                 DiscoveredDeviceRow(
                                     device = discoveredDevice,
                                     isConnecting = discoveredDevice.device.address.endsWith("D9"),
-                                    onDeviceClicked = {  },
+                                    onDeviceClicked = { connect(it.device) }
                                 )
                                 Divider()
                             }
                         }
-                        // Else, show a placeholder.
+                    // Else, show a placeholder.
                         ?: item {
                             NoDevicesInRangeInfo(
                                 modifier = Modifier

@@ -1,47 +1,51 @@
 package no.nordicsemi.android.ei.websocket
 
+import android.util.Log
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import no.nordicsemi.android.ei.di.IODispatcher
-import no.nordicsemi.android.ei.websocket.WebSocketEvent.*
+import no.nordicsemi.android.ei.websocket.WebSocketState.*
 import okhttp3.*
 import javax.inject.Inject
 
 /**
  * WebSocketManager
  */
-class WebSocketManager @Inject constructor(
+class EiWebSocket @Inject constructor(
     private val client: OkHttpClient,
     private val request: Request,
     @IODispatcher private val ioDispatcher: CoroutineDispatcher
 ) {
     private lateinit var webSocket: WebSocket
-    private val _socketState = MutableSharedFlow<WebSocketEvent>()
-    val socketState: SharedFlow<WebSocketEvent> = _socketState
+    private val _webSocketState = MutableSharedFlow<WebSocketState>()
+    val webSocketState: SharedFlow<WebSocketState> = _webSocketState
+    private val _message = MutableSharedFlow<JsonObject>()
+    val message: SharedFlow<JsonObject> = _message
     private val coroutineScope = CoroutineScope(ioDispatcher)
 
     private val webSocketListener = object : WebSocketListener() {
 
         override fun onOpen(webSocket: WebSocket, response: Response) {
             coroutineScope.launch {
-                _socketState.emit(OnOpen(response = response))
+                _webSocketState.emit(OnOpen(response = response))
             }
         }
 
         override fun onMessage(webSocket: WebSocket, text: String) {
             coroutineScope.launch {
-                _socketState.emit(OnMessage( text = text))
+                Log.i("AAAA", "Response $text")
+                _message.emit(JsonParser.parseString(text).asJsonObject)
             }
         }
 
         override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
             coroutineScope.launch {
-                _socketState.emit(
+                _webSocketState.emit(
                     OnClosing(
                         code = code,
                         reason = reason
@@ -52,13 +56,13 @@ class WebSocketManager @Inject constructor(
 
         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
             coroutineScope.launch {
-                _socketState.emit(OnClosed(code = code, reason = reason))
+                _webSocketState.emit(OnClosed(code = code, reason = reason))
             }
         }
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
             coroutineScope.launch {
-                _socketState.emit(OnFailure(throwable = t, response = response))
+                _webSocketState.emit(OnFailure(throwable = t, response = response))
             }
         }
     }
@@ -67,12 +71,13 @@ class WebSocketManager @Inject constructor(
         webSocket = client.newWebSocket(request = request, listener = webSocketListener)
     }
 
-    suspend fun send(deviceId: String, json: JsonObject) = withContext(ioDispatcher) {
+    fun send(json: JsonObject) {
+        Log.i("AAAA", "Sending?")
         webSocket.send(text = json.toString())
     }
 
     //TODO verify reasoning
-    suspend fun disconnect(deviceId: String) = withContext(ioDispatcher) {
+    fun disconnect() {
         webSocket.close(WebSocketStatus.NORMAL_CLOSURE.ordinal, "Finished")
     }
 }

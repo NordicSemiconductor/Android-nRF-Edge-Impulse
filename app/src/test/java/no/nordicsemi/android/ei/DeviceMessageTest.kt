@@ -3,8 +3,11 @@ package no.nordicsemi.android.ei
 import com.google.common.truth.Truth.assertThat
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
-import no.nordicsemi.android.ei.model.*
+import no.nordicsemi.android.ei.model.ConfigureMessage
 import no.nordicsemi.android.ei.model.Direction.RECEIVE
+import no.nordicsemi.android.ei.model.Message
+import no.nordicsemi.android.ei.model.Sensor
+import no.nordicsemi.android.ei.model.WebSocketMessage
 import no.nordicsemi.android.ei.util.MessageTypeAdapter
 import org.junit.Test
 
@@ -52,7 +55,7 @@ class DeviceMessageTest {
             JsonParser.parseString(
                 gson.toJson(
                     WebSocketMessage(
-                        message = Hello(
+                        message = Message.Hello(
                             apiKey = "ei_1234",
                             deviceId = "01:23:45:67:89:AA",
                             deviceType = "NRF5340_DK",
@@ -83,7 +86,7 @@ class DeviceMessageTest {
                 "    \"hello\": true\n" +
                 "}"
         val actualResult =
-            JsonParser.parseString(gson.toJson(Success(hello = true)))
+            JsonParser.parseString(gson.toJson(Message.Success(hello = true)))
         val expectedResult = JsonParser.parseString(jsonString).asJsonObject
         assertThat(expectedResult == actualResult).isTrue()
     }
@@ -103,7 +106,7 @@ class DeviceMessageTest {
                 gson.toJson(
                     WebSocketMessage(
                         direction = RECEIVE,
-                        message = Success(hello = true)
+                        message = Message.Success(hello = true)
                     )
                 )
             )
@@ -120,7 +123,7 @@ class DeviceMessageTest {
         val actualResult =
             JsonParser.parseString(
                 gson.toJson(
-                    Error(
+                    Message.Error(
                         hello = false,
                         error = "API key is not correct, or a similar message"
                     )
@@ -146,7 +149,7 @@ class DeviceMessageTest {
                 gson.toJson(
                     WebSocketMessage(
                         direction = RECEIVE,
-                        message = Error(
+                        message = Message.Error(
                             hello = false,
                             error = "API key is not correct, or a similar message"
                         )
@@ -170,7 +173,7 @@ class DeviceMessageTest {
             JsonParser.parseString(
                 gson.toJson(
                     ConfigureMessage(
-                        message = Configure(
+                        message = Message.Configure(
                             apiKey = "ei_123456",
                             address = "wss://studio.edgeimpulse.com"
                         )
@@ -203,7 +206,7 @@ class DeviceMessageTest {
                 gson.toJson(
                     WebSocketMessage(
                         direction = RECEIVE,
-                        message = SampleRequest(
+                        message = Message.SampleRequest(
                             label = "wave",
                             length = 10000,
                             path = "/api/training/data",

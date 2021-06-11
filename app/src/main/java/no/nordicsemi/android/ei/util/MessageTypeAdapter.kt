@@ -1,7 +1,7 @@
 package no.nordicsemi.android.ei.util
 
 import com.google.gson.*
-import no.nordicsemi.android.ei.model.*
+import no.nordicsemi.android.ei.model.Message
 import java.lang.reflect.Type
 
 class MessageTypeAdapter : JsonSerializer<Message>, JsonDeserializer<Message> {
@@ -14,14 +14,14 @@ class MessageTypeAdapter : JsonSerializer<Message>, JsonDeserializer<Message> {
         val deviceMessage = JsonObject()
         return src?.let { message ->
             when (message) {
-                is Hello -> {
+                is Message.Hello -> {
                     deviceMessage.add("hello", context?.serialize(message))
                     deviceMessage
                 }
-                is Success, is Error, is Configure -> {
+                is Message.Success, is Error, is Message.Configure -> {
                     context?.serialize(message)!!
                 }
-                is SampleRequest -> {
+                is Message.SampleRequest -> {
                     deviceMessage.add("sample", context?.serialize(message))
                     deviceMessage
                 }
