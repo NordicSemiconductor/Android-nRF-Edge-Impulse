@@ -269,6 +269,7 @@ private fun ProjectContent(
                         .fillMaxSize()
                         .padding(paddingValues = innerPadding),
                     configuredDevices = viewModel.configuredDevices,
+                    activeDevices = viewModel.commsManagers,
                     refreshingState = viewModel.isRefreshing,
                     onRefresh = { viewModel.listDevices() },
                     scannerState = devicesViewModel.scannerState,

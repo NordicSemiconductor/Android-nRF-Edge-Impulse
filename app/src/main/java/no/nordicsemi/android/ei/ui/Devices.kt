@@ -25,6 +25,7 @@ import no.nordicsemi.android.ei.ble.rssiAsPercent
 import no.nordicsemi.android.ei.ble.state.ScannerState
 import no.nordicsemi.android.ei.ble.state.ScanningState
 import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.Reason
+import no.nordicsemi.android.ei.comms.CommsManager
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.ui.layouts.*
 import no.nordicsemi.android.ei.util.exhaustive
@@ -35,6 +36,7 @@ import no.nordicsemi.android.ei.viewmodels.state.indicatorColor
 fun Devices(
     modifier: Modifier = Modifier,
     configuredDevices: List<Device>,
+    activeDevices: Map<BluetoothDevice, CommsManager>,
     refreshingState: Boolean,
     onRefresh: () -> Unit,
     scannerState: ScannerState,
@@ -130,8 +132,8 @@ fun Devices(
                             ) { discoveredDevice ->
                                 DiscoveredDeviceRow(
                                     device = discoveredDevice,
-                                    isConnecting = discoveredDevice.device.address.endsWith("01"), // TODO implement
-                                    onDeviceClicked = { connect(it.device) }, // TODO implement
+                                    isConnecting = activeDevices.containsKey(discoveredDevice.device),
+                                    onDeviceClicked = { connect(it.device) },
                                 )
                                 Divider()
                             }
