@@ -59,9 +59,7 @@ import no.nordicsemi.android.ei.ui.layouts.UserAppBar
 import no.nordicsemi.android.ei.ui.layouts.isScrollingUp
 import no.nordicsemi.android.ei.ui.theme.NordicMiddleGrey
 import no.nordicsemi.android.ei.viewmodels.DashboardViewModel
-import no.nordicsemi.android.ei.viewmodels.event.Error
-import no.nordicsemi.android.ei.viewmodels.event.ProjectCreated
-import no.nordicsemi.android.ei.viewmodels.event.ProjectSelected
+import no.nordicsemi.android.ei.viewmodels.event.Event
 import java.net.UnknownHostException
 
 @Composable
@@ -86,7 +84,7 @@ fun Dashboard(
         viewModel.eventFlow.runCatching {
             this.collect { event ->
                 when (event) {
-                    is ProjectCreated -> {
+                    is Event.Project.Created -> {
                         isCreateProjectDialogVisible = false
                         showSnackbar(
                             coroutineScope = coroutineScope,
@@ -97,10 +95,10 @@ fun Dashboard(
                             )
                         )
                     }
-                    is ProjectSelected -> {
+                    is Event.Project.Selected -> {
                         onProjectSelected(event.project)
                     }
-                    is Error -> {
+                    is Event.Error -> {
                         isCreateProjectDialogVisible = false
                         showSnackbar(
                             coroutineScope = coroutineScope,

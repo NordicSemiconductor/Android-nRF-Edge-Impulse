@@ -48,7 +48,7 @@ import no.nordicsemi.android.ei.util.asMessage
 import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel
 import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
 import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
-import no.nordicsemi.android.ei.viewmodels.event.Error
+import no.nordicsemi.android.ei.viewmodels.event.Event
 import java.util.*
 
 @Composable
@@ -204,7 +204,7 @@ private fun ProjectContent(
         viewModel.eventFlow.runCatching {
             this.collect {
                 when (it) {
-                    is Error -> {
+                    is Event.Error -> {
                         showSnackbar(
                             coroutineScope = scope,
                             snackbarHostState = snackbarHostState,

@@ -10,8 +10,6 @@ import androidx.paging.cachedIn
 import dagger.hilt.EntryPoints
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.receiveAsFlow
 import no.nordicsemi.android.ei.HorizontalPagerTab.TESTING
 import no.nordicsemi.android.ei.HorizontalPagerTab.TRAINING
 import no.nordicsemi.android.ei.di.ProjectComponentEntryPoint
@@ -20,7 +18,6 @@ import no.nordicsemi.android.ei.di.UserComponentEntryPoint
 import no.nordicsemi.android.ei.di.UserManager
 import no.nordicsemi.android.ei.repository.ProjectDataRepository
 import no.nordicsemi.android.ei.repository.ProjectRepository
-import no.nordicsemi.android.ei.viewmodels.event.Event
 import javax.inject.Inject
 
 @HiltViewModel
@@ -29,9 +26,6 @@ class DataAcquisitionViewModel @Inject constructor(
     private val userManager: UserManager,
     private val projectRepository: ProjectRepository
 ) : AndroidViewModel(context as Application) {
-
-    private val eventChannel = Channel<Event>(Channel.BUFFERED)
-    val eventFlow = eventChannel.receiveAsFlow()
 
     private val projectManager: ProjectManager
         get() = EntryPoints

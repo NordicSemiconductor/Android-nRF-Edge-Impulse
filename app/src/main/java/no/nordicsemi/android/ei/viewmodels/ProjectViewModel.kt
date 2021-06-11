@@ -23,7 +23,6 @@ import no.nordicsemi.android.ei.repository.ProjectDataRepository
 import no.nordicsemi.android.ei.repository.ProjectRepository
 import no.nordicsemi.android.ei.repository.UserDataRepository
 import no.nordicsemi.android.ei.util.guard
-import no.nordicsemi.android.ei.viewmodels.event.Error
 import no.nordicsemi.android.ei.viewmodels.event.Event
 import javax.inject.Inject
 
@@ -79,7 +78,7 @@ class ProjectViewModel @Inject constructor(
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope.launch {
                 eventChannel
-                    .send(Error(throwable = throwable))
+                    .send(Event.Error(throwable = throwable))
                     .also { isRefreshing = false }
             }
         }

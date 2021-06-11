@@ -19,17 +19,13 @@ import no.nordicsemi.android.ei.account.AccountHelper
 import no.nordicsemi.android.ei.di.ProjectManager
 import no.nordicsemi.android.ei.di.UserComponentEntryPoint
 import no.nordicsemi.android.ei.di.UserManager
-import no.nordicsemi.android.ei.model.DevelopmentKeys
 import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.repository.DashboardRepository
 import no.nordicsemi.android.ei.repository.UserDataRepository
 import no.nordicsemi.android.ei.service.param.developmentKeys
 import no.nordicsemi.android.ei.util.guard
-import no.nordicsemi.android.ei.viewmodels.event.Error
 import no.nordicsemi.android.ei.viewmodels.event.Event
-import no.nordicsemi.android.ei.viewmodels.event.ProjectCreated
-import no.nordicsemi.android.ei.viewmodels.event.ProjectSelected
 import javax.inject.Inject
 
 @HiltViewModel
@@ -67,7 +63,7 @@ class DashboardViewModel @Inject constructor(
         isRefreshing = true
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope
-                .launch { eventChannel.send(Error(throwable)) }
+                .launch { eventChannel.send(Event.Error(throwable)) }
                 .also { isRefreshing = false }
         }
         viewModelScope.launch(handler) {
@@ -88,7 +84,7 @@ class DashboardViewModel @Inject constructor(
     fun createProject(projectName: String) {
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope.launch {
-                eventChannel.send(Error(throwable))
+                eventChannel.send(Event.Error(throwable))
             }
         }
         viewModelScope.launch(handler) {
@@ -100,7 +96,7 @@ class DashboardViewModel @Inject constructor(
                     guard(response.success) {
                         throw Throwable(response.error)
                     }
-                    eventChannel.send(ProjectCreated(projectName))
+                    eventChannel.send(Event.Project.Created(projectName))
                 }
         }
     }
@@ -113,7 +109,7 @@ class DashboardViewModel @Inject constructor(
         isDownloadingDevelopmentKeys = true
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope
-                .launch { eventChannel.send(Error(throwable)) }
+                .launch { eventChannel.send(Event.Error(throwable)) }
                 .also { isDownloadingDevelopmentKeys = false }
         }
         viewModelScope.launch(handler) {
@@ -128,7 +124,7 @@ class DashboardViewModel @Inject constructor(
                     project = project,
                     keys = response.developmentKeys()
                 )
-                eventChannel.send(ProjectSelected(project))
+                eventChannel.send(Event.Project.Selected(project))
             }.also { isDownloadingDevelopmentKeys = false }
         }
     }
