@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import no.nordicsemi.android.ei.di.DefaultDispatcher
+import no.nordicsemi.android.ei.di.IODispatcher
 import no.nordicsemi.android.ei.websocket.WebSocketEvent.*
 import okhttp3.*
 import javax.inject.Inject
@@ -18,12 +18,12 @@ import javax.inject.Inject
 class WebSocketManager @Inject constructor(
     private val client: OkHttpClient,
     private val request: Request,
-    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher
+    @IODispatcher private val ioDispatcher: CoroutineDispatcher
 ) {
     private lateinit var webSocket: WebSocket
     private val _socketState = MutableSharedFlow<WebSocketEvent>()
     val socketState: SharedFlow<WebSocketEvent> = _socketState
-    private val coroutineScope = CoroutineScope(defaultDispatcher)
+    private val coroutineScope = CoroutineScope(ioDispatcher)
 
     private val webSocketListener = object : WebSocketListener() {
 
@@ -67,12 +67,12 @@ class WebSocketManager @Inject constructor(
         webSocket = client.newWebSocket(request = request, listener = webSocketListener)
     }
 
-    suspend fun send(deviceId: String, json: JsonObject) = withContext(defaultDispatcher) {
-        webSocket.send(text = json.toString()) ?: false
+    suspend fun send(deviceId: String, json: JsonObject) = withContext(ioDispatcher) {
+        webSocket.send(text = json.toString())
     }
 
     //TODO verify reasoning
-    suspend fun disconnect(deviceId: String) = withContext(defaultDispatcher) {
-        webSocket.close(WebSocketStatus.NORMAL_CLOSURE.ordinal, "Finished") ?: false
+    suspend fun disconnect(deviceId: String) = withContext(ioDispatcher) {
+        webSocket.close(WebSocketStatus.NORMAL_CLOSURE.ordinal, "Finished")
     }
 }
