@@ -30,6 +30,6 @@ sealed class Message {
 
     data class SampleRequestResponse(
         val sample: Boolean,
-        val error: String?
+        val error: String? = null
     ) : Message()
 }
