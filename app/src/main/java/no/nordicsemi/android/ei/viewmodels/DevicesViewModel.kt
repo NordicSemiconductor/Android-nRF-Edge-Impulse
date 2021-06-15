@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Application
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.BroadcastReceiver
@@ -12,6 +13,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.LocationManager
+import android.os.ParcelUuid
 import androidx.compose.runtime.mutableStateListOf
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
@@ -19,6 +21,7 @@ import androidx.lifecycle.AndroidViewModel
 import dagger.hilt.EntryPoints
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import no.nordicsemi.android.ei.ble.BleDevice
 import no.nordicsemi.android.ei.ble.state.ScannerState
 import no.nordicsemi.android.ei.ble.state.ScanningState
 import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.Reason
@@ -153,14 +156,17 @@ class DevicesViewModel @Inject constructor(
         }
 
         // TODO Add a scan filter
-        // val scanFilter = ScanFilter.Builder().build()
+        val scanFilter = ScanFilter.Builder()
+            .setServiceUuid(ParcelUuid(BleDevice.serviceUuid))
+            .build()
+        val filters = listOf(scanFilter)
         val scanSettings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .setReportDelay(0)
             .build()
         BluetoothAdapter.getDefaultAdapter().bluetoothLeScanner?.apply {
             scannerState.onScanningStarted()
-            startScan(null, scanSettings, scanCallback)
+            startScan(filters, scanSettings, scanCallback)
         }
     }
 
