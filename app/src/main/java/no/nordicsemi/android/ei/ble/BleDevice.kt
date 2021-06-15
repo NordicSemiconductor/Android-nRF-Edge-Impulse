@@ -5,11 +5,13 @@ import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.content.Context
 import android.util.Log
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.callbackFlow
 import no.nordicsemi.android.ble.BleManager
+import no.nordicsemi.android.ble.data.JsonMerger
 import no.nordicsemi.android.ble.ktx.getCharacteristic
-import no.nordicsemi.android.ble.ktx.suspend
 import no.nordicsemi.android.ei.util.guard
 import java.util.*
 
@@ -26,8 +28,6 @@ class BleDevice(
 
     private var rx: BluetoothGattCharacteristic? = null
     private var tx: BluetoothGattCharacteristic? = null
-
-    private var _message = MutableSharedFlow<String>()
 
     override fun log(priority: Int, message: String) {
         Log.println(priority, "BleDevice", message)
@@ -54,14 +54,6 @@ class BleDevice(
 
         override fun initialize() {
             requestMtu(512).enqueue()
-            // TODO implement JSON Merger in BLE library
-            setNotificationCallback(tx).with { _, data ->
-                _message.tryEmit(data.getStringValue(0) ?: "")
-            }
-        }
-
-        override fun onDeviceReady() {
-            Log.d("BleDevice", "Ready")
         }
 
     }
@@ -77,7 +69,18 @@ class BleDevice(
     /**
      * Returns the shared flow with incoming data.
      */
-    fun messagesAsFlow(): Flow<String> = _message
+    @ExperimentalCoroutinesApi
+    fun messagesAsFlow(): Flow<String> = callbackFlow {
+        checkNotNull(tx)
+        setNotificationCallback(tx)
+            .merge(JsonMerger())
+            .with { _, data ->
+                data.getStringValue(0)?.let {
+                    trySend(it)
+                }
+            }
+        awaitClose { removeNotificationCallback(tx) }
+    }
 
     /**
      * Enables notifications. The first message that should be received is the Hello message.

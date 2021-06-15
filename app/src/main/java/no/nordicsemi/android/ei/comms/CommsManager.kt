@@ -7,7 +7,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
-import com.google.gson.JsonSerializer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.transform
@@ -24,6 +23,7 @@ import no.nordicsemi.android.ei.websocket.WebSocketState
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class CommsManager(
     private val developmentKeys: DevelopmentKeys,
     device: DiscoveredBluetoothDevice,
@@ -61,23 +61,13 @@ class CommsManager(
                     is WebSocketState.Open -> {
                         // Initialize notifications. This will enable notifications and cause a
                         // Hello message to be sent from the device.
+                        Log.d("AAAA", "Web Socket opened, enabling notifications")
                         bleDevice.initialize()
                     }
                     else -> {
                     }
                 }.exhaustive
             }
-        }
-        scope.launch {
-            bleDevice.messagesAsFlow()
-                .transform<String, DeviceMessage> { message ->
-                    Log.d("AAAA", "Received: $message")
-                    val deviceMessage = gson.fromJson(message, DeviceMessage::class.java)
-                    Log.d("AAAA", "Converted to: $deviceMessage")
-                }
-                .collect { message ->
-                    Log.d("AAAA", "Collected to: $message")
-                }
         }
         scope.launch {
             bleDevice.stateAsFlow().collect { bleState ->
@@ -89,6 +79,17 @@ class CommsManager(
                     ConnectionState.Initializing -> { /* do nothing */ }
                     // Device is ready and initiated. It has required services.
                     ConnectionState.Ready -> {
+                        scope.launch {
+                            bleDevice.messagesAsFlow()
+                                .transform<String, DeviceMessage> { message ->
+                                    Log.d("AAAA", "Received: $message")
+                                    val deviceMessage = gson.fromJson(message, DeviceMessage::class.java)
+                                    Log.d("AAAA", "Converted to: $deviceMessage")
+                                }
+                                .collect { message ->
+                                    Log.d("AAAA", "Collected to: $message")
+                                }
+                        }
                         // When the device is connected, open the Web Socket.
                         Log.d("AAAA", "Device is ready, opening socket")
                         state = DeviceState.AUTHENTICATING
