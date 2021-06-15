@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.content.Context
+import android.util.Log
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import no.nordicsemi.android.ble.BleManager
@@ -26,7 +27,11 @@ class BleDevice(
     private var rx: BluetoothGattCharacteristic? = null
     private var tx: BluetoothGattCharacteristic? = null
 
-    private var _message = MutableSharedFlow<ByteArray>()
+    private var _message = MutableSharedFlow<String>()
+
+    override fun log(priority: Int, message: String) {
+        Log.println(priority, "BleDevice", message)
+    }
 
     override fun getGattCallback(): BleManagerGattCallback = object: BleManagerGattCallback() {
 
@@ -34,9 +39,9 @@ class BleDevice(
             gatt.getService(serviceUuid)
                 .guard { return false }
                 .apply {
-                    tx = getCharacteristic(txUuid, BluetoothGattCharacteristic.PROPERTY_NOTIFY)
-                        .guard { return false }
                     rx = getCharacteristic(rxUuid, BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE)
+                        .guard { return false }
+                    tx = getCharacteristic(txUuid, BluetoothGattCharacteristic.PROPERTY_NOTIFY)
                         .guard { return false }
                 }
             return true
@@ -49,33 +54,44 @@ class BleDevice(
 
         override fun initialize() {
             requestMtu(512).enqueue()
+            // TODO implement JSON Merger in BLE library
             setNotificationCallback(tx).with { _, data ->
-                _message.tryEmit(data.value ?: byteArrayOf())
+                _message.tryEmit(data.getStringValue(0) ?: "")
             }
-            enableNotifications(tx).enqueue()
+        }
+
+        override fun onDeviceReady() {
+            Log.d("BleDevice", "Ready")
         }
 
     }
 
     // TODO should the API be suspendable, or just calling .enqueue()?
-    suspend fun connect() {
+    fun connect() {
         connect(device)
             .retry(3, 100)
             .useAutoConnect(false)
-            .suspend()
+            .enqueue()
     }
 
     /**
      * Returns the shared flow with incoming data.
      */
-    fun receiveAsFlow(): Flow<ByteArray> {
-        return _message
+    fun messagesAsFlow(): Flow<String> = _message
+
+    /**
+     * Enables notifications. The first message that should be received is the Hello message.
+     */
+    fun initialize() {
+        enableNotifications(tx).enqueue()
     }
 
     /**
      * Sends the given data to the device.
      */
-    suspend fun send(byteArray: ByteArray) {
-        writeCharacteristic(rx, byteArray).suspend()
+    fun send(string: String) {
+        writeCharacteristic(rx, string.encodeToByteArray())
+            .split()
+            .enqueue()
     }
 }

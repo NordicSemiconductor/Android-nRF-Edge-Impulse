@@ -10,7 +10,7 @@ enum class DeviceState {
     /** The device is currently being set up. */
     CONNECTING,
     /** The device is connected and needs to be authenticated. */
-    READY,
+    AUTHENTICATING,
     /** The device is ready.. */
     AUTHENTICATED,
 }
@@ -19,6 +19,6 @@ fun DeviceState.indicatorColor() = when (this) {
     DeviceState.NOT_IN_RANGE -> NordicRed
     DeviceState.IN_RANGE -> NordicLake
     DeviceState.CONNECTING -> NordicFall
-    DeviceState.READY -> NordicSun
+    DeviceState.AUTHENTICATING -> NordicSun
     DeviceState.AUTHENTICATED -> NordicGrass
 }

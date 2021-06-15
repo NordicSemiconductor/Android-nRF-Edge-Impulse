@@ -1,6 +1,5 @@
 package no.nordicsemi.android.ei.ui
 
-import android.bluetooth.BluetoothDevice
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,12 +35,12 @@ import no.nordicsemi.android.ei.viewmodels.state.indicatorColor
 fun Devices(
     modifier: Modifier = Modifier,
     configuredDevices: List<Device>,
-    activeDevices: Map<BluetoothDevice, CommsManager>,
+    activeDevices: Map<String, CommsManager>,
     refreshingState: Boolean,
     onRefresh: () -> Unit,
     scannerState: ScannerState,
     onScannerStarted: () -> Unit,
-    connect: (BluetoothDevice) -> Unit
+    connect: (DiscoveredBluetoothDevice) -> Unit
 ) {
     val scanningState = scannerState.scanningState
 
@@ -78,7 +77,7 @@ fun Devices(
                 ) { configuredDevice ->
                     ConfiguredDeviceRow(
                         device = configuredDevice,
-                        state = DeviceState.IN_RANGE, // TODO implement
+                        state = DeviceState.IN_RANGE, // TODO fix
                         onDeviceClicked = { }, // TODO implement
                     )
                     Divider()
@@ -121,19 +120,19 @@ fun Devices(
                         // Filter only devices that have not been configured.
                         .filter { discoveredDevice ->
                             configuredDevices.find { configuredDevice ->
-                                configuredDevice.deviceId == discoveredDevice.device.address
+                                configuredDevice.deviceId == discoveredDevice.bluetoothDevice.address
                             } == null
                         }
                         // Display only if at least one was found.
                         .takeIf { it.isNotEmpty() }?.let { discoveredDevices ->
                             items(
                                 items = discoveredDevices,
-                                key = { it.device.address }
+                                key = { it.bluetoothDevice.address }
                             ) { discoveredDevice ->
                                 DiscoveredDeviceRow(
                                     device = discoveredDevice,
-                                    isConnecting = activeDevices.containsKey(discoveredDevice.device),
-                                    onDeviceClicked = { connect(it.device) },
+                                    isConnecting = activeDevices.containsKey(discoveredDevice.deviceId),
+                                    onDeviceClicked = { connect(it) },
                                 )
                                 Divider()
                             }
@@ -261,7 +260,7 @@ fun DiscoveredDeviceRow(
                 style = MaterialTheme.typography.body1
             )
             Text(
-                text = device.device.address,
+                text = device.bluetoothDevice.address,
                 color = MaterialTheme.colors.onSurface,
                 style = MaterialTheme.typography.caption
             )

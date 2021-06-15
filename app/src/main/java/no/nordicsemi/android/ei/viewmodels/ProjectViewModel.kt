@@ -3,6 +3,7 @@ package no.nordicsemi.android.ei.viewmodels
 import android.app.Application
 import android.bluetooth.BluetoothDevice
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.*
 import androidx.compose.ui.focus.FocusRequester
 import androidx.lifecycle.AndroidViewModel
@@ -17,6 +18,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.ble.BleDevice
+import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.comms.CommsManager
 import no.nordicsemi.android.ei.di.*
 import no.nordicsemi.android.ei.model.Device
@@ -26,7 +28,6 @@ import no.nordicsemi.android.ei.model.WebSocketMessage
 import no.nordicsemi.android.ei.repository.ProjectDataRepository
 import no.nordicsemi.android.ei.repository.ProjectRepository
 import no.nordicsemi.android.ei.repository.UserDataRepository
-import no.nordicsemi.android.ei.util.MessageTypeAdapter
 import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.viewmodels.event.Event
 import no.nordicsemi.android.ei.websocket.EiWebSocket
@@ -58,7 +59,7 @@ class ProjectViewModel @Inject constructor(
         get() = projectDataRepository.developmentKeys
 
     /** A map of device managers. */
-    var commsManagers = mutableStateMapOf<BluetoothDevice, CommsManager>()
+    var commsManagers = mutableStateMapOf<String, CommsManager>()
         private set
 
     /** A list of configured devices obtained from the service. */
@@ -68,12 +69,6 @@ class ProjectViewModel @Inject constructor(
     /** Whether the list of configured devices is refreshing. */
     var isRefreshing: Boolean by mutableStateOf(false)
         private set
-
-    private val gson = GsonBuilder()
-        .registerTypeAdapter(Message::class.java, MessageTypeAdapter())
-        .disableHtmlEscaping()
-        .setPrettyPrinting()
-        .create()
 
     // TODO This needs to be fixed: NPE when switching back to the app.
     private val userComponentEntryPoint: UserComponentEntryPoint
@@ -169,47 +164,48 @@ class ProjectViewModel @Inject constructor(
     }
 
     //TODO need to finalize the api
-    fun connect(device: BluetoothDevice) {
+    fun connect(device: DiscoveredBluetoothDevice) {
         val commsManager = CommsManager(
-            bleDevice = BleDevice(device = device, context = getApplication()),
-            eiWebSocket = EiWebSocket(
-                client = client,
-                request = request,
-                ioDispatcher = ioDispatcher
-            )
+            developmentKeys = keys,
+            device = device,
+            context = getApplication(),
+            client = client,
+            request = request,
+            scope = viewModelScope,
         )
-        commsManagers[device] = commsManager
+        commsManagers[device.deviceId] = commsManager
         viewModelScope.launch {
+            Log.d("AAAA", "Connecting...")
             commsManager.connect()
         }
     }
 
     //TODO needs to be discussed
-    private fun authenticate(device: BluetoothDevice) {
-        commsManagers[device]?.let {
-            viewModelScope.launch {
-                val deviceMessage = WebSocketMessage(
-                    message = Message.Hello(
-                        apiKey = keys.apiKey,
-                        deviceId = device.address,
-                        deviceType = "NRF5340_DK",
-                        connection = "ip",
-                        sensors = listOf(
-                            Sensor(
-                                name = "Accelerometer",
-                                maxSampleLengths = 60000,
-                                frequencies = listOf(62.5, 100)
-                            ),
-                            Sensor(
-                                name = "Microphone",
-                                maxSampleLengths = 4000,
-                                frequencies = listOf(16000)
-                            )
-                        )
-                    )
-                )
-                it.authenticate(deviceMessage)
-            }
-        }
-    }
+//    private fun authenticate(device: BluetoothDevice) {
+//        commsManagers[device]?.let {
+//            viewModelScope.launch {
+//                val deviceMessage = WebSocketMessage(
+//                    message = Message.Hello(
+//                        apiKey = keys.apiKey,
+//                        deviceId = device.address,
+//                        deviceType = "NRF5340_DK",
+//                        connection = "ip",
+//                        sensors = listOf(
+//                            Sensor(
+//                                name = "Accelerometer",
+//                                maxSampleLengths = 60000,
+//                                frequencies = listOf(62.5, 100)
+//                            ),
+//                            Sensor(
+//                                name = "Microphone",
+//                                maxSampleLengths = 4000,
+//                                frequencies = listOf(16000)
+//                            )
+//                        )
+//                    )
+//                )
+//                it.authenticate(deviceMessage)
+//            }
+//        }
+//    }
 }

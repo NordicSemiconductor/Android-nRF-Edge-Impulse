@@ -11,7 +11,10 @@ import android.bluetooth.BluetoothDevice
 data class DiscoveredBluetoothDevice(
     var name: String?,
     var rssi: Int,
-    val device: BluetoothDevice
-)
+    val bluetoothDevice: BluetoothDevice
+) {
+    /** The device ID. */
+    val deviceId = bluetoothDevice.address
+}
 
 fun DiscoveredBluetoothDevice.rssiAsPercent() = (100.0f * (127.0f + rssi) / (127.0f + 20.0f)).toInt()

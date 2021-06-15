@@ -23,7 +23,7 @@ class ScannerState(
 
     fun onDeviceFound(scanResult: ScanResult) {
         discoveredDevices.find {
-            it.device == scanResult.device
+            it.bluetoothDevice == scanResult.device
         }?.let {
             it.rssi = max(-128, scanResult.rssi)
             it.name = scanResult.scanRecord?.deviceName
@@ -63,6 +63,6 @@ private fun ScanResult.toDiscoveredBluetoothDevice(): DiscoveredBluetoothDevice 
     return DiscoveredBluetoothDevice(
         name = scanRecord?.deviceName,
         rssi = rssi,
-        device = device
+        bluetoothDevice = device
     )
 }
