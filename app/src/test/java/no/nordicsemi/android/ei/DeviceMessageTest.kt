@@ -86,7 +86,7 @@ class DeviceMessageTest {
                 "    \"hello\": true\n" +
                 "}"
         val actualResult =
-            JsonParser.parseString(gson.toJson(Message.Success(hello = true)))
+            JsonParser.parseString(gson.toJson(Message.HelloResponse(hello = true)))
         val expectedResult = JsonParser.parseString(jsonString).asJsonObject
         assertThat(expectedResult == actualResult).isTrue()
     }
@@ -106,7 +106,7 @@ class DeviceMessageTest {
                 gson.toJson(
                     WebSocketMessage(
                         direction = RECEIVE,
-                        message = Message.Success(hello = true)
+                        message = Message.HelloResponse(hello = true)
                     )
                 )
             )
@@ -123,7 +123,7 @@ class DeviceMessageTest {
         val actualResult =
             JsonParser.parseString(
                 gson.toJson(
-                    Message.Error(
+                    Message.HelloResponse(
                         hello = false,
                         error = "API key is not correct, or a similar message"
                     )
@@ -149,7 +149,7 @@ class DeviceMessageTest {
                 gson.toJson(
                     WebSocketMessage(
                         direction = RECEIVE,
-                        message = Message.Error(
+                        message = Message.HelloResponse(
                             hello = false,
                             error = "API key is not correct, or a similar message"
                         )
