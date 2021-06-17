@@ -4,8 +4,12 @@ import no.nordicsemi.android.ei.model.Direction.SEND
 import no.nordicsemi.android.ei.model.Method.POST
 import no.nordicsemi.android.ei.model.Type.*
 
-abstract class DeviceMessage {
+sealed class DeviceMessage {
     abstract val type: Type
+}
+
+object InvalidMessage: DeviceMessage() {
+    override val type = INVALID
 }
 
 data class WebSocketMessage(

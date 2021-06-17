@@ -1,8 +1,9 @@
 package no.nordicsemi.android.ei.util
 
 import com.google.gson.*
-import no.nordicsemi.android.ei.model.Message
+import no.nordicsemi.android.ei.model.*
 import java.lang.reflect.Type
+import java.security.InvalidParameterException
 
 class MessageTypeAdapter : JsonSerializer<Message>, JsonDeserializer<Message> {
 
@@ -38,6 +39,23 @@ class MessageTypeAdapter : JsonSerializer<Message>, JsonDeserializer<Message> {
         typeOfT: Type?,
         context: JsonDeserializationContext?
     ): Message {
-        TODO("Not yet implemented")
+        json?.asJsonObject?.let { root ->
+            root.get("hello")?.apply {
+                takeIf { isJsonPrimitive }?.let {
+                    return context!!.deserialize(this, Message.HelloResponse::class.java)
+                }
+                return context!!.deserialize(this, Message.Hello::class.java)
+            }
+            root.get("sample")?.apply {
+                takeIf { isJsonPrimitive }?.let {
+                    return context!!.deserialize(json, Message.SampleRequestResponse::class.java)
+                }
+                return context!!.deserialize(json, Message.SampleRequest::class.java)
+            }
+            root.get("apiKey")?.apply {
+                return context!!.deserialize(json, Message.Configure::class.java)
+            }
+        }
+        throw InvalidParameterException("Type not supported: $typeOfT")
     }
 }

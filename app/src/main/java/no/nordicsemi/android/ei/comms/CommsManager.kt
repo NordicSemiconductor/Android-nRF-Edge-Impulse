@@ -15,6 +15,7 @@ import no.nordicsemi.android.ble.ktx.stateAsFlow
 import no.nordicsemi.android.ei.ble.BleDevice
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.model.*
+import no.nordicsemi.android.ei.util.DeviceMessageTypeAdapter
 import no.nordicsemi.android.ei.util.MessageTypeAdapter
 import no.nordicsemi.android.ei.util.exhaustive
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
@@ -44,6 +45,7 @@ class CommsManager(
 
     private val gson = GsonBuilder()
         .registerTypeAdapter(Message::class.java, MessageTypeAdapter())
+        .registerTypeAdapter(DeviceMessage::class.java, DeviceMessageTypeAdapter())
         .disableHtmlEscaping()
         .setPrettyPrinting()
         .create()
@@ -54,60 +56,9 @@ class CommsManager(
     var state by mutableStateOf(DeviceState.IN_RANGE)
 
     init {
-        scope.launch {
-            webSocket.stateAsFlow().collect { webSocketState ->
-                when (webSocketState) {
-                    // The Web Socket is open.
-                    is WebSocketState.Open -> {
-                        // Initialize notifications. This will enable notifications and cause a
-                        // Hello message to be sent from the device.
-                        Log.d("AAAA", "Web Socket opened, enabling notifications")
-                        bleDevice.initialize()
-                    }
-                    else -> {
-                    }
-                }.exhaustive
-            }
-        }
-        scope.launch {
-            bleDevice.stateAsFlow().collect { bleState ->
-                Log.d("AAAA", "New state: $bleState")
-                when (bleState) {
-                    // Device started to connect.
-                    ConnectionState.Connecting -> state = DeviceState.CONNECTING
-                    // Device is connected, service discovery and initialization started.
-                    ConnectionState.Initializing -> { /* do nothing */ }
-                    // Device is ready and initiated. It has required services.
-                    ConnectionState.Ready -> {
-                        scope.launch {
-                            bleDevice.messagesAsFlow()
-                                .transform<String, DeviceMessage> { message ->
-                                    Log.d("AAAA", "Received: $message")
-                                    val deviceMessage = gson.fromJson(message, DeviceMessage::class.java)
-                                    Log.d("AAAA", "Converted to: $deviceMessage")
-                                }
-                                .collect { message ->
-                                    Log.d("AAAA", "Collected to: $message")
-                                }
-                        }
-                        // When the device is connected, open the Web Socket.
-                        Log.d("AAAA", "Device is ready, opening socket")
-                        state = DeviceState.AUTHENTICATING
-                        webSocket.connect()
-                    }
-                    // Device gets disconnected.
-                    ConnectionState.Disconnecting -> { /* do nothing */ }
-                    // Device is now disconnected.
-                    is ConnectionState.Disconnected -> {
-                        Log.d("AAAA", "Device is disconnected")
-                        // Use IN_RANGE, so that the device row is clickable.
-                        state = DeviceState.IN_RANGE
-                        // Close the Web Socket if it's open.
-                        webSocket.disconnect()
-                    }
-                }.exhaustive
-            }
-        }
+        scope.launch { registerToWebSocketStateChanges() }
+        scope.launch { registerToDeviceNotifications() }
+        scope.launch { registerToDeviceStateChanges() }
     }
 
     /**
@@ -123,6 +74,70 @@ class CommsManager(
     fun disconnect() {
         webSocket.disconnect()
         bleDevice.disconnect()
+    }
+
+    private suspend fun registerToWebSocketStateChanges() {
+        webSocket.stateAsFlow().collect { webSocketState ->
+            when (webSocketState) {
+                // The Web Socket is open.
+                is WebSocketState.Open -> {
+                    // Initialize notifications. This will enable notifications and cause a
+                    // Hello message to be sent from the device.
+                    Log.d("AAAA", "Web Socket opened, enabling notifications")
+                    bleDevice.initialize()
+                }
+                else -> {
+                }
+            }.exhaustive
+        }
+    }
+
+    private suspend fun registerToDeviceStateChanges() {
+        bleDevice.stateAsFlow().collect { bleState ->
+            Log.d("AAAA", "New state: $bleState")
+            when (bleState) {
+                // Device started to connect.
+                ConnectionState.Connecting -> state = DeviceState.CONNECTING
+                // Device is connected, service discovery and initialization started.
+                ConnectionState.Initializing -> { /* do nothing */ }
+                // Device is ready and initiated. It has required services.
+                ConnectionState.Ready -> {
+                    // When the device is connected, open the Web Socket.
+                    Log.d("AAAA", "Device is ready, opening socket")
+                    state = DeviceState.AUTHENTICATING
+                    webSocket.connect()
+                }
+                // Device gets disconnected.
+                ConnectionState.Disconnecting -> { /* do nothing */ }
+                // Device is now disconnected.
+                is ConnectionState.Disconnected -> {
+                    Log.d("AAAA", "Device is disconnected")
+                    // Use IN_RANGE, so that the device row is clickable.
+                    state = DeviceState.IN_RANGE
+                    // Close the Web Socket if it's open.
+                    webSocket.disconnect()
+                }
+            }.exhaustive
+        }
+    }
+
+    private suspend fun registerToDeviceNotifications() {
+        bleDevice.messagesAsFlow()
+            .transform<String, DeviceMessage> { json ->
+                emit(gson.fromJson(json, DeviceMessage::class.java))
+            }
+            .collect { deviceMessage ->
+                Log.d("AAAA", "Collected to: $deviceMessage")
+                when (deviceMessage) {
+                    is WebSocketMessage -> {
+                        when (deviceMessage.message) {
+                            is Message.Hello -> {
+                                // TODO: Send messaeg
+                            }
+                        }
+                    }
+                }
+            }
     }
 
     /**

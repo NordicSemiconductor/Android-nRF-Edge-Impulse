@@ -13,5 +13,8 @@ enum class Type {
     CONFIGURE,
 
     @SerializedName("http")
-    HTTP
+    HTTP,
+
+    @SerializedName("invalid")
+    INVALID
 }
