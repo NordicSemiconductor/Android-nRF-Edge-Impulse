@@ -1,7 +1,8 @@
 package no.nordicsemi.android.ei.util
 
+import android.util.Log
 import com.google.gson.*
-import no.nordicsemi.android.ei.model.*
+import no.nordicsemi.android.ei.model.Message
 import java.lang.reflect.Type
 import java.security.InvalidParameterException
 
@@ -39,21 +40,34 @@ class MessageTypeAdapter : JsonSerializer<Message>, JsonDeserializer<Message> {
         typeOfT: Type?,
         context: JsonDeserializationContext?
     ): Message {
+        Log.d("AAAA", "MessageTypeAdapter deserializing: $json")
         json?.asJsonObject?.let { root ->
-            root.get("hello")?.apply {
-                takeIf { isJsonPrimitive }?.let {
-                    return context!!.deserialize(this, Message.HelloResponse::class.java)
+            // Check if the element exists before checking if it's a primitive
+            when {
+                root.has("hello") -> {
+                    root.get("hello")?.apply {
+                        takeIf { isJsonPrimitive }?.let {
+                            return context!!.deserialize(root, Message.HelloResponse::class.java)
+                        }
+                        return context!!.deserialize(this, Message.Hello::class.java)
+                    }
                 }
-                return context!!.deserialize(this, Message.Hello::class.java)
-            }
-            root.get("sample")?.apply {
-                takeIf { isJsonPrimitive }?.let {
-                    return context!!.deserialize(json, Message.SampleRequestResponse::class.java)
+                root.has("sample") -> {
+                    root.get("sample")?.apply {
+                        takeIf { isJsonPrimitive }?.let {
+                            return context!!.deserialize(root, Message.SampleRequestResponse::class.java)
+                        }
+                        return context!!.deserialize(json, Message.SampleRequest::class.java)
+                    }
                 }
-                return context!!.deserialize(json, Message.SampleRequest::class.java)
-            }
-            root.get("apiKey")?.apply {
-                return context!!.deserialize(json, Message.Configure::class.java)
+                root.has("apiKey") -> {
+                    root.get("apiKey")?.apply {
+                        return context!!.deserialize(root, Message.Configure::class.java)
+                    }
+                }
+                else -> {
+                    throw InvalidParameterException("Type not supported: $typeOfT")
+                }
             }
         }
         throw InvalidParameterException("Type not supported: $typeOfT")
