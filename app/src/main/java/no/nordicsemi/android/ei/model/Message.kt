@@ -1,5 +1,7 @@
 package no.nordicsemi.android.ei.model
 
+import com.google.gson.annotations.SerializedName
+
 sealed class Message {
 
     data class Hello(
@@ -12,7 +14,10 @@ sealed class Message {
         val supportsSnapshotStreaming: Boolean = false
     ) : Message()
 
-    data class HelloResponse(val hello: Boolean, val error: String? = null) : Message()
+    data class HelloResponse(
+        val hello: Boolean,
+        @SerializedName(value = "err") val error: String? = null
+    ) : Message()
 
     data class Configure(
         val apiKey: String,
