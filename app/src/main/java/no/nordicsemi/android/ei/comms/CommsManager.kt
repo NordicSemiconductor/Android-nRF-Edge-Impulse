@@ -7,9 +7,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.transform
+import kotlinx.coroutines.launch
 import no.nordicsemi.android.ble.ktx.state.ConnectionState
 import no.nordicsemi.android.ble.ktx.stateAsFlow
 import no.nordicsemi.android.ei.ble.BleDevice
@@ -46,17 +49,18 @@ class CommsManager(
     private val gson = GsonBuilder()
         .registerTypeAdapter(Message::class.java, MessageTypeAdapter())
         .registerTypeAdapter(DeviceMessage::class.java, DeviceMessageTypeAdapter())
-        .disableHtmlEscaping()
         .setPrettyPrinting()
         .create()
 
     /** The device ID. Initially set to device MAC address. */
     val deviceId: String = device.deviceId
+
     /** The device state. */
     var state by mutableStateOf(DeviceState.IN_RANGE)
 
     init {
         scope.launch { registerToWebSocketStateChanges() }
+        scope.launch { registerToWebSocketMessages() }
         scope.launch { registerToDeviceNotifications() }
         scope.launch { registerToDeviceStateChanges() }
     }
@@ -92,6 +96,29 @@ class CommsManager(
         }
     }
 
+    private suspend fun registerToWebSocketMessages() {
+        webSocket.messageAsFlow().collect { json ->
+            val message = gson.fromJson(json, Message::class.java)
+            Log.d("AAAA", "Received message from WebSocket: $message")
+            when (message) {
+                is Message.HelloResponse -> {
+                    message.takeUnless {
+                        it.hello
+                    }?.let {
+                        val configureMessage =
+                            ConfigureMessage(message = Message.Configure(apiKey = developmentKeys.apiKey))
+                        val configJson = gson.toJson(configureMessage)
+                        Log.d("AAAA", "Sending configure message: $configJson")
+                        bleDevice.send(configJson)
+                    }
+                }
+                else -> {
+
+                }
+            }.exhaustive
+        }
+    }
+
     private suspend fun registerToDeviceStateChanges() {
         bleDevice.stateAsFlow().collect { bleState ->
             Log.d("AAAA", "New state: $bleState")
@@ -99,7 +126,8 @@ class CommsManager(
                 // Device started to connect.
                 ConnectionState.Connecting -> state = DeviceState.CONNECTING
                 // Device is connected, service discovery and initialization started.
-                ConnectionState.Initializing -> { /* do nothing */ }
+                ConnectionState.Initializing -> { /* do nothing */
+                }
                 // Device is ready and initiated. It has required services.
                 ConnectionState.Ready -> {
                     // When the device is connected, open the Web Socket.
@@ -108,7 +136,8 @@ class CommsManager(
                     webSocket.connect()
                 }
                 // Device gets disconnected.
-                ConnectionState.Disconnecting -> { /* do nothing */ }
+                ConnectionState.Disconnecting -> { /* do nothing */
+                }
                 // Device is now disconnected.
                 is ConnectionState.Disconnected -> {
                     Log.d("AAAA", "Device is disconnected")
@@ -132,7 +161,12 @@ class CommsManager(
                     is WebSocketMessage -> {
                         when (deviceMessage.message) {
                             is Message.Hello -> {
-                                // TODO: Send messaeg
+                                webSocket.send(
+                                    gson.toJsonTree(
+                                        deviceMessage.message,
+                                        Message::class.java
+                                    )
+                                )
                             }
                         }
                     }
@@ -168,13 +202,13 @@ class CommsManager(
 
         //TODO remove this delay and we have to observe the messages emitted from the socket
         delay(5000)
-        webSocket.send(deviceMessageJson.get(MESSAGE).asJsonObject)
+        webSocket.send(deviceMessageJson.get(MESSAGE))
     }
 
     //TODO sending messages from the phone to the device
     fun send(deviceMessage: DeviceMessage) {
         val deviceMessageJson = JsonParser.parseString(gson.toJson(deviceMessage)).asJsonObject
-        webSocket.send(deviceMessageJson.get(MESSAGE).asJsonObject)
+        webSocket.send(deviceMessageJson.get(MESSAGE))
     }
 }
 
