@@ -21,7 +21,7 @@ sealed class Message {
 
     data class Configure(
         val apiKey: String,
-        val address: String
+        val address: String = "wss://studio.edgeimpulse.com"
     ) : Message()
 
     data class SampleRequest(
