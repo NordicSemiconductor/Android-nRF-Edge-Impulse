@@ -1,6 +1,7 @@
 package no.nordicsemi.android.ei.websocket
 
 import android.util.Log
+import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import kotlinx.coroutines.CoroutineScope
@@ -72,7 +73,7 @@ class EiWebSocket @Inject constructor(
         webSocket = client.newWebSocket(request = request, listener = webSocketListener)
     }
 
-    fun send(json: JsonObject) {
+    fun send(json: JsonElement) {
         Log.i("AAAA", "Sending to webSocket?")
         webSocket?.send(text = json.toString())
     }
