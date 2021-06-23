@@ -6,7 +6,8 @@ sealed class Message {
 
     data class Hello(
         val version: Int = 3,
-        val apiKey: String,
+        //TODO make apiKey val this is to be able to patch the appi key until the config message is in place in the fw.
+        var apiKey: String,
         val deviceId: String,
         val deviceType: String,
         val connection: String,

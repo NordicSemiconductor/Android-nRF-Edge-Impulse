@@ -1,11 +1,16 @@
 package no.nordicsemi.android.ei.di
 
+import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import no.nordicsemi.android.ei.BuildConfig
+import no.nordicsemi.android.ei.model.DeviceMessage
+import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.service.EiService
+import no.nordicsemi.android.ei.util.DeviceMessageTypeAdapter
+import no.nordicsemi.android.ei.util.MessageTypeAdapter
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.logging.HttpLoggingInterceptor
@@ -52,4 +57,13 @@ object ServiceApiModule {
     fun provideWebSocketRequest(): Request = Request.Builder()
         .url("wss://remote-mgmt.edgeimpulse.com")
         .build()
+
+
+    @Provides
+    @Singleton
+    fun provideGson() = GsonBuilder()
+        .registerTypeAdapter(Message::class.java, MessageTypeAdapter())
+        .registerTypeAdapter(DeviceMessage::class.java, DeviceMessageTypeAdapter())
+        .setPrettyPrinting()
+        .create()
 }

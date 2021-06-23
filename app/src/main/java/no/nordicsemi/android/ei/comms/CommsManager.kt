@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.google.gson.GsonBuilder
+import com.google.gson.Gson
 import com.google.gson.JsonParser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -18,8 +18,6 @@ import no.nordicsemi.android.ble.ktx.stateAsFlow
 import no.nordicsemi.android.ei.ble.BleDevice
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.model.*
-import no.nordicsemi.android.ei.util.DeviceMessageTypeAdapter
-import no.nordicsemi.android.ei.util.MessageTypeAdapter
 import no.nordicsemi.android.ei.util.exhaustive
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import no.nordicsemi.android.ei.websocket.EiWebSocket
@@ -29,6 +27,7 @@ import okhttp3.Request
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CommsManager(
+    private val gson: Gson,
     private val developmentKeys: DevelopmentKeys,
     device: DiscoveredBluetoothDevice,
     context: Context,
@@ -45,12 +44,6 @@ class CommsManager(
         request = request,
         coroutineScope = scope,
     )
-
-    private val gson = GsonBuilder()
-        .registerTypeAdapter(Message::class.java, MessageTypeAdapter())
-        .registerTypeAdapter(DeviceMessage::class.java, DeviceMessageTypeAdapter())
-        .setPrettyPrinting()
-        .create()
 
     /** The device ID. Initially set to device MAC address. */
     val deviceId: String = device.deviceId
@@ -110,7 +103,7 @@ class CommsManager(
                         val configJson = gson.toJson(configureMessage)
                         Log.d("AAAA", "Sending configure message: $configJson")
                         bleDevice.send(configJson)
-                    }
+                    } ?: run { state = DeviceState.AUTHENTICATED }
                 }
                 else -> {
 
@@ -161,6 +154,10 @@ class CommsManager(
                     is WebSocketMessage -> {
                         when (deviceMessage.message) {
                             is Message.Hello -> {
+                                // Lets patch the api key until the config message is supported by the firmware.
+                                if (deviceMessage.message.apiKey.isBlank()) {
+                                    deviceMessage.message.apiKey = developmentKeys.apiKey
+                                }
                                 webSocket.send(
                                     gson.toJsonTree(
                                         deviceMessage.message,

@@ -1,14 +1,13 @@
 package no.nordicsemi.android.ei.viewmodels
 
 import android.app.Application
-import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.*
 import androidx.compose.ui.focus.FocusRequester
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.gson.GsonBuilder
+import com.google.gson.Gson
 import dagger.hilt.EntryPoints
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -17,20 +16,16 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import no.nordicsemi.android.ei.ble.BleDevice
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.comms.CommsManager
 import no.nordicsemi.android.ei.di.*
 import no.nordicsemi.android.ei.model.Device
-import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.Sensor
-import no.nordicsemi.android.ei.model.WebSocketMessage
 import no.nordicsemi.android.ei.repository.ProjectDataRepository
 import no.nordicsemi.android.ei.repository.ProjectRepository
 import no.nordicsemi.android.ei.repository.UserDataRepository
 import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.viewmodels.event.Event
-import no.nordicsemi.android.ei.websocket.EiWebSocket
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import javax.inject.Inject
@@ -42,6 +37,7 @@ class ProjectViewModel @Inject constructor(
     private val projectRepository: ProjectRepository,
     private val client: OkHttpClient,
     private val request: Request,
+    private val gson: Gson,
     @IODispatcher private val ioDispatcher: CoroutineDispatcher
 ) : AndroidViewModel(context as Application) {
 
@@ -166,6 +162,7 @@ class ProjectViewModel @Inject constructor(
     //TODO need to finalize the api
     fun connect(device: DiscoveredBluetoothDevice) {
         val commsManager = CommsManager(
+            gson = gson,
             developmentKeys = keys,
             device = device,
             context = getApplication(),
