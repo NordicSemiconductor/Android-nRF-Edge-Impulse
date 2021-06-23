@@ -20,7 +20,7 @@
     <string name="bluetooth_disabled_info">The Bluetooth adapter is turned off. Click the button below to enable it.</string>
 
     <string name="thingy_guide_title">Can\'t see your device?</string>
-    <string name="thingy_guide_info">1. Make sure the DK is <b>turned on</b> and is connected to a power source using a micro USB cable or a coin cell is plugged in.
+    <string name="thingy_guide_info">1. Make sure the DK is <b>turned on</b> and is connected to a power source using a micro USB cable or a coin cell battery.
         \n\n2. Make sure the <b>firmware</b> is flashed.</string>
 
 
