@@ -110,7 +110,7 @@ fun Login(
             } catch (e: SocketTimeoutException) {
                 onProgressChanged(activity.getString(R.string.error_timeout))
             } catch (e: HttpException) {
-                if (e.code() == HttpURLConnection.HTTP_MOVED_TEMP) {
+                if (e.code() == HttpURLConnection.HTTP_UNAUTHORIZED) {
                     AccountHelper.invalidateAuthToken(token, activity)
                     continue
                 } else {
