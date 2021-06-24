@@ -43,6 +43,7 @@ class ProjectViewModel @Inject constructor(
 
     /** The channel for emitting one-time events. */
     private val eventChannel = Channel<Event>(Channel.BUFFERED)
+
     /** The flow that emits events. */
     val eventFlow = eventChannel.receiveAsFlow()
 
@@ -175,6 +176,11 @@ class ProjectViewModel @Inject constructor(
             Log.d("AAAA", "Connecting...")
             commsManager.connect()
         }
+    }
+
+    fun disconnect(device: DiscoveredBluetoothDevice) {
+        commsManagers[device.deviceId]?.disconnect()
+        commsManagers.remove(device.deviceId)
     }
 
     //TODO needs to be discussed

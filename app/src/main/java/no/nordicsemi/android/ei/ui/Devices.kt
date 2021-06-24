@@ -75,10 +75,19 @@ fun Devices(
                     items = configuredDevices,
                     key = { it.deviceId }
                 ) { configuredDevice ->
+                    val discoveredBluetoothDevice =
+                        scannerState.discoveredDevices.find { it.deviceId == configuredDevice.deviceId }
                     ConfiguredDeviceRow(
                         device = configuredDevice,
-                        state = DeviceState.IN_RANGE, // TODO fix
-                        onDeviceClicked = { }, // TODO implement
+                        state = discoveredBluetoothDevice?.let {
+                            activeDevices[configuredDevice.deviceId]?.state
+                                ?: DeviceState.IN_RANGE
+                        } ?: DeviceState.NOT_IN_RANGE,
+                        onDeviceClicked = {
+                            discoveredBluetoothDevice?.let {
+                                connect(it)
+                            }
+                        }
                     )
                     Divider()
                 }
@@ -131,13 +140,15 @@ fun Devices(
                             ) { discoveredDevice ->
                                 DiscoveredDeviceRow(
                                     device = discoveredDevice,
-                                    isConnecting = activeDevices.containsKey(discoveredDevice.deviceId),
+                                    state = activeDevices[discoveredDevice.deviceId]?.state
+                                        ?: DeviceState.IN_RANGE,
                                     onDeviceClicked = { connect(it) },
+                                    onDeviceAuthenticated = { onRefresh() }
                                 )
                                 Divider()
                             }
                         }
-                        // Else, show a placeholder.
+                    // Else, show a placeholder.
                         ?: item {
                             NoDevicesInRangeInfo(
                                 modifier = Modifier
@@ -166,14 +177,14 @@ fun Devices(
 fun ConfiguredDeviceRow(
     device: Device,
     state: DeviceState,
-    onDeviceClicked: (Device) -> Unit,
+    onDeviceClicked: (Device) -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(color = MaterialTheme.colors.surface)
             .clickable(
-                enabled = state == DeviceState.IN_RANGE,
+                enabled = state == DeviceState.IN_RANGE || state == DeviceState.AUTHENTICATED,
                 onClick = { onDeviceClicked(device) },
             )
             .padding(16.dp),
@@ -228,15 +239,16 @@ fun ConfiguredDeviceRow(
 @Composable
 fun DiscoveredDeviceRow(
     device: DiscoveredBluetoothDevice,
-    isConnecting: Boolean,
+    state: DeviceState,
     onDeviceClicked: (DiscoveredBluetoothDevice) -> Unit,
+    onDeviceAuthenticated: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(color = MaterialTheme.colors.surface)
             .clickable(
-                enabled = !isConnecting,
+                enabled = state == DeviceState.IN_RANGE,
                 onClick = { onDeviceClicked(device) },
             )
             .padding(16.dp),
@@ -266,20 +278,29 @@ fun DiscoveredDeviceRow(
             )
         }
         Spacer(modifier = Modifier.width(width = 16.dp))
-        if (isConnecting) {
-            CircularProgressIndicator(
-                modifier = Modifier
-                    .size(24.dp)
-                    .align(Alignment.CenterVertically)
-            )
-        } else {
-            Image(
-                painter = painterResource(id = getRssiRes(device.rssiAsPercent())),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(24.dp)
-                    .align(Alignment.CenterVertically)
-            )
+        when (state) {
+            // RSSI image can be displayed even when not in range
+            DeviceState.IN_RANGE, DeviceState.NOT_IN_RANGE -> {
+                Image(
+                    painter = painterResource(id = getRssiRes(device.rssiAsPercent())),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .align(Alignment.CenterVertically)
+                )
+            }
+            DeviceState.CONNECTING,
+            DeviceState.AUTHENTICATING -> {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .align(Alignment.CenterVertically)
+                )
+            }
+            DeviceState.AUTHENTICATED -> {
+                // Once the device is authenticated we should refresh the list of devices.
+                onDeviceAuthenticated()
+            }
         }
     }
 }
