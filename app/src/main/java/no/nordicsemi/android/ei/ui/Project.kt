@@ -106,8 +106,9 @@ private fun LargeScreen(
                     dismissOnClickOutside = false
                 )
             ) {
+                val connectedDevices by remember { viewModel.connectedDevices }
                 RecordSampleLargeScreen(
-                    connectedDevices = viewModel.configuredDevices,
+                    connectedDevices = connectedDevices,
                     focusRequester = viewModel.focusRequester,
                     selectedDevice = viewModel.selectedDevice,
                     onDeviceSelected = { viewModel.onDeviceSelected(it) },
@@ -138,13 +139,13 @@ private fun SmallScreen(
     val currentOrientation = LocalConfiguration.current.orientation
     val isLandscape = currentOrientation == ORIENTATION_LANDSCAPE
     val modalBottomSheetState = rememberModalBottomSheetState(initialValue = Hidden)
-
+    val connectedDevices by remember { viewModel.connectedDevices }
     ModalBottomSheetLayout(
         sheetState = modalBottomSheetState,
         sheetContent = {
             RecordSampleSmallScreen(
                 isLandscape = isLandscape,
-                connectedDevices = viewModel.configuredDevices,
+                connectedDevices = connectedDevices,
                 focusRequester = viewModel.focusRequester,
                 selectedDevice = viewModel.selectedDevice,
                 onDeviceSelected = { viewModel.onDeviceSelected(device = it) },
@@ -285,7 +286,6 @@ private fun ProjectContent(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues = innerPadding),
-                    connectedDevice = viewModel.configuredDevices,
                     pagerState = pagerState,
                     listStates = listStates,
                     samples = listOf(

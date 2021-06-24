@@ -29,7 +29,7 @@ import okhttp3.Request
 class CommsManager(
     private val gson: Gson,
     private val developmentKeys: DevelopmentKeys,
-    device: DiscoveredBluetoothDevice,
+    val device: DiscoveredBluetoothDevice,
     context: Context,
     client: OkHttpClient,
     request: Request,

@@ -30,7 +30,6 @@ import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.flow.Flow
 import no.nordicsemi.android.ei.HorizontalPagerTab
 import no.nordicsemi.android.ei.R
-import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Sample
 import no.nordicsemi.android.ei.ui.layouts.InfoLayout
 import no.nordicsemi.android.ei.util.asMessage
@@ -40,7 +39,6 @@ import java.util.*
 @Composable
 fun DataAcquisition(
     modifier: Modifier = Modifier,
-    connectedDevice: List<Device>,
     pagerState: PagerState,
     listStates: List<LazyListState>,
     samples: List<Flow<PagingData<Sample>>>,

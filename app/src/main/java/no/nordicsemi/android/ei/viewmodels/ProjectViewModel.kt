@@ -26,8 +26,10 @@ import no.nordicsemi.android.ei.repository.ProjectRepository
 import no.nordicsemi.android.ei.repository.UserDataRepository
 import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.viewmodels.event.Event
+import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.internal.filterList
 import javax.inject.Inject
 
 @HiltViewModel
@@ -61,6 +63,14 @@ class ProjectViewModel @Inject constructor(
 
     /** A list of configured devices obtained from the service. */
     var configuredDevices = mutableStateListOf<Device>()
+        private set
+
+    /** A list of connected devices derived using the configuredDevices and the commsManagers. */
+    var connectedDevices = derivedStateOf {
+        configuredDevices.filterList {
+            commsManagers[deviceId]?.state == DeviceState.AUTHENTICATED
+        }
+    }
         private set
 
     /** Whether the list of configured devices is refreshing. */
@@ -212,3 +222,4 @@ class ProjectViewModel @Inject constructor(
 //        }
 //    }
 }
+
