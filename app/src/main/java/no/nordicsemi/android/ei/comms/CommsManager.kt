@@ -27,13 +27,13 @@ import okhttp3.Request
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CommsManager(
+    private val scope: CoroutineScope,
     private val gson: Gson,
     private val developmentKeys: DevelopmentKeys,
     val device: DiscoveredBluetoothDevice,
     context: Context,
     client: OkHttpClient,
-    request: Request,
-    scope: CoroutineScope,
+    request: Request
 ) {
     private val bleDevice = BleDevice(
         device = device.bluetoothDevice,
@@ -41,12 +41,11 @@ class CommsManager(
     )
     private val webSocket = EiWebSocket(
         client = client,
-        request = request,
-        coroutineScope = scope,
+        request = request
     )
 
     /** The device ID. Initially set to device MAC address. */
-    val deviceId: String = device.deviceId
+    private val deviceId: String = device.deviceId
 
     /** The device state. */
     var state by mutableStateOf(DeviceState.IN_RANGE)
@@ -59,18 +58,22 @@ class CommsManager(
     }
 
     /**
-     * Initiates BLE connection to the device.
+     * Initiates BLE connection to the device by launching a coroutine
      */
     fun connect() {
-        bleDevice.connect()
+        scope.launch {
+            bleDevice.connect()
+        }
     }
 
     /**
      * Disconnects the BLE device and closes the associated Web Socket.
      */
     fun disconnect() {
-        webSocket.disconnect()
-        bleDevice.disconnect()
+        scope.launch {
+            webSocket.disconnect()
+            bleDevice.disconnect()
+        }
     }
 
     private suspend fun registerToWebSocketStateChanges() {
@@ -203,8 +206,10 @@ class CommsManager(
 
     //TODO sending messages from the phone to the device
     fun send(deviceMessage: DeviceMessage) {
-        val deviceMessageJson = JsonParser.parseString(gson.toJson(deviceMessage)).asJsonObject
-        webSocket.send(deviceMessageJson.get(MESSAGE))
+        scope.launch {
+            val deviceMessageJson = JsonParser.parseString(gson.toJson(deviceMessage)).asJsonObject
+            webSocket.send(deviceMessageJson.get(MESSAGE))
+        }
     }
 }
 

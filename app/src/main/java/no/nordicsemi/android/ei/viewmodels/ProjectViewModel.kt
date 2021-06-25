@@ -173,13 +173,13 @@ class ProjectViewModel @Inject constructor(
     fun connect(device: DiscoveredBluetoothDevice): Unit =
         commsManagers.getOrPut(key = device.deviceId, defaultValue = {
             CommsManager(
+                scope = viewModelScope,
                 gson = gson,
                 developmentKeys = keys,
                 device = device,
                 context = getApplication(),
                 client = client,
                 request = request,
-                scope = viewModelScope,
             )
         }).run {
             connect()
