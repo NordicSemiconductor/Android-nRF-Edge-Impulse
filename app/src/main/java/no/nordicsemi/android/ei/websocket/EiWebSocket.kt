@@ -8,7 +8,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
-import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.websocket.WebSocketState.*
 import okhttp3.*
 import javax.inject.Inject
@@ -68,7 +67,6 @@ class EiWebSocket @Inject constructor(
     fun messageAsFlow(): Flow<JsonObject> = _message
 
     fun connect() {
-        guard(webSocket == null) { return }
         Log.i("AAAA", "Connecting to webSocket")
         webSocket = client.newWebSocket(request = request, listener = webSocketListener)
     }
@@ -81,6 +79,6 @@ class EiWebSocket @Inject constructor(
     //TODO verify reasoning
     fun disconnect() {
         Log.i("AAAA", "Disconnecting from webSocket")
-        webSocket?.close(WebSocketStatus.NORMAL_CLOSURE.ordinal, "Finished")
+        webSocket?.close(WebSocketStatus.NORMAL_CLOSURE.code, "Finished")
     }
 }
