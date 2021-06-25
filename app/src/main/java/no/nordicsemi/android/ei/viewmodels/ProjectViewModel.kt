@@ -2,7 +2,6 @@ package no.nordicsemi.android.ei.viewmodels
 
 import android.app.Application
 import android.content.Context
-import android.util.Log
 import androidx.compose.runtime.*
 import androidx.compose.ui.focus.FocusRequester
 import androidx.lifecycle.AndroidViewModel
@@ -171,55 +170,24 @@ class ProjectViewModel @Inject constructor(
     }
 
     //TODO need to finalize the api
-    fun connect(device: DiscoveredBluetoothDevice) {
-        val commsManager = CommsManager(
-            gson = gson,
-            developmentKeys = keys,
-            device = device,
-            context = getApplication(),
-            client = client,
-            request = request,
-            scope = viewModelScope,
-        )
-        commsManagers[device.deviceId] = commsManager
-        viewModelScope.launch {
-            Log.d("AAAA", "Connecting...")
-            commsManager.connect()
+    fun connect(device: DiscoveredBluetoothDevice): Unit =
+        commsManagers.getOrPut(key = device.deviceId, defaultValue = {
+            CommsManager(
+                gson = gson,
+                developmentKeys = keys,
+                device = device,
+                context = getApplication(),
+                client = client,
+                request = request,
+                scope = viewModelScope,
+            )
+        }).run {
+            connect()
         }
-    }
 
     fun disconnect(device: DiscoveredBluetoothDevice) {
         commsManagers[device.deviceId]?.disconnect()
         commsManagers.remove(device.deviceId)
     }
-
-    //TODO needs to be discussed
-//    private fun authenticate(device: BluetoothDevice) {
-//        commsManagers[device]?.let {
-//            viewModelScope.launch {
-//                val deviceMessage = WebSocketMessage(
-//                    message = Message.Hello(
-//                        apiKey = keys.apiKey,
-//                        deviceId = device.address,
-//                        deviceType = "NRF5340_DK",
-//                        connection = "ip",
-//                        sensors = listOf(
-//                            Sensor(
-//                                name = "Accelerometer",
-//                                maxSampleLengths = 60000,
-//                                frequencies = listOf(62.5, 100)
-//                            ),
-//                            Sensor(
-//                                name = "Microphone",
-//                                maxSampleLengths = 4000,
-//                                frequencies = listOf(16000)
-//                            )
-//                        )
-//                    )
-//                )
-//                it.authenticate(deviceMessage)
-//            }
-//        }
-//    }
 }
 
