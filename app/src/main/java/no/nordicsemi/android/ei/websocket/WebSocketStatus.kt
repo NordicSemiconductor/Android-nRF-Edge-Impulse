@@ -4,7 +4,7 @@ package no.nordicsemi.android.ei.websocket
  * WebSocketStatus
  * refer https://datatracker.ietf.org/doc/html/rfc6455#section-7.4
  */
-enum class WebSocketStatus(code: Int) {
+enum class WebSocketStatus(val code: Int) {
 
     /**
      * 1000 indicates a normal closure, meaning that the purpose for
