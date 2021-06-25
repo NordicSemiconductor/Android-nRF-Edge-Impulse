@@ -8,6 +8,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Label
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.runtime.*
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -25,6 +27,7 @@ import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Sensor
 import no.nordicsemi.android.ei.ui.theme.NordicGrass
+import no.nordicsemi.android.ei.ui.theme.NordicRed
 import java.util.*
 
 
@@ -187,16 +190,39 @@ private fun RecordSampleContent(
     selectedFrequency: Number?,
     onFrequencySelected: (Number) -> Unit
 ) {
-
+    val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     var isDevicesMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var isSensorsMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var isFrequencyMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var sampleLength by remember { mutableStateOf(5000) }
 
+    //TODO clear data when if the device gets disconnected?
+    connectedDevices.takeIf { it.isEmpty() }?.apply {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
+                Icon(
+                    modifier = Modifier
+                        .size(36.dp),
+                    tint = NordicRed,
+                    imageVector = Icons.Outlined.ErrorOutline,
+                    contentDescription = context.getString(R.string.connect_device_for_data_acquisition)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(text = context.getString(R.string.connect_device_for_data_acquisition))
+            }
+        }
+        Spacer(modifier = Modifier.height(height = 16.dp))
+    } ?: run {
+        if (selectedDevice == null) {
+            onDeviceSelected(connectedDevices[0])
+        }
+    }
+
     OutlinedTextField(
         value = selectedDevice?.name ?: stringResource(id = R.string.empty),
         onValueChange = { },
+        enabled = connectedDevices.isNotEmpty(),
         modifier = Modifier
             .fillMaxWidth()
             .focusRequester(focusRequester = focusRequester),
@@ -215,6 +241,7 @@ private fun RecordSampleContent(
         },
         trailingIcon = {
             IconButton(
+                enabled = connectedDevices.isNotEmpty(),
                 onClick = {
                     focusRequester.requestFocus()
                     isDevicesMenuExpanded = true
@@ -245,6 +272,7 @@ private fun RecordSampleContent(
     OutlinedTextField(
         value = label,
         onValueChange = { onLabelChanged(it) },
+        enabled = selectedDevice != null,
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp),
