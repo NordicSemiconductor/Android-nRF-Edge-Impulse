@@ -53,7 +53,7 @@ object AccountHelper {
         try {
             return suspendCancellableCoroutine { continuation ->
                 accountManager.getAuthToken(
-                    account, "limited",
+                    account, authTokenType,
                     null,
                     activity, { future ->
                         try {
