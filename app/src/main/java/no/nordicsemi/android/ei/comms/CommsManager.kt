@@ -67,12 +67,14 @@ class CommsManager(
     }
 
     /**
-     * Disconnects the BLE device and closes the associated Web Socket.
+     * Disconnects the BLE device and closes the associated Web Socket after the disconnection is completed.
      */
     fun disconnect() {
         scope.launch {
-            webSocket.disconnect()
-            bleDevice.disconnect()
+            bleDevice.disconnectDevice().also {
+                // Close the Web Socket if it's open.
+                webSocket.disconnect()
+            }
         }
     }
 
@@ -139,8 +141,6 @@ class CommsManager(
                     Log.d("AAAA", "Device is disconnected")
                     // Use IN_RANGE, so that the device row is clickable.
                     state = DeviceState.IN_RANGE
-                    // Close the Web Socket if it's open.
-                    webSocket.disconnect()
                 }
             }.exhaustive
         }
