@@ -5,16 +5,11 @@ import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.content.Context
 import android.util.Log
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
 import no.nordicsemi.android.ble.BleManager
-import no.nordicsemi.android.ble.callback.DataReceivedCallback
-import no.nordicsemi.android.ble.data.Data
 import no.nordicsemi.android.ble.data.JsonMerger
 import no.nordicsemi.android.ble.ktx.getCharacteristic
 import no.nordicsemi.android.ei.util.guard
@@ -23,12 +18,12 @@ import java.util.*
 class BleDevice(
     val device: BluetoothDevice,
     context: Context
-): BleManager(context) {
+) : BleManager(context) {
 
     companion object {
         val serviceUuid: UUID = UUID.fromString("6E400001-B5A3-F393-E0A9-E50E24DCCA9E")
-        val rxUuid: UUID      = UUID.fromString("6E400002-B5A3-F393-E0A9-E50E24DCCA9E")
-        val txUuid: UUID      = UUID.fromString("6E400003-B5A3-F393-E0A9-E50E24DCCA9E")
+        val rxUuid: UUID = UUID.fromString("6E400002-B5A3-F393-E0A9-E50E24DCCA9E")
+        val txUuid: UUID = UUID.fromString("6E400003-B5A3-F393-E0A9-E50E24DCCA9E")
     }
 
     private var rx: BluetoothGattCharacteristic? = null
@@ -41,13 +36,16 @@ class BleDevice(
         Log.println(priority, "BleDevice", message)
     }
 
-    override fun getGattCallback(): BleManagerGattCallback = object: BleManagerGattCallback() {
+    override fun getGattCallback(): BleManagerGattCallback = object : BleManagerGattCallback() {
 
         override fun isRequiredServiceSupported(gatt: BluetoothGatt): Boolean {
             gatt.getService(serviceUuid)
                 .guard { return false }
                 .apply {
-                    rx = getCharacteristic(rxUuid, BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE)
+                    rx = getCharacteristic(
+                        rxUuid,
+                        BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE
+                    )
                         .guard { return false }
                     tx = getCharacteristic(txUuid, BluetoothGattCharacteristic.PROPERTY_NOTIFY)
                         .guard { return false }
@@ -79,6 +77,11 @@ class BleDevice(
             .retry(3, 100)
             .useAutoConnect(false)
             .enqueue()
+    }
+
+    // TODO what should the api be?
+    fun disconnectDevice() {
+        disconnect().enqueue()
     }
 
     /**
