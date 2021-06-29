@@ -1,5 +1,6 @@
 package no.nordicsemi.android.ei.di
 
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
@@ -61,7 +62,7 @@ object ServiceApiModule {
 
     @Provides
     @Singleton
-    fun provideGson() = GsonBuilder()
+    fun provideGson(): Gson = GsonBuilder()
         .registerTypeAdapter(Message::class.java, MessageTypeAdapter())
         .registerTypeAdapter(DeviceMessage::class.java, DeviceMessageTypeAdapter())
         .setPrettyPrinting()
