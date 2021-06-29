@@ -2,7 +2,6 @@ package no.nordicsemi.android.ei.viewmodels
 
 import android.app.Application
 import android.content.Context
-import android.util.Log
 import androidx.compose.runtime.*
 import androidx.compose.ui.focus.FocusRequester
 import androidx.lifecycle.AndroidViewModel
@@ -144,7 +143,6 @@ class ProjectViewModel @Inject constructor(
                 // If the user decides to delete a device from the web while being connected to i t from the phone,
                 // We should disconnect from that device
                 configuredDevices.filter { !response.devices.contains(it) }.onEach { device ->
-                    Log.d("AAAA", "Distinct device $device")
                     commsManagers.remove(device.deviceId)?.apply {
                         state.takeIf {
                             it == DeviceState.CONNECTING ||

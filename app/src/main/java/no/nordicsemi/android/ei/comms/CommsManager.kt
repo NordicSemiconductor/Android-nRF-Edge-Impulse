@@ -9,7 +9,6 @@ import com.google.gson.Gson
 import com.google.gson.JsonParser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
@@ -171,37 +170,6 @@ class CommsManager(
                     }
                 }
             }
-    }
-
-    /**
-     * Authenticates the device in the EI Studio.
-     */
-    private suspend fun authenticate() {
-        val deviceMessage = WebSocketMessage(
-            message = Message.Hello(
-                apiKey = developmentKeys.apiKey,
-                deviceId = deviceId,
-                deviceType = "NRF5340_DK",
-                connection = "ip",
-                sensors = listOf(
-                    Sensor(
-                        name = "Accelerometer",
-                        maxSampleLengths = 60000,
-                        frequencies = listOf(62.5, 100)
-                    ),
-                    Sensor(
-                        name = "Microphone",
-                        maxSampleLengths = 4000,
-                        frequencies = listOf(16000)
-                    )
-                )
-            )
-        )
-        val deviceMessageJson = JsonParser.parseString(gson.toJson(deviceMessage)).asJsonObject
-
-        //TODO remove this delay and we have to observe the messages emitted from the socket
-        delay(5000)
-        webSocket.send(deviceMessageJson.get(MESSAGE))
     }
 
     //TODO sending messages from the phone to the device
