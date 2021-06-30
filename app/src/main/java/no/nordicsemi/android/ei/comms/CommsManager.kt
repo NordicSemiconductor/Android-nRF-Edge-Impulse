@@ -100,16 +100,35 @@ class CommsManager(
             Log.d("AAAA", "Received message from WebSocket: $message")
             when (message) {
                 is HelloResponse -> {
-                    message.takeUnless {
+                    // if the Hello message returned with a success wrap the received response and send it to the device
+                    message.takeIf {
                         it.hello
                     }?.let {
-                        bleDevice.send(gson.toJson(ConfigureMessage(message = Configure(apiKey = developmentKeys.apiKey))))
-                    } ?: run { state = DeviceState.AUTHENTICATED }
+                        bleDevice.send(
+                            generateDeviceMessage(
+                                message = WebSocketMessage(
+                                    direction = Direction.RECEIVE,
+                                    message = HelloResponse(hello = true)
+                                )
+                            )
+                        )
+                        state = DeviceState.AUTHENTICATED
+                    } ?: run {
+                        bleDevice.send(
+                            generateDeviceMessage(
+                                message = ConfigureMessage(
+                                    message = Configure(
+                                        apiKey = developmentKeys.apiKey
+                                    )
+                                )
+                            )
+                        )
+                    }
                 }
                 is SampleRequest -> {
                     bleDevice.send(
-                        gson.toJson(
-                            WebSocketMessage(
+                        generateDeviceMessage(
+                            message = WebSocketMessage(
                                 direction = Direction.RECEIVE,
                                 message = message
                             )
@@ -202,8 +221,8 @@ class CommsManager(
         selectedSensor: Sensor
     ) {
         bleDevice.send(
-            gson.toJson(
-                WebSocketMessage(
+            generateDeviceMessage(
+                message = WebSocketMessage(
                     direction = Direction.RECEIVE,
                     message = SampleRequest(
                         label = label,
@@ -216,6 +235,13 @@ class CommsManager(
             )
         )
     }
+
+    /**
+     * Generates a device message in the format of a Json string with a new line character appended to indicate the end of the message.
+     */
+    private fun generateDeviceMessage(message: DeviceMessage): String = gson.toJson(
+        message
+    ).plus("\n")
 }
 
 private const val MESSAGE = "message"
