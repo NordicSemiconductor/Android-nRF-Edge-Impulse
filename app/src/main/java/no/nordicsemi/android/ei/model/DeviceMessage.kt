@@ -1,5 +1,6 @@
 package no.nordicsemi.android.ei.model
 
+import no.nordicsemi.android.ei.model.Direction.RECEIVE
 import no.nordicsemi.android.ei.model.Direction.SEND
 import no.nordicsemi.android.ei.model.Method.POST
 import no.nordicsemi.android.ei.model.Type.*
@@ -8,7 +9,7 @@ sealed class DeviceMessage {
     abstract val type: Type
 }
 
-object InvalidMessage: DeviceMessage() {
+object InvalidMessage : DeviceMessage() {
     override val type = INVALID
 }
 
@@ -21,6 +22,7 @@ data class WebSocketMessage(
 }
 
 data class ConfigureMessage(
+    val direction: Direction = RECEIVE,
     val message: Message
 ) : DeviceMessage() {
     override val type = CONFIGURE
