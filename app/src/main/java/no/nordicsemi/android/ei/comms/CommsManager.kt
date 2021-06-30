@@ -182,9 +182,6 @@ class CommsManager(
                     is WebSocketMessage -> {
                         when (deviceMessage.message) {
                             is Hello -> {
-                                // Lets patch the api key until the config message is supported by the firmware.
-                                deviceMessage.message.apiKey = developmentKeys.apiKey
-                                deviceMessage.message.deviceId = bleDevice.device.address
                                 webSocket.send(
                                     gson.toJsonTree(
                                         deviceMessage.message,
