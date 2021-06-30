@@ -182,6 +182,7 @@ class CommsManager(
                     is WebSocketMessage -> {
                         when (deviceMessage.message) {
                             is Hello -> {
+                                deviceMessage.message.deviceId = bleDevice.device.address
                                 webSocket.send(
                                     gson.toJsonTree(
                                         deviceMessage.message,
@@ -189,9 +190,15 @@ class CommsManager(
                                     )
                                 )
                             }
-                        }
+                            else -> {
+                                //TODO check other messages
+                            }
+                        }.exhaustive
                     }
-                }
+                    else -> {
+                        //TODO check other messages
+                    }
+                }.exhaustive
             }
     }
 

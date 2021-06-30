@@ -7,7 +7,8 @@ sealed class Message {
     data class Hello(
         val version: Int = 3,
         val apiKey: String,
-        val deviceId: String,
+        //TODO device address is hardcoded until it is in place in the fw. Change it to val after
+        var deviceId: String,
         val deviceType: String,
         val connection: String,
         val sensors: List<Sensor>,
