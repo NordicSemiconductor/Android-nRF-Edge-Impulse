@@ -57,7 +57,7 @@ class MessageTypeAdapter : JsonSerializer<Message>, JsonDeserializer<Message> {
                         takeIf { isJsonPrimitive }?.let {
                             return context!!.deserialize(root, Message.SampleRequestResponse::class.java)
                         }
-                        return context!!.deserialize(json, Message.SampleRequest::class.java)
+                        return context!!.deserialize(this, Message.SampleRequest::class.java)
                     }
                 }
                 root.has("apiKey") -> {
