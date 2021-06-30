@@ -29,7 +29,7 @@ sealed class Message {
     data class SampleRequest(
         val label: String,
         val length: Int,
-        val path: String,
+        val path: String = "/api/training/data",
         val hmacKey: String,
         val interval: Int,
         val sensor: String
