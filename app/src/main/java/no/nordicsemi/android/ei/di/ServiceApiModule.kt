@@ -65,6 +65,5 @@ object ServiceApiModule {
     fun provideGson(): Gson = GsonBuilder()
         .registerTypeAdapter(Message::class.java, MessageTypeAdapter())
         .registerTypeAdapter(DeviceMessage::class.java, DeviceMessageTypeAdapter())
-        .setPrettyPrinting()
         .create()
 }
