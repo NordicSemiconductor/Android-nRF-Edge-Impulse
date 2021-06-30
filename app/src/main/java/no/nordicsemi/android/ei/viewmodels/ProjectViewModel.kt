@@ -100,6 +100,8 @@ class ProjectViewModel @Inject constructor(
         private set
     var selectedSensor: Sensor? by mutableStateOf(null)
         private set
+    var sampleLength by mutableStateOf(0)
+        private set
     var selectedFrequency: Number? by mutableStateOf(null)
         private set
 
@@ -176,6 +178,10 @@ class ProjectViewModel @Inject constructor(
         sensor.frequencies.firstOrNull()
             ?.let { onFrequencySelected(frequency = it) }
             ?: run { selectedFrequency = null }
+    }
+
+    fun onSampleLengthChanged(sampleLength: Int) {
+        this.sampleLength = sampleLength
     }
 
     fun onFrequencySelected(frequency: Number) {

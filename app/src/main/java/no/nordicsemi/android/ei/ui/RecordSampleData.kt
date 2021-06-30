@@ -28,22 +28,11 @@ import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Sensor
 import no.nordicsemi.android.ei.ui.theme.NordicGrass
 import no.nordicsemi.android.ei.ui.theme.NordicRed
-import java.util.*
 
 
 @Composable
 fun RecordSampleLargeScreen(
-    connectedDevices: List<Device>,
-    focusRequester: FocusRequester,
-    selectedDevice: Device?,
-    onDeviceSelected: (Device) -> Unit,
-    label: String,
-    onLabelChanged: (String) -> Unit,
-    selectedSensor: Sensor?,
-    onSensorSelected: (Sensor) -> Unit,
-    selectedFrequency: Number?,
-    onFrequencySelected: (Number) -> Unit,
-    onDismiss: () -> Unit
+    content: @Composable () -> Unit
 ) {
     Surface {
         Column {
@@ -63,42 +52,7 @@ fun RecordSampleLargeScreen(
             Column(
                 modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp),
             ) {
-                RecordSampleContent(
-                    connectedDevices = connectedDevices,
-                    focusRequester = focusRequester,
-                    selectedDevice = selectedDevice,
-                    onDeviceSelected = onDeviceSelected,
-                    label = label,
-                    onLabelChanged = onLabelChanged,
-                    selectedSensor = selectedSensor,
-                    onSensorSelected = onSensorSelected,
-                    selectedFrequency = selectedFrequency,
-                    onFrequencySelected = onFrequencySelected
-                )
-                Spacer(modifier = Modifier.height(32.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(
-                        onClick = { onDismiss() }
-                    ) {
-                        Text(
-                            text = stringResource(R.string.action_dialog_cancel).uppercase(Locale.US),
-                            style = MaterialTheme.typography.button
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(32.dp))
-                    TextButton(
-                        enabled = selectedSensor != null,
-                        onClick = { /*TODO implement start sampling*/ }
-                    ) {
-                        Text(
-                            text = stringResource(R.string.action_start_sampling).uppercase(Locale.US),
-                            style = MaterialTheme.typography.button
-                        )
-                    }
-                }
+                content()
             }
         }
     }
@@ -107,16 +61,7 @@ fun RecordSampleLargeScreen(
 @Composable
 fun RecordSampleSmallScreen(
     isLandscape: Boolean,
-    connectedDevices: List<Device>,
-    focusRequester: FocusRequester,
-    selectedDevice: Device?,
-    onDeviceSelected: (Device) -> Unit,
-    label: String,
-    onLabelChanged: (String) -> Unit,
-    selectedSensor: Sensor?,
-    onSensorSelected: (Sensor) -> Unit,
-    selectedFrequency: Number?,
-    onFrequencySelected: (Number) -> Unit,
+    content: @Composable () -> Unit,
     onCloseClicked: () -> Unit
 ) {
     Scaffold(
@@ -145,40 +90,14 @@ fun RecordSampleSmallScreen(
                     enabled = isLandscape
                 )
         ) {
-            RecordSampleContent(
-                connectedDevices = connectedDevices,
-                focusRequester = focusRequester,
-                selectedDevice = selectedDevice,
-                onDeviceSelected = onDeviceSelected,
-                label = label,
-                onLabelChanged = onLabelChanged,
-                selectedSensor = selectedSensor,
-                onSensorSelected = onSensorSelected,
-                selectedFrequency = selectedFrequency,
-                onFrequencySelected = onFrequencySelected
-            )
-            Spacer(modifier = Modifier.height(32.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Button(
-                    enabled = selectedSensor != null,
-                    onClick = { /*TODO implement start sampling*/ }
-                ) {
-                    Text(
-                        text = stringResource(R.string.action_start_sampling).uppercase(Locale.US),
-                        style = MaterialTheme.typography.button
-                    )
-                }
-            }
+            content()
         }
     }
 }
 
 
 @Composable
-private fun RecordSampleContent(
+fun RecordSampleContent(
     connectedDevices: List<Device>,
     focusRequester: FocusRequester,
     selectedDevice: Device?,
@@ -187,6 +106,8 @@ private fun RecordSampleContent(
     onLabelChanged: (String) -> Unit,
     selectedSensor: Sensor?,
     onSensorSelected: (Sensor) -> Unit,
+    sampleLength: Int,
+    onSampleLengthChanged: (Int) -> Unit,
     selectedFrequency: Number?,
     onFrequencySelected: (Number) -> Unit
 ) {
@@ -195,7 +116,6 @@ private fun RecordSampleContent(
     var isDevicesMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var isSensorsMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var isFrequencyMenuExpanded by rememberSaveable { mutableStateOf(false) }
-    var sampleLength by remember { mutableStateOf(5000) }
 
     //TODO clear data when if the device gets disconnected?
     connectedDevices.takeIf { it.isEmpty() }?.apply {
@@ -362,8 +282,10 @@ private fun RecordSampleContent(
             Row {
                 IconButton(
                     onClick = {
-                        if (sampleLength + SAMPLE_DELTA <= MAX_SAMPLE_LENGTH)
-                            sampleLength += SAMPLE_DELTA
+                        selectedSensor?.let { sensor ->
+                            if (sampleLength + SAMPLE_LENGTH_DELTA <= sensor.maxSampleLengths)
+                                onSampleLengthChanged(sampleLength + SAMPLE_LENGTH_DELTA)
+                        }
                     },
                     enabled = selectedSensor != null
                 ) {
@@ -374,8 +296,8 @@ private fun RecordSampleContent(
                 }
                 IconButton(
                     onClick = {
-                        if (sampleLength - SAMPLE_DELTA > MIN_SAMPLE_LENGTH)
-                            sampleLength -= SAMPLE_DELTA
+                        if (sampleLength - SAMPLE_LENGTH_DELTA > MIN_SAMPLE_LENGTH)
+                            onSampleLengthChanged(sampleLength - SAMPLE_LENGTH_DELTA)
                     },
                     enabled = selectedSensor != null
                 ) {
@@ -466,7 +388,6 @@ private fun ShowDevicesDropdown(
                 Box(
                     modifier = Modifier
                         .size(8.dp)
-                        //TODO Add green to display connected devices
                         .background(color = NordicGrass, shape = CircleShape)
                 )
             }
@@ -528,5 +449,4 @@ private fun ShowFrequenciesDropdown(
 }
 
 private const val MIN_SAMPLE_LENGTH = 0
-private const val SAMPLE_DELTA = 10
-private const val MAX_SAMPLE_LENGTH = 10000
+private const val SAMPLE_LENGTH_DELTA = 10

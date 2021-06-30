@@ -2,10 +2,7 @@ package no.nordicsemi.android.ei.ui
 
 import android.content.res.Configuration.*
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.ModalBottomSheetValue.*
@@ -63,6 +60,7 @@ fun Project(
             BottomNavigationScreen.DEVICES
         )
     }
+
     if (isLargeScreen) {
         LargeScreen(
             viewModel = viewModel,
@@ -108,17 +106,50 @@ private fun LargeScreen(
             ) {
                 val connectedDevices by remember { viewModel.connectedDevices }
                 RecordSampleLargeScreen(
-                    connectedDevices = connectedDevices,
-                    focusRequester = viewModel.focusRequester,
-                    selectedDevice = viewModel.selectedDevice,
-                    onDeviceSelected = { viewModel.onDeviceSelected(it) },
-                    label = viewModel.label,
-                    onLabelChanged = { viewModel.onLabelChanged(it) },
-                    selectedSensor = viewModel.selectedSensor,
-                    onSensorSelected = { viewModel.onSensorSelected(it) },
-                    selectedFrequency = viewModel.selectedFrequency,
-                    onFrequencySelected = { viewModel.onFrequencySelected(it) },
-                    onDismiss = { isDialogVisible = false }
+                    content = {
+                        RecordSampleContent(
+                            connectedDevices = connectedDevices,
+                            focusRequester = viewModel.focusRequester,
+                            selectedDevice = viewModel.selectedDevice,
+                            onDeviceSelected = { viewModel.onDeviceSelected(device = it) },
+                            label = viewModel.label,
+                            onLabelChanged = { viewModel.onLabelChanged(label = it) },
+                            selectedSensor = viewModel.selectedSensor,
+                            onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
+                            sampleLength = viewModel.sampleLength,
+                            onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
+                            selectedFrequency = viewModel.selectedFrequency,
+                            onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) }
+                        )
+                        Spacer(modifier = Modifier.height(32.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            TextButton(
+                                onClick = { isDialogVisible = false }
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.action_dialog_cancel).uppercase(
+                                        Locale.US
+                                    ),
+                                    style = MaterialTheme.typography.button
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(32.dp))
+                            TextButton(
+                                enabled = viewModel.selectedSensor != null,
+                                onClick = { /*TODO implement start sampling*/ }
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.action_start_sampling).uppercase(
+                                        Locale.US
+                                    ),
+                                    style = MaterialTheme.typography.button
+                                )
+                            }
+                        }
+                    }
                 )
             }
         }
@@ -136,8 +167,7 @@ private fun SmallScreen(
     onBackPressed: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    val currentOrientation = LocalConfiguration.current.orientation
-    val isLandscape = currentOrientation == ORIENTATION_LANDSCAPE
+    val isLandscape = LocalConfiguration.current.orientation == ORIENTATION_LANDSCAPE
     val modalBottomSheetState = rememberModalBottomSheetState(initialValue = Hidden)
     val connectedDevices by remember { viewModel.connectedDevices }
     ModalBottomSheetLayout(
@@ -145,21 +175,46 @@ private fun SmallScreen(
         sheetContent = {
             RecordSampleSmallScreen(
                 isLandscape = isLandscape,
-                connectedDevices = connectedDevices,
-                focusRequester = viewModel.focusRequester,
-                selectedDevice = viewModel.selectedDevice,
-                onDeviceSelected = { viewModel.onDeviceSelected(device = it) },
-                label = viewModel.label,
-                onLabelChanged = { viewModel.onLabelChanged(label = it) },
-                selectedSensor = viewModel.selectedSensor,
-                onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
-                selectedFrequency = viewModel.selectedFrequency,
-                onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) },
                 onCloseClicked = {
                     hideBottomSheet(
                         scope = scope,
                         modalBottomSheetState = modalBottomSheetState
                     )
+                },
+                content = {
+                    RecordSampleContent(
+                        connectedDevices = connectedDevices,
+                        focusRequester = viewModel.focusRequester,
+                        selectedDevice = viewModel.selectedDevice,
+                        onDeviceSelected = { viewModel.onDeviceSelected(device = it) },
+                        label = viewModel.label,
+                        onLabelChanged = { viewModel.onLabelChanged(label = it) },
+                        selectedSensor = viewModel.selectedSensor,
+                        onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
+                        sampleLength = viewModel.sampleLength,
+                        onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
+                        selectedFrequency = viewModel.selectedFrequency,
+                        onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) }
+                    )
+                    Spacer(modifier = Modifier.height(32.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Button(
+                            enabled = viewModel.selectedSensor != null,
+                            onClick = {
+                                /*TODO implement start sampling*/
+                            }
+                        ) {
+                            Text(
+                                text = stringResource(R.string.action_start_sampling).uppercase(
+                                    Locale.US
+                                ),
+                                style = MaterialTheme.typography.button
+                            )
+                        }
+                    }
                 }
             )
         }
