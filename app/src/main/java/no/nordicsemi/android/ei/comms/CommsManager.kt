@@ -17,6 +17,7 @@ import no.nordicsemi.android.ble.ktx.stateAsFlow
 import no.nordicsemi.android.ei.ble.BleDevice
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.model.*
+import no.nordicsemi.android.ei.model.Message.*
 import no.nordicsemi.android.ei.util.exhaustive
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import no.nordicsemi.android.ei.websocket.EiWebSocket
@@ -98,16 +99,22 @@ class CommsManager(
             val message = gson.fromJson(json, Message::class.java)
             Log.d("AAAA", "Received message from WebSocket: $message")
             when (message) {
-                is Message.HelloResponse -> {
+                is HelloResponse -> {
                     message.takeUnless {
                         it.hello
                     }?.let {
-                        val configureMessage =
-                            ConfigureMessage(message = Message.Configure(apiKey = developmentKeys.apiKey))
-                        val configJson = gson.toJson(configureMessage)
-                        Log.d("AAAA", "Sending configure message: $configJson")
-                        bleDevice.send(configJson)
+                        bleDevice.send(gson.toJson(ConfigureMessage(message = Configure(apiKey = developmentKeys.apiKey))))
                     } ?: run { state = DeviceState.AUTHENTICATED }
+                }
+                is SampleRequest -> {
+                    bleDevice.send(
+                        gson.toJson(
+                            WebSocketMessage(
+                                direction = Direction.RECEIVE,
+                                message = message
+                            )
+                        )
+                    )
                 }
                 else -> {
 
@@ -155,7 +162,7 @@ class CommsManager(
                 when (deviceMessage) {
                     is WebSocketMessage -> {
                         when (deviceMessage.message) {
-                            is Message.Hello -> {
+                            is Hello -> {
                                 // Lets patch the api key until the config message is supported by the firmware.
                                 deviceMessage.message.apiKey = developmentKeys.apiKey
                                 deviceMessage.message.deviceId = bleDevice.device.address
@@ -178,6 +185,36 @@ class CommsManager(
             val deviceMessageJson = JsonParser.parseString(gson.toJson(deviceMessage)).asJsonObject
             webSocket.send(deviceMessageJson.get(MESSAGE))
         }
+    }
+
+    /**
+     * Starts sampling on the connected device.
+     *
+     * @param label                 Sample label
+     * @param sampleLength          Sample length
+     * @param selectedFrequency     Selected frequency
+     * @param selectedSensor        Selected sensor
+     */
+    fun startSampling(
+        label: String,
+        sampleLength: Int,
+        selectedFrequency: Int,
+        selectedSensor: Sensor
+    ) {
+        bleDevice.send(
+            gson.toJson(
+                WebSocketMessage(
+                    direction = Direction.RECEIVE,
+                    message = SampleRequest(
+                        label = label,
+                        length = sampleLength,
+                        hmacKey = developmentKeys.hmacKey,
+                        interval = selectedFrequency,
+                        sensor = selectedSensor.name
+                    )
+                )
+            )
+        )
     }
 }
 

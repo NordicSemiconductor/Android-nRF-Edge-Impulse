@@ -139,7 +139,16 @@ private fun LargeScreen(
                             Spacer(modifier = Modifier.width(32.dp))
                             TextButton(
                                 enabled = viewModel.selectedSensor != null,
-                                onClick = { /*TODO implement start sampling*/ }
+                                onClick = {
+                                    viewModel.selectedDevice?.let { device ->
+                                        viewModel.commsManagers[device.deviceId]?.startSampling(
+                                            viewModel.label,
+                                            10000,
+                                            viewModel.selectedFrequency!!.toInt(),
+                                            viewModel.selectedSensor!!
+                                        )
+                                    }
+                                }
                             ) {
                                 Text(
                                     text = stringResource(R.string.action_start_sampling).uppercase(
@@ -204,7 +213,14 @@ private fun SmallScreen(
                         Button(
                             enabled = viewModel.selectedSensor != null,
                             onClick = {
-                                /*TODO implement start sampling*/
+                                viewModel.selectedDevice?.let { device ->
+                                    viewModel.commsManagers[device.deviceId]?.startSampling(
+                                        viewModel.label,
+                                        10000,
+                                        viewModel.selectedFrequency!!.toInt(),
+                                        viewModel.selectedSensor!!
+                                    )
+                                }
                             }
                         ) {
                             Text(
