@@ -84,7 +84,7 @@ fun Devices(
                 ) { configuredDevice ->
                     val discoveredBluetoothDevice =
                         scannerState.discoveredDevices.find { it.deviceId == configuredDevice.deviceId }
-                    ConfiguredDeviceRow(
+                    SwipeableConfiguredDeviceRow(
                         device = configuredDevice,
                         state = discoveredBluetoothDevice?.let {
                             activeDevices[configuredDevice.deviceId]?.state
@@ -183,7 +183,7 @@ fun Devices(
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ConfiguredDeviceRow(
+fun SwipeableConfiguredDeviceRow(
     device: Device,
     state: DeviceState,
     onDeviceClicked: (Device) -> Unit,
