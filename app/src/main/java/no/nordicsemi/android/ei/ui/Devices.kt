@@ -4,16 +4,23 @@ import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
@@ -30,6 +37,7 @@ import no.nordicsemi.android.ei.ui.layouts.*
 import no.nordicsemi.android.ei.util.exhaustive
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import no.nordicsemi.android.ei.viewmodels.state.indicatorColor
+import kotlin.math.roundToInt
 
 @Composable
 fun Devices(
@@ -43,7 +51,6 @@ fun Devices(
     connect: (DiscoveredBluetoothDevice) -> Unit
 ) {
     val scanningState = scannerState.scanningState
-
     SwipeRefresh(
         state = rememberSwipeRefreshState(refreshingState),
         onRefresh = onRefresh,
@@ -87,7 +94,8 @@ fun Devices(
                             discoveredBluetoothDevice?.let {
                                 connect(it)
                             }
-                        }
+                        },
+                        onDisconnectClicked = { activeDevices[it.deviceId]?.disconnect() }
                     )
                     Divider()
                 }
@@ -173,23 +181,87 @@ fun Devices(
     }
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ConfiguredDeviceRow(
     device: Device,
     state: DeviceState,
-    onDeviceClicked: (Device) -> Unit
+    onDeviceClicked: (Device) -> Unit,
+    onDisconnectClicked: (Device) -> Unit
+) {
+    // If the device is connecting state display the swipeable row
+    when (state) {
+        DeviceState.IN_RANGE, DeviceState.NOT_IN_RANGE -> {
+            ConfiguredDeviceRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(color = MaterialTheme.colors.surface)
+                    .clickable(
+                        enabled = state == DeviceState.IN_RANGE || state == DeviceState.AUTHENTICATED,
+                        onClick = { onDeviceClicked(device) },
+                    )
+                    .padding(16.dp),
+                device = device,
+                state = state
+            )
+        }
+        else -> {
+            val width = LocalConfiguration.current.screenWidthDp.dp
+            val sizePx = with(LocalDensity.current) { -width.toPx() }
+            val swipeableState = rememberSwipeableState(1)
+            val offset = sizePx / 3
+            val anchors = mapOf(offset to 0, 1f to 1) // Maps anchor points (in px) to states
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .swipeable(
+                        state = swipeableState,
+                        anchors = anchors,
+                        thresholds = { _, _ -> FractionalThreshold(0.3f) },
+                        orientation = Orientation.Horizontal
+                    )
+                    .background(Color.Red)
+            ) {
+                IconButton(
+                    modifier = Modifier
+                        ./*offset(x = (width - width/5)).*/align(Alignment.CenterEnd)
+                        .padding(end = 4.dp),
+                    onClick = { onDisconnectClicked(device) }) {
+                    Icon(
+                        modifier = Modifier.size(32.dp),
+                        imageVector = Icons.Default.Close,
+                        contentDescription = null
+                    )
+                }
+                ConfiguredDeviceRow(
+                    modifier = Modifier
+                        .offset { IntOffset(swipeableState.offset.value.roundToInt(), 0) }
+                        .fillMaxWidth()
+                        .background(color = MaterialTheme.colors.surface)
+                        .clickable(
+                            enabled = state == DeviceState.IN_RANGE || state == DeviceState.AUTHENTICATED,
+                            onClick = { onDeviceClicked(device) },
+                        )
+                        .padding(16.dp),
+                    device = device,
+                    state = state
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ConfiguredDeviceRow(
+    modifier: Modifier,
+    device: Device,
+    state: DeviceState
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(color = MaterialTheme.colors.surface)
-            .clickable(
-                enabled = state == DeviceState.IN_RANGE || state == DeviceState.AUTHENTICATED,
-                onClick = { onDeviceClicked(device) },
-            )
-            .padding(16.dp),
+        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
-    ) {
+    )
+    {
         Image(
             painter = painterResource(id = R.drawable.ic_devices),
             contentDescription = null,

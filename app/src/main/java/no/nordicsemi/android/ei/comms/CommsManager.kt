@@ -243,9 +243,11 @@ class CommsManager(
     /**
      * Generates a device message in the format of a Json string with a new line character appended to indicate the end of the message.
      */
-    private fun generateDeviceMessage(message: DeviceMessage): String = gson.toJson(
-        message
-    ).plus("\n")
+    private fun generateDeviceMessage(message: DeviceMessage): String = StringBuilder(
+        gson.toJson(
+            message
+        )
+    ).appendLine().toString()
 }
 
 private const val MESSAGE = "message"
