@@ -37,7 +37,6 @@ class ProjectViewModel @Inject constructor(
     private val userManager: UserManager,
     private val projectRepository: ProjectRepository,
     private val client: OkHttpClient,
-    private val request: Request,
     private val gson: Gson,
     @IODispatcher private val ioDispatcher: CoroutineDispatcher
 ) : AndroidViewModel(context as Application) {
@@ -55,6 +54,10 @@ class ProjectViewModel @Inject constructor(
     /** Project development keys. */
     private val keys
         get() = projectDataRepository.developmentKeys
+
+    /** Socket token for deployment */
+    private val socketToken
+        get() = projectDataRepository.socketToken
 
     /** A map of device managers. */
     var commsManagers = mutableStateMapOf<String, CommsManager>()
@@ -100,7 +103,8 @@ class ProjectViewModel @Inject constructor(
         private set
     var selectedSensor: Sensor? by mutableStateOf(null)
         private set
-    var sampleLength by mutableStateOf(0)
+    var sampleLength by mutableStateOf(10000)
+        //TODO fix hardcoded sample length
         private set
     var selectedFrequency: Number? by mutableStateOf(null)
         private set
@@ -195,10 +199,10 @@ class ProjectViewModel @Inject constructor(
                 scope = viewModelScope,
                 gson = gson,
                 developmentKeys = keys,
+                socketToken = socketToken,
                 device = device,
                 context = getApplication(),
-                client = client,
-                request = request,
+                client = client
             )
         }).run {
             connect()

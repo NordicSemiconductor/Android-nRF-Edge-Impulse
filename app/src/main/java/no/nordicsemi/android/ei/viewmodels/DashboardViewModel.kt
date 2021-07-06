@@ -102,10 +102,6 @@ class DashboardViewModel @Inject constructor(
     }
 
     fun selectProject(project: Project) {
-        getDevelopmentKeys(project = project)
-    }
-
-    private fun getDevelopmentKeys(project: Project) {
         isDownloadingDevelopmentKeys = true
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope
@@ -113,19 +109,32 @@ class DashboardViewModel @Inject constructor(
                 .also { isDownloadingDevelopmentKeys = false }
         }
         viewModelScope.launch(handler) {
-            dashboardRepository.developmentKeys(
+            // Retrieve the development keys for the project
+            val developmentKeys = dashboardRepository.developmentKeys(
                 token = userDataRepo.token,
                 projectId = project.id
             ).let { response ->
                 guard(response.success) {
                     throw Throwable(response.error)
                 }
-                projectManager.projectSelected(
-                    project = project,
-                    keys = response.developmentKeys()
-                )
-                eventChannel.send(Event.Project.Selected(project))
-            }.also { isDownloadingDevelopmentKeys = false }
+                response.developmentKeys()
+            }
+            // Retrieve the socket token for the project
+            val socketToken =
+                dashboardRepository.getSocketToken(developmentKeys.apiKey, projectId = project.id)
+                    .let { response ->
+                        guard(response.success) {
+                            throw  Throwable(response.error)
+                        }
+                        response.token
+                    }
+            projectManager.projectSelected(
+                project = project,
+                keys = developmentKeys,
+                socketToken = socketToken
+            )
+            eventChannel.send(Event.Project.Selected(project))
+            isDownloadingDevelopmentKeys = false
         }
     }
 

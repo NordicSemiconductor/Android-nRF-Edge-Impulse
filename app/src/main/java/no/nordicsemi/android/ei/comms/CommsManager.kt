@@ -27,21 +27,28 @@ import okhttp3.Request
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CommsManager(
+    val device: DiscoveredBluetoothDevice,
     private val scope: CoroutineScope,
     private val gson: Gson,
     private val developmentKeys: DevelopmentKeys,
-    val device: DiscoveredBluetoothDevice,
-    context: Context,
+    socketToken: SocketToken,
     client: OkHttpClient,
-    request: Request
+    context: Context,
 ) {
     private val bleDevice = BleDevice(
         device = device.bluetoothDevice,
         context = context
     )
-    private val webSocket = EiWebSocket(
+    private val dataAcquisitionWebSocket = EiWebSocket(
         client = client,
-        request = request
+        request = Request.Builder().url("wss://remote-mgmt.edgeimpulse.com").build()
+    )
+
+    private var deploymentWebSocket: EiWebSocket = EiWebSocket(
+        client = client,
+        request = Request.Builder()
+            .url("wss://studio.edgeimpulse.com/socket.io/?token=${socketToken.token}&EIO=3&transport=websocket")
+            .build()
     )
 
     /** The device ID. Initially set to device MAC address. */
@@ -73,13 +80,19 @@ class CommsManager(
         scope.launch {
             bleDevice.disconnectDevice().also {
                 // Close the Web Socket if it's open.
-                webSocket.disconnect()
+                dataAcquisitionWebSocket.disconnect()
             }
         }
     }
 
+    fun build() {
+        scope.launch {
+            deploymentWebSocket.connect()
+        }
+    }
+
     private suspend fun registerToWebSocketStateChanges() {
-        webSocket.stateAsFlow().collect { webSocketState ->
+        dataAcquisitionWebSocket.stateAsFlow().collect { webSocketState ->
             when (webSocketState) {
                 // The Web Socket is open.
                 is WebSocketState.Open -> {
@@ -95,7 +108,7 @@ class CommsManager(
     }
 
     private suspend fun registerToWebSocketMessages() {
-        webSocket.messageAsFlow().collect { json ->
+        dataAcquisitionWebSocket.messageAsFlow().collect { json ->
             val message = gson.fromJson(json, Message::class.java)
             Log.d("AAAA", "Received message from WebSocket: $message")
             when (message) {
@@ -156,7 +169,7 @@ class CommsManager(
                     // When the device is connected, open the Web Socket.
                     Log.d("AAAA", "Device is ready, opening socket")
                     state = DeviceState.AUTHENTICATING
-                    webSocket.connect()
+                    dataAcquisitionWebSocket.connect()
                 }
                 // Device gets disconnected.
                 ConnectionState.Disconnecting -> { /* do nothing */
@@ -183,7 +196,7 @@ class CommsManager(
                         when (deviceMessage.message) {
                             is Hello -> {
                                 deviceMessage.message.deviceId = bleDevice.device.address
-                                webSocket.send(
+                                dataAcquisitionWebSocket.send(
                                     gson.toJsonTree(
                                         deviceMessage.message,
                                         Message::class.java
@@ -206,7 +219,7 @@ class CommsManager(
     fun send(deviceMessage: DeviceMessage) {
         scope.launch {
             val deviceMessageJson = JsonParser.parseString(gson.toJson(deviceMessage)).asJsonObject
-            webSocket.send(deviceMessageJson.get(MESSAGE))
+            dataAcquisitionWebSocket.send(deviceMessageJson.get(MESSAGE))
         }
     }
 
