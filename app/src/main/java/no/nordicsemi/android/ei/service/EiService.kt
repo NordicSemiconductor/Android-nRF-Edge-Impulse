@@ -98,14 +98,14 @@ interface EiService {
     /**
      * Retrieve socket token for a project
      *
-     * @param apiKey       Token received during the login.
-     * @param socketTokenRequest Socket token request
+     * @param apiKey    Token received during the login.
+     * @param projectId Project ID
      */
     @Headers("Accept: application/json", "Content-Type: application/json")
     @GET("api/{projectId}/socket-token")
     suspend fun getSocketToken(
         @Header("x-api-key") apiKey: String,
-        @Path("projectId") socketTokenRequest: GetSocketTokenRequest,
+        @Path("projectId") projectId: Int,
     ): GetSocketTokenResponse
 
 }

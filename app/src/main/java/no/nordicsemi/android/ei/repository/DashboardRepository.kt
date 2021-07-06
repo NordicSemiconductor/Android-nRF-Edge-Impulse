@@ -5,7 +5,6 @@ import kotlinx.coroutines.withContext
 import no.nordicsemi.android.ei.di.IODispatcher
 import no.nordicsemi.android.ei.service.EiService
 import no.nordicsemi.android.ei.service.param.CreateProjectRequest
-import no.nordicsemi.android.ei.service.param.GetSocketTokenRequest
 import javax.inject.Inject
 
 class DashboardRepository @Inject constructor(
@@ -22,6 +21,6 @@ class DashboardRepository @Inject constructor(
     }
 
     suspend fun getSocketToken(apiKey: String, projectId: Int) = withContext(ioDispatcher) {
-        service.getSocketToken(apiKey, GetSocketTokenRequest(projectId = projectId))
+        service.getSocketToken(apiKey = apiKey, projectId = projectId)
     }
 }
