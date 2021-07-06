@@ -13,7 +13,6 @@ import no.nordicsemi.android.ei.service.EiService
 import no.nordicsemi.android.ei.util.DeviceMessageTypeAdapter
 import no.nordicsemi.android.ei.util.MessageTypeAdapter
 import okhttp3.OkHttpClient
-import okhttp3.Request
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.HttpLoggingInterceptor.Level
 import retrofit2.Retrofit
@@ -52,13 +51,6 @@ object ServiceApiModule {
             .addConverterFactory(GsonConverterFactory.create())
             .build().create()
     }
-
-    @Provides
-    @Singleton
-    fun provideWebSocketRequest(): Request = Request.Builder()
-        .url("wss://remote-mgmt.edgeimpulse.com")
-        .build()
-
 
     @Provides
     @Singleton
