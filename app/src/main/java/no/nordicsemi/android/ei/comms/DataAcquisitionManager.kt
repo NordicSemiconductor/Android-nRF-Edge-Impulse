@@ -31,7 +31,6 @@ class CommsManager(
     private val scope: CoroutineScope,
     private val gson: Gson,
     private val developmentKeys: DevelopmentKeys,
-    socketToken: SocketToken,
     client: OkHttpClient,
     context: Context,
 ) {
@@ -42,13 +41,6 @@ class CommsManager(
     private val dataAcquisitionWebSocket = EiWebSocket(
         client = client,
         request = Request.Builder().url("wss://remote-mgmt.edgeimpulse.com").build()
-    )
-
-    private var deploymentWebSocket: EiWebSocket = EiWebSocket(
-        client = client,
-        request = Request.Builder()
-            .url("wss://studio.edgeimpulse.com/socket.io/?token=${socketToken.token}&EIO=3&transport=websocket")
-            .build()
     )
 
     /** The device ID. Initially set to device MAC address. */
@@ -84,13 +76,6 @@ class CommsManager(
             }
         }
     }
-
-    fun build() {
-        scope.launch {
-            deploymentWebSocket.connect()
-        }
-    }
-
     private suspend fun registerToWebSocketStateChanges() {
         dataAcquisitionWebSocket.stateAsFlow().collect { webSocketState ->
             when (webSocketState) {

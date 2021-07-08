@@ -27,7 +27,6 @@ import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.viewmodels.event.Event
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import okhttp3.OkHttpClient
-import okhttp3.Request
 import okhttp3.internal.filterList
 import javax.inject.Inject
 
@@ -199,7 +198,6 @@ class ProjectViewModel @Inject constructor(
                 scope = viewModelScope,
                 gson = gson,
                 developmentKeys = keys,
-                socketToken = socketToken,
                 device = device,
                 context = getApplication(),
                 client = client
