@@ -441,7 +441,7 @@ private fun ShowDownloadingDevelopmentKeysDialog(
             )
             Spacer(modifier = Modifier.height(32.dp))
             Text(
-                text = stringResource(R.string.label_fetching_development_keys),
+                text = stringResource(R.string.label_fetching_development_keys_socket_token),
                 color = MaterialTheme.colors.onSurface,
                 style = MaterialTheme.typography.body1
             )
