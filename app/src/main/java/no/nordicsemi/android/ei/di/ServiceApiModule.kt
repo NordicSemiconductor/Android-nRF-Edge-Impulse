@@ -38,7 +38,7 @@ object ServiceApiModule {
         return OkHttpClient.Builder()
             .addInterceptor(interceptor)
             .followRedirects(false)
-            .pingInterval(30, TimeUnit.SECONDS)
+            .pingInterval(25, TimeUnit.SECONDS)
             .build()
     }
 
