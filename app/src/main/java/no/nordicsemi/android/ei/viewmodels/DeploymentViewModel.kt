@@ -7,7 +7,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.gson.Gson
 import dagger.hilt.EntryPoints
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -16,7 +15,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import no.nordicsemi.android.ei.comms.DeploymentManager
 import no.nordicsemi.android.ei.di.*
 import no.nordicsemi.android.ei.model.DevelopmentKeys
 import no.nordicsemi.android.ei.model.User
@@ -26,7 +24,6 @@ import no.nordicsemi.android.ei.repository.UserDataRepository
 import no.nordicsemi.android.ei.util.Engine
 import no.nordicsemi.android.ei.util.ModelType
 import no.nordicsemi.android.ei.viewmodels.event.Event
-import okhttp3.OkHttpClient
 import javax.inject.Inject
 
 @HiltViewModel
@@ -34,8 +31,6 @@ class DeploymentViewModel @Inject constructor(
     @ApplicationContext context: Context,
     private val userManager: UserManager,
     private val projectRepository: ProjectRepository,
-    client: OkHttpClient,
-    gson: Gson,
     @IODispatcher private val ioDispatcher: CoroutineDispatcher
 ) : AndroidViewModel(context as Application) {
     private val eventChannel = Channel<Event>(Channel.BUFFERED)
@@ -83,14 +78,6 @@ class DeploymentViewModel @Inject constructor(
             modelType = ModelType.INT_8
         )
     }
-
-    private val deploymentManager =
-        DeploymentManager(
-            scope = viewModelScope,
-            gson = gson,
-            socketToken = socketToken,
-            client = client
-        )
 
     fun buildOnDeviceModel(
         projectId: Int,
