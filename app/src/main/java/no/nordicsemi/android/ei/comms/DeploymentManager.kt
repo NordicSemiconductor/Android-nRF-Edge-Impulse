@@ -11,7 +11,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.model.DeviceMessage
-import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.SocketToken
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import no.nordicsemi.android.ei.websocket.EiWebSocket
@@ -28,7 +27,7 @@ class DeploymentManager(
     private var deploymentWebSocket: EiWebSocket = EiWebSocket(
         client = client,
         request = Request.Builder()
-            .url("wss://studio.edgeimpulse.com/socket.io/?token=${socketToken.expires}&EIO=3&transport=websocket")
+            .url("wss://studio.edgeimpulse.com/socket.io/?transport=websocket&EIO=3&token=${socketToken.socketToken}")
             .build()
     )
 
@@ -38,7 +37,7 @@ class DeploymentManager(
     init {
         scope.launch { registerToWebSocketStateChanges() }
         scope.launch { registerToWebSocketMessages() }
-        build()
+        connect()
     }
 
     /**
@@ -60,13 +59,6 @@ class DeploymentManager(
         }
     }
 
-    fun build() {
-        scope.launch {
-            //TODO added delay for testing, needs to be removed
-            deploymentWebSocket.connect()
-        }
-    }
-
     private suspend fun registerToWebSocketStateChanges() {
         deploymentWebSocket.stateAsFlow().collect { webSocketState ->
             Log.d("AAAA", "Deployment manager websocket state: $webSocketState")
@@ -75,8 +67,7 @@ class DeploymentManager(
 
     private suspend fun registerToWebSocketMessages() {
         deploymentWebSocket.messageAsFlow().collect { json ->
-            val message = gson.fromJson(json, Message::class.java)
-            Log.d("AAAA", "Received message from WebSocket: $message")
+            Log.d("AAAA", "Received message from WebSocket: $json")
         }
     }
 
