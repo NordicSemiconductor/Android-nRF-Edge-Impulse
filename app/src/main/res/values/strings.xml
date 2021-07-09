@@ -12,4 +12,5 @@
     <string name="something_went_wrong">Something went wrong!</string>
     <string name="title_collected_data">Collected Data</string>
     <string name="empty" />
+    <string name="label_eon_compiler_summary">Same accuracy, up to 50% less memory. Open source.</string>
 </resources>

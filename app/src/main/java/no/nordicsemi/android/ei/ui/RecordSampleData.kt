@@ -365,7 +365,7 @@ fun RecordSampleContent(
 }
 
 @Composable
-private fun ShowDevicesDropdown(
+fun ShowDevicesDropdown(
     connectedDevices: List<Device>,
     onDeviceSelected: (Device) -> Unit,
     onDismiss: () -> Unit,

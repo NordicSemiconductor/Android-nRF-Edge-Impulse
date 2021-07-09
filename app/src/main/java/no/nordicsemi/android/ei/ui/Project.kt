@@ -371,10 +371,12 @@ private fun ProjectContent(
                 val deploymentViewModel: DeploymentViewModel = viewModel(
                     factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
                 )
+                val connectedDevices by remember { viewModel.connectedDevices }
                 Deployment(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(paddingValues = innerPadding)
+                        .padding(paddingValues = innerPadding),
+                    connectedDevices = connectedDevices
                 )
             }
         }

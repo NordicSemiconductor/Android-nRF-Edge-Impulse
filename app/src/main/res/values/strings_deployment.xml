@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="build">Build</string>
+    <string name="label_enable_eon_compiler">Enable Eon Compiler</string>
+</resources>

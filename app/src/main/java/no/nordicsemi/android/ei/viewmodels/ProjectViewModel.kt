@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.comms.CommsManager
+import no.nordicsemi.android.ei.comms.DeploymentManager
 import no.nordicsemi.android.ei.di.*
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Sensor
@@ -103,6 +104,15 @@ class ProjectViewModel @Inject constructor(
         private set
     var selectedFrequency: Number? by mutableStateOf(null)
         private set
+
+
+    private val deploymentManager =
+        DeploymentManager(
+            scope = viewModelScope,
+            gson = gson,
+            socketToken = projectDataRepository.socketToken,
+            client = client
+        )
 
     // ---- Implementation ------------------------------------
     init {
