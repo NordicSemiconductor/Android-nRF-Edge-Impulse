@@ -108,4 +108,13 @@ interface EiService {
         @Path("projectId") projectId: Int,
     ): GetSocketTokenResponse
 
+    //TODO Fix type
+    @Headers("Accept: application/json", "Content-Type: application/json")
+    @POST("api/{projectId}/jobs/build-ondevice-model")
+    suspend fun buildOnDevice(
+        @Header("x-api-key") apiKey: String,
+        @Path("projectId") projectId: Int,
+        @Query("type") type: String = "nordic-thingy53",
+        @Body buildOnDeviceModels: BuildOnDeviceModelRequest,
+    ): BuildOnDeviceModelResponse
 }
