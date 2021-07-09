@@ -43,6 +43,7 @@ import no.nordicsemi.android.ei.ui.layouts.TabTopAppBar
 import no.nordicsemi.android.ei.ui.layouts.isScrollingUp
 import no.nordicsemi.android.ei.util.asMessage
 import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel
+import no.nordicsemi.android.ei.viewmodels.DeploymentViewModel
 import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
 import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Event
@@ -366,8 +367,15 @@ private fun ProjectContent(
                     snackbarHostState = snackbarHostState,
                 )
             }
-            composable(route = BottomNavigationScreen.DEPLOYMENT.route) {
-                Deployment(modifier = Modifier.padding(paddingValues = innerPadding))
+            composable(route = BottomNavigationScreen.DEPLOYMENT.route) { backStackEntry ->
+                val deploymentViewModel: DeploymentViewModel = viewModel(
+                    factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
+                )
+                Deployment(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues = innerPadding)
+                )
             }
         }
     }

@@ -5,6 +5,9 @@ import kotlinx.coroutines.withContext
 import no.nordicsemi.android.ei.di.IODispatcher
 import no.nordicsemi.android.ei.model.DevelopmentKeys
 import no.nordicsemi.android.ei.service.EiService
+import no.nordicsemi.android.ei.service.param.BuildOnDeviceModelRequest
+import no.nordicsemi.android.ei.util.Engine
+import no.nordicsemi.android.ei.util.ModelType
 import javax.inject.Inject
 
 class ProjectRepository @Inject constructor(
@@ -30,6 +33,22 @@ class ProjectRepository @Inject constructor(
             category = category,
             offset = offset,
             limit = limit
+        )
+    }
+
+    suspend fun buildOnDeviceModels(
+        projectId: Int,
+        keys: DevelopmentKeys,
+        engine: Engine,
+        modelType: ModelType
+    ) = withContext(ioDispatcher) {
+        service.buildOnDevice(
+            apiKey = keys.apiKey,
+            projectId = projectId,
+            buildOnDeviceModels = BuildOnDeviceModelRequest(
+                engine = engine.engine,
+                modelType = modelType.modelType
+            )
         )
     }
 }

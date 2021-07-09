@@ -54,10 +54,6 @@ class ProjectViewModel @Inject constructor(
     private val keys
         get() = projectDataRepository.developmentKeys
 
-    /** Socket token for deployment */
-    private val socketToken
-        get() = projectDataRepository.socketToken
-
     /** A map of device managers. */
     var commsManagers = mutableStateMapOf<String, CommsManager>()
         private set
