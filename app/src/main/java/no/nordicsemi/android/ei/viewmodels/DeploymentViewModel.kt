@@ -45,12 +45,6 @@ class DeploymentViewModel @Inject constructor(
     var user: User by mutableStateOf(userDataRepo.user)
         private set
 
-    var isRefreshing: Boolean by mutableStateOf(false)
-        private set
-
-    var isDownloadingDevelopmentKeys: Boolean by mutableStateOf(false)
-        private set
-
     /** The project associated with the View Model. */
     val project
         get() = projectDataRepository.project
