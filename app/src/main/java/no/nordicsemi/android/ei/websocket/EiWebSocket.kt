@@ -26,7 +26,7 @@ class EiWebSocket @Inject constructor(
         )
     private val _message =
         MutableSharedFlow<JsonObject>(
-            extraBufferCapacity = 1,
+            extraBufferCapacity = 10,
             onBufferOverflow = BufferOverflow.DROP_OLDEST
         )
 
@@ -39,7 +39,11 @@ class EiWebSocket @Inject constructor(
 
         override fun onMessage(webSocket: WebSocket, text: String) {
             Log.i("AAAA", "onMessage webSocket: $text")
-            _message.tryEmit(JsonParser.parseString(text).asJsonObject)
+            try {
+                _message.tryEmit(JsonParser.parseString(text).asJsonObject)
+            } catch (e: Exception) {
+
+            }
         }
 
         override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
