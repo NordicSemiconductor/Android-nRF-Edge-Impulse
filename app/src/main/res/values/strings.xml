@@ -13,4 +13,7 @@
     <string name="title_collected_data">Collected Data</string>
     <string name="empty" />
     <string name="label_eon_compiler_summary">Same accuracy, up to 50% less memory. Open source.</string>
+    <string name="title_select_optional_optimizations">Select Optimizations (optional)</string>
+    <string name="label_optimization_performance_summary">This optimization is recommended for best performance</string>
+    <string name="label_logs">Logs</string>
 </resources>

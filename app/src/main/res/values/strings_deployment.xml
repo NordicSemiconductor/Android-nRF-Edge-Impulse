@@ -2,4 +2,9 @@
 <resources>
     <string name="build">Build</string>
     <string name="label_enable_eon_compiler">Enable Eon Compiler</string>
+    <string name="label_deploy_impulse">Deploy your impulse</string>
+    <string name="label_select_device">Select Device</string>
+    <string name="title_available_optimizations">Available optimizations for NN Classifier</string>
+    <string name="label_neural_classifier_quantized_int8">Quantized (int8)</string>
+    <string name="label_neural_classifier_unoptimized_float32">Unoptimized (float32)</string>
 </resources>
