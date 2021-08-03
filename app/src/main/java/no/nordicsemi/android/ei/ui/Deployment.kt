@@ -30,7 +30,6 @@ fun Deployment(connectedDevices: List<Device>) {
     var selectedDevice by remember {
         mutableStateOf(connectedDevices.firstOrNull())
     }
-
     LazyColumn {
         item {
             BuildFirmware(
@@ -42,9 +41,12 @@ fun Deployment(connectedDevices: List<Device>) {
                 }
             )
         }
-
         item {
-            BuildLogs(selectedDevice = selectedDevice)
+            Text(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+                text = stringResource(R.string.label_logs),
+                style = MaterialTheme.typography.h6
+            )
         }
     }
 }
@@ -57,13 +59,11 @@ private fun BuildFirmware(
     onDeviceSelected: (Device) -> Unit
 ) {
 
-    CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice == null) ContentAlpha.disabled else ContentAlpha.high) {
-        Text(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-            text = stringResource(R.string.label_deploy_impulse),
-            style = MaterialTheme.typography.h6
-        )
-    }
+    Text(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+        text = stringResource(R.string.label_deploy_impulse),
+        style = MaterialTheme.typography.h6
+    )
     Surface {
         Column(modifier = Modifier.padding(all = 16.dp)) {
             SelectDevice(
@@ -243,7 +243,7 @@ private fun SelectOptimizations(
                                 selectedNNClassifier =
                                     context.getString(R.string.label_neural_classifier_unoptimized_float32)
                             })
-                        .padding(start = 8.dp, top = 8.dp)
+                        .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
                 )
             }
         }
@@ -257,18 +257,5 @@ private fun SelectOptimizations(
         ) {
             Text(text = stringResource(R.string.build))
         }
-    }
-}
-
-@Composable
-private fun BuildLogs(
-    selectedDevice: Device?
-) {
-    CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice == null) ContentAlpha.disabled else ContentAlpha.high) {
-        Text(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-            text = stringResource(R.string.label_logs),
-            style = MaterialTheme.typography.h6
-        )
     }
 }
