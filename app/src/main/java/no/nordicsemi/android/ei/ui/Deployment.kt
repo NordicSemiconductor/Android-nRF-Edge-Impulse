@@ -1,19 +1,20 @@
 package no.nordicsemi.android.ei.ui
 
-import android.content.Context
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -21,42 +22,62 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.gson.JsonObject
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Device
+import no.nordicsemi.android.ei.util.Engine
+import no.nordicsemi.android.ei.util.ModelType
+import no.nordicsemi.android.ei.viewmodels.DeploymentViewModel
 
 @Composable
-fun Deployment(connectedDevices: List<Device>) {
-    val context = LocalContext.current
+fun Deployment(
+    deploymentViewModel: DeploymentViewModel,
+    connectedDevices: List<Device>,
+    logs: SnapshotStateList<JsonObject>
+) {
     var selectedDevice by remember {
         mutableStateOf(connectedDevices.firstOrNull())
     }
     LazyColumn {
         item {
             BuildFirmware(
-                context = context,
                 connectedDevices = connectedDevices,
                 selectedDevice = selectedDevice,
                 onDeviceSelected = {
                     selectedDevice = it
+                },
+                onBuildFirmware = { engine, modelType ->
+                    deploymentViewModel.buildOnDeviceModel(
+                        engine = engine,
+                        modelType = modelType
+                    )
                 }
             )
         }
-        item {
-            Text(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-                text = stringResource(R.string.label_logs),
-                style = MaterialTheme.typography.h6
-            )
+        logs.takeIf { it.isNotEmpty() }?.let { it ->
+            item {
+                Text(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+                    text = stringResource(R.string.label_logs),
+                    style = MaterialTheme.typography.h6
+                )
+            }
+            items(
+                items = it,
+                key = { }
+            ) {
+                LogRow(jsonObject = it)
+            }
         }
     }
 }
 
 @Composable
 private fun BuildFirmware(
-    context: Context,
     connectedDevices: List<Device>,
     selectedDevice: Device?,
-    onDeviceSelected: (Device) -> Unit
+    onDeviceSelected: (Device) -> Unit,
+    onBuildFirmware: (Engine, ModelType) -> Unit
 ) {
 
     Text(
@@ -71,7 +92,10 @@ private fun BuildFirmware(
                 selectedDevice = selectedDevice,
                 onDeviceSelected = onDeviceSelected
             )
-            SelectOptimizations(context = context, selectedDevice = selectedDevice)
+            SelectOptimizations(
+                selectedDevice = selectedDevice,
+                onBuildFirmware = onBuildFirmware
+            )
         }
     }
 }
@@ -143,11 +167,11 @@ private fun SelectDevice(
 
 @Composable
 private fun SelectOptimizations(
-    context: Context,
-    selectedDevice: Device?
+    selectedDevice: Device?,
+    onBuildFirmware: (Engine, ModelType) -> Unit
 ) {
     var isEonCompilerEnabled by remember { mutableStateOf(false) }
-    var selectedNNClassifier by remember { mutableStateOf("Quantized (int8)") }
+    var selectedNNClassifier by remember { mutableStateOf(ModelType.INT_8) }
 
     Column {
         CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice == null) ContentAlpha.disabled else ContentAlpha.high) {
@@ -195,21 +219,15 @@ private fun SelectOptimizations(
             verticalAlignment = Alignment.CenterVertically
         ) {
             RadioButton(
-                selected = selectedNNClassifier == stringResource(id = R.string.label_neural_classifier_quantized_int8),
-                onClick = {
-                    selectedNNClassifier =
-                        context.getString(R.string.label_neural_classifier_quantized_int8)
-                },
+                selected = selectedNNClassifier == ModelType.INT_8,
+                onClick = { selectedNNClassifier = ModelType.INT_8 },
                 enabled = selectedDevice != null
             )
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(
-                        onClick = {
-                            selectedNNClassifier =
-                                context.getString(R.string.label_neural_classifier_quantized_int8)
-                        })
+                        onClick = { selectedNNClassifier = ModelType.INT_8 })
                     .padding(start = 8.dp)
             ) {
                 CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice == null) ContentAlpha.disabled else ContentAlpha.high) {
@@ -225,11 +243,8 @@ private fun SelectOptimizations(
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             RadioButton(
-                selected = selectedNNClassifier == stringResource(id = R.string.label_neural_classifier_unoptimized_float32),
-                onClick = {
-                    selectedNNClassifier =
-                        context.getString(R.string.label_neural_classifier_unoptimized_float32)
-                },
+                selected = selectedNNClassifier == ModelType.FLOAT_32,
+                onClick = { selectedNNClassifier = ModelType.FLOAT_32 },
                 enabled = selectedDevice != null
             )
             CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice == null) ContentAlpha.disabled else ContentAlpha.high) {
@@ -239,10 +254,7 @@ private fun SelectOptimizations(
                         .fillMaxWidth()
                         .clickable(
                             enabled = selectedDevice != null,
-                            onClick = {
-                                selectedNNClassifier =
-                                    context.getString(R.string.label_neural_classifier_unoptimized_float32)
-                            })
+                            onClick = { selectedNNClassifier = ModelType.FLOAT_32 })
                         .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
                 )
             }
@@ -252,10 +264,27 @@ private fun SelectOptimizations(
             modifier = Modifier
                 .wrapContentWidth()
                 .align(CenterHorizontally),
-            onClick = { /*TODO*/ },
+            onClick = {
+                onBuildFirmware(
+                    if (isEonCompilerEnabled) Engine.TFLITE_EON else Engine.TFLITE,
+                    selectedNNClassifier
+                )
+            },
             enabled = selectedDevice != null
         ) {
             Text(text = stringResource(R.string.build))
         }
+    }
+}
+
+@Composable
+private fun LogRow(jsonObject: JsonObject) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(color = MaterialTheme.colors.surface)
+            .padding(16.dp),
+    ) {
+        Text(text = jsonObject.toString())
     }
 }

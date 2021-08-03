@@ -105,7 +105,6 @@ class ProjectViewModel @Inject constructor(
     var selectedFrequency: Number? by mutableStateOf(null)
         private set
 
-
     private val deploymentManager =
         DeploymentManager(
             scope = viewModelScope,
@@ -113,6 +112,7 @@ class ProjectViewModel @Inject constructor(
             socketToken = projectDataRepository.socketToken,
             client = client
         )
+    val logs = deploymentManager.logs
 
     // ---- Implementation ------------------------------------
     init {

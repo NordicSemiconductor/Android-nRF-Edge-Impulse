@@ -12,11 +12,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.di.*
-import no.nordicsemi.android.ei.model.DevelopmentKeys
 import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.repository.ProjectDataRepository
 import no.nordicsemi.android.ei.repository.ProjectRepository
@@ -70,25 +68,13 @@ class DeploymentViewModel @Inject constructor(
             .get(projectManager.projectComponent!!, ProjectComponentEntryPoint::class.java)
             .projectDataRepository()
 
-    init {
-        buildOnDeviceModel(
-            project.id,
-            keys = keys,
-            engine = Engine.TFLITE_EON,
-            modelType = ModelType.INT_8
-        )
-    }
-
     fun buildOnDeviceModel(
-        projectId: Int,
-        keys: DevelopmentKeys,
         engine: Engine,
         modelType: ModelType
     ) {
         viewModelScope.launch {
-            delay(8000)
             projectRepository.buildOnDeviceModels(
-                projectId = projectId,
+                projectId = project.id,
                 keys = keys,
                 engine = engine,
                 modelType = modelType

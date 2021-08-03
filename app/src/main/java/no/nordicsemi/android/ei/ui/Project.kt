@@ -373,7 +373,9 @@ private fun ProjectContent(
                 )
                 val connectedDevices by remember { viewModel.connectedDevices }
                 Deployment(
-                    connectedDevices = connectedDevices
+                    deploymentViewModel = deploymentViewModel,
+                    connectedDevices = connectedDevices,
+                    logs = viewModel.logs
                 )
             }
         }

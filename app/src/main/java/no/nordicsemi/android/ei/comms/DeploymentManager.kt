@@ -1,18 +1,14 @@
 package no.nordicsemi.android.ei.comms
 
 import android.util.Log
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateListOf
 import com.google.gson.Gson
-import com.google.gson.JsonParser
+import com.google.gson.JsonObject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import no.nordicsemi.android.ei.model.DeviceMessage
 import no.nordicsemi.android.ei.model.SocketToken
-import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import no.nordicsemi.android.ei.websocket.EiWebSocket
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -31,8 +27,8 @@ class DeploymentManager(
             .build()
     )
 
-    /** The device state. */
-    var state by mutableStateOf(DeviceState.IN_RANGE)
+    var logs = mutableStateListOf<JsonObject>()
+        private set
 
     init {
         scope.launch { registerToWebSocketStateChanges() }
@@ -68,25 +64,9 @@ class DeploymentManager(
     private suspend fun registerToWebSocketMessages() {
         deploymentWebSocket.messageAsFlow().collect { json ->
             Log.d("AAAA", "Received message from WebSocket: $json")
+            logs.add(json)
         }
     }
-
-    //TODO sending messages from the phone to the device
-    fun send(deviceMessage: DeviceMessage) {
-        scope.launch {
-            val deviceMessageJson = JsonParser.parseString(gson.toJson(deviceMessage)).asJsonObject
-            deploymentWebSocket.send(deviceMessageJson.get(MESSAGE))
-        }
-    }
-
-    /**
-     * Generates a device message in the format of a Json string with a new line character appended to indicate the end of the message.
-     */
-    private fun generateDeviceMessage(message: DeviceMessage): String = StringBuilder(
-        gson.toJson(
-            message
-        )
-    ).appendLine().toString()
 }
 
 private const val MESSAGE = "message"
