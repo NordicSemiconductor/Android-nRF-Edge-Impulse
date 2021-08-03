@@ -373,9 +373,6 @@ private fun ProjectContent(
                 )
                 val connectedDevices by remember { viewModel.connectedDevices }
                 Deployment(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues = innerPadding),
                     connectedDevices = connectedDevices
                 )
             }
