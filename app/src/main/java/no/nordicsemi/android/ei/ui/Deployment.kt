@@ -45,10 +45,11 @@ fun Deployment(
     }
 
     if (buildState is BuildState.Error) {
+        // TODO confirm error message to be displayed
         showSnackbar(
             snackbarHostState = snackbarHostState,
             coroutineScope = coroutineScope,
-            message = buildState.reason ?: context.getString(R.string.error_unknown)
+            message = "Failed to build firmware " + (buildState.reason ?: context.getString(R.string.error_unknown))
         )
     }
 
@@ -325,3 +326,6 @@ private fun LogRow(buildLog: BuildLog) {
         }
     }
 }
+
+// TODO test regex to display the progress.
+private val regex1 = Regex("\\[(.*?)\\]")
