@@ -2,8 +2,6 @@ package no.nordicsemi.android.ei.websocket
 
 import android.util.Log
 import com.google.gson.JsonElement
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -25,7 +23,7 @@ class EiWebSocket @Inject constructor(
             onBufferOverflow = BufferOverflow.DROP_OLDEST
         )
     private val _message =
-        MutableSharedFlow<JsonObject>(
+        MutableSharedFlow<String>(
             extraBufferCapacity = 10,
             onBufferOverflow = BufferOverflow.DROP_OLDEST
         )
@@ -40,9 +38,9 @@ class EiWebSocket @Inject constructor(
         override fun onMessage(webSocket: WebSocket, text: String) {
             Log.i("AAAA", "onMessage webSocket: $text")
             try {
-                _message.tryEmit(JsonParser.parseString(text).asJsonObject)
+                _message.tryEmit(text)
             } catch (e: Exception) {
-
+                //_message.tryEmit(JsonParser.parseString(regex.replace(text, "")).asJsonObject)
             }
         }
 
@@ -70,7 +68,7 @@ class EiWebSocket @Inject constructor(
     /**
      * Returns the messages received via the WebSocket as flow.
      */
-    fun messageAsFlow(): Flow<JsonObject> = _message
+    fun messageAsFlow(): Flow<String> = _message
 
     /**
      * Connects to EI websocket.

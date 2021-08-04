@@ -373,9 +373,14 @@ private fun ProjectContent(
                 )
                 val connectedDevices by remember { viewModel.connectedDevices }
                 Deployment(
-                    deploymentViewModel = deploymentViewModel,
                     connectedDevices = connectedDevices,
-                    logs = viewModel.logs
+                    logs = viewModel.logs,
+                    onBuildFirmware = { engine, modelType ->
+                        viewModel.buildOnDeviceModel(
+                            engine = engine,
+                            modelType = modelType
+                        )
+                    }
                 )
             }
         }

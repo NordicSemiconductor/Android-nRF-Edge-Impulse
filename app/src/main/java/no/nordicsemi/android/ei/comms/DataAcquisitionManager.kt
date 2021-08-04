@@ -76,6 +76,7 @@ class CommsManager(
             }
         }
     }
+
     private suspend fun registerToWebSocketStateChanges() {
         dataAcquisitionWebSocket.stateAsFlow().collect { webSocketState ->
             when (webSocketState) {
@@ -93,13 +94,13 @@ class CommsManager(
     }
 
     private suspend fun registerToWebSocketMessages() {
-        dataAcquisitionWebSocket.messageAsFlow().collect { json ->
-            val message = gson.fromJson(json, Message::class.java)
-            Log.d("AAAA", "Received message from WebSocket: $message")
-            when (message) {
+        dataAcquisitionWebSocket.messageAsFlow().collect { message ->
+            val json = gson.fromJson(message, Message::class.java)
+            Log.d("AAAA", "Received message from WebSocket: $json")
+            when (json) {
                 is HelloResponse -> {
                     // if the Hello message returned with a success wrap the received response and send it to the device
-                    message.takeIf {
+                    json.takeIf {
                         it.hello
                     }?.let {
                         bleDevice.send(
@@ -128,7 +129,7 @@ class CommsManager(
                         generateDeviceMessage(
                             message = WebSocketMessage(
                                 direction = Direction.RECEIVE,
-                                message = message
+                                message = json
                             )
                         )
                     )

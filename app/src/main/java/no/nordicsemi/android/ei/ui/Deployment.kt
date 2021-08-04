@@ -22,23 +22,22 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.gson.JsonObject
 import no.nordicsemi.android.ei.R
+import no.nordicsemi.android.ei.model.BuildLog
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.util.Engine
 import no.nordicsemi.android.ei.util.ModelType
-import no.nordicsemi.android.ei.viewmodels.DeploymentViewModel
 
 @Composable
 fun Deployment(
-    deploymentViewModel: DeploymentViewModel,
     connectedDevices: List<Device>,
-    logs: SnapshotStateList<JsonObject>
+    logs: SnapshotStateList<BuildLog>,
+    onBuildFirmware: (Engine, ModelType) -> Unit
 ) {
     var selectedDevice by remember {
         mutableStateOf(connectedDevices.firstOrNull())
     }
-    LazyColumn {
+    LazyColumn(contentPadding = PaddingValues(bottom = 56.dp)) {
         item {
             BuildFirmware(
                 connectedDevices = connectedDevices,
@@ -46,15 +45,10 @@ fun Deployment(
                 onDeviceSelected = {
                     selectedDevice = it
                 },
-                onBuildFirmware = { engine, modelType ->
-                    deploymentViewModel.buildOnDeviceModel(
-                        engine = engine,
-                        modelType = modelType
-                    )
-                }
+                onBuildFirmware = onBuildFirmware
             )
         }
-        logs.takeIf { it.isNotEmpty() }?.let { it ->
+        logs.takeIf { it.isNotEmpty() }?.let { notEmptyLogs ->
             item {
                 Text(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
@@ -62,11 +56,9 @@ fun Deployment(
                     style = MaterialTheme.typography.h6
                 )
             }
-            items(
-                items = it,
-                key = { }
-            ) {
-                LogRow(jsonObject = it)
+            items(items = notEmptyLogs) { log ->
+                LogRow(buildLog = log)
+                Divider()
             }
         }
     }
@@ -278,13 +270,20 @@ private fun SelectOptimizations(
 }
 
 @Composable
-private fun LogRow(jsonObject: JsonObject) {
+private fun LogRow(buildLog: BuildLog) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(color = MaterialTheme.colors.surface)
             .padding(16.dp),
     ) {
-        Text(text = jsonObject.toString())
+        when (buildLog) {
+            is BuildLog.Data -> {
+                Text(text = buildLog.data.replace("\n", ""))
+            }
+            is BuildLog.Finished -> {
+                Text(text = buildLog.success.takeIf { it }?.let { "Success" } ?: "Failed")
+            }
+        }
     }
 }

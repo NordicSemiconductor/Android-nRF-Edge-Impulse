@@ -13,17 +13,21 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.comms.CommsManager
 import no.nordicsemi.android.ei.comms.DeploymentManager
 import no.nordicsemi.android.ei.di.*
+import no.nordicsemi.android.ei.model.BuildLog
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Sensor
 import no.nordicsemi.android.ei.repository.ProjectDataRepository
 import no.nordicsemi.android.ei.repository.ProjectRepository
 import no.nordicsemi.android.ei.repository.UserDataRepository
+import no.nordicsemi.android.ei.util.Engine
+import no.nordicsemi.android.ei.util.ModelType
 import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.viewmodels.event.Event
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
@@ -104,15 +108,8 @@ class ProjectViewModel @Inject constructor(
         private set
     var selectedFrequency: Number? by mutableStateOf(null)
         private set
-
-    private val deploymentManager =
-        DeploymentManager(
-            scope = viewModelScope,
-            gson = gson,
-            socketToken = projectDataRepository.socketToken,
-            client = client
-        )
-    val logs = deploymentManager.logs
+    var logs = mutableStateListOf<BuildLog>()
+        private set
 
     // ---- Implementation ------------------------------------
     init {
@@ -215,6 +212,40 @@ class ProjectViewModel @Inject constructor(
     fun disconnect(device: DiscoveredBluetoothDevice) {
         commsManagers[device.deviceId]?.disconnect()
         commsManagers.remove(device.deviceId)
+    }
+
+    fun buildOnDeviceModel(
+        engine: Engine,
+        modelType: ModelType
+    ) {
+        val handler = CoroutineExceptionHandler { _, throwable ->
+            viewModelScope.launch {
+                eventChannel
+                    .send(Event.Error(throwable = throwable))
+            }
+        }
+        viewModelScope.launch(handler) {
+            projectRepository.buildOnDeviceModels(
+                projectId = project.id,
+                keys = keys,
+                engine = engine,
+                modelType = modelType
+            ).let { response ->
+                guard(response.success) {
+                    throw Throwable(response.error)
+                }
+                logs.clear()
+                DeploymentManager(
+                    scope = viewModelScope,
+                    gson = gson,
+                    jobId = response.id,
+                    socketToken = projectDataRepository.socketToken,
+                    client = client
+                ).logsAsFlow().collect {
+                    logs.add(it)
+                }
+            }
+        }
     }
 }
 
