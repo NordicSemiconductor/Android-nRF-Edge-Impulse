@@ -38,4 +38,44 @@ sealed class Message {
         val sample: Boolean,
         val error: String? = null
     ) : Message()
+
+    data class SampleStarted(
+        val sampleStarted: Boolean
+    ) : Message()
+
+    data class SampleUploading(
+        val sampleUploading: Boolean
+    ) : Message()
+
+    data class SampleFinished(
+        val sampleFinished: Boolean
+    ) : Message()
+
+    /*sealed class Sample : Message() {
+        data class Request(
+            val label: String,
+            val length: Int,
+            val path: String = "/api/training/data",
+            val hmacKey: String,
+            val interval: Int,
+            val sensor: String
+        ) : Message()
+
+        data class Response(
+            val sample: Boolean,
+            val error: String? = null
+        ) : Message()
+
+        data class Started(
+            val sampleStarted: Boolean
+        ) : Message()
+
+        data class Uploading(
+            val sampleUploading: Boolean
+        ) : Message()
+
+        data class Finished(
+            val sampleFinished: Boolean
+        ) : Message()
+    }*/
 }

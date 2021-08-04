@@ -13,14 +13,12 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.comms.CommsManager
 import no.nordicsemi.android.ei.comms.DeploymentManager
 import no.nordicsemi.android.ei.di.*
-import no.nordicsemi.android.ei.model.BuildLog
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Sensor
 import no.nordicsemi.android.ei.repository.ProjectDataRepository
@@ -108,12 +106,24 @@ class ProjectViewModel @Inject constructor(
         private set
     var selectedFrequency: Number? by mutableStateOf(null)
         private set
-    var logs = mutableStateListOf<BuildLog>()
-        private set
+
+    /** Creates a deployment manager */
+    private var deploymentManager = DeploymentManager(
+        scope = viewModelScope,
+        gson = gson,
+        jobId = 0,
+        socketToken = projectDataRepository.socketToken,
+        client = client
+    )
 
     /** Whether a build is in progress. */
-    var isBuilding: Boolean by mutableStateOf(false)
-        private set
+    var buildState = derivedStateOf {
+        deploymentManager.buildState
+    }
+
+    var logs = derivedStateOf {
+        deploymentManager.logs
+    }
 
     // ---- Implementation ------------------------------------
     init {
@@ -222,39 +232,14 @@ class ProjectViewModel @Inject constructor(
         engine: Engine,
         modelType: ModelType
     ) {
-        isBuilding = true
-        val handler = CoroutineExceptionHandler { _, throwable ->
-            viewModelScope.launch {
-                eventChannel
-                    .send(Event.Error(throwable = throwable))
-                    .also { isBuilding = false }
-            }
-        }
-        viewModelScope.launch(handler) {
+        deploymentManager.build(buildOnDeviceModel = {
             projectRepository.buildOnDeviceModels(
                 projectId = project.id,
                 keys = keys,
                 engine = engine,
                 modelType = modelType
-            ).let { response ->
-                guard(response.success) {
-                    throw Throwable(response.error)
-                }
-                logs.clear()
-                DeploymentManager(
-                    scope = viewModelScope,
-                    gson = gson,
-                    jobId = response.id,
-                    socketToken = projectDataRepository.socketToken,
-                    client = client
-                ).logsAsFlow().collect {
-                    logs.add(it)
-                    if (it is BuildLog.Finished) {
-                        isBuilding = false
-                    }
-                }
-            }
-        }
+            )
+        })
     }
 }
 

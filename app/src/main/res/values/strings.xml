@@ -8,7 +8,6 @@
     <string name="name_edge_impulse">Edge Impulse</string>
 
     <string name="error_generic">Error: %s!</string>
-    <string name="error_Unknown">Unknown error!</string>
     <string name="something_went_wrong">Something went wrong!</string>
     <string name="title_collected_data">Collected Data</string>
     <string name="empty" />

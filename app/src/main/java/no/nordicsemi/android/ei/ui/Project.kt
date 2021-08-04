@@ -41,12 +41,11 @@ import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ui.layouts.CollapsibleFloatingActionButton
 import no.nordicsemi.android.ei.ui.layouts.TabTopAppBar
 import no.nordicsemi.android.ei.ui.layouts.isScrollingUp
-import no.nordicsemi.android.ei.util.asMessage
 import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel
-import no.nordicsemi.android.ei.viewmodels.DeploymentViewModel
 import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
 import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Event
+import java.net.UnknownHostException
 import java.util.*
 
 @Composable
@@ -280,16 +279,17 @@ private fun ProjectContent(
 
     LocalLifecycleOwner.current.lifecycleScope.launchWhenStarted {
         viewModel.eventFlow.runCatching {
-            this.collect {
-                when (it) {
+            this.collect { event ->
+                when (event) {
                     is Event.Error -> {
                         showSnackbar(
                             coroutineScope = scope,
                             snackbarHostState = snackbarHostState,
-                            message = it.throwable.asMessage(
-                                context,
-                                context.getString(R.string.error_refreshing_failed)
-                            )
+                            message = when (event.throwable) {
+                                is UnknownHostException -> context.getString(R.string.error_no_internet)
+                                else -> event.throwable.localizedMessage
+                                    ?: context.getString(R.string.error_refreshing_failed)
+                            }
                         )
                     }
                     else -> {
@@ -368,21 +368,20 @@ private fun ProjectContent(
                 )
             }
             composable(route = BottomNavigationScreen.DEPLOYMENT.route) { backStackEntry ->
-                val deploymentViewModel: DeploymentViewModel = viewModel(
-                    factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
-                )
                 val connectedDevices by remember { viewModel.connectedDevices }
+                val logs by remember { viewModel.logs }
+                val buildState by remember { viewModel.buildState }
                 Deployment(
+                    snackbarHostState = snackbarHostState,
                     connectedDevices = connectedDevices,
-                    logs = viewModel.logs,
-                    isBuilding = viewModel.isBuilding,
-                    onBuildFirmware = { engine, modelType ->
-                        viewModel.buildOnDeviceModel(
-                            engine = engine,
-                            modelType = modelType
-                        )
-                    }
-                )
+                    logs = logs,
+                    buildState = buildState
+                ) { engine, modelType ->
+                    viewModel.buildOnDeviceModel(
+                        engine = engine,
+                        modelType = modelType
+                    )
+                }
             }
         }
     }
