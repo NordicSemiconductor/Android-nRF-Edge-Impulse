@@ -13,7 +13,6 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -32,6 +31,7 @@ import no.nordicsemi.android.ei.util.ModelType
 fun Deployment(
     connectedDevices: List<Device>,
     logs: SnapshotStateList<BuildLog>,
+    isBuilding: Boolean,
     onBuildFirmware: (Engine, ModelType) -> Unit
 ) {
     var selectedDevice by remember {
@@ -42,6 +42,7 @@ fun Deployment(
             BuildFirmware(
                 connectedDevices = connectedDevices,
                 selectedDevice = selectedDevice,
+                isBuilding = isBuilding,
                 onDeviceSelected = {
                     selectedDevice = it
                 },
@@ -50,11 +51,25 @@ fun Deployment(
         }
         logs.takeIf { it.isNotEmpty() }?.let { notEmptyLogs ->
             item {
-                Text(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-                    text = stringResource(R.string.label_logs),
-                    style = MaterialTheme.typography.h6
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        modifier = Modifier
+                            .weight(1.0f),
+                        text = stringResource(R.string.label_logs),
+                        style = MaterialTheme.typography.h6
+                    )
+                    if (isBuilding) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .align(Alignment.CenterVertically)
+                        )
+                    }
+                }
             }
             items(items = notEmptyLogs) { log ->
                 LogRow(buildLog = log)
@@ -68,6 +83,7 @@ fun Deployment(
 private fun BuildFirmware(
     connectedDevices: List<Device>,
     selectedDevice: Device?,
+    isBuilding: Boolean,
     onDeviceSelected: (Device) -> Unit,
     onBuildFirmware: (Engine, ModelType) -> Unit
 ) {
@@ -78,14 +94,19 @@ private fun BuildFirmware(
         style = MaterialTheme.typography.h6
     )
     Surface {
-        Column(modifier = Modifier.padding(all = 16.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(all = 16.dp)
+        ) {
             SelectDevice(
                 connectedDevices = connectedDevices,
                 selectedDevice = selectedDevice,
+                isBuilding = isBuilding,
                 onDeviceSelected = onDeviceSelected
             )
             SelectOptimizations(
                 selectedDevice = selectedDevice,
+                isBuilding = isBuilding,
                 onBuildFirmware = onBuildFirmware
             )
         }
@@ -96,11 +117,12 @@ private fun BuildFirmware(
 private fun SelectDevice(
     connectedDevices: List<Device>,
     selectedDevice: Device?,
+    isBuilding: Boolean,
     onDeviceSelected: (Device) -> Unit
 ) {
     var isDevicesMenuExpanded by remember { mutableStateOf(false) }
 
-    CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice == null) ContentAlpha.disabled else ContentAlpha.high) {
+    CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice != null && !isBuilding) ContentAlpha.high else ContentAlpha.disabled) {
         Text(
             text = stringResource(R.string.label_select_device),
             style = TextStyle(fontSize = 18.sp),
@@ -113,7 +135,7 @@ private fun SelectDevice(
             .padding(bottom = 16.dp),
         value = selectedDevice?.name ?: stringResource(id = R.string.empty),
         onValueChange = { },
-        enabled = connectedDevices.isNotEmpty(),
+        enabled = connectedDevices.isNotEmpty() && !isBuilding,
         readOnly = true,
         label = {
             Text(text = stringResource(R.string.label_device))
@@ -160,13 +182,14 @@ private fun SelectDevice(
 @Composable
 private fun SelectOptimizations(
     selectedDevice: Device?,
+    isBuilding: Boolean,
     onBuildFirmware: (Engine, ModelType) -> Unit
 ) {
     var isEonCompilerEnabled by remember { mutableStateOf(false) }
     var selectedNNClassifier by remember { mutableStateOf(ModelType.INT_8) }
 
     Column {
-        CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice == null) ContentAlpha.disabled else ContentAlpha.high) {
+        CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice != null && !isBuilding) ContentAlpha.high else ContentAlpha.disabled) {
             Text(
                 text = stringResource(R.string.title_select_optional_optimizations),
                 style = TextStyle(fontSize = 18.sp),
@@ -180,7 +203,7 @@ private fun SelectOptimizations(
                 .padding(bottom = 16.dp)
         ) {
             Column {
-                CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice == null) ContentAlpha.disabled else ContentAlpha.high) {
+                CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice != null && !isBuilding) ContentAlpha.high else ContentAlpha.disabled) {
                     Text(
                         text = stringResource(R.string.label_enable_eon_compiler)
                     )
@@ -200,12 +223,12 @@ private fun SelectOptimizations(
                 onCheckedChange = { isEonCompilerEnabled = it }
             )
         }
-        Text(
-            modifier = Modifier
-                .alpha(if (selectedDevice == null) ContentAlpha.disabled else ContentAlpha.high),
-            text = stringResource(R.string.title_available_optimizations),
-            style = TextStyle(fontSize = 18.sp)
-        )
+        CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice != null && !isBuilding) ContentAlpha.high else ContentAlpha.disabled) {
+            Text(
+                text = stringResource(R.string.title_available_optimizations),
+                style = TextStyle(fontSize = 18.sp)
+            )
+        }
         Row(
             modifier = Modifier.padding(top = 8.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -213,7 +236,7 @@ private fun SelectOptimizations(
             RadioButton(
                 selected = selectedNNClassifier == ModelType.INT_8,
                 onClick = { selectedNNClassifier = ModelType.INT_8 },
-                enabled = selectedDevice != null
+                enabled = selectedDevice != null && !isBuilding
             )
             Column(
                 modifier = Modifier
@@ -222,7 +245,7 @@ private fun SelectOptimizations(
                         onClick = { selectedNNClassifier = ModelType.INT_8 })
                     .padding(start = 8.dp)
             ) {
-                CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice == null) ContentAlpha.disabled else ContentAlpha.high) {
+                CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice != null && !isBuilding) ContentAlpha.high else ContentAlpha.disabled) {
                     Text(
                         text = AnnotatedString(text = stringResource(R.string.label_neural_classifier_quantized_int8))
                     )
@@ -237,9 +260,9 @@ private fun SelectOptimizations(
             RadioButton(
                 selected = selectedNNClassifier == ModelType.FLOAT_32,
                 onClick = { selectedNNClassifier = ModelType.FLOAT_32 },
-                enabled = selectedDevice != null
+                enabled = selectedDevice != null && !isBuilding
             )
-            CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice == null) ContentAlpha.disabled else ContentAlpha.high) {
+            CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice != null && !isBuilding) ContentAlpha.high else ContentAlpha.disabled) {
                 Text(
                     text = AnnotatedString(text = stringResource(R.string.label_neural_classifier_unoptimized_float32)),
                     modifier = Modifier
@@ -262,7 +285,7 @@ private fun SelectOptimizations(
                     selectedNNClassifier
                 )
             },
-            enabled = selectedDevice != null
+            enabled = selectedDevice != null && !isBuilding
         ) {
             Text(text = stringResource(R.string.build))
         }

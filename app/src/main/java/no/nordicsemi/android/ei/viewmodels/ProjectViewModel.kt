@@ -111,6 +111,10 @@ class ProjectViewModel @Inject constructor(
     var logs = mutableStateListOf<BuildLog>()
         private set
 
+    /** Whether a build is in progress. */
+    var isBuilding: Boolean by mutableStateOf(false)
+        private set
+
     // ---- Implementation ------------------------------------
     init {
         // When the view model is created, load the configured devices from the service.
@@ -218,10 +222,12 @@ class ProjectViewModel @Inject constructor(
         engine: Engine,
         modelType: ModelType
     ) {
+        isBuilding = true
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope.launch {
                 eventChannel
                     .send(Event.Error(throwable = throwable))
+                    .also { isBuilding = false }
             }
         }
         viewModelScope.launch(handler) {
@@ -243,6 +249,9 @@ class ProjectViewModel @Inject constructor(
                     client = client
                 ).logsAsFlow().collect {
                     logs.add(it)
+                    if (it is BuildLog.Finished) {
+                        isBuilding = false
+                    }
                 }
             }
         }

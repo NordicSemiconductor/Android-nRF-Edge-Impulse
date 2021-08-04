@@ -375,6 +375,7 @@ private fun ProjectContent(
                 Deployment(
                     connectedDevices = connectedDevices,
                     logs = viewModel.logs,
+                    isBuilding = viewModel.isBuilding,
                     onBuildFirmware = { engine, modelType ->
                         viewModel.buildOnDeviceModel(
                             engine = engine,
