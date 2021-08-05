@@ -1,6 +1,5 @@
 package no.nordicsemi.android.ei.comms
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -35,7 +34,8 @@ class DeploymentManager(
             .url("wss://studio.edgeimpulse.com/socket.io/?transport=websocket&EIO=3&token=${socketToken.socketToken}")
             .build()
     )
-    var buildState by mutableStateOf<BuildState>(BuildState.Finished)
+
+    var buildState by mutableStateOf<BuildState>(BuildState.Unknown)
         private set
     var logs = mutableStateListOf<BuildLog>()
         private set
@@ -43,22 +43,6 @@ class DeploymentManager(
     init {
         scope.launch { registerToWebSocketStateChanges() }
         scope.launch { registerToWebSocketMessages() }
-    }
-
-    fun build(buildOnDeviceModel: suspend () -> BuildOnDeviceModelResponse) {
-        // Establish a socket connection right before calling build to avoid timeout
-        connect()
-        scope.launch {
-            buildState = BuildState.Started
-            buildOnDeviceModel().let { response ->
-                guard(response.success) {
-                    // Disconnect the websocket in case the build command fails
-                    disconnect()
-                    throw Throwable(response.error)
-                }
-                jobId = response.id
-            }
-        }
     }
 
     /**
@@ -84,7 +68,6 @@ class DeploymentManager(
         deploymentWebSocket.stateAsFlow().collect { webSocketState ->
             when (webSocketState) {
                 is WebSocketState.Closed -> {
-                    Log.d("AAAA", "Did we get a close?")
                     buildState = BuildState.Finished
                 }
                 is WebSocketState.Failed -> {
@@ -136,6 +119,37 @@ class DeploymentManager(
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Calls buildOnDeviceModel api on the Edge impulse backend
+     * @param buildOnDeviceModel buildOnDeviceModel API call as a suspending lambda.
+     */
+    fun build(buildOnDeviceModel: suspend () -> BuildOnDeviceModelResponse) {
+        // Establish a socket connection right before calling build to avoid timeout
+        connect()
+        scope.launch {
+            buildState = BuildState.Started
+            buildOnDeviceModel().let { response ->
+                guard(response.success) {
+                    // Disconnect the websocket in case the build command fails
+                    disconnect()
+                    throw Throwable(response.error)
+                }
+                jobId = response.id
+            }
+        }
+    }
+
+    /**
+     * Calls downbloadBuild api on the Edge impulse backend
+     * @param downloadBuild downloadBuild API call as a suspending lambda.
+     */
+    fun downloadBuild(downloadBuild: suspend () -> Unit) {
+        scope.launch {
+            buildState = BuildState.Started
+            downloadBuild()
         }
     }
 }

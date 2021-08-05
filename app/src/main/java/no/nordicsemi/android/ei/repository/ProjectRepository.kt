@@ -46,9 +46,21 @@ class ProjectRepository @Inject constructor(
             apiKey = keys.apiKey,
             projectId = projectId,
             buildOnDeviceModels = BuildOnDeviceModelRequest(
-                engine = engine.engine,
-                modelType = modelType.modelType
+                engine = engine.engine/*,
+                modelType = modelType.modelType*/
             )
+        )
+    }
+
+    suspend fun downloadBuild(
+        projectId: Int,
+        keys: DevelopmentKeys,
+        modelType: ModelType
+    ) = withContext(ioDispatcher) {
+        service.downloadBuild(
+            apiKey = keys.apiKey,
+            projectId = projectId,
+            modelType = modelType.modelType,
         )
     }
 }

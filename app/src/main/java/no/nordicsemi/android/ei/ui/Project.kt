@@ -375,13 +375,17 @@ private fun ProjectContent(
                     snackbarHostState = snackbarHostState,
                     connectedDevices = connectedDevices,
                     logs = logs,
-                    buildState = buildState
-                ) { engine, modelType ->
-                    viewModel.buildOnDeviceModel(
-                        engine = engine,
-                        modelType = modelType
-                    )
-                }
+                    buildState = buildState,
+                    onBuildFirmware = { engine, modelType ->
+                        viewModel.buildOnDeviceModel(
+                            engine = engine,
+                            modelType = modelType
+                        )
+                    },
+                    onFirmwareDownload = {
+                        viewModel.downloadBuild(modelType = it)
+                    }
+                )
             }
         }
     }

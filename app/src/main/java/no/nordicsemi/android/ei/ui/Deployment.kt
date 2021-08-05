@@ -9,6 +9,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
@@ -36,21 +37,33 @@ fun Deployment(
     connectedDevices: List<Device>,
     logs: SnapshotStateList<BuildLog>,
     buildState: BuildState,
-    onBuildFirmware: (Engine, ModelType) -> Unit
+    onBuildFirmware: (Engine, ModelType) -> Unit,
+    onFirmwareDownload: (ModelType) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     var selectedDevice by remember {
         mutableStateOf(connectedDevices.firstOrNull())
     }
+    var modelType by rememberSaveable { mutableStateOf(ModelType.INT_8) }
 
-    if (buildState is BuildState.Error) {
-        // TODO confirm error message to be displayed
-        showSnackbar(
-            snackbarHostState = snackbarHostState,
-            coroutineScope = coroutineScope,
-            message = "Failed to build firmware " + (buildState.reason ?: context.getString(R.string.error_unknown))
-        )
+    when (buildState) {
+        is BuildState.Error -> {
+            // TODO confirm error message to be displayed
+            showSnackbar(
+                snackbarHostState = snackbarHostState,
+                coroutineScope = coroutineScope,
+                message = "Failed to build firmware " + (buildState.reason
+                    ?: context.getString(R.string.error_unknown))
+            )
+        }
+        is BuildState.Finished -> {
+            // TODO unable to test with failing builds
+            // Let's start downloading when the Build finishes.
+            onFirmwareDownload(modelType)
+        }
+        else -> {
+        }
     }
 
     LazyColumn(contentPadding = PaddingValues(bottom = 56.dp)) {
@@ -58,10 +71,12 @@ fun Deployment(
             BuildFirmware(
                 connectedDevices = connectedDevices,
                 selectedDevice = selectedDevice,
-                buildState = buildState,
                 onDeviceSelected = {
                     selectedDevice = it
                 },
+                modelType = modelType,
+                onModelTypeSelected = { modelType = it },
+                buildState = buildState,
                 onBuildFirmware = onBuildFirmware
             )
         }
@@ -99,11 +114,12 @@ fun Deployment(
 private fun BuildFirmware(
     connectedDevices: List<Device>,
     selectedDevice: Device?,
-    buildState: BuildState,
     onDeviceSelected: (Device) -> Unit,
+    modelType: ModelType,
+    onModelTypeSelected: (ModelType) -> Unit,
+    buildState: BuildState,
     onBuildFirmware: (Engine, ModelType) -> Unit
 ) {
-
     Text(
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
         text = stringResource(R.string.label_deploy_impulse),
@@ -122,6 +138,8 @@ private fun BuildFirmware(
             )
             SelectOptimizations(
                 selectedDevice = selectedDevice,
+                modelType = modelType,
+                onModelTypeSelected = onModelTypeSelected,
                 buildState = buildState,
                 onBuildFirmware = onBuildFirmware
             )
@@ -198,12 +216,12 @@ private fun SelectDevice(
 @Composable
 private fun SelectOptimizations(
     selectedDevice: Device?,
+    modelType: ModelType,
+    onModelTypeSelected: (ModelType) -> Unit,
     buildState: BuildState,
     onBuildFirmware: (Engine, ModelType) -> Unit
 ) {
-    var isEonCompilerEnabled by remember { mutableStateOf(false) }
-    var selectedNNClassifier by remember { mutableStateOf(ModelType.INT_8) }
-
+    var engine by rememberSaveable { mutableStateOf(Engine.TFLITE_EON) }
     Column {
         CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice != null && buildState != BuildState.Started) ContentAlpha.high else ContentAlpha.disabled) {
             Text(
@@ -230,13 +248,18 @@ private fun SelectOptimizations(
                 }
             }
             Switch(
-                checked = isEonCompilerEnabled,
+                checked = engine == Engine.TFLITE_EON,
                 modifier = Modifier
                     .weight(1.0f)
                     .padding(start = 8.dp)
                     .align(Alignment.CenterVertically),
                 enabled = selectedDevice != null,
-                onCheckedChange = { isEonCompilerEnabled = it }
+                onCheckedChange = { checked ->
+                    engine = when (checked) {
+                        true -> Engine.TFLITE_EON
+                        false -> Engine.TFLITE
+                    }
+                }
             )
         }
         CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice != null && buildState != BuildState.Started) ContentAlpha.high else ContentAlpha.disabled) {
@@ -250,15 +273,15 @@ private fun SelectOptimizations(
             verticalAlignment = Alignment.CenterVertically
         ) {
             RadioButton(
-                selected = selectedNNClassifier == ModelType.INT_8,
-                onClick = { selectedNNClassifier = ModelType.INT_8 },
+                selected = modelType == ModelType.INT_8,
+                onClick = { onModelTypeSelected(modelType) },
                 enabled = selectedDevice != null && buildState != BuildState.Started
             )
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(
-                        onClick = { selectedNNClassifier = ModelType.INT_8 })
+                        onClick = { onModelTypeSelected(modelType) })
                     .padding(start = 8.dp)
             ) {
                 CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice != null && buildState != BuildState.Started) ContentAlpha.high else ContentAlpha.disabled) {
@@ -274,8 +297,8 @@ private fun SelectOptimizations(
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             RadioButton(
-                selected = selectedNNClassifier == ModelType.FLOAT_32,
-                onClick = { selectedNNClassifier = ModelType.FLOAT_32 },
+                selected = modelType == ModelType.FLOAT_32,
+                onClick = { onModelTypeSelected(modelType) },
                 enabled = selectedDevice != null && buildState != BuildState.Started
             )
             CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice != null && buildState != BuildState.Started) ContentAlpha.high else ContentAlpha.disabled) {
@@ -285,7 +308,7 @@ private fun SelectOptimizations(
                         .fillMaxWidth()
                         .clickable(
                             enabled = selectedDevice != null,
-                            onClick = { selectedNNClassifier = ModelType.FLOAT_32 })
+                            onClick = { onModelTypeSelected(modelType) })
                         .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
                 )
             }
@@ -297,8 +320,8 @@ private fun SelectOptimizations(
                 .align(CenterHorizontally),
             onClick = {
                 onBuildFirmware(
-                    if (isEonCompilerEnabled) Engine.TFLITE_EON else Engine.TFLITE,
-                    selectedNNClassifier
+                    engine,
+                    modelType
                 )
             },
             enabled = selectedDevice != null && buildState != BuildState.Started

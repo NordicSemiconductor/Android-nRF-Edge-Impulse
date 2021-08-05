@@ -241,5 +241,15 @@ class ProjectViewModel @Inject constructor(
             )
         })
     }
+
+    fun downloadBuild(modelType: ModelType) {
+        deploymentManager.downloadBuild(downloadBuild = {
+            projectRepository.downloadBuild(
+                projectId = project.id,
+                keys = keys,
+                modelType = modelType
+            )
+        })
+    }
 }
 
