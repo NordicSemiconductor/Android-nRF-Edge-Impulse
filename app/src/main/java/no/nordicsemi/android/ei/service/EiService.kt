@@ -117,7 +117,8 @@ interface EiService {
         @Body buildOnDeviceModels: BuildOnDeviceModelRequest,
     ): BuildOnDeviceModelResponse
 
-
+    // TODO needs testing
+    @Streaming
     @Headers("Accept: application/zip")
     @GET("api/{projectId}/deployment/download")
     suspend fun downloadBuild(
