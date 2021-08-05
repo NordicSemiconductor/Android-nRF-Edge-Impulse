@@ -108,7 +108,6 @@ interface EiService {
         @Path("projectId") projectId: Int,
     ): GetSocketTokenResponse
 
-    //TODO Fix type
     @Headers("Accept: application/json", "Content-Type: application/json")
     @POST("api/{projectId}/jobs/build-ondevice-model")
     suspend fun buildOnDevice(
@@ -117,4 +116,14 @@ interface EiService {
         @Query("type") type: String = "nordic-thingy53",
         @Body buildOnDeviceModels: BuildOnDeviceModelRequest,
     ): BuildOnDeviceModelResponse
+
+
+    @Headers("Accept: application/zip")
+    @GET("api/{projectId}/deployment/download")
+    suspend fun downloadBuild(
+        @Header("x-api-key") apiKey: String,
+        @Path("projectId") projectId: Int,
+        @Query("type") type: String = "nordic-thingy53",
+        @Query("modelType") modelType: String,
+    )
 }
