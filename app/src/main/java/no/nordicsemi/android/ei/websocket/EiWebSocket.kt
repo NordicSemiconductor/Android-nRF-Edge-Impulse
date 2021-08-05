@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import no.nordicsemi.android.ei.websocket.WebSocketState.*
 import okhttp3.*
+import java.util.*
 import javax.inject.Inject
 
 /**
@@ -28,6 +29,12 @@ class EiWebSocket @Inject constructor(
             onBufferOverflow = BufferOverflow.DROP_OLDEST
         )
 
+    private val pingTask = object : TimerTask() {
+        override fun run() {
+            webSocket?.send("2")
+        }
+    }
+
     private val webSocketListener = object : WebSocketListener() {
 
         override fun onOpen(webSocket: WebSocket, response: Response) {
@@ -41,6 +48,7 @@ class EiWebSocket @Inject constructor(
         }
 
         override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+            pingTask.cancel()
             Log.i("AAAA", "onClosing webSocket: $reason ($code)")
             _webSocketState.tryEmit(Closing(code = code, reason = reason))
         }
@@ -90,5 +98,21 @@ class EiWebSocket @Inject constructor(
     fun disconnect() {
         Log.i("AAAA", "Disconnecting from webSocket")
         webSocket?.close(WebSocketStatus.NORMAL_CLOSURE.code, "Finished")
+    }
+
+    /**
+     * Starts pinging every 20 seconds. Note this is only to be used with the Deployment Manager,
+     * hence should not be used in the DataAcquisitionManager
+     */
+    fun startPinging() {
+        Timer().scheduleAtFixedRate(pingTask, 20000, 20000)
+    }
+
+    /**
+     * Stops pinging. Note this is only to be used with the Deployment Manager,
+     * hence should not be used in the DataAcquisitionManager
+     */
+    fun stopPinging() {
+        pingTask.cancel()
     }
 }

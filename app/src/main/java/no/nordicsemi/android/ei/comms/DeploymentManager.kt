@@ -67,13 +67,22 @@ class DeploymentManager(
     private suspend fun registerToWebSocketStateChanges() {
         deploymentWebSocket.stateAsFlow().collect { webSocketState ->
             when (webSocketState) {
+                is WebSocketState.Open -> {
+                    // We need to start sending pings for the deployment websocket.
+                    // NOTE: This is is not needed in the DataAcquisitionWebsocket.
+                    deploymentWebSocket.startPinging()
+                }
+                is WebSocketState.Closing -> {
+                    // We need to stop pinging when the WebSocket is closing.
+                    deploymentWebSocket.stopPinging()
+                }
                 is WebSocketState.Closed -> {
                     buildState = BuildState.Finished
                 }
                 is WebSocketState.Failed -> {
+                    // We need to stop pinging when the WebSocket throws an error.
+                    deploymentWebSocket.stopPinging()
                     buildState = BuildState.Error(webSocketState.throwable.message)
-                }
-                else -> {
                 }
             }
         }
