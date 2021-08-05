@@ -181,13 +181,28 @@ class CommsManager(
                     is WebSocketMessage -> {
                         when (deviceMessage.message) {
                             is Hello -> {
-                                deviceMessage.message.deviceId = bleDevice.device.address
-                                dataAcquisitionWebSocket.send(
-                                    gson.toJsonTree(
-                                        deviceMessage.message,
-                                        Message::class.java
+                                // Let's confirm if
+                                deviceMessage.message.apiKey.takeIf { apiKey ->
+                                    apiKey.isNotEmpty() && apiKey != developmentKeys.apiKey
+                                }?.let {
+                                    bleDevice.send(
+                                        generateDeviceMessage(
+                                            message = ConfigureMessage(
+                                                message = Configure(
+                                                    apiKey = developmentKeys.apiKey
+                                                )
+                                            )
+                                        )
                                     )
-                                )
+                                } ?: run {
+                                    deviceMessage.message.deviceId = bleDevice.device.address
+                                    dataAcquisitionWebSocket.send(
+                                        gson.toJsonTree(
+                                            deviceMessage.message,
+                                            Message::class.java
+                                        )
+                                    )
+                                }
                             }
                             else -> {
                                 //TODO check other messages
