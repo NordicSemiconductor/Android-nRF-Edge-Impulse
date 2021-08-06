@@ -29,11 +29,7 @@ class EiWebSocket @Inject constructor(
             onBufferOverflow = BufferOverflow.DROP_OLDEST
         )
 
-    private val pingTask = object : TimerTask() {
-        override fun run() {
-            webSocket?.send("2")
-        }
-    }
+    private lateinit var pingTask: TimerTask
 
     private val webSocketListener = object : WebSocketListener() {
 
@@ -105,6 +101,11 @@ class EiWebSocket @Inject constructor(
      * hence should not be used in the DataAcquisitionManager
      */
     fun startPinging() {
+        pingTask = object : TimerTask() {
+            override fun run() {
+                webSocket?.send("2")
+            }
+        }
         Timer().scheduleAtFixedRate(pingTask, 20000, 20000)
     }
 
