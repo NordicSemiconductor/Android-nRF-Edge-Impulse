@@ -2,6 +2,7 @@ package no.nordicsemi.android.ei.viewmodels
 
 import android.app.Application
 import android.content.Context
+import android.net.Uri
 import androidx.compose.runtime.*
 import androidx.compose.ui.focus.FocusRequester
 import androidx.lifecycle.AndroidViewModel
@@ -109,9 +110,9 @@ class ProjectViewModel @Inject constructor(
 
     /** Creates a deployment manager */
     private var deploymentManager = DeploymentManager(
+        context = context,
         scope = viewModelScope,
         gson = gson,
-        jobId = 0,
         socketToken = projectDataRepository.socketToken,
         client = client
     )
@@ -228,6 +229,12 @@ class ProjectViewModel @Inject constructor(
         commsManagers.remove(device.deviceId)
     }
 
+
+    /**
+     * Build device firmware.
+     * @param engine        Engine type
+     * @param modelType     ModelType to download.
+     */
     fun buildOnDeviceModel(
         engine: Engine,
         modelType: ModelType
@@ -242,14 +249,30 @@ class ProjectViewModel @Inject constructor(
         })
     }
 
-    fun downloadBuild(modelType: ModelType) {
-        deploymentManager.downloadBuild(downloadBuild = {
+    /**
+     * Download build.
+     * @param context       Context.
+     * @param modelType     ModelType to download.
+     * @param uri           Uri to save the file to.
+     */
+    fun downloadBuild(context: Context, modelType: ModelType, uri: Uri) {
+        viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
+            viewModelScope
+                .launch { eventChannel.send(Event.Error(throwable)) }
+        }) {
             projectRepository.downloadBuild(
                 projectId = project.id,
                 keys = keys,
                 modelType = modelType
-            )
-        })
+            ).let { response ->
+                val bytes = response.byteStream().readBytes()
+                response.byteStream().close()
+                context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    outputStream.write(bytes)
+                    outputStream.close()
+                }
+            }
+        }
     }
 }
 

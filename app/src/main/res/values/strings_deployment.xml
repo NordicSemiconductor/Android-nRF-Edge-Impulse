@@ -7,4 +7,5 @@
     <string name="title_available_optimizations">Available optimizations for NN Classifier</string>
     <string name="label_neural_classifier_quantized_int8">Quantized (int8)</string>
     <string name="label_neural_classifier_unoptimized_float32">Unoptimized (float32)</string>
+    <string name="error_building_firmware">\"Failed to build firmware: \"</string>
 </resources>

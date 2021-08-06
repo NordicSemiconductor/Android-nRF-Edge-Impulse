@@ -2,6 +2,7 @@ package no.nordicsemi.android.ei.service
 
 import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.service.param.*
+import okhttp3.ResponseBody
 import retrofit2.http.*
 
 interface EiService {
@@ -124,7 +125,6 @@ interface EiService {
     suspend fun downloadBuild(
         @Header("x-api-key") apiKey: String,
         @Path("projectId") projectId: Int,
-        @Query("type") type: String = "nordic-thingy53",
-        @Query("modelType") modelType: String,
-    )
+        @Query("type") type: String = "nordic-thingy53"
+    ) : ResponseBody
 }

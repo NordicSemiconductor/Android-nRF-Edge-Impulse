@@ -1,5 +1,10 @@
 package no.nordicsemi.android.ei.ui
 
+import android.app.Activity.RESULT_OK
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -30,15 +35,17 @@ import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.showSnackbar
 import no.nordicsemi.android.ei.util.Engine
 import no.nordicsemi.android.ei.util.ModelType
+import java.util.*
 
 @Composable
 fun Deployment(
     snackbarHostState: SnackbarHostState,
+    projectName: String,
     connectedDevices: List<Device>,
     logs: SnapshotStateList<BuildLog>,
     buildState: BuildState,
     onBuildFirmware: (Engine, ModelType) -> Unit,
-    onFirmwareDownload: (ModelType) -> Unit
+    onFirmwareDownload: (ModelType, Uri) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -47,20 +54,33 @@ fun Deployment(
     }
     var modelType by rememberSaveable { mutableStateOf(ModelType.INT_8) }
 
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            result.data?.data?.let { uri ->
+                onFirmwareDownload(modelType, uri)
+            }
+        }
+    }
     when (buildState) {
         is BuildState.Error -> {
             // TODO confirm error message to be displayed
             showSnackbar(
                 snackbarHostState = snackbarHostState,
                 coroutineScope = coroutineScope,
-                message = "Failed to build firmware " + (buildState.reason
+                message = stringResource(R.string.error_building_firmware) + (buildState.reason
                     ?: context.getString(R.string.error_unknown))
             )
         }
         is BuildState.Finished -> {
-            // TODO unable to test with failing builds
-            // Let's start downloading when the Build finishes.
-            onFirmwareDownload(modelType)
+            launcher.launch(
+                Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+                    .setType("application/zip").putExtra(
+                        Intent.EXTRA_TITLE,
+                        "$projectName-thingy-53".replace(" ", "-").lowercase(Locale.US)
+                    )
+            )
         }
         else -> {
         }
@@ -349,6 +369,3 @@ private fun LogRow(buildLog: BuildLog) {
         }
     }
 }
-
-// TODO test regex to display the progress.
-private val regex1 = Regex("\\[(.*?)\\]")

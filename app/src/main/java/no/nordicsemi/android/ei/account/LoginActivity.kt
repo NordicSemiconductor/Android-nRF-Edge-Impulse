@@ -17,8 +17,8 @@ import no.nordicsemi.android.ei.Uris
 import no.nordicsemi.android.ei.ui.Login
 import no.nordicsemi.android.ei.ui.theme.NordicTheme
 import no.nordicsemi.android.ei.util.asMessage
-import no.nordicsemi.android.ei.viewmodels.state.LoginState
 import no.nordicsemi.android.ei.viewmodels.LoginViewModel
+import no.nordicsemi.android.ei.viewmodels.state.LoginState
 
 @AndroidEntryPoint
 class LoginActivity : AccountAuthenticatorActivity() {
@@ -99,7 +99,7 @@ class LoginActivity : AccountAuthenticatorActivity() {
 
         // If the account name has changed, rename it.
         val oldAccountName = intent.getStringExtra(KEY_ACCOUNT_NAME)
-        takeIf { accountName != oldAccountName }?.run {
+        oldAccountName?.takeIf { accountName != oldAccountName }?.run {
             accountManager.renameAccount(account, accountName, {
                 finalize(accountType, accountName, authToken)
             }, null)

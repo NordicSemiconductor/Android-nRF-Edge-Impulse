@@ -1,5 +1,6 @@
 package no.nordicsemi.android.ei.comms
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -20,11 +21,12 @@ import no.nordicsemi.android.ei.websocket.WebSocketState
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class DeploymentManager(
+    private val context: Context,
     private val scope: CoroutineScope,
     private val gson: Gson,
-    var jobId: Int,
     socketToken: SocketToken,
     client: OkHttpClient
 ) {
@@ -34,7 +36,7 @@ class DeploymentManager(
             .url("wss://studio.edgeimpulse.com/socket.io/?transport=websocket&EIO=3&token=${socketToken.socketToken}")
             .build()
     )
-
+    private var jobId = 0
     var buildState by mutableStateOf<BuildState>(BuildState.Unknown)
         private set
     var logs = mutableStateListOf<BuildLog>()
@@ -49,19 +51,14 @@ class DeploymentManager(
      * Initiates a websocket connection to obtain deployment messages.
      */
     private fun connect() {
-        scope.launch {
-            deploymentWebSocket.connect()
-        }
+        deploymentWebSocket.connect()
     }
 
     /**
      * Disconnect from the deployment websocket
      */
     private fun disconnect() {
-        scope.launch {
-            // Close the Web Socket if it's open.
-            deploymentWebSocket.disconnect()
-        }
+        deploymentWebSocket.disconnect()
     }
 
     private suspend fun registerToWebSocketStateChanges() {
@@ -77,7 +74,6 @@ class DeploymentManager(
                     deploymentWebSocket.stopPinging()
                 }
                 is WebSocketState.Closed -> {
-                    buildState = BuildState.Finished
                 }
                 is WebSocketState.Failed -> {
                     // We need to stop pinging when the WebSocket throws an error.
@@ -92,7 +88,7 @@ class DeploymentManager(
         deploymentWebSocket.messageAsFlow().collect { message ->
             JsonParser.parseString(regex.replace(message, "")).let { jsonElement ->
                 if (jsonElement.isJsonObject) {
-                    // TODO this log message can be ignored but needs claficiation
+                    // TODO this log message can be ignored but needs clarification
                     //_logs.emit(gson.fromJson(it.asJsonObject, BuildLog::class.java))
                 } else if (jsonElement.isJsonArray) {
                     jsonElement.asJsonArray.let { jsonArray ->
@@ -113,13 +109,13 @@ class DeploymentManager(
                                     BuildLog.Finished::class.java
                                 )?.let { finished ->
                                     logs.add(finished)
-                                }?.also { success ->
-                                    buildState = when (success) {
+                                    //Set the build state before disconnecting
+                                    buildState = when (finished.success) {
                                         true -> BuildState.Finished
                                         false -> BuildState.Error(reason = "Error while building")
                                     }
+                                    disconnect()
                                 }
-                                disconnect()
                             }
                             else -> {
 
@@ -148,17 +144,6 @@ class DeploymentManager(
                 }
                 jobId = response.id
             }
-        }
-    }
-
-    /**
-     * Calls downbloadBuild api on the Edge impulse backend
-     * @param downloadBuild downloadBuild API call as a suspending lambda.
-     */
-    fun downloadBuild(downloadBuild: suspend () -> Unit) {
-        scope.launch {
-            buildState = BuildState.Started
-            downloadBuild()
         }
     }
 }

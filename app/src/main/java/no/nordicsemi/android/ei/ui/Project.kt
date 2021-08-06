@@ -373,6 +373,7 @@ private fun ProjectContent(
                 val buildState by remember { viewModel.buildState }
                 Deployment(
                     snackbarHostState = snackbarHostState,
+                    projectName = viewModel.project.name,
                     connectedDevices = connectedDevices,
                     logs = logs,
                     buildState = buildState,
@@ -382,8 +383,8 @@ private fun ProjectContent(
                             modelType = modelType
                         )
                     },
-                    onFirmwareDownload = {
-                        viewModel.downloadBuild(modelType = it)
+                    onFirmwareDownload = {modelType, uri ->
+                        viewModel.downloadBuild(context = context, modelType = modelType, uri = uri)
                     }
                 )
             }
