@@ -3,7 +3,9 @@
     package="no.nordicsemi.android.ei">
 
     <!-- Make the app only available for devices supporting BLE -->
-    <uses-feature android:name="android.hardware.bluetooth_le" android:required="true"/>
+    <uses-feature
+        android:name="android.hardware.bluetooth_le"
+        android:required="true" />
 
     <uses-permission
         android:name="android.permission.MANAGE_ACCOUNTS"
@@ -34,9 +36,8 @@
         <activity
             android:name=".account.LoginActivity"
             android:exported="true"
-            android:windowSoftInputMode="adjustResize"
-            android:theme="@style/Theme.nRFEdgeImpulse.NoActionBar">
-        </activity>
+            android:theme="@style/Theme.nRFEdgeImpulse.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -48,6 +49,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <service
             android:name=".account.AuthenticatorService"
             android:enabled="true"
@@ -55,7 +57,8 @@
             <intent-filter>
                 <action android:name="android.accounts.AccountAuthenticator" />
             </intent-filter>
-            <meta-data android:name="android.accounts.AccountAuthenticator"
+            <meta-data
+                android:name="android.accounts.AccountAuthenticator"
                 android:resource="@xml/authenticator" />
         </service>
     </application>
