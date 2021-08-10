@@ -3,6 +3,9 @@ package no.nordicsemi.android.ei.util
 import android.util.Log
 import com.google.gson.*
 import no.nordicsemi.android.ei.model.Message
+import no.nordicsemi.android.ei.model.Message.Sample.ProgressEvent.*
+import no.nordicsemi.android.ei.model.Message.Sample.Request
+import no.nordicsemi.android.ei.model.Message.Sample.Response
 import java.lang.reflect.Type
 import java.security.InvalidParameterException
 
@@ -23,7 +26,7 @@ class MessageTypeAdapter : JsonSerializer<Message>, JsonDeserializer<Message> {
                 is Message.HelloResponse, is Message.Configure -> {
                     context?.serialize(message)!!
                 }
-                is Message.SampleRequest -> {
+                is Request -> {
                     deviceMessage.add("sample", context?.serialize(message))
                     deviceMessage
                 }
@@ -52,24 +55,58 @@ class MessageTypeAdapter : JsonSerializer<Message>, JsonDeserializer<Message> {
                         return context!!.deserialize(this, Message.Hello::class.java)
                     }
                 }
+                root.has("apiKey") -> {
+                    root.get("apiKey")?.apply {
+                        return context!!.deserialize(root, Message.Configure::class.java)
+                    }
+                }
                 root.has("sample") -> {
                     root.get("sample")?.apply {
                         takeIf { isJsonPrimitive }?.let {
-                            return context!!.deserialize(root, Message.SampleRequestResponse::class.java)
+                            return context!!.deserialize(
+                                root,
+                                Response::class.java
+                            )
                         }
-                        return context!!.deserialize(this, Message.SampleRequest::class.java)
+                        return context!!.deserialize(this,Response::class.java)
                     }
                 }
                 root.has("sampleStarted") -> {
                     root.get("sampleStarted")?.apply {
                         takeIf { isJsonPrimitive }?.let {
-                            return context!!.deserialize(root, Message.SampleStarted::class.java)
+                            return context!!.deserialize(root, Started::class.java)
                         }
                     }
                 }
-                root.has("apiKey") -> {
-                    root.get("apiKey")?.apply {
-                        return context!!.deserialize(root, Message.Configure::class.java)
+                root.has("sampleProcessing") -> {
+                    root.get("sampleProcessing")?.apply {
+                        takeIf { isJsonPrimitive }?.let {
+                            return context!!.deserialize(
+                                root,
+                               Processing::class.java
+                            )
+                        }
+                    }
+                }
+                root.has("sampleReading") -> {
+                    root.get("sampleReading")?.apply {
+                        takeIf { isJsonPrimitive }?.let {
+                            return context!!.deserialize(root,Reading::class.java)
+                        }
+                    }
+                }
+                root.has("sampleUploading") -> {
+                    root.get("sampleUploading")?.apply {
+                        takeIf { isJsonPrimitive }?.let {
+                            return context!!.deserialize(root, Uploading::class.java)
+                        }
+                    }
+                }
+                root.has("sampleFinished") -> {
+                    root.get("sampleFinished")?.apply {
+                        takeIf { isJsonPrimitive }?.let {
+                            return context!!.deserialize(root, Finished::class.java)
+                        }
                     }
                 }
                 else -> {

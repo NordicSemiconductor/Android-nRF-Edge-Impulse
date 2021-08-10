@@ -16,7 +16,9 @@ class DeviceMessageTypeAdapter: JsonDeserializer<DeviceMessage> {
         val targetType: Type = when (root.get("type")?.asString) {
             "ws" -> WebSocketMessage::class.java
             "configure" -> ConfigureMessage::class.java
-            "http" -> SendDataMessage::class.java
+            "http" -> {
+                SendDataMessage::class.java
+            }
             else -> return InvalidMessage
         }
         return context!!.deserialize(json, targetType)

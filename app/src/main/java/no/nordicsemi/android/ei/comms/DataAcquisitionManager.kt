@@ -7,10 +7,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.google.gson.Gson
 import com.google.gson.JsonParser
+import com.google.gson.JsonSyntaxException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ble.ktx.state.ConnectionState
 import no.nordicsemi.android.ble.ktx.stateAsFlow
@@ -18,6 +18,9 @@ import no.nordicsemi.android.ei.ble.BleDevice
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.model.*
 import no.nordicsemi.android.ei.model.Message.*
+import no.nordicsemi.android.ei.model.Message.Sample.*
+import no.nordicsemi.android.ei.model.Message.Sample.ProgressEvent.Processing
+import no.nordicsemi.android.ei.model.Message.Sample.ProgressEvent.Uploading
 import no.nordicsemi.android.ei.util.exhaustive
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import no.nordicsemi.android.ei.websocket.EiWebSocket
@@ -26,14 +29,15 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class CommsManager(
+class DataAcquisitionManager(
     val device: DiscoveredBluetoothDevice,
     private val scope: CoroutineScope,
     private val gson: Gson,
     private val developmentKeys: DevelopmentKeys,
-    client: OkHttpClient,
+    private val client: OkHttpClient,
     context: Context,
 ) {
+
     private val bleDevice = BleDevice(
         device = device.bluetoothDevice,
         context = context
@@ -42,6 +46,11 @@ class CommsManager(
         client = client,
         request = Request.Builder().url("wss://remote-mgmt.edgeimpulse.com").build()
     )
+    private var isSampleUploading = false
+    private var sampleJson = ""
+
+    var samplingState = mutableStateOf<Message.Sample>(Unknown)
+    var dataSample = mutableStateOf<DeviceMessage?>(null)
 
     /** The device ID. Initially set to device MAC address. */
     private val deviceId: String = device.deviceId
@@ -124,7 +133,7 @@ class CommsManager(
                         )
                     }
                 }
-                is SampleRequest -> {
+                is Message.Sample.Request -> {
                     bleDevice.send(
                         generateDeviceMessage(
                             message = WebSocketMessage(
@@ -172,47 +181,110 @@ class CommsManager(
 
     private suspend fun registerToDeviceNotifications() {
         bleDevice.messagesAsFlow()
-            .transform<String, DeviceMessage> { json ->
-                emit(gson.fromJson(json, DeviceMessage::class.java))
-            }
-            .collect { deviceMessage ->
-                Log.d("AAAA", "Collected to: $deviceMessage")
-                when (deviceMessage) {
-                    is WebSocketMessage -> {
-                        when (deviceMessage.message) {
-                            is Hello -> {
-                                // Let's confirm if
-                                deviceMessage.message.apiKey.takeIf { apiKey ->
-                                    apiKey.isNotEmpty() && apiKey != developmentKeys.apiKey
-                                }?.let {
-                                    bleDevice.send(
-                                        generateDeviceMessage(
-                                            message = ConfigureMessage(
-                                                message = Configure(
-                                                    apiKey = developmentKeys.apiKey
+            /*.transform<String, DeviceMessage> { json ->
+                try {
+                    Log.d("AAAA", "JSON from device: $json")
+                    if (isSampleUploading) {
+                        sampleJson += json
+                        gson.fromJson(sampleJson, DeviceMessage::class.java)?.let { deviceMessage ->
+                            isSampleUploading = false
+                            sampleJson = ""
+                            Log.d("AAAA", "Message: $deviceMessage")
+                            emit(deviceMessage)
+                        }
+                    } else {
+                        emit(gson.fromJson(json, DeviceMessage::class.java))
+                    }
+                } catch (ex: JsonSyntaxException) {
+                    Log.d("AAAA", "Error while parsing device notifications: ${ex.message}")
+                }
+            }*/
+            .collect { json ->
+                try {
+                    Log.d("AAAA", "JSON from device: $json")
+                    val deviceMessage = if (isSampleUploading) {
+                        sampleJson += json
+                        gson.fromJson(sampleJson, DeviceMessage::class.java)?.let { deviceMessage ->
+                            isSampleUploading = false
+                            sampleJson = ""
+                            Log.d("AAAA", "Message: $deviceMessage")
+                            deviceMessage
+                        }
+                    } else {
+                        gson.fromJson(json, DeviceMessage::class.java)
+                    }
+                    when (deviceMessage) {
+                        is WebSocketMessage -> {
+                            when (deviceMessage.message) {
+                                is Hello -> {
+                                    // Let's confirm if
+                                    deviceMessage.message.apiKey.takeIf { apiKey ->
+                                        apiKey.isNotEmpty() && apiKey != developmentKeys.apiKey
+                                    }?.let {
+                                        bleDevice.send(
+                                            generateDeviceMessage(
+                                                message = ConfigureMessage(
+                                                    message = Configure(
+                                                        apiKey = developmentKeys.apiKey
+                                                    )
                                                 )
                                             )
                                         )
-                                    )
-                                } ?: run {
-                                    deviceMessage.message.deviceId = bleDevice.device.address
-                                    dataAcquisitionWebSocket.send(
-                                        gson.toJsonTree(
-                                            deviceMessage.message,
-                                            Message::class.java
+                                    } ?: run {
+                                        deviceMessage.message.deviceId = bleDevice.device.address
+                                        dataAcquisitionWebSocket.send(
+                                            gson.toJsonTree(
+                                                deviceMessage.message,
+                                                Message::class.java
+                                            )
                                         )
-                                    )
+                                    }
                                 }
-                            }
-                            else -> {
-                                //TODO check other messages
-                            }
-                        }.exhaustive
-                    }
-                    else -> {
-                        //TODO check other messages
-                    }
-                }.exhaustive
+                                is Response -> {
+                                    // No need to forward this to the websocket.
+                                }
+                                is Processing -> {
+                                    // No need to forward this to the websocket.
+                                }
+                                is Uploading -> {
+                                    isSampleUploading = deviceMessage.message.sampleUploading
+                                    // no need to forward this to the websocket.
+                                }
+                                else -> {
+                                    //TODO check other messages
+                                }
+                            }.exhaustive
+                        }
+                        is SendDataMessage -> {
+                            // TODO Fix posting data to backend
+                            /*val request: Request = Request.Builder()
+                                .header("x-api-key", deviceMessage.headers.xApiKey)
+                                .header("x-label", deviceMessage.headers.xLabel)
+                                .header(
+                                    "x-allow-duplicates",
+                                    deviceMessage.headers.xAllowDuplicates.toString()
+                                )
+                                .url(deviceMessage.address)
+                                .post(Base64.decode(deviceMessage.body, Base64.DEFAULT).toString().toRequestBody())
+                                .build()
+                            client.newCall(request = request)
+                                .enqueue(responseCallback = object : Callback {
+                                    override fun onFailure(call: Call, e: IOException) {
+                                        TODO("Not yet implemented")
+                                    }
+                                    override fun onResponse(call: Call, response: okhttp3.Response) {
+                                        Log.d("AAAA", "Response: $response")
+                                    }
+                                })*/
+
+                        }
+                        else -> {
+                            //TODO check other messages
+                        }
+                    }.exhaustive
+                } catch (ex: JsonSyntaxException) {
+                    Log.d("AAAA", "Error while parsing device notifications: ${ex.message}")
+                }
             }
     }
 
@@ -242,7 +314,7 @@ class CommsManager(
             generateDeviceMessage(
                 message = WebSocketMessage(
                     direction = Direction.RECEIVE,
-                    message = SampleRequest(
+                    message = Request(
                         label = label,
                         length = sampleLength,
                         hmacKey = developmentKeys.hmacKey,

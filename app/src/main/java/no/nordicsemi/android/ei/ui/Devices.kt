@@ -32,7 +32,7 @@ import no.nordicsemi.android.ei.ble.rssiAsPercent
 import no.nordicsemi.android.ei.ble.state.ScannerState
 import no.nordicsemi.android.ei.ble.state.ScanningState
 import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.Reason
-import no.nordicsemi.android.ei.comms.CommsManager
+import no.nordicsemi.android.ei.comms.DataAcquisitionManager
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.ui.layouts.*
 import no.nordicsemi.android.ei.util.exhaustive
@@ -44,7 +44,7 @@ import kotlin.math.roundToInt
 fun Devices(
     modifier: Modifier = Modifier,
     configuredDevices: List<Device>,
-    activeDevices: Map<String, CommsManager>,
+    activeDevices: Map<String, DataAcquisitionManager>,
     refreshingState: Boolean,
     onRefresh: () -> Unit,
     scannerState: ScannerState,

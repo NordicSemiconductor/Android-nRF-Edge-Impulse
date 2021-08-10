@@ -44,7 +44,7 @@ class EiWebSocket @Inject constructor(
         }
 
         override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-            pingTask.cancel()
+            stopPinging()
             Log.i("AAAA", "onClosing webSocket: $reason ($code)")
             _webSocketState.tryEmit(Closing(code = code, reason = reason))
         }
@@ -114,6 +114,7 @@ class EiWebSocket @Inject constructor(
      * hence should not be used in the DataAcquisitionManager
      */
     fun stopPinging() {
-        pingTask.cancel()
+        if (this::pingTask.isInitialized)
+            pingTask.cancel()
     }
 }

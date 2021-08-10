@@ -25,33 +25,12 @@ sealed class Message {
         val address: String = "wss://studio.edgeimpulse.com"
     ) : Message()
 
-    data class SampleRequest(
-        val label: String,
-        val length: Int,
-        val path: String = "/api/training/data",
-        val hmacKey: String,
-        val interval: Int,
-        val sensor: String
-    ) : Message()
-
-    data class SampleRequestResponse(
-        val sample: Boolean,
-        val error: String? = null
-    ) : Message()
-
-    data class SampleStarted(
-        val sampleStarted: Boolean
-    ) : Message()
-
-    data class SampleUploading(
-        val sampleUploading: Boolean
-    ) : Message()
-
-    data class SampleFinished(
-        val sampleFinished: Boolean
-    ) : Message()
-
-    /*sealed class Sample : Message() {
+    /**
+     * Progress event messages
+     *
+     * @see https://docs.edgeimpulse.com/reference#remote-management
+     */
+    sealed class Sample : Message() {
         data class Request(
             val label: String,
             val length: Int,
@@ -59,23 +38,45 @@ sealed class Message {
             val hmacKey: String,
             val interval: Int,
             val sensor: String
-        ) : Message()
+        ) : Sample()
 
         data class Response(
             val sample: Boolean,
             val error: String? = null
-        ) : Message()
+        ) : Sample()
 
-        data class Started(
-            val sampleStarted: Boolean
-        ) : Message()
+        sealed class ProgressEvent : Sample() {
 
-        data class Uploading(
-            val sampleUploading: Boolean
-        ) : Message()
+            /**
+             * Indicates that the device started sampling. Send the following message right when sampling starts:
+             */
+            data class Started(val sampleStarted: Boolean) : ProgressEvent()
 
-        data class Finished(
-            val sampleFinished: Boolean
-        ) : Message()
-    }*/
+            /**
+             * If the device is done sampling, but is processing the sample before uploading,
+             * such as a device preprocessing audio or signing the file. Send the following message
+             * to indicate that the device is processing:
+             */
+            data class Processing(val sampleProcessing: Boolean) : ProgressEvent()
+
+            /**
+             * If the device is not connected directly to the internet, the daemon needs to pull the data
+             * from the device over serial, which could be slow for large files. Send the following message
+             * to indicate that this process started, and how far the process is along:
+             */
+            data class Reading(val sampleReading: Boolean, val progressPercentage: Int) :
+                ProgressEvent()
+
+            /**
+             * Before you start the upload, send:
+             */
+            data class Uploading(val sampleUploading: Boolean) : ProgressEvent()
+
+            data class Finished(
+                val sampleFinished: Boolean
+            ) : Sample()
+        }
+
+        object Unknown : Sample()
+    }
 }

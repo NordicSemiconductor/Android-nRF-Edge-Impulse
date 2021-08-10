@@ -17,7 +17,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
-import no.nordicsemi.android.ei.comms.CommsManager
+import no.nordicsemi.android.ei.comms.DataAcquisitionManager
 import no.nordicsemi.android.ei.comms.DeploymentManager
 import no.nordicsemi.android.ei.di.*
 import no.nordicsemi.android.ei.model.Device
@@ -59,7 +59,7 @@ class ProjectViewModel @Inject constructor(
         get() = projectDataRepository.developmentKeys
 
     /** A map of device managers. */
-    var commsManagers = mutableStateMapOf<String, CommsManager>()
+    var dataAcquisitionManager = mutableStateMapOf<String, DataAcquisitionManager>()
         private set
 
     /** A list of configured devices obtained from the service. */
@@ -69,7 +69,7 @@ class ProjectViewModel @Inject constructor(
     /** A list of connected devices derived using the configuredDevices and the commsManagers. */
     var connectedDevices = derivedStateOf {
         configuredDevices.filterList {
-            commsManagers[deviceId]?.state == DeviceState.AUTHENTICATED
+            dataAcquisitionManager[deviceId]?.state == DeviceState.AUTHENTICATED
         }
     }
         private set
@@ -102,7 +102,7 @@ class ProjectViewModel @Inject constructor(
         private set
     var selectedSensor: Sensor? by mutableStateOf(null)
         private set
-    var sampleLength by mutableStateOf(10000)
+    var sampleLength by mutableStateOf(2000)
         //TODO fix hardcoded sample length
         private set
     var selectedFrequency: Number? by mutableStateOf(null)
@@ -116,6 +116,12 @@ class ProjectViewModel @Inject constructor(
         socketToken = projectDataRepository.socketToken,
         client = client
     )
+
+    val dataSample = derivedStateOf {
+        selectedDevice?.let {
+            dataAcquisitionManager[it.deviceId]?.dataSample
+        }
+    }
 
     /** Whether a build is in progress. */
     var buildState = derivedStateOf {
@@ -166,7 +172,7 @@ class ProjectViewModel @Inject constructor(
                 // If the user decides to delete a device from the web while being connected to i t from the phone,
                 // We should disconnect from that device
                 configuredDevices.filter { !response.devices.contains(it) }.onEach { device ->
-                    commsManagers.remove(device.deviceId)?.apply {
+                    dataAcquisitionManager.remove(device.deviceId)?.apply {
                         state.takeIf {
                             it == DeviceState.CONNECTING ||
                                     it == DeviceState.AUTHENTICATING ||
@@ -211,8 +217,8 @@ class ProjectViewModel @Inject constructor(
 
     //TODO need to finalize the api
     fun connect(device: DiscoveredBluetoothDevice): Unit =
-        commsManagers.getOrPut(key = device.deviceId, defaultValue = {
-            CommsManager(
+        dataAcquisitionManager.getOrPut(key = device.deviceId, defaultValue = {
+            DataAcquisitionManager(
                 scope = viewModelScope,
                 gson = gson,
                 developmentKeys = keys,
@@ -225,8 +231,8 @@ class ProjectViewModel @Inject constructor(
         }
 
     fun disconnect(device: DiscoveredBluetoothDevice) {
-        commsManagers[device.deviceId]?.disconnect()
-        commsManagers.remove(device.deviceId)
+        dataAcquisitionManager[device.deviceId]?.disconnect()
+        dataAcquisitionManager.remove(device.deviceId)
     }
 
 

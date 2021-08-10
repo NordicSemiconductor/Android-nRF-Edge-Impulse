@@ -141,7 +141,7 @@ private fun LargeScreen(
                                 enabled = viewModel.selectedSensor != null,
                                 onClick = {
                                     viewModel.selectedDevice?.let { device ->
-                                        viewModel.commsManagers[device.deviceId]?.startSampling(
+                                        viewModel.dataAcquisitionManager[device.deviceId]?.startSampling(
                                             viewModel.label,
                                             10000,
                                             viewModel.selectedFrequency!!.toInt(),
@@ -214,7 +214,7 @@ private fun SmallScreen(
                             enabled = viewModel.selectedSensor != null,
                             onClick = {
                                 viewModel.selectedDevice?.let { device ->
-                                    viewModel.commsManagers[device.deviceId]?.startSampling(
+                                    viewModel.dataAcquisitionManager[device.deviceId]?.startSampling(
                                         viewModel.label,
                                         10000,
                                         viewModel.selectedFrequency!!.toInt(),
@@ -342,7 +342,7 @@ private fun ProjectContent(
                         .fillMaxSize()
                         .padding(paddingValues = innerPadding),
                     configuredDevices = viewModel.configuredDevices,
-                    activeDevices = viewModel.commsManagers,
+                    activeDevices = viewModel.dataAcquisitionManager,
                     refreshingState = viewModel.isRefreshing,
                     onRefresh = { viewModel.listDevices() },
                     scannerState = devicesViewModel.scannerState,

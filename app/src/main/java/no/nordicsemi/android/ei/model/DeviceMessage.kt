@@ -28,12 +28,11 @@ data class ConfigureMessage(
     override val type = CONFIGURE
 }
 
-@Suppress("ArrayInDataClass")
 data class SendDataMessage(
     val address: String = "https://ingestion.edgeimpulse.com/api/training/data",
     val method: Method = POST,
     val headers: Headers,
-    val body: ByteArray
+    val body: String
 ) : DeviceMessage() {
     override val type = HTTP
 }
