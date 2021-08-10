@@ -11,6 +11,7 @@ import com.google.gson.JsonSyntaxException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ble.ktx.state.ConnectionState
 import no.nordicsemi.android.ble.ktx.stateAsFlow
@@ -181,7 +182,7 @@ class DataAcquisitionManager(
 
     private suspend fun registerToDeviceNotifications() {
         bleDevice.messagesAsFlow()
-            /*.transform<String, DeviceMessage> { json ->
+            .transform<String, DeviceMessage> { json ->
                 try {
                     Log.d("AAAA", "JSON from device: $json")
                     if (isSampleUploading) {
@@ -198,93 +199,77 @@ class DataAcquisitionManager(
                 } catch (ex: JsonSyntaxException) {
                     Log.d("AAAA", "Error while parsing device notifications: ${ex.message}")
                 }
-            }*/
-            .collect { json ->
-                try {
-                    Log.d("AAAA", "JSON from device: $json")
-                    val deviceMessage = if (isSampleUploading) {
-                        sampleJson += json
-                        gson.fromJson(sampleJson, DeviceMessage::class.java)?.let { deviceMessage ->
-                            isSampleUploading = false
-                            sampleJson = ""
-                            Log.d("AAAA", "Message: $deviceMessage")
-                            deviceMessage
-                        }
-                    } else {
-                        gson.fromJson(json, DeviceMessage::class.java)
-                    }
-                    when (deviceMessage) {
-                        is WebSocketMessage -> {
-                            when (deviceMessage.message) {
-                                is Hello -> {
-                                    // Let's confirm if
-                                    deviceMessage.message.apiKey.takeIf { apiKey ->
-                                        apiKey.isNotEmpty() && apiKey != developmentKeys.apiKey
-                                    }?.let {
-                                        bleDevice.send(
-                                            generateDeviceMessage(
-                                                message = ConfigureMessage(
-                                                    message = Configure(
-                                                        apiKey = developmentKeys.apiKey
-                                                    )
+            }
+            .collect { deviceMessage ->
+                when (deviceMessage) {
+                    is WebSocketMessage -> {
+                        when (deviceMessage.message) {
+                            is Hello -> {
+                                // Let's confirm if
+                                deviceMessage.message.apiKey.takeIf { apiKey ->
+                                    apiKey.isNotEmpty() && apiKey != developmentKeys.apiKey
+                                }?.let {
+                                    bleDevice.send(
+                                        generateDeviceMessage(
+                                            message = ConfigureMessage(
+                                                message = Configure(
+                                                    apiKey = developmentKeys.apiKey
                                                 )
                                             )
                                         )
-                                    } ?: run {
-                                        deviceMessage.message.deviceId = bleDevice.device.address
-                                        dataAcquisitionWebSocket.send(
-                                            gson.toJsonTree(
-                                                deviceMessage.message,
-                                                Message::class.java
-                                            )
+                                    )
+                                } ?: run {
+                                    deviceMessage.message.deviceId = bleDevice.device.address
+                                    dataAcquisitionWebSocket.send(
+                                        gson.toJsonTree(
+                                            deviceMessage.message,
+                                            Message::class.java
                                         )
-                                    }
+                                    )
                                 }
-                                is Response -> {
-                                    // No need to forward this to the websocket.
+                            }
+                            is Response -> {
+                                // No need to forward this to the websocket.
+                            }
+                            is Processing -> {
+                                // No need to forward this to the websocket.
+                            }
+                            is Uploading -> {
+                                isSampleUploading = deviceMessage.message.sampleUploading
+                                // no need to forward this to the websocket.
+                            }
+                            else -> {
+                                //TODO check other messages
+                            }
+                        }.exhaustive
+                    }
+                    is SendDataMessage -> {
+                        // TODO Fix posting data to backend
+                        /*val request: Request = Request.Builder()
+                            .header("x-api-key", deviceMessage.headers.xApiKey)
+                            .header("x-label", deviceMessage.headers.xLabel)
+                            .header(
+                                "x-allow-duplicates",
+                                deviceMessage.headers.xAllowDuplicates.toString()
+                            )
+                            .url(deviceMessage.address)
+                            .post(Base64.decode(deviceMessage.body, Base64.DEFAULT).toString().toRequestBody())
+                            .build()
+                        client.newCall(request = request)
+                            .enqueue(responseCallback = object : Callback {
+                                override fun onFailure(call: Call, e: IOException) {
+                                    TODO("Not yet implemented")
                                 }
-                                is Processing -> {
-                                    // No need to forward this to the websocket.
+                                override fun onResponse(call: Call, response: okhttp3.Response) {
+                                    Log.d("AAAA", "Response: $response")
                                 }
-                                is Uploading -> {
-                                    isSampleUploading = deviceMessage.message.sampleUploading
-                                    // no need to forward this to the websocket.
-                                }
-                                else -> {
-                                    //TODO check other messages
-                                }
-                            }.exhaustive
-                        }
-                        is SendDataMessage -> {
-                            // TODO Fix posting data to backend
-                            /*val request: Request = Request.Builder()
-                                .header("x-api-key", deviceMessage.headers.xApiKey)
-                                .header("x-label", deviceMessage.headers.xLabel)
-                                .header(
-                                    "x-allow-duplicates",
-                                    deviceMessage.headers.xAllowDuplicates.toString()
-                                )
-                                .url(deviceMessage.address)
-                                .post(Base64.decode(deviceMessage.body, Base64.DEFAULT).toString().toRequestBody())
-                                .build()
-                            client.newCall(request = request)
-                                .enqueue(responseCallback = object : Callback {
-                                    override fun onFailure(call: Call, e: IOException) {
-                                        TODO("Not yet implemented")
-                                    }
-                                    override fun onResponse(call: Call, response: okhttp3.Response) {
-                                        Log.d("AAAA", "Response: $response")
-                                    }
-                                })*/
+                            })*/
 
-                        }
-                        else -> {
-                            //TODO check other messages
-                        }
-                    }.exhaustive
-                } catch (ex: JsonSyntaxException) {
-                    Log.d("AAAA", "Error while parsing device notifications: ${ex.message}")
-                }
+                    }
+                    else -> {
+                        //TODO check other messages
+                    }
+                }.exhaustive
             }
     }
 
