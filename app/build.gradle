@@ -79,7 +79,7 @@ dependencies {
     // https://github.com/Kotlin/kotlinx.coroutines/releases
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.1-native-mt'
     // wait for alpha-06 release for a crash in 05 https://issuetracker.google.com/issues/194301889
-    implementation 'androidx.navigation:navigation-compose:2.4.0-alpha04'
+    implementation 'androidx.navigation:navigation-compose:2.4.0-alpha06'
     // https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/
     testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.1-native-mt'
     // Paging 3 - https://developer.android.com/jetpack/androidx/releases/paging
