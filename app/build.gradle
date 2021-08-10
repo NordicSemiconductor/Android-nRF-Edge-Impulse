@@ -11,9 +11,7 @@ android {
 
     defaultConfig {
         applicationId "no.nordicsemi.android.nrfei"
-        // Work around to upgrade to compose v1.0.0 until agp version 7.1.0-alpha06 is available
-        // https://developer.android.com/jetpack/androidx/releases/compose-material#1.0.0
-        minSdkVersion 24
+        minSdkVersion 21
         targetSdkVersion 30
         versionCode 6
         versionName "0.1.2"
