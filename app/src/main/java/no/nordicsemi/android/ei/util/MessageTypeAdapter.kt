@@ -61,14 +61,28 @@ class MessageTypeAdapter : JsonSerializer<Message>, JsonDeserializer<Message> {
                     }
                 }
                 root.has("sample") -> {
-                    root.get("sample")?.apply {
-                        takeIf { isJsonPrimitive }?.let {
-                            return context!!.deserialize(
-                                root,
-                                Response::class.java
-                            )
+                    root.get("sample")?.let { sample ->
+                        return when {
+                            sample.isJsonPrimitive -> {
+                                context!!.deserialize(
+                                    root,
+                                    Response::class.java
+                                )
+                            }
+                            else -> {
+                                sample.asJsonObject?.let {
+                                    return when {
+                                        it.has("path") -> {
+                                            context!!.deserialize(it, Request::class.java)
+                                        }
+                                        else -> {
+                                            throw InvalidParameterException("Type not supported: $typeOfT")
+                                        }
+                                    }
+                                }
+                                throw InvalidParameterException("Type not supported: $typeOfT")
+                            }
                         }
-                        return context!!.deserialize(this,Response::class.java)
                     }
                 }
                 root.has("sampleStarted") -> {

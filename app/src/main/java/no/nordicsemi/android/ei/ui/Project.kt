@@ -140,15 +140,15 @@ private fun LargeScreen(
                             TextButton(
                                 enabled = viewModel.selectedSensor != null,
                                 onClick = {
-                                    //viewModel.startSampling()
-                                    viewModel.selectedDevice?.let { device ->
+                                    viewModel.startSampling()
+                                    /*viewModel.selectedDevice?.let { device ->
                                         viewModel.dataAcquisitionManager[device.deviceId]?.startSampling(
                                             viewModel.label,
                                             10000,
                                             viewModel.selectedFrequency!!.toInt(),
                                             viewModel.selectedSensor!!
                                         )
-                                    }
+                                    }*/
                                 }
                             ) {
                                 Text(
@@ -214,14 +214,15 @@ private fun SmallScreen(
                         Button(
                             enabled = viewModel.selectedSensor != null,
                             onClick = {
-                                viewModel.selectedDevice?.let { device ->
+                                viewModel.startSampling()
+                                /*viewModel.selectedDevice?.let { device ->
                                     viewModel.dataAcquisitionManager[device.deviceId]?.startSampling(
                                         viewModel.label,
                                         10000,
                                         viewModel.selectedFrequency!!.toInt(),
                                         viewModel.selectedSensor!!
                                     )
-                                }
+                                }*/
                             }
                         ) {
                             Text(
