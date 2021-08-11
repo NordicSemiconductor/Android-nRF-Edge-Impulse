@@ -1,6 +1,7 @@
 package no.nordicsemi.android.ei.comms
 
 import android.content.Context
+import android.util.Base64
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,15 +20,21 @@ import no.nordicsemi.android.ei.ble.BleDevice
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.model.*
 import no.nordicsemi.android.ei.model.Message.*
-import no.nordicsemi.android.ei.model.Message.Sample.*
 import no.nordicsemi.android.ei.model.Message.Sample.ProgressEvent.Processing
 import no.nordicsemi.android.ei.model.Message.Sample.ProgressEvent.Uploading
+import no.nordicsemi.android.ei.model.Message.Sample.Response
+import no.nordicsemi.android.ei.model.Message.Sample.Unknown
 import no.nordicsemi.android.ei.util.exhaustive
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import no.nordicsemi.android.ei.websocket.EiWebSocket
 import no.nordicsemi.android.ei.websocket.WebSocketState
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import okio.IOException
+
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DataAcquisitionManager(
@@ -184,13 +191,12 @@ class DataAcquisitionManager(
         bleDevice.messagesAsFlow()
             .transform<String, DeviceMessage> { json ->
                 try {
-                    Log.d("AAAA", "JSON from device: $json")
                     if (isSampleUploading) {
+                        Log.d("AAAA", "Data sample json: $json")
                         sampleJson += json
                         gson.fromJson(sampleJson, DeviceMessage::class.java)?.let { deviceMessage ->
                             isSampleUploading = false
                             sampleJson = ""
-                            Log.d("AAAA", "Message: $deviceMessage")
                             emit(deviceMessage)
                         }
                     } else {
@@ -201,6 +207,7 @@ class DataAcquisitionManager(
                 }
             }
             .collect { deviceMessage ->
+                Log.d("AAAA", "Message: $deviceMessage")
                 when (deviceMessage) {
                     is WebSocketMessage -> {
                         when (deviceMessage.message) {
@@ -244,27 +251,39 @@ class DataAcquisitionManager(
                         }.exhaustive
                     }
                     is SendDataMessage -> {
+                        val data = Base64.decode(
+                            deviceMessage.body,
+                            Base64.DEFAULT
+                        )
                         // TODO Fix posting data to backend
-                        /*val request: Request = Request.Builder()
+                        val request: Request = Request.Builder()
                             .header("x-api-key", deviceMessage.headers.xApiKey)
                             .header("x-label", deviceMessage.headers.xLabel)
+                            .header("x-file-name", deviceMessage.headers.xFileName)
                             .header(
-                                "x-allow-duplicates",
-                                deviceMessage.headers.xAllowDuplicates.toString()
+                                "x-disallow-duplicates",
+                                deviceMessage.headers.xDisallowDuplicates.toString()
+                            )
+                            .header(
+                                "content-type",
+                                "application/" + when (deviceMessage.headers.xFileName.contains("cbor")) {
+                                    true -> "cbor"
+                                    else -> "json"
+                                }
                             )
                             .url(deviceMessage.address)
-                            .post(Base64.decode(deviceMessage.body, Base64.DEFAULT).toString().toRequestBody())
+                            .post(body = data.toRequestBody())
                             .build()
                         client.newCall(request = request)
                             .enqueue(responseCallback = object : Callback {
                                 override fun onFailure(call: Call, e: IOException) {
-                                    TODO("Not yet implemented")
+                                    Log.d("AAAA", "On failure: ${e.message}")
                                 }
+
                                 override fun onResponse(call: Call, response: okhttp3.Response) {
                                     Log.d("AAAA", "Response: $response")
                                 }
-                            })*/
-
+                            })
                     }
                     else -> {
                         //TODO check other messages
@@ -299,7 +318,7 @@ class DataAcquisitionManager(
             generateDeviceMessage(
                 message = WebSocketMessage(
                     direction = Direction.RECEIVE,
-                    message = Request(
+                    message = Message.Sample.Request(
                         label = label,
                         length = sampleLength,
                         hmacKey = developmentKeys.hmacKey,

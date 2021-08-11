@@ -235,6 +235,33 @@ class ProjectViewModel @Inject constructor(
         dataAcquisitionManager.remove(device.deviceId)
     }
 
+    fun startSampling(category: String = "training") {
+        viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
+            viewModelScope
+                .launch { eventChannel.send(Event.Error(throwable)) }
+        }) {
+            selectedDevice?.let { device ->
+                selectedSensor?.let { sensor ->
+                    selectedFrequency?.let { frequency ->
+                        projectRepository.startSampling(
+                            keys = keys,
+                            projectId = project.id,
+                            deviceId = device.deviceId,
+                            label = label,
+                            lengthMs = sampleLength,
+                            category = category,
+                            intervalMs = 1.div(frequency.toFloat()).times(1000),
+                            sensor = sensor.name
+                        ).let { response ->
+                            guard(response.success) {
+                                throw Throwable(response.error)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * Build device firmware.

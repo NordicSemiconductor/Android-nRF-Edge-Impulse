@@ -83,7 +83,7 @@ class MessageTypeAdapter : JsonSerializer<Message>, JsonDeserializer<Message> {
                         takeIf { isJsonPrimitive }?.let {
                             return context!!.deserialize(
                                 root,
-                               Processing::class.java
+                                Processing::class.java
                             )
                         }
                     }
@@ -91,7 +91,7 @@ class MessageTypeAdapter : JsonSerializer<Message>, JsonDeserializer<Message> {
                 root.has("sampleReading") -> {
                     root.get("sampleReading")?.apply {
                         takeIf { isJsonPrimitive }?.let {
-                            return context!!.deserialize(root,Reading::class.java)
+                            return context!!.deserialize(root, Reading::class.java)
                         }
                     }
                 }

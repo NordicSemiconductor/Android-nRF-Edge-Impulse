@@ -140,6 +140,7 @@ private fun LargeScreen(
                             TextButton(
                                 enabled = viewModel.selectedSensor != null,
                                 onClick = {
+                                    //viewModel.startSampling()
                                     viewModel.selectedDevice?.let { device ->
                                         viewModel.dataAcquisitionManager[device.deviceId]?.startSampling(
                                             viewModel.label,

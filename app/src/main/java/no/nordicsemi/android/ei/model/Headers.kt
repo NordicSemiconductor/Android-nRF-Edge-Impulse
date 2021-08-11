@@ -8,7 +8,9 @@ data class Headers(
     val xApiKey: String,
     @SerializedName("x-label")
     val xLabel: String,
+    @SerializedName("x-file-name")
+    val xFileName: String,
     @IntRange(from = 0, to = 1)
-    @SerializedName("x-allow-duplicates")
-    val xAllowDuplicates: Int = 0
+    @SerializedName("x-disallow-duplicates")
+    val xDisallowDuplicates: Int = 0
 )
