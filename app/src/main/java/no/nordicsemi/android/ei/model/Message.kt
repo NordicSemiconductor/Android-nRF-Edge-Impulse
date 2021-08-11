@@ -25,6 +25,10 @@ sealed class Message {
         val address: String = "wss://studio.edgeimpulse.com"
     ) : Message()
 
+    data class Error(
+        @SerializedName("err") val error: String?
+    ) : Message()
+
     /**
      * Progress event messages
      *
@@ -73,7 +77,7 @@ sealed class Message {
             data class Uploading(val sampleUploading: Boolean) : ProgressEvent()
 
             data class Finished(
-                val sampleFinished: Boolean
+                val sampleFinished: Boolean = true
             ) : Sample()
         }
 
