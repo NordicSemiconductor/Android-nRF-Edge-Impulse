@@ -8,7 +8,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.google.gson.Gson
 import com.google.gson.JsonParser
-import com.google.gson.JsonSyntaxException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
@@ -55,9 +54,8 @@ class DataAcquisitionManager(
         request = Request.Builder().url("wss://remote-mgmt.edgeimpulse.com").build()
     )
     private var isSampleUploading = false
-    private var sampleJson = ""
 
-    var samplingState = mutableStateOf<Message.Sample>(Unknown)
+    var samplingState by mutableStateOf<Message.Sample>(Unknown)
     var dataSample = mutableStateOf<DeviceMessage?>(null)
 
     /** The device ID. Initially set to device MAC address. */
@@ -189,25 +187,10 @@ class DataAcquisitionManager(
 
     private suspend fun registerToDeviceNotifications() {
         bleDevice.messagesAsFlow()
-            .transform<String, DeviceMessage> { json ->
-                try {
-                    if (isSampleUploading) {
-                        Log.d("AAAA", "Data sample json: $json")
-                        sampleJson += json
-                        gson.fromJson(sampleJson, DeviceMessage::class.java)?.let { deviceMessage ->
-                            isSampleUploading = false
-                            sampleJson = ""
-                            emit(deviceMessage)
-                        }
-                    } else {
-                        emit(gson.fromJson(json, DeviceMessage::class.java))
-                    }
-                } catch (ex: JsonSyntaxException) {
-                    Log.d("AAAA", "Error while parsing device notifications: ${ex.message}")
-                }
+            .transform { json ->
+                emit(gson.fromJson(json, DeviceMessage::class.java))
             }
             .collect { deviceMessage ->
-                Log.d("AAAA", "Message: $deviceMessage")
                 when (deviceMessage) {
                     is WebSocketMessage -> {
                         when (deviceMessage.message) {
@@ -236,54 +219,21 @@ class DataAcquisitionManager(
                                 }
                             }
                             is Response -> {
-                                // No need to forward this to the websocket.
+                                samplingState = deviceMessage.message
                             }
                             is Processing -> {
-                                // No need to forward this to the websocket.
+                                samplingState = deviceMessage.message
                             }
                             is Uploading -> {
-                                isSampleUploading = deviceMessage.message.sampleUploading
-                                // no need to forward this to the websocket.
+                                samplingState = deviceMessage.message
                             }
                             else -> {
                                 //TODO check other messages
                             }
                         }.exhaustive
                     }
-                    is SendDataMessage -> {
-                        val data = Base64.decode(
-                            deviceMessage.body,
-                            Base64.DEFAULT
-                        )
-                        // TODO Fix posting data to backend
-                        val request: Request = Request.Builder()
-                            .header("x-api-key", deviceMessage.headers.xApiKey)
-                            .header("x-label", deviceMessage.headers.xLabel)
-                            .header("x-file-name", deviceMessage.headers.xFileName)
-                            .header(
-                                "x-disallow-duplicates",
-                                deviceMessage.headers.xDisallowDuplicates.toString()
-                            )
-                            .header(
-                                "content-type",
-                                "application/" + when (deviceMessage.headers.xFileName.contains("cbor")) {
-                                    true -> "cbor"
-                                    else -> "json"
-                                }
-                            )
-                            .url(deviceMessage.address)
-                            .post(body = data.toRequestBody())
-                            .build()
-                        client.newCall(request = request)
-                            .enqueue(responseCallback = object : Callback {
-                                override fun onFailure(call: Call, e: IOException) {
-                                    Log.d("AAAA", "On failure: ${e.message}")
-                                }
-
-                                override fun onResponse(call: Call, response: okhttp3.Response) {
-                                    Log.d("AAAA", "Response: $response")
-                                }
-                            })
+                    is DataSample -> {
+                        postDataSample(dataSample = deviceMessage)
                     }
                     else -> {
                         //TODO check other messages
@@ -338,6 +288,43 @@ class DataAcquisitionManager(
             message
         )
     ).appendLine().toString()
+
+    private fun postDataSample(dataSample: DataSample) {
+        val data = Base64.decode(
+            dataSample.body,
+            Base64.DEFAULT
+        )
+
+        val request: Request = Request.Builder()
+            .header("x-api-key", dataSample.headers.xApiKey)
+            .header("x-label", dataSample.headers.xLabel)
+            .header("x-file-name", dataSample.headers.xFileName)
+            .header(
+                "x-disallow-duplicates",
+                dataSample.headers.xDisallowDuplicates.toString()
+            )
+            .header(
+                "content-type",
+                "application/" + when (dataSample.headers.xFileName.contains("cbor")) {
+                    true -> "cbor"
+                    else -> "json"
+                }
+            )
+            .url(dataSample.address)
+            .post(body = data.toRequestBody())
+            .build()
+        client.newCall(request = request)
+            .enqueue(responseCallback = object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    Log.d("AAAA", "On failure: ${e.message}")
+                }
+
+                override fun onResponse(call: Call, response: okhttp3.Response) {
+                    Log.d("AAAA", "Response: $response")
+                    samplingState = Message.Sample.ProgressEvent.Finished()
+                }
+            })
+    }
 }
 
 private const val MESSAGE = "message"

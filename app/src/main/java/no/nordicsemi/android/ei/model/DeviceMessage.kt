@@ -28,7 +28,7 @@ data class ConfigureMessage(
     override val type = CONFIGURE
 }
 
-data class SendDataMessage(
+data class DataSample(
     val address: String = "https://ingestion.edgeimpulse.com/api/training/data",
     val method: Method = POST,
     val headers: Headers,

@@ -17,7 +17,7 @@ class DeviceMessageTypeAdapter: JsonDeserializer<DeviceMessage> {
             "ws" -> WebSocketMessage::class.java
             "configure" -> ConfigureMessage::class.java
             "http" -> {
-                SendDataMessage::class.java
+                DataSample::class.java
             }
             else -> return InvalidMessage
         }
