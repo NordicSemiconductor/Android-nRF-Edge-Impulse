@@ -3,6 +3,7 @@ package no.nordicsemi.android.ei.util
 import android.util.Log
 import com.google.gson.*
 import no.nordicsemi.android.ei.model.Message
+import no.nordicsemi.android.ei.model.Message.*
 import no.nordicsemi.android.ei.model.Message.Sample.ProgressEvent.*
 import no.nordicsemi.android.ei.model.Message.Sample.Request
 import no.nordicsemi.android.ei.model.Message.Sample.Response
@@ -19,11 +20,11 @@ class MessageTypeAdapter : JsonSerializer<Message>, JsonDeserializer<Message> {
         val deviceMessage = JsonObject()
         return src?.let { message ->
             when (message) {
-                is Message.Hello -> {
+                is Hello -> {
                     deviceMessage.add("hello", context?.serialize(message))
                     deviceMessage
                 }
-                is Message.HelloResponse, is Message.Configure -> {
+                is HelloResponse, is Configure -> {
                     context?.serialize(message)!!
                 }
                 is Request -> {
@@ -50,14 +51,14 @@ class MessageTypeAdapter : JsonSerializer<Message>, JsonDeserializer<Message> {
                 root.has("hello") -> {
                     root.get("hello")?.apply {
                         takeIf { isJsonPrimitive }?.let {
-                            return context!!.deserialize(root, Message.HelloResponse::class.java)
+                            return context!!.deserialize(root, HelloResponse::class.java)
                         }
-                        return context!!.deserialize(this, Message.Hello::class.java)
+                        return context!!.deserialize(this, Hello::class.java)
                     }
                 }
                 root.has("apiKey") -> {
                     root.get("apiKey")?.apply {
-                        return context!!.deserialize(root, Message.Configure::class.java)
+                        return context!!.deserialize(root, Configure::class.java)
                     }
                 }
                 root.has("sample") -> {
@@ -122,6 +123,9 @@ class MessageTypeAdapter : JsonSerializer<Message>, JsonDeserializer<Message> {
                             return context!!.deserialize(root, Finished::class.java)
                         }
                     }
+                }
+                root.has("err") -> {
+                    return context!!.deserialize(root, Error::class.java)
                 }
                 else -> {
                     throw InvalidParameterException("Type not supported: $typeOfT")
