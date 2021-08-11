@@ -290,11 +290,6 @@ class DataAcquisitionManager(
     ).appendLine().toString()
 
     private fun postDataSample(dataSample: DataSample) {
-        val data = Base64.decode(
-            dataSample.body,
-            Base64.DEFAULT
-        )
-
         val request: Request = Request.Builder()
             .header("x-api-key", dataSample.headers.xApiKey)
             .header("x-label", dataSample.headers.xLabel)
@@ -311,7 +306,12 @@ class DataAcquisitionManager(
                 }
             )
             .url(dataSample.address)
-            .post(body = data.toRequestBody())
+            .post(
+                body = Base64.decode(
+                    dataSample.body,
+                    Base64.DEFAULT
+                ).toRequestBody()
+            )
             .build()
         client.newCall(request = request)
             .enqueue(responseCallback = object : Callback {
