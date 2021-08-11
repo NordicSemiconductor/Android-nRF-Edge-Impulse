@@ -6,6 +6,7 @@ import no.nordicsemi.android.ei.di.IODispatcher
 import no.nordicsemi.android.ei.model.DevelopmentKeys
 import no.nordicsemi.android.ei.service.EiService
 import no.nordicsemi.android.ei.service.param.BuildOnDeviceModelRequest
+import no.nordicsemi.android.ei.service.param.StartSamplingRequest
 import no.nordicsemi.android.ei.util.Engine
 import no.nordicsemi.android.ei.util.ModelType
 import javax.inject.Inject
@@ -33,6 +34,30 @@ class ProjectRepository @Inject constructor(
             category = category,
             offset = offset,
             limit = limit
+        )
+    }
+
+    suspend fun startSampling(
+        keys: DevelopmentKeys,
+        projectId: Int,
+        deviceId: String,
+        label: String,
+        lengthMs: Number,
+        category: String,
+        intervalMs: Float,
+        sensor: String
+    ) = withContext(ioDispatcher) {
+        service.startSampling(
+            apiKey = keys.apiKey,
+            projectId = projectId,
+            deviceId = deviceId,
+            startSamplingRequest = StartSamplingRequest(
+                label = label,
+                lengthMs = lengthMs,
+                category = category,
+                intervalMs = intervalMs,
+                sensor = sensor
+            )
         )
     }
 

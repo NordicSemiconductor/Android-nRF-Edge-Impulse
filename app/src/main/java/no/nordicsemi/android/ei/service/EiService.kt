@@ -110,6 +110,15 @@ interface EiService {
     ): GetSocketTokenResponse
 
     @Headers("Accept: application/json", "Content-Type: application/json")
+    @POST("api/{projectId}/device/{deviceId}/start-sampling")
+    suspend fun startSampling(
+        @Header("x-api-key") apiKey: String,
+        @Path("projectId") projectId: Int,
+        @Path("deviceId") deviceId: String,
+        @Body startSamplingRequest: StartSamplingRequest,
+    ): StartSamplingResponse
+
+    @Headers("Accept: application/json", "Content-Type: application/json")
     @POST("api/{projectId}/jobs/build-ondevice-model")
     suspend fun buildOnDevice(
         @Header("x-api-key") apiKey: String,
@@ -126,5 +135,5 @@ interface EiService {
         @Header("x-api-key") apiKey: String,
         @Path("projectId") projectId: Int,
         @Query("type") type: String = "nordic-thingy53"
-    ) : ResponseBody
+    ): ResponseBody
 }
