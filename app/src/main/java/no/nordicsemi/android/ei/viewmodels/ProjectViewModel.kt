@@ -34,6 +34,7 @@ import okhttp3.OkHttpClient
 import okhttp3.internal.filterList
 import javax.inject.Inject
 
+
 @HiltViewModel
 class ProjectViewModel @Inject constructor(
     @ApplicationContext context: Context,
@@ -117,11 +118,12 @@ class ProjectViewModel @Inject constructor(
         client = client
     )
 
-    val dataSample = derivedStateOf {
+    var samplingState = derivedStateOf {
         selectedDevice?.let {
-            dataAcquisitionManager[it.deviceId]?.dataSample
+            dataAcquisitionManager[it.deviceId]?.samplingState
         }
     }
+        private set
 
     /** Whether a build is in progress. */
     var buildState = derivedStateOf {
@@ -223,8 +225,9 @@ class ProjectViewModel @Inject constructor(
                 gson = gson,
                 developmentKeys = keys,
                 device = device,
-                context = getApplication(),
-                client = client
+                client = client,
+                eventChannel = eventChannel,
+                context = getApplication()
             )
         }).run {
             connect()
@@ -308,4 +311,5 @@ class ProjectViewModel @Inject constructor(
         }
     }
 }
+
 
