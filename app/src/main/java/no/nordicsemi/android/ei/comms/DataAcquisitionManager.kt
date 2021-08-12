@@ -308,10 +308,12 @@ class DataAcquisitionManager(
             )
             .header(
                 "content-type",
-                "application/" + when (dataSample.headers.xFileName.contains("cbor")) {
-                    true -> "cbor"
-                    else -> "json"
-                }
+                "application/${
+                    when (dataSample.headers.xFileName.contains("cbor")) {
+                        true -> "cbor"
+                        else -> "json"
+                    }
+                }"
             )
             .url(dataSample.address)
             .post(
