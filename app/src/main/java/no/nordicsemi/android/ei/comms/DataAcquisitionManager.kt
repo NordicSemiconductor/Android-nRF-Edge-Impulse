@@ -8,8 +8,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.google.gson.Gson
 import com.google.gson.JsonParser
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
@@ -24,6 +26,7 @@ import no.nordicsemi.android.ei.model.Message.Sample.ProgressEvent.Uploading
 import no.nordicsemi.android.ei.model.Message.Sample.Response
 import no.nordicsemi.android.ei.model.Message.Sample.Unknown
 import no.nordicsemi.android.ei.util.exhaustive
+import no.nordicsemi.android.ei.viewmodels.event.Event
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import no.nordicsemi.android.ei.websocket.EiWebSocket
 import no.nordicsemi.android.ei.websocket.WebSocketState
@@ -42,9 +45,9 @@ class DataAcquisitionManager(
     private val gson: Gson,
     private val developmentKeys: DevelopmentKeys,
     private val client: OkHttpClient,
+    private val eventChannel: Channel<Event>,
     context: Context,
 ) {
-
     private val bleDevice = BleDevice(
         device = device.bluetoothDevice,
         context = context
@@ -53,10 +56,15 @@ class DataAcquisitionManager(
         client = client,
         request = Request.Builder().url("wss://remote-mgmt.edgeimpulse.com").build()
     )
-    private var isSampleUploading = false
+
+    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        scope.launch {
+            eventChannel
+                .send(Event.Error(throwable = throwable))
+        }
+    }
 
     var samplingState by mutableStateOf<Message.Sample>(Unknown)
-    var dataSample = mutableStateOf<DeviceMessage?>(null)
 
     /** The device ID. Initially set to device MAC address. */
     private val deviceId: String = device.deviceId
@@ -65,17 +73,17 @@ class DataAcquisitionManager(
     var state by mutableStateOf(DeviceState.IN_RANGE)
 
     init {
-        scope.launch { registerToWebSocketStateChanges() }
-        scope.launch { registerToWebSocketMessages() }
-        scope.launch { registerToDeviceNotifications() }
-        scope.launch { registerToDeviceStateChanges() }
+        scope.launch(exceptionHandler) { registerToWebSocketStateChanges() }
+        scope.launch(exceptionHandler) { registerToWebSocketMessages() }
+        scope.launch(exceptionHandler) { registerToDeviceNotifications() }
+        scope.launch(exceptionHandler) { registerToDeviceStateChanges() }
     }
 
     /**
      * Initiates BLE connection to the device by launching a coroutine
      */
     fun connect() {
-        scope.launch {
+        scope.launch((exceptionHandler)) {
             bleDevice.connect()
         }
     }
@@ -84,7 +92,7 @@ class DataAcquisitionManager(
      * Disconnects the BLE device and closes the associated Web Socket after the disconnection is completed.
      */
     fun disconnect() {
-        scope.launch {
+        scope.launch((exceptionHandler)) {
             bleDevice.disconnectDevice().also {
                 // Close the Web Socket if it's open.
                 dataAcquisitionWebSocket.disconnect()
@@ -316,7 +324,11 @@ class DataAcquisitionManager(
         client.newCall(request = request)
             .enqueue(responseCallback = object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
-                    Log.d("AAAA", "On failure: ${e.message}")
+                    Log.e("AAAA", "Error while posting data sample: ${e.message}")
+                    samplingState = Unknown
+                    scope.launch {
+                        eventChannel.send(Event.Error(throwable = e))
+                    }
                 }
 
                 override fun onResponse(call: Call, response: okhttp3.Response) {
