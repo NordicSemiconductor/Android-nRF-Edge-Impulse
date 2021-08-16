@@ -4,9 +4,8 @@ import android.util.Log
 import com.google.gson.*
 import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.Message.*
+import no.nordicsemi.android.ei.model.Message.Sample.*
 import no.nordicsemi.android.ei.model.Message.Sample.ProgressEvent.*
-import no.nordicsemi.android.ei.model.Message.Sample.Request
-import no.nordicsemi.android.ei.model.Message.Sample.Response
 import java.lang.reflect.Type
 import java.security.InvalidParameterException
 

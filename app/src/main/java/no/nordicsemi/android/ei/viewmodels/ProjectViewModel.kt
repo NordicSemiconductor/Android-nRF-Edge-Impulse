@@ -80,6 +80,10 @@ class ProjectViewModel @Inject constructor(
     var isRefreshing: Boolean by mutableStateOf(false)
         private set
 
+    /** Whether the list of configured devices is refreshing. */
+    var isStartSamplingRequested: Boolean by mutableStateOf(false)
+        private set
+
     // TODO This needs to be fixed: NPE when switching back to the app.
     private val userComponentEntryPoint: UserComponentEntryPoint
         get() = EntryPoints.get(userManager.userComponent!!, UserComponentEntryPoint::class.java)
@@ -242,11 +246,15 @@ class ProjectViewModel @Inject constructor(
     fun startSampling(category: Category) {
         viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
             viewModelScope
-                .launch { eventChannel.send(Event.Error(throwable)) }
+                .launch {
+                    eventChannel.send(Event.Error(throwable))
+                        .also { isStartSamplingRequested = false }
+                }
         }) {
             selectedDevice?.let { device ->
                 selectedSensor?.let { sensor ->
                     selectedFrequency?.let { frequency ->
+                        isStartSamplingRequested = true
                         projectRepository.startSampling(
                             keys = keys,
                             projectId = project.id,
@@ -260,6 +268,8 @@ class ProjectViewModel @Inject constructor(
                             guard(response.success) {
                                 throw Throwable(response.error)
                             }
+                        }.also {
+                            isStartSamplingRequested = false
                         }
                     }
                 }

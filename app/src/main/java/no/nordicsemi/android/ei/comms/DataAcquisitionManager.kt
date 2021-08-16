@@ -22,10 +22,7 @@ import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.model.*
 import no.nordicsemi.android.ei.model.Message.*
 import no.nordicsemi.android.ei.model.Message.Sample
-import no.nordicsemi.android.ei.model.Message.Sample.ProgressEvent.Processing
-import no.nordicsemi.android.ei.model.Message.Sample.ProgressEvent.Uploading
-import no.nordicsemi.android.ei.model.Message.Sample.Response
-import no.nordicsemi.android.ei.model.Message.Sample.Unknown
+import no.nordicsemi.android.ei.model.Message.Sample.*
 import no.nordicsemi.android.ei.util.exhaustive
 import no.nordicsemi.android.ei.viewmodels.event.Event
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
@@ -233,10 +230,7 @@ class DataAcquisitionManager(
                             is Response -> {
                                 samplingState = deviceMessage.message
                             }
-                            is Processing -> {
-                                samplingState = deviceMessage.message
-                            }
-                            is Uploading -> {
+                            is ProgressEvent -> {
                                 samplingState = deviceMessage.message
                             }
                             else -> {
@@ -280,7 +274,7 @@ class DataAcquisitionManager(
             generateDeviceMessage(
                 message = WebSocketMessage(
                     direction = Direction.RECEIVE,
-                    message = Sample.Request(
+                    message = Request(
                         label = label,
                         length = sampleLength,
                         hmacKey = developmentKeys.hmacKey,
@@ -332,7 +326,7 @@ class DataAcquisitionManager(
             .enqueue(responseCallback = object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
                     Log.e("AAAA", "Error while posting data sample: ${e.message}")
-                    samplingState = Unknown
+                    samplingState = Finished(false, e.message)
                     scope.launch {
                         eventChannel.send(Event.Error(throwable = e))
                     }
@@ -340,7 +334,7 @@ class DataAcquisitionManager(
 
                 override fun onResponse(call: Call, response: okhttp3.Response) {
                     Log.d("AAAA", "Response: $response")
-                    samplingState = Sample.ProgressEvent.Finished()
+                    samplingState = Finished()
                 }
             })
     }

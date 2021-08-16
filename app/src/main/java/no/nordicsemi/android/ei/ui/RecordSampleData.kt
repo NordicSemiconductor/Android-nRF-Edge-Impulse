@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -15,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -27,6 +29,7 @@ import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Category
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Message
+import no.nordicsemi.android.ei.model.Message.Sample.*
 import no.nordicsemi.android.ei.model.Sensor
 import no.nordicsemi.android.ei.ui.theme.NordicGrass
 import no.nordicsemi.android.ei.ui.theme.NordicRed
@@ -152,7 +155,7 @@ fun RecordSampleContent(
             ) else it.toString()
         },
         onValueChange = { },
-        enabled = connectedDevices.isNotEmpty() || samplingState != Message.Sample.Unknown,
+        enabled = (samplingState is Finished || samplingState is Unknown),
         modifier = Modifier
             .fillMaxWidth()
             .focusRequester(focusRequester = focusRequester),
@@ -171,7 +174,7 @@ fun RecordSampleContent(
         },
         trailingIcon = {
             IconButton(
-                enabled = connectedDevices.isNotEmpty(),
+                enabled = (samplingState is Finished || samplingState is Unknown),
                 onClick = {
                     focusRequester.requestFocus()
                     isCategoryExpanded = true
@@ -201,7 +204,7 @@ fun RecordSampleContent(
     OutlinedTextField(
         value = selectedDevice?.name ?: stringResource(id = R.string.empty),
         onValueChange = { },
-        enabled = connectedDevices.isNotEmpty(),
+        enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp)
@@ -221,7 +224,7 @@ fun RecordSampleContent(
         },
         trailingIcon = {
             IconButton(
-                enabled = connectedDevices.isNotEmpty(),
+                enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
                 onClick = {
                     focusRequester.requestFocus()
                     isDevicesMenuExpanded = true
@@ -252,7 +255,7 @@ fun RecordSampleContent(
     OutlinedTextField(
         value = label,
         onValueChange = { onLabelChanged(it) },
-        enabled = connectedDevices.isNotEmpty()/* && selectedDevice != null*/,
+        enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp),
@@ -275,7 +278,7 @@ fun RecordSampleContent(
             .fillMaxWidth()
             .padding(top = 16.dp)
             .focusRequester(focusRequester = focusRequester),
-        enabled = connectedDevices.isNotEmpty()/* && selectedDevice != null*/,
+        enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
         readOnly = true,
         label = {
             Text(text = stringResource(R.string.label_sensor))
@@ -289,7 +292,7 @@ fun RecordSampleContent(
         },
         trailingIcon = {
             IconButton(
-                enabled = selectedDevice != null,
+                enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
                 onClick = {
                     focusRequester.requestFocus()
                     isSensorsMenuExpanded = true
@@ -326,7 +329,7 @@ fun RecordSampleContent(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp),
-        enabled = connectedDevices.isNotEmpty()/* && selectedDevice != null*/,
+        enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
         readOnly = true,
         label = {
             Text(text = stringResource(R.string.label_sample_length))
@@ -347,7 +350,7 @@ fun RecordSampleContent(
                                 onSampleLengthChanged(sampleLength + SAMPLE_LENGTH_DELTA)
                         }
                     },
-                    enabled = selectedSensor != null
+                    enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
@@ -359,7 +362,7 @@ fun RecordSampleContent(
                         if (sampleLength - SAMPLE_LENGTH_DELTA > MIN_SAMPLE_LENGTH)
                             onSampleLengthChanged(sampleLength - SAMPLE_LENGTH_DELTA)
                     },
-                    enabled = selectedSensor != null
+                    enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown)
                 ) {
                     Icon(
                         modifier = Modifier.size(24.dp),
@@ -378,11 +381,9 @@ fun RecordSampleContent(
             .fillMaxWidth()
             .padding(top = 16.dp)
             .focusRequester(focusRequester = focusRequester),
-        enabled = connectedDevices.isNotEmpty() && selectedSensor?.frequencies?.isNotEmpty() ?: false,
+        enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
         readOnly = true,
-        label = {
-            Text(text = stringResource(R.string.label_frequency))
-        },
+        label = { Text(text = stringResource(R.string.label_frequency)) },
         leadingIcon = {
             Icon(
                 modifier = Modifier.size(24.dp),
@@ -392,7 +393,7 @@ fun RecordSampleContent(
         },
         trailingIcon = {
             IconButton(
-                enabled = selectedSensor?.frequencies?.isNotEmpty() ?: false,
+                enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
                 onClick = {
                     focusRequester.requestFocus()
                     isFrequencyMenuExpanded = true
@@ -422,6 +423,48 @@ fun RecordSampleContent(
         },
         singleLine = true
     )
+    if (connectedDevices.isNotEmpty() && samplingState !is Unknown) {
+        Surface(
+            modifier = Modifier
+                .padding(vertical = 16.dp)
+                .clip(shape = RoundedCornerShape(8.dp))
+        ) {
+            Row(
+                modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    modifier = Modifier.weight(1.0f), text = when (samplingState) {
+                        is Request -> {
+                            "Sending sample request to device..."
+                        }
+                        is Response -> {
+                            "Response to sample request received..."
+                        }
+                        is ProgressEvent.Started -> {
+                            "Sampling started..."
+                        }
+                        is ProgressEvent.Processing -> {
+                            "Sample processing..."
+                        }
+                        is ProgressEvent.Uploading -> {
+                            "Uploading sample..."
+                        }
+                        is Finished -> {
+                            "Sampling finished."
+                        }
+                        else -> {
+                            "Unknown."
+                        }
+                    }
+                )
+                if (samplingState !is Finished && samplingState !is Unknown)
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp)
+                    )
+            }
+        }
+    }
 }
 
 @Composable

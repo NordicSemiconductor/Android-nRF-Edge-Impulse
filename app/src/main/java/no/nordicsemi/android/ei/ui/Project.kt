@@ -39,6 +39,8 @@ import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.*
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Category
+import no.nordicsemi.android.ei.model.Message.Sample.Finished
+import no.nordicsemi.android.ei.model.Message.Sample.Unknown
 import no.nordicsemi.android.ei.ui.layouts.CollapsibleFloatingActionButton
 import no.nordicsemi.android.ei.ui.layouts.TabTopAppBar
 import no.nordicsemi.android.ei.ui.layouts.isScrollingUp
@@ -144,7 +146,8 @@ private fun LargeScreen(
                             }
                             Spacer(modifier = Modifier.width(32.dp))
                             TextButton(
-                                enabled = connectedDevices.isNotEmpty() && viewModel.selectedSensor != null && viewModel.label.isNotEmpty(),
+                                enabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
+                                        (samplingState is Finished || samplingState is Unknown),
                                 onClick = {
                                     viewModel.startSampling(category = category)
                                 }
@@ -215,7 +218,8 @@ private fun SmallScreen(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Button(
-                            enabled = connectedDevices.isNotEmpty() && viewModel.selectedSensor != null && viewModel.label.isNotEmpty(),
+                            enabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
+                                    (samplingState is Finished || samplingState is Unknown),
                             onClick = {
                                 viewModel.startSampling(category = category)
                             }

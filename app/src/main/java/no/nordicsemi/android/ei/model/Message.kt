@@ -76,10 +76,12 @@ sealed class Message {
              */
             data class Uploading(val sampleUploading: Boolean) : ProgressEvent()
 
-            data class Finished(
-                val sampleFinished: Boolean = true
-            ) : Sample()
         }
+
+        data class Finished(
+            val sampleFinished: Boolean = true,
+            val error: String? = null
+        ) : Sample()
 
         object Unknown : Sample()
     }
