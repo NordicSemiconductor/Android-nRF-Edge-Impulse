@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.*
 import no.nordicsemi.android.ei.R
+import no.nordicsemi.android.ei.model.Category
 import no.nordicsemi.android.ei.ui.layouts.CollapsibleFloatingActionButton
 import no.nordicsemi.android.ei.ui.layouts.TabTopAppBar
 import no.nordicsemi.android.ei.ui.layouts.isScrollingUp
@@ -86,6 +87,7 @@ private fun LargeScreen(
     onBackPressed: () -> Unit
 ) {
     var isDialogVisible by rememberSaveable { mutableStateOf(false) }
+    var category by rememberSaveable { mutableStateOf(Category.TRAINING) }
     ProjectContent(
         viewModel = viewModel,
         scope = rememberCoroutineScope(),
@@ -104,12 +106,16 @@ private fun LargeScreen(
                     dismissOnClickOutside = false
                 )
             ) {
+                val samplingState by remember { viewModel.samplingState }
                 val connectedDevices by remember { viewModel.connectedDevices }
                 RecordSampleLargeScreen(
                     content = {
                         RecordSampleContent(
+                            samplingState = samplingState,
                             connectedDevices = connectedDevices,
                             focusRequester = viewModel.focusRequester,
+                            category = category,
+                            onCategorySelected = { category = it },
                             selectedDevice = viewModel.selectedDevice,
                             onDeviceSelected = { viewModel.onDeviceSelected(device = it) },
                             label = viewModel.label,
@@ -138,17 +144,9 @@ private fun LargeScreen(
                             }
                             Spacer(modifier = Modifier.width(32.dp))
                             TextButton(
-                                enabled = viewModel.selectedSensor != null,
+                                enabled = connectedDevices.isNotEmpty() && viewModel.selectedSensor != null && viewModel.label.isNotEmpty(),
                                 onClick = {
-                                    viewModel.startSampling()
-                                    /*viewModel.selectedDevice?.let { device ->
-                                        viewModel.dataAcquisitionManager[device.deviceId]?.startSampling(
-                                            viewModel.label,
-                                            10000,
-                                            viewModel.selectedFrequency!!.toInt(),
-                                            viewModel.selectedSensor!!
-                                        )
-                                    }*/
+                                    viewModel.startSampling(category = category)
                                 }
                             ) {
                                 Text(
@@ -179,7 +177,9 @@ private fun SmallScreen(
     val scope = rememberCoroutineScope()
     val isLandscape = LocalConfiguration.current.orientation == ORIENTATION_LANDSCAPE
     val modalBottomSheetState = rememberModalBottomSheetState(initialValue = Hidden)
+    val samplingState by remember { viewModel.samplingState }
     val connectedDevices by remember { viewModel.connectedDevices }
+    var category by rememberSaveable { mutableStateOf(Category.TRAINING) }
     ModalBottomSheetLayout(
         sheetState = modalBottomSheetState,
         sheetContent = {
@@ -193,8 +193,11 @@ private fun SmallScreen(
                 },
                 content = {
                     RecordSampleContent(
+                        samplingState = samplingState,
                         connectedDevices = connectedDevices,
                         focusRequester = viewModel.focusRequester,
+                        category = category,
+                        onCategorySelected = { category = it },
                         selectedDevice = viewModel.selectedDevice,
                         onDeviceSelected = { viewModel.onDeviceSelected(device = it) },
                         label = viewModel.label,
@@ -212,17 +215,9 @@ private fun SmallScreen(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Button(
-                            enabled = viewModel.selectedSensor != null,
+                            enabled = connectedDevices.isNotEmpty() && viewModel.selectedSensor != null && viewModel.label.isNotEmpty(),
                             onClick = {
-                                viewModel.startSampling()
-                                /*viewModel.selectedDevice?.let { device ->
-                                    viewModel.dataAcquisitionManager[device.deviceId]?.startSampling(
-                                        viewModel.label,
-                                        10000,
-                                        viewModel.selectedFrequency!!.toInt(),
-                                        viewModel.selectedSensor!!
-                                    )
-                                }*/
+                                viewModel.startSampling(category = category)
                             }
                         ) {
                             Text(
@@ -273,7 +268,6 @@ private fun ProjectContent(
         onScreenChanged(BottomNavigationScreen.fromNav(destination))
     }
     val snackbarHostState = remember { SnackbarHostState() }
-
     val pagerState = rememberPagerState(pageCount = 2)
     val trainingListState = rememberLazyListState()
     val testingListState = rememberLazyListState()
@@ -344,7 +338,7 @@ private fun ProjectContent(
                         .fillMaxSize()
                         .padding(paddingValues = innerPadding),
                     configuredDevices = viewModel.configuredDevices,
-                    activeDevices = viewModel.dataAcquisitionManager,
+                    activeDevices = viewModel.dataAcquisitionManagers,
                     refreshingState = viewModel.isRefreshing,
                     onRefresh = { viewModel.listDevices() },
                     scannerState = devicesViewModel.scannerState,
@@ -385,7 +379,7 @@ private fun ProjectContent(
                             modelType = modelType
                         )
                     },
-                    onFirmwareDownload = {modelType, uri ->
+                    onFirmwareDownload = { modelType, uri ->
                         viewModel.downloadBuild(context = context, modelType = modelType, uri = uri)
                     }
                 )

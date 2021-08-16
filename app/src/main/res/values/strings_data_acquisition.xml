@@ -5,6 +5,7 @@
     <string name="label_col_label">Label</string>
     <string name="label_col_length">Length</string>
 
+    <string name="label_category">Category</string>
     <string name="label_device">Device</string>
     <string name="label_label">Label</string>
     <string name="label_sensor">Sensor</string>

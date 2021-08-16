@@ -21,6 +21,7 @@ import no.nordicsemi.android.ei.ble.BleDevice
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.model.*
 import no.nordicsemi.android.ei.model.Message.*
+import no.nordicsemi.android.ei.model.Message.Sample
 import no.nordicsemi.android.ei.model.Message.Sample.ProgressEvent.Processing
 import no.nordicsemi.android.ei.model.Message.Sample.ProgressEvent.Uploading
 import no.nordicsemi.android.ei.model.Message.Sample.Response
@@ -64,19 +65,20 @@ class DataAcquisitionManager(
         }
     }
 
-    var samplingState by mutableStateOf<Message.Sample>(Unknown)
+    var samplingState by mutableStateOf<Sample>(Unknown)
 
     /** The device ID. Initially set to device MAC address. */
     private val deviceId: String = device.deviceId
 
     /** The device state. */
     var state by mutableStateOf(DeviceState.IN_RANGE)
+        private set
 
     init {
-        scope.launch(exceptionHandler) { registerToWebSocketStateChanges() }
-        scope.launch(exceptionHandler) { registerToWebSocketMessages() }
-        scope.launch(exceptionHandler) { registerToDeviceNotifications() }
-        scope.launch(exceptionHandler) { registerToDeviceStateChanges() }
+        scope.launch/*(exceptionHandler)*/ { registerToWebSocketStateChanges() }
+        scope.launch/*(exceptionHandler)*/ { registerToWebSocketMessages() }
+        scope.launch/*(exceptionHandler)*/ { registerToDeviceNotifications() }
+        scope.launch/*(exceptionHandler)*/ { registerToDeviceStateChanges() }
     }
 
     /**
@@ -117,13 +119,14 @@ class DataAcquisitionManager(
     }
 
     private suspend fun registerToWebSocketMessages() {
-        dataAcquisitionWebSocket.messageAsFlow().collect { message ->
-            val json = gson.fromJson(message, Message::class.java)
-            Log.d("AAAA", "Received message from WebSocket: $json")
-            when (json) {
+        dataAcquisitionWebSocket.messageAsFlow().transform { json ->
+            emit(gson.fromJson(json, Message::class.java))
+        }.collect { message ->
+            Log.d("AAAA", "Received message from WebSocket: $message")
+            when (message) {
                 is HelloResponse -> {
                     // if the Hello message returned with a success wrap the received response and send it to the device
-                    json.takeIf {
+                    message.takeIf {
                         it.hello
                     }?.let {
                         bleDevice.send(
@@ -147,12 +150,13 @@ class DataAcquisitionManager(
                         )
                     }
                 }
-                is Message.Sample.Request -> {
+                is Sample.Request -> {
+                    samplingState = message
                     bleDevice.send(
                         generateDeviceMessage(
                             message = WebSocketMessage(
                                 direction = Direction.RECEIVE,
-                                message = json
+                                message = message
                             )
                         )
                     )
@@ -276,7 +280,7 @@ class DataAcquisitionManager(
             generateDeviceMessage(
                 message = WebSocketMessage(
                     direction = Direction.RECEIVE,
-                    message = Message.Sample.Request(
+                    message = Sample.Request(
                         label = label,
                         length = sampleLength,
                         hmacKey = developmentKeys.hmacKey,
@@ -298,6 +302,7 @@ class DataAcquisitionManager(
     ).appendLine().toString()
 
     private fun postDataSample(dataSample: DataSample) {
+        Log.d("AAAA", "Data Sample $dataSample")
         val request: Request = Request.Builder()
             .header("x-api-key", dataSample.headers.xApiKey)
             .header("x-label", dataSample.headers.xLabel)
@@ -335,7 +340,7 @@ class DataAcquisitionManager(
 
                 override fun onResponse(call: Call, response: okhttp3.Response) {
                     Log.d("AAAA", "Response: $response")
-                    samplingState = Message.Sample.ProgressEvent.Finished()
+                    samplingState = Sample.ProgressEvent.Finished()
                 }
             })
     }

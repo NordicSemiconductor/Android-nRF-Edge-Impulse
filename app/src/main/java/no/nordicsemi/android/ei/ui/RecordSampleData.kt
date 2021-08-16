@@ -1,10 +1,9 @@
 package no.nordicsemi.android.ei.ui
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -15,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -22,12 +22,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import no.nordicsemi.android.ei.R
+import no.nordicsemi.android.ei.model.Category
 import no.nordicsemi.android.ei.model.Device
+import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.Sensor
 import no.nordicsemi.android.ei.ui.theme.NordicGrass
 import no.nordicsemi.android.ei.ui.theme.NordicRed
+import java.util.*
 
 
 @Composable
@@ -98,8 +102,11 @@ fun RecordSampleSmallScreen(
 
 @Composable
 fun RecordSampleContent(
+    samplingState: Message.Sample?,
     connectedDevices: List<Device>,
     focusRequester: FocusRequester,
+    category: Category,
+    onCategorySelected: (Category) -> Unit,
     selectedDevice: Device?,
     onDeviceSelected: (Device) -> Unit,
     label: String,
@@ -113,6 +120,7 @@ fun RecordSampleContent(
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
+    var isCategoryExpanded by rememberSaveable { mutableStateOf(false) }
     var isDevicesMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var isSensorsMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var isFrequencyMenuExpanded by rememberSaveable { mutableStateOf(false) }
@@ -138,13 +146,66 @@ fun RecordSampleContent(
             onDeviceSelected(connectedDevices[0])
         }
     }
-
+    OutlinedTextField(
+        value = category.type.replaceFirstChar {
+            if (it.isLowerCase()) it.titlecase(
+                Locale.US
+            ) else it.toString()
+        },
+        onValueChange = { },
+        enabled = connectedDevices.isNotEmpty() || samplingState != Message.Sample.Unknown,
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusRequester(focusRequester = focusRequester),
+        readOnly = true,
+        label = {
+            Text(text = stringResource(R.string.label_category))
+        },
+        leadingIcon = {
+            Icon(
+                modifier = Modifier
+                    .size(24.dp)
+                    .padding(4.dp),
+                imageVector = Icons.Default.Category,
+                contentDescription = null
+            )
+        },
+        trailingIcon = {
+            IconButton(
+                enabled = connectedDevices.isNotEmpty(),
+                onClick = {
+                    focusRequester.requestFocus()
+                    isCategoryExpanded = true
+                }
+            ) {
+                Icon(
+                    modifier = Modifier.rotate(if (isCategoryExpanded) 180f else 0f),
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = null
+                )
+                if (isCategoryExpanded) {
+                    ShowCategoryDropdown(
+                        onCategorySelected = {
+                            onCategorySelected(it)
+                            isCategoryExpanded = false
+                        },
+                        onDismiss = {
+                            isCategoryExpanded = false
+                            focusManager.clearFocus()
+                        }
+                    )
+                }
+            }
+        },
+        singleLine = true
+    )
     OutlinedTextField(
         value = selectedDevice?.name ?: stringResource(id = R.string.empty),
         onValueChange = { },
         enabled = connectedDevices.isNotEmpty(),
         modifier = Modifier
             .fillMaxWidth()
+            .padding(top = 16.dp)
             .focusRequester(focusRequester = focusRequester),
         readOnly = true,
         label = {
@@ -192,7 +253,7 @@ fun RecordSampleContent(
     OutlinedTextField(
         value = label,
         onValueChange = { onLabelChanged(it) },
-        enabled = selectedDevice != null,
+        enabled = connectedDevices.isNotEmpty()/* && selectedDevice != null*/,
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp),
@@ -215,7 +276,7 @@ fun RecordSampleContent(
             .fillMaxWidth()
             .padding(top = 16.dp)
             .focusRequester(focusRequester = focusRequester),
-        enabled = selectedDevice != null,
+        enabled = connectedDevices.isNotEmpty()/* && selectedDevice != null*/,
         readOnly = true,
         label = {
             Text(text = stringResource(R.string.label_sensor))
@@ -266,7 +327,7 @@ fun RecordSampleContent(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp),
-        enabled = selectedDevice != null,
+        enabled = connectedDevices.isNotEmpty()/* && selectedDevice != null*/,
         readOnly = true,
         label = {
             Text(text = stringResource(R.string.label_sample_length))
@@ -318,7 +379,7 @@ fun RecordSampleContent(
             .fillMaxWidth()
             .padding(top = 16.dp)
             .focusRequester(focusRequester = focusRequester),
-        enabled = selectedSensor?.frequencies?.isNotEmpty() ?: false,
+        enabled = connectedDevices.isNotEmpty() && selectedSensor?.frequencies?.isNotEmpty() ?: false,
         readOnly = true,
         label = {
             Text(text = stringResource(R.string.label_frequency))
@@ -362,6 +423,116 @@ fun RecordSampleContent(
         },
         singleLine = true
     )
+}
+
+@Composable
+private fun CategorySelection(category: Category, onCategorySelected: (Category) -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .padding(end = 8.dp, bottom = 8.dp)
+                .weight(1.0f)
+                .clip(shape = RoundedCornerShape(24.dp))
+                .border(
+                    border = BorderStroke(
+                        width = 2.dp,
+                        color = MaterialTheme.colors.primary
+                    ),
+                    shape = RoundedCornerShape(24.dp)
+                )
+                .clickable(onClick = { onCategorySelected(Category.TRAINING) })
+                .background(color = if (category == Category.TRAINING) MaterialTheme.colors.primaryVariant else MaterialTheme.colors.background)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    modifier = Modifier.padding(start = 8.dp),
+                    imageVector = Icons.Default.ModelTraining,
+                    contentDescription = null,
+                    tint = MaterialTheme.colors.onSurface
+                )
+                Text(
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                    text = stringResource(id = R.string.title_training),
+                    textAlign = TextAlign.Center,
+                    color = if (category == Category.TRAINING) MaterialTheme.colors.surface else MaterialTheme.colors.onSurface
+                )
+            }
+        }
+        Box(
+            modifier = Modifier
+                .padding(end = 8.dp, bottom = 8.dp)
+                .weight(1.0f)
+                .clip(shape = RoundedCornerShape(24.dp))
+                .border(
+                    border = BorderStroke(
+                        width = 2.dp,
+                        color = MaterialTheme.colors.primary
+                    ),
+                    shape = RoundedCornerShape(24.dp)
+                )
+                .clickable(onClick = { onCategorySelected(Category.TESTING) })
+                .background(
+                    color = if (category == Category.TESTING) MaterialTheme.colors.primaryVariant.copy(
+                        alpha = 0.6f
+                    ) else MaterialTheme.colors.background
+                )
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    modifier = Modifier.padding(start = 8.dp),
+                    imageVector = Icons.Default.Science,
+                    contentDescription = null,
+                    tint = MaterialTheme.colors.onSurface
+                )
+                Text(
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                    text = stringResource(id = R.string.title_testing),
+                    textAlign = TextAlign.Center,
+                    color = if (category == Category.TESTING) MaterialTheme.colors.surface else MaterialTheme.colors.onSurface
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ShowCategoryDropdown(
+    onCategorySelected: (Category) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val categories = listOf(Category.TRAINING, Category.TESTING)
+    DropdownMenu(
+        modifier = Modifier
+            .fillMaxWidth(),
+        expanded = true,
+        onDismissRequest = onDismiss
+    ) {
+        categories.forEach { category ->
+            DropdownMenuItem(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                onClick = { onCategorySelected(category) }
+            ) {
+                Text(
+                    modifier = Modifier.weight(1.0f),
+                    text = category.type.replaceFirstChar {
+                        if (it.isLowerCase()) it.titlecase(
+                            Locale.US
+                        ) else it.toString()
+                    }
+                )
+            }
+        }
+    }
 }
 
 @Composable

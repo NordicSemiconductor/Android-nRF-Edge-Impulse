@@ -20,6 +20,7 @@ import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.comms.DataAcquisitionManager
 import no.nordicsemi.android.ei.comms.DeploymentManager
 import no.nordicsemi.android.ei.di.*
+import no.nordicsemi.android.ei.model.Category
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Sensor
 import no.nordicsemi.android.ei.repository.ProjectDataRepository
@@ -60,7 +61,7 @@ class ProjectViewModel @Inject constructor(
         get() = projectDataRepository.developmentKeys
 
     /** A map of device managers. */
-    var dataAcquisitionManager = mutableStateMapOf<String, DataAcquisitionManager>()
+    var dataAcquisitionManagers = mutableStateMapOf<String, DataAcquisitionManager>()
         private set
 
     /** A list of configured devices obtained from the service. */
@@ -70,7 +71,7 @@ class ProjectViewModel @Inject constructor(
     /** A list of connected devices derived using the configuredDevices and the commsManagers. */
     var connectedDevices = derivedStateOf {
         configuredDevices.filterList {
-            dataAcquisitionManager[deviceId]?.state == DeviceState.AUTHENTICATED
+            dataAcquisitionManagers[deviceId]?.state == DeviceState.AUTHENTICATED
         }
     }
         private set
@@ -120,7 +121,7 @@ class ProjectViewModel @Inject constructor(
 
     var samplingState = derivedStateOf {
         selectedDevice?.let {
-            dataAcquisitionManager[it.deviceId]?.samplingState
+            dataAcquisitionManagers[it.deviceId]?.samplingState
         }
     }
         private set
@@ -174,7 +175,7 @@ class ProjectViewModel @Inject constructor(
                 // If the user decides to delete a device from the web while being connected to i t from the phone,
                 // We should disconnect from that device
                 configuredDevices.filter { !response.devices.contains(it) }.onEach { device ->
-                    dataAcquisitionManager.remove(device.deviceId)?.apply {
+                    dataAcquisitionManagers.remove(device.deviceId)?.apply {
                         state.takeIf {
                             it == DeviceState.CONNECTING ||
                                     it == DeviceState.AUTHENTICATING ||
@@ -219,7 +220,7 @@ class ProjectViewModel @Inject constructor(
 
     //TODO need to finalize the api
     fun connect(device: DiscoveredBluetoothDevice): Unit =
-        dataAcquisitionManager.getOrPut(key = device.deviceId, defaultValue = {
+        dataAcquisitionManagers.getOrPut(key = device.deviceId, defaultValue = {
             DataAcquisitionManager(
                 scope = viewModelScope,
                 gson = gson,
@@ -234,11 +235,11 @@ class ProjectViewModel @Inject constructor(
         }
 
     fun disconnect(device: DiscoveredBluetoothDevice) {
-        dataAcquisitionManager[device.deviceId]?.disconnect()
-        dataAcquisitionManager.remove(device.deviceId)
+        dataAcquisitionManagers[device.deviceId]?.disconnect()
+        dataAcquisitionManagers.remove(device.deviceId)
     }
 
-    fun startSampling(category: String = "training") {
+    fun startSampling(category: Category) {
         viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
             viewModelScope
                 .launch { eventChannel.send(Event.Error(throwable)) }

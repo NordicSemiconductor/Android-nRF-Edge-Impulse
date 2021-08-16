@@ -3,6 +3,7 @@ package no.nordicsemi.android.ei.repository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import no.nordicsemi.android.ei.di.IODispatcher
+import no.nordicsemi.android.ei.model.Category
 import no.nordicsemi.android.ei.model.DevelopmentKeys
 import no.nordicsemi.android.ei.service.EiService
 import no.nordicsemi.android.ei.service.param.BuildOnDeviceModelRequest
@@ -43,7 +44,7 @@ class ProjectRepository @Inject constructor(
         deviceId: String,
         label: String,
         lengthMs: Number,
-        category: String,
+        category: Category,
         intervalMs: Float,
         sensor: String
     ) = withContext(ioDispatcher) {
@@ -54,7 +55,7 @@ class ProjectRepository @Inject constructor(
             startSamplingRequest = StartSamplingRequest(
                 label = label,
                 lengthMs = lengthMs,
-                category = category,
+                category = category.type,
                 intervalMs = intervalMs,
                 sensor = sensor
             )
