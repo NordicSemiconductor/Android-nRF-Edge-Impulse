@@ -1,9 +1,10 @@
 package no.nordicsemi.android.ei.ui
 
-import androidx.compose.foundation.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -14,7 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -22,7 +22,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Category
@@ -423,86 +422,6 @@ fun RecordSampleContent(
         },
         singleLine = true
     )
-}
-
-@Composable
-private fun CategorySelection(category: Category, onCategorySelected: (Category) -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth()) {
-        Box(
-            modifier = Modifier
-                .padding(end = 8.dp, bottom = 8.dp)
-                .weight(1.0f)
-                .clip(shape = RoundedCornerShape(24.dp))
-                .border(
-                    border = BorderStroke(
-                        width = 2.dp,
-                        color = MaterialTheme.colors.primary
-                    ),
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .clickable(onClick = { onCategorySelected(Category.TRAINING) })
-                .background(color = if (category == Category.TRAINING) MaterialTheme.colors.primaryVariant else MaterialTheme.colors.background)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    modifier = Modifier.padding(start = 8.dp),
-                    imageVector = Icons.Default.ModelTraining,
-                    contentDescription = null,
-                    tint = MaterialTheme.colors.onSurface
-                )
-                Text(
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp, vertical = 8.dp),
-                    text = stringResource(id = R.string.title_training),
-                    textAlign = TextAlign.Center,
-                    color = if (category == Category.TRAINING) MaterialTheme.colors.surface else MaterialTheme.colors.onSurface
-                )
-            }
-        }
-        Box(
-            modifier = Modifier
-                .padding(end = 8.dp, bottom = 8.dp)
-                .weight(1.0f)
-                .clip(shape = RoundedCornerShape(24.dp))
-                .border(
-                    border = BorderStroke(
-                        width = 2.dp,
-                        color = MaterialTheme.colors.primary
-                    ),
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .clickable(onClick = { onCategorySelected(Category.TESTING) })
-                .background(
-                    color = if (category == Category.TESTING) MaterialTheme.colors.primaryVariant.copy(
-                        alpha = 0.6f
-                    ) else MaterialTheme.colors.background
-                )
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    modifier = Modifier.padding(start = 8.dp),
-                    imageVector = Icons.Default.Science,
-                    contentDescription = null,
-                    tint = MaterialTheme.colors.onSurface
-                )
-                Text(
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp, vertical = 8.dp),
-                    text = stringResource(id = R.string.title_testing),
-                    textAlign = TextAlign.Center,
-                    color = if (category == Category.TESTING) MaterialTheme.colors.surface else MaterialTheme.colors.onSurface
-                )
-            }
-        }
-    }
 }
 
 @Composable
