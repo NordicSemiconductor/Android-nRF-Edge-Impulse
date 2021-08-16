@@ -135,7 +135,12 @@ private fun LargeScreen(
                             horizontalArrangement = Arrangement.End
                         ) {
                             TextButton(
-                                onClick = { isDialogVisible = false }
+                                enabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
+                                        (samplingState is Finished || samplingState is Unknown),
+                                onClick = {
+                                    isDialogVisible =
+                                        samplingState is Finished || samplingState is Unknown
+                                }
                             ) {
                                 Text(
                                     text = stringResource(R.string.action_dialog_cancel).uppercase(
@@ -189,10 +194,11 @@ private fun SmallScreen(
             RecordSampleSmallScreen(
                 isLandscape = isLandscape,
                 onCloseClicked = {
-                    hideBottomSheet(
-                        scope = scope,
-                        modalBottomSheetState = modalBottomSheetState
-                    )
+                    if (samplingState is Finished || samplingState is Unknown)
+                        hideBottomSheet(
+                            scope = scope,
+                            modalBottomSheetState = modalBottomSheetState
+                        )
                 },
                 content = {
                     RecordSampleContent(
