@@ -11,5 +11,5 @@ package no.nordicsemi.android.ei.service.param
 data class StartSamplingResponse(
     val success: Boolean,
     val error: String?,
-    val id: Int?
+    val id: Number?
 )
