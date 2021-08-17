@@ -72,10 +72,10 @@ class DataAcquisitionManager(
         private set
 
     init {
-        scope.launch/*(exceptionHandler)*/ { registerToWebSocketStateChanges() }
-        scope.launch/*(exceptionHandler)*/ { registerToWebSocketMessages() }
-        scope.launch/*(exceptionHandler)*/ { registerToDeviceNotifications() }
-        scope.launch/*(exceptionHandler)*/ { registerToDeviceStateChanges() }
+        scope.launch(exceptionHandler) { registerToWebSocketStateChanges() }
+        scope.launch(exceptionHandler) { registerToWebSocketMessages() }
+        scope.launch(exceptionHandler) { registerToDeviceNotifications() }
+        scope.launch(exceptionHandler) { registerToDeviceStateChanges() }
     }
 
     /**
@@ -233,9 +233,7 @@ class DataAcquisitionManager(
                             is ProgressEvent -> {
                                 samplingState = deviceMessage.message
                             }
-                            else -> {
-                                //TODO check other messages
-                            }
+                            else -> { }
                         }.exhaustive
                     }
                     is DataSample -> {
