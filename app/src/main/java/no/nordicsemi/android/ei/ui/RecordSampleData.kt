@@ -31,6 +31,7 @@ import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.Message.Sample.*
 import no.nordicsemi.android.ei.model.Sensor
+import no.nordicsemi.android.ei.showSnackbar
 import no.nordicsemi.android.ei.ui.theme.NordicGrass
 import no.nordicsemi.android.ei.ui.theme.NordicRed
 import java.util.*
@@ -40,7 +41,7 @@ import java.util.*
 fun RecordSampleLargeScreen(
     content: @Composable () -> Unit
 ) {
-    Surface {
+    Surface(modifier = Modifier.wrapContentSize()) {
         Column {
             Row(
                 modifier = Modifier
@@ -56,7 +57,10 @@ fun RecordSampleLargeScreen(
                 )
             }
             Column(
-                modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp),
+                modifier = Modifier
+                    .wrapContentSize()
+                    .verticalScroll(state = rememberScrollState())
+                    .padding(start = 32.dp, bottom = 16.dp, end = 32.dp)
             ) {
                 content()
             }
@@ -66,12 +70,15 @@ fun RecordSampleLargeScreen(
 
 @Composable
 fun RecordSampleSmallScreen(
+    samplingState: Message.Sample,
     isLandscape: Boolean,
     content: @Composable () -> Unit,
     onCloseClicked: () -> Unit
 ) {
+    val scaffoldState = rememberScaffoldState(snackbarHostState = SnackbarHostState())
     Scaffold(
         modifier = Modifier.wrapContentHeight(),
+        scaffoldState = scaffoldState,
         topBar = {
             TopAppBar(
                 title = {
@@ -89,7 +96,7 @@ fun RecordSampleSmallScreen(
     ) {
         Column(
             modifier = Modifier
-                .wrapContentHeight()
+                .fillMaxHeight()
                 .padding(16.dp)
                 .verticalScroll(
                     state = rememberScrollState(),
@@ -97,6 +104,17 @@ fun RecordSampleSmallScreen(
                 )
         ) {
             content()
+            if (samplingState is Finished) {
+                showSnackbar(
+                    coroutineScope = rememberCoroutineScope(),
+                    snackbarHostState = scaffoldState.snackbarHostState,
+                    message = if (samplingState.sampleFinished) {
+                        "Sampling Finished"
+                    } else {
+                        "Error " + samplingState.error
+                    }
+                )
+            }
         }
     }
 }
@@ -423,11 +441,12 @@ fun RecordSampleContent(
         },
         singleLine = true
     )
-    if (connectedDevices.isNotEmpty() && samplingState !is Unknown) {
+    if (connectedDevices.isNotEmpty() && (samplingState !is Finished && samplingState !is Unknown)) {
         Surface(
             modifier = Modifier
-                .padding(vertical = 16.dp)
-                .clip(shape = RoundedCornerShape(8.dp))
+                .padding(top = 16.dp)
+                .clip(shape = RoundedCornerShape(8.dp)),
+            elevation = 6.dp
         ) {
             Row(
                 modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),

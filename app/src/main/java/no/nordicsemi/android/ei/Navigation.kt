@@ -8,6 +8,7 @@ import androidx.hilt.navigation.HiltViewModelFactory
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import no.nordicsemi.android.ei.account.AccountHelper
+import no.nordicsemi.android.ei.model.Message.Sample.*
 import no.nordicsemi.android.ei.ui.Dashboard
 import no.nordicsemi.android.ei.ui.Project
 import no.nordicsemi.android.ei.ui.Splashscreen

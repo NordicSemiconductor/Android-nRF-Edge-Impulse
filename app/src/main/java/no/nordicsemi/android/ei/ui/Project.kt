@@ -1,6 +1,7 @@
 package no.nordicsemi.android.ei.ui
 
 import android.content.res.Configuration.*
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -39,6 +40,7 @@ import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.*
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Category
+import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.Message.Sample.Finished
 import no.nordicsemi.android.ei.model.Message.Sample.Unknown
 import no.nordicsemi.android.ei.ui.layouts.CollapsibleFloatingActionButton
@@ -90,11 +92,15 @@ private fun LargeScreen(
 ) {
     var isDialogVisible by rememberSaveable { mutableStateOf(false) }
     var category by rememberSaveable { mutableStateOf(Category.TRAINING) }
+    val samplingState by remember { viewModel.samplingState }
+    val connectedDevices by remember { viewModel.connectedDevices }
     ProjectContent(
         viewModel = viewModel,
         scope = rememberCoroutineScope(),
+        isBackHandlerEnabled = false,
         selectedScreen = selectedScreen,
         onScreenChanged = onScreenChanged,
+        samplingState = samplingState,
         isFabVisible = selectedScreen.shouldFabBeVisible && !isDialogVisible,
         onFabClicked = { isDialogVisible = true },
         onBackPressed = onBackPressed
@@ -108,8 +114,6 @@ private fun LargeScreen(
                     dismissOnClickOutside = false
                 )
             ) {
-                val samplingState by remember { viewModel.samplingState }
-                val connectedDevices by remember { viewModel.connectedDevices }
                 RecordSampleLargeScreen(
                     content = {
                         RecordSampleContent(
@@ -129,17 +133,18 @@ private fun LargeScreen(
                             selectedFrequency = viewModel.selectedFrequency,
                             onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) }
                         )
-                        Spacer(modifier = Modifier.height(32.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp),
                             horizontalArrangement = Arrangement.End
                         ) {
                             TextButton(
-                                enabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
-                                        (samplingState is Finished || samplingState is Unknown),
+                                enabled = samplingState is Finished || samplingState is Unknown,
                                 onClick = {
                                     isDialogVisible =
-                                        samplingState is Finished || samplingState is Unknown
+                                        !(samplingState is Finished || samplingState is Unknown)
                                 }
                             ) {
                                 Text(
@@ -184,14 +189,22 @@ private fun SmallScreen(
 ) {
     val scope = rememberCoroutineScope()
     val isLandscape = LocalConfiguration.current.orientation == ORIENTATION_LANDSCAPE
-    val modalBottomSheetState = rememberModalBottomSheetState(initialValue = Hidden)
     val samplingState by remember { viewModel.samplingState }
+    val modalBottomSheetState =
+        rememberModalBottomSheetState(
+            initialValue = Hidden/*, confirmStateChange = {
+            (samplingState is Finished || samplingState is Unknown)
+        }*/
+        )
+    remember { SnackbarHostState() }
     val connectedDevices by remember { viewModel.connectedDevices }
     var category by rememberSaveable { mutableStateOf(Category.TRAINING) }
+
     ModalBottomSheetLayout(
         sheetState = modalBottomSheetState,
         sheetContent = {
             RecordSampleSmallScreen(
+                samplingState = samplingState,
                 isLandscape = isLandscape,
                 onCloseClicked = {
                     if (samplingState is Finished || samplingState is Unknown)
@@ -245,8 +258,10 @@ private fun SmallScreen(
         ProjectContent(
             viewModel = viewModel,
             scope = scope,
+            isBackHandlerEnabled = modalBottomSheetState.isVisible,
             selectedScreen = selectedScreen,
             onScreenChanged = onScreenChanged,
+            samplingState = samplingState,
             isFabVisible = selectedScreen.shouldFabBeVisible,// && !modalBottomSheetState.isVisible,
             onFabClicked = {
                 showBottomSheet(
@@ -255,7 +270,11 @@ private fun SmallScreen(
                     isLandsScape = isLandscape,
                 )
             },
-            onBackPressed = onBackPressed
+            onBackPressed = {
+                if (modalBottomSheetState.isVisible && (samplingState is Finished || samplingState is Unknown))
+                    hideBottomSheet(scope = scope, modalBottomSheetState = modalBottomSheetState)
+                else onBackPressed()
+            }
         )
     }
 }
@@ -265,8 +284,10 @@ private fun SmallScreen(
 private fun ProjectContent(
     viewModel: ProjectViewModel,
     scope: CoroutineScope,
+    isBackHandlerEnabled: Boolean,
     selectedScreen: BottomNavigationScreen,
     onScreenChanged: (BottomNavigationScreen) -> Unit,
+    samplingState: Message.Sample,
     isFabVisible: Boolean,
     onFabClicked: () -> Unit,
     onBackPressed: () -> Unit
@@ -282,6 +303,7 @@ private fun ProjectContent(
     val trainingListState = rememberLazyListState()
     val testingListState = rememberLazyListState()
     val listStates = listOf(trainingListState, testingListState)
+
 
     LocalLifecycleOwner.current.lifecycleScope.launchWhenStarted {
         viewModel.eventFlow.runCatching {
@@ -304,11 +326,11 @@ private fun ProjectContent(
             }
         }
     }
-
     Scaffold(
         scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
         topBar = {
             ProjectTopAppBar(
+                samplingState = samplingState,
                 modifier = Modifier.fillMaxWidth(),
                 projectName = viewModel.project.name,
                 selectedScreen = selectedScreen,
@@ -360,6 +382,10 @@ private fun ProjectContent(
                 val dataAcquisitionViewModel: DataAcquisitionViewModel = viewModel(
                     factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
                 )
+                BackHandler(
+                    enabled = isBackHandlerEnabled,
+                    onBack = onBackPressed
+                )
                 DataAcquisition(
                     modifier = Modifier
                         .fillMaxSize()
@@ -390,7 +416,11 @@ private fun ProjectContent(
                         )
                     },
                     onFirmwareDownload = { modelType, uri ->
-                        viewModel.downloadBuild(context = context, modelType = modelType, uri = uri)
+                        viewModel.downloadBuild(
+                            context = context,
+                            modelType = modelType,
+                            uri = uri
+                        )
                     }
                 )
             }
@@ -402,6 +432,7 @@ private fun ProjectContent(
 @Composable
 private fun ProjectTopAppBar(
     modifier: Modifier = Modifier,
+    samplingState: Message.Sample,
     projectName: String,
     selectedScreen: BottomNavigationScreen,
     pagerState: PagerState,
@@ -411,6 +442,7 @@ private fun ProjectTopAppBar(
         HorizontalPagerTab.TRAINING,
         HorizontalPagerTab.TESTING,
     )
+
     when (selectedScreen) {
         BottomNavigationScreen.DATA_ACQUISITION -> {
             TabTopAppBar(
@@ -430,7 +462,9 @@ private fun ProjectTopAppBar(
                 pagerState = pagerState,
                 modifier = modifier,
                 navigationIcon = {
-                    IconButton(onClick = onBackPressed) {
+                    IconButton(onClick = {
+                        onBackPressed()
+                    }) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
                             contentDescription = null
@@ -444,7 +478,9 @@ private fun ProjectTopAppBar(
                 title = { Title(text = projectName) },
                 modifier = modifier,
                 navigationIcon = {
-                    IconButton(onClick = onBackPressed) {
+                    IconButton(onClick = {
+                        onBackPressed()
+                    }) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
                             contentDescription = null

@@ -22,6 +22,7 @@ import no.nordicsemi.android.ei.comms.DeploymentManager
 import no.nordicsemi.android.ei.di.*
 import no.nordicsemi.android.ei.model.Category
 import no.nordicsemi.android.ei.model.Device
+import no.nordicsemi.android.ei.model.Message.Sample
 import no.nordicsemi.android.ei.model.Sensor
 import no.nordicsemi.android.ei.repository.ProjectDataRepository
 import no.nordicsemi.android.ei.repository.ProjectRepository
@@ -126,7 +127,7 @@ class ProjectViewModel @Inject constructor(
     var samplingState = derivedStateOf {
         selectedDevice?.let {
             dataAcquisitionManagers[it.deviceId]?.samplingState
-        }
+        } ?: Sample.Unknown
     }
         private set
 
