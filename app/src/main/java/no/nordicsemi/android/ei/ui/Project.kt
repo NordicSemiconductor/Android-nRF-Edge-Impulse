@@ -192,9 +192,10 @@ private fun SmallScreen(
     val samplingState by remember { viewModel.samplingState }
     val modalBottomSheetState =
         rememberModalBottomSheetState(
-            initialValue = Hidden/*, confirmStateChange = {
-            (samplingState is Finished || samplingState is Unknown)
-        }*/
+            initialValue = Hidden, confirmStateChange = {
+                if (it == HalfExpanded || it == Expanded) true
+                else (samplingState is Finished || samplingState is Unknown)
+            }
         )
     remember { SnackbarHostState() }
     val connectedDevices by remember { viewModel.connectedDevices }
