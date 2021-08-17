@@ -2,9 +2,9 @@
 buildscript {
     ext {
         // https://developer.android.com/jetpack/androidx/releases/compose
-        compose_version = '1.0.0'
+        compose_version = '1.0.1'
         // https://developer.android.com/jetpack/compose/setup#configure_kotlin
-        kotlin_version = '1.5.10'
+        kotlin_version = '1.5.21'
         // https://github.com/google/dagger/releases
         hilt_dagger_version = '2.38.1'
         // https://developer.android.com/training/dependency-injection/hilt-android
@@ -12,9 +12,9 @@ buildscript {
         // https://github.com/google/accompanist/releases
         accompanist_version = '0.12.0'
         // https://github.com/google/accompanist/releases
-        accompanist_version = '0.16.0'
+        accompanist_version = '0.16.1'
         // https://developer.android.com/jetpack/androidx/releases/lifecycle#kotlin
-        lifecycle_version = "2.4.0-alpha02"
+        lifecycle_version = '2.4.0-alpha03'
     }
     repositories {
         google()
