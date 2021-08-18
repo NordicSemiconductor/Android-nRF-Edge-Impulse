@@ -40,7 +40,7 @@ import java.util.*
 fun RecordSampleLargeScreen(
     content: @Composable () -> Unit
 ) {
-    Surface(modifier = Modifier.wrapContentSize()) {
+    Surface(modifier = Modifier.wrapContentSize().clip(shape = RoundedCornerShape(4.dp))) {
         Column {
             Row(
                 modifier = Modifier
