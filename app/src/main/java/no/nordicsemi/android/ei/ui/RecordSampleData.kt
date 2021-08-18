@@ -31,7 +31,6 @@ import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.Message.Sample.*
 import no.nordicsemi.android.ei.model.Sensor
-import no.nordicsemi.android.ei.showSnackbar
 import no.nordicsemi.android.ei.ui.theme.NordicGrass
 import no.nordicsemi.android.ei.ui.theme.NordicRed
 import java.util.*
@@ -70,7 +69,6 @@ fun RecordSampleLargeScreen(
 
 @Composable
 fun RecordSampleSmallScreen(
-    samplingState: Message.Sample,
     isLandscape: Boolean,
     content: @Composable () -> Unit,
     onCloseClicked: () -> Unit
@@ -104,21 +102,9 @@ fun RecordSampleSmallScreen(
                 )
         ) {
             content()
-            if (samplingState is Finished) {
-                showSnackbar(
-                    coroutineScope = rememberCoroutineScope(),
-                    snackbarHostState = scaffoldState.snackbarHostState,
-                    message = if (samplingState.sampleFinished) {
-                        "Sampling Finished"
-                    } else {
-                        "Error " + samplingState.error
-                    }
-                )
-            }
         }
     }
 }
-
 
 @Composable
 fun RecordSampleContent(
@@ -441,7 +427,7 @@ fun RecordSampleContent(
         },
         singleLine = true
     )
-    if (connectedDevices.isNotEmpty() && (samplingState !is Finished && samplingState !is Unknown)) {
+    if (connectedDevices.isNotEmpty() && (samplingState !is Unknown)) {
         Surface(
             modifier = Modifier
                 .padding(top = 16.dp)
@@ -470,7 +456,11 @@ fun RecordSampleContent(
                             "Uploading sample..."
                         }
                         is Finished -> {
-                            "Sampling finished."
+                            "Sampling Finished${
+                                samplingState.error?.let {
+                                    " : $it"
+                                }
+                            }"
                         }
                         else -> {
                             "Unknown."

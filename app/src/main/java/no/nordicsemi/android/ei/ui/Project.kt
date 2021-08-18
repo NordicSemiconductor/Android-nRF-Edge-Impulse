@@ -23,9 +23,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.hilt.navigation.HiltViewModelFactory
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -40,7 +39,6 @@ import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.*
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Category
-import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.Message.Sample.Finished
 import no.nordicsemi.android.ei.model.Message.Sample.Unknown
 import no.nordicsemi.android.ei.ui.layouts.CollapsibleFloatingActionButton
@@ -100,7 +98,6 @@ private fun LargeScreen(
         isBackHandlerEnabled = false,
         selectedScreen = selectedScreen,
         onScreenChanged = onScreenChanged,
-        samplingState = samplingState,
         isFabVisible = selectedScreen.shouldFabBeVisible && !isDialogVisible,
         onFabClicked = { isDialogVisible = true },
         onBackPressed = onBackPressed
@@ -145,6 +142,7 @@ private fun LargeScreen(
                                 onClick = {
                                     isDialogVisible =
                                         !(samplingState is Finished || samplingState is Unknown)
+                                    viewModel.resetSamplingState()
                                 }
                             ) {
                                 Text(
@@ -204,15 +202,7 @@ private fun SmallScreen(
         sheetState = modalBottomSheetState,
         sheetContent = {
             RecordSampleSmallScreen(
-                samplingState = samplingState,
                 isLandscape = isLandscape,
-                onCloseClicked = {
-                    if (samplingState is Finished || samplingState is Unknown)
-                        hideBottomSheet(
-                            scope = scope,
-                            modalBottomSheetState = modalBottomSheetState
-                        )
-                },
                 content = {
                     RecordSampleContent(
                         samplingState = samplingState,
@@ -251,6 +241,15 @@ private fun SmallScreen(
                             )
                         }
                     }
+                },
+                onCloseClicked = {
+                    if (samplingState is Finished || samplingState is Unknown) {
+                        hideBottomSheet(
+                            scope = scope,
+                            modalBottomSheetState = modalBottomSheetState
+                        )
+                        viewModel.resetSamplingState()
+                    }
                 }
             )
         }
@@ -261,15 +260,14 @@ private fun SmallScreen(
             isBackHandlerEnabled = modalBottomSheetState.isVisible,
             selectedScreen = selectedScreen,
             onScreenChanged = onScreenChanged,
-            samplingState = samplingState,
-            isFabVisible = selectedScreen.shouldFabBeVisible,// && !modalBottomSheetState.isVisible,
+            isFabVisible = selectedScreen.shouldFabBeVisible,
             onFabClicked = {
                 showBottomSheet(
                     scope = scope,
                     modalBottomSheetState = modalBottomSheetState,
                     isLandsScape = isLandscape,
                 )
-            },
+            },// && !modalBottomSheetState.isVisible,
             onBackPressed = {
                 if (modalBottomSheetState.isVisible && (samplingState is Finished || samplingState is Unknown))
                     hideBottomSheet(scope = scope, modalBottomSheetState = modalBottomSheetState)
@@ -287,7 +285,6 @@ private fun ProjectContent(
     isBackHandlerEnabled: Boolean,
     selectedScreen: BottomNavigationScreen,
     onScreenChanged: (BottomNavigationScreen) -> Unit,
-    samplingState: Message.Sample,
     isFabVisible: Boolean,
     onFabClicked: () -> Unit,
     onBackPressed: () -> Unit
@@ -330,7 +327,6 @@ private fun ProjectContent(
         scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
         topBar = {
             ProjectTopAppBar(
-                samplingState = samplingState,
                 modifier = Modifier.fillMaxWidth(),
                 projectName = viewModel.project.name,
                 selectedScreen = selectedScreen,
@@ -362,9 +358,7 @@ private fun ProjectContent(
             startDestination = BottomNavigationScreen.DEVICES.route
         ) {
             composable(route = BottomNavigationScreen.DEVICES.route) { backStackEntry ->
-                val devicesViewModel: DevicesViewModel = viewModel(
-                    factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
-                )
+                val devicesViewModel = hiltViewModel<DevicesViewModel>()
                 Devices(
                     modifier = Modifier
                         .fillMaxSize()
@@ -379,9 +373,7 @@ private fun ProjectContent(
                 )
             }
             composable(route = BottomNavigationScreen.DATA_ACQUISITION.route) { backStackEntry ->
-                val dataAcquisitionViewModel: DataAcquisitionViewModel = viewModel(
-                    factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
-                )
+                val dataAcquisitionViewModel = hiltViewModel<DataAcquisitionViewModel>()
                 BackHandler(
                     enabled = isBackHandlerEnabled,
                     onBack = onBackPressed
@@ -432,7 +424,6 @@ private fun ProjectContent(
 @Composable
 private fun ProjectTopAppBar(
     modifier: Modifier = Modifier,
-    samplingState: Message.Sample,
     projectName: String,
     selectedScreen: BottomNavigationScreen,
     pagerState: PagerState,

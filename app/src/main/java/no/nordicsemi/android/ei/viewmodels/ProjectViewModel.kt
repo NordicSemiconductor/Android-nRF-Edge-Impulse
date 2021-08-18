@@ -262,6 +262,7 @@ class ProjectViewModel @Inject constructor(
                 selectedSensor?.let { sensor ->
                     selectedFrequency?.let { frequency ->
                         isStartSamplingRequested = true
+                        resetSamplingState(device = device)
                         projectRepository.startSampling(
                             keys = keys,
                             projectId = project.id,
@@ -327,6 +328,23 @@ class ProjectViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    /**
+     * Resets the current sampling state of a DataAcquisitionManager
+     */
+    fun resetSamplingState() {
+        // We should reset the sampling state before starting a new sampling session.
+        selectedDevice?.let { device ->
+            resetSamplingState(device = device)
+        }
+    }
+
+    /**
+     * Resets the current sampling state of a DataAcquisitionManager
+     */
+    private fun resetSamplingState(device: Device) {
+        dataAcquisitionManagers[device.deviceId]?.resetSamplingState()
     }
 }
 

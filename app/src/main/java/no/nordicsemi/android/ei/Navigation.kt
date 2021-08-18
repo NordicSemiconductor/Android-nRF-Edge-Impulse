@@ -5,6 +5,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.HiltViewModelFactory
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import no.nordicsemi.android.ei.account.AccountHelper
@@ -63,10 +64,8 @@ fun Navigation(
             )
         }
 
-        composable(Route.project) { backStackEntry ->
-            val viewModel: ProjectViewModel = viewModel(
-                factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
-            )
+        composable(Route.project) {
+            val viewModel = hiltViewModel<ProjectViewModel>()
             Project(
                 viewModel = viewModel,
                 onBackPressed = {

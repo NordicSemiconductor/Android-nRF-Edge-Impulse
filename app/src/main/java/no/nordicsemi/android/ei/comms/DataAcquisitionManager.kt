@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -30,8 +31,8 @@ import no.nordicsemi.android.ei.websocket.EiWebSocket
 import no.nordicsemi.android.ei.websocket.WebSocketState
 import okhttp3.Call
 import okhttp3.Callback
+import okhttp3.Headers
 import okhttp3.OkHttpClient
-import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.IOException
 
@@ -52,7 +53,7 @@ class DataAcquisitionManager(
     )
     private val dataAcquisitionWebSocket = EiWebSocket(
         client = client,
-        request = Request.Builder().url("wss://remote-mgmt.edgeimpulse.com").build()
+        request = okhttp3.Request.Builder().url("wss://remote-mgmt.edgeimpulse.com").build()
     )
 
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
@@ -97,6 +98,13 @@ class DataAcquisitionManager(
                 dataAcquisitionWebSocket.disconnect()
             }
         }
+    }
+
+    /**
+     * Resets the current sampling state.
+     */
+    fun resetSamplingState() {
+        samplingState = Unknown
     }
 
     private suspend fun registerToWebSocketStateChanges() {
@@ -147,7 +155,7 @@ class DataAcquisitionManager(
                         )
                     }
                 }
-                is Sample.Request -> {
+                is Request -> {
                     samplingState = message
                     bleDevice.send(
                         generateDeviceMessage(
@@ -196,10 +204,8 @@ class DataAcquisitionManager(
 
     private suspend fun registerToDeviceNotifications() {
         bleDevice.messagesAsFlow()
-            .transform { json ->
-                emit(gson.fromJson(json, DeviceMessage::class.java))
-            }
-            .collect { deviceMessage ->
+            .collect { json ->
+                val deviceMessage = gson.fromJson(json, DeviceMessage::class.java)
                 when (deviceMessage) {
                     is WebSocketMessage -> {
                         when (deviceMessage.message) {
@@ -233,11 +239,17 @@ class DataAcquisitionManager(
                             is ProgressEvent -> {
                                 samplingState = deviceMessage.message
                             }
-                            else -> { }
+                            else -> {
+                            }
                         }.exhaustive
                     }
                     is DataSample -> {
-                        postDataSample(dataSample = deviceMessage)
+                        postDataSample(
+                            headersJson = JsonParser.parseString(json).asJsonObject.getAsJsonObject(
+                                "headers"
+                            ),
+                            dataSample = deviceMessage
+                        )
                     }
                     else -> {
                         //TODO check other messages
@@ -262,6 +274,7 @@ class DataAcquisitionManager(
      * @param selectedFrequency     Selected frequency
      * @param selectedSensor        Selected sensor
      */
+    @Suppress("unused")
     fun startSampling(
         label: String,
         sampleLength: Int,
@@ -293,25 +306,14 @@ class DataAcquisitionManager(
         )
     ).appendLine().toString()
 
-    private fun postDataSample(dataSample: DataSample) {
+    private fun postDataSample(headersJson: JsonObject, dataSample: DataSample) {
+        val headersBuilder = Headers.Builder()
+        val headers = headersJson.keySet().toList().onEach {
+            headersBuilder.add(name = it, value = headersJson[it].asString)
+        }.let { headersBuilder.build() }
         Log.d("AAAA", "Data Sample $dataSample")
-        val request: Request = Request.Builder()
-            .header("x-api-key", dataSample.headers.xApiKey)
-            .header("x-label", dataSample.headers.xLabel)
-            .header("x-file-name", dataSample.headers.xFileName)
-            .header(
-                "x-disallow-duplicates",
-                dataSample.headers.xDisallowDuplicates.toString()
-            )
-            .header(
-                "content-type",
-                "application/${
-                    when (dataSample.headers.xFileName.contains("cbor")) {
-                        true -> "cbor"
-                        else -> "json"
-                    }
-                }"
-            )
+        val request: okhttp3.Request = okhttp3.Request.Builder()
+            .headers(headers = headers)
             .url(dataSample.address)
             .post(
                 body = Base64.decode(
@@ -325,14 +327,16 @@ class DataAcquisitionManager(
                 override fun onFailure(call: Call, e: IOException) {
                     Log.e("AAAA", "Error while posting data sample: ${e.message}")
                     samplingState = Finished(false, e.message)
-                    scope.launch {
-                        eventChannel.send(Event.Error(throwable = e))
-                    }
                 }
 
                 override fun onResponse(call: Call, response: okhttp3.Response) {
-                    Log.d("AAAA", "Response: $response")
-                    samplingState = Finished()
+                    samplingState = Finished(
+                        sampleFinished = true,
+                        error = "Error while uploading sample. ${
+                            response.body?.let { body ->
+                                String(body.bytes())
+                            }
+                        }")
                 }
             })
     }

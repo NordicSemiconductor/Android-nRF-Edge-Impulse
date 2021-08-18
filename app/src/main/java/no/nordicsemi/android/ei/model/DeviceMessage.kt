@@ -1,5 +1,6 @@
 package no.nordicsemi.android.ei.model
 
+import com.google.gson.annotations.SerializedName
 import no.nordicsemi.android.ei.model.Direction.RECEIVE
 import no.nordicsemi.android.ei.model.Direction.SEND
 import no.nordicsemi.android.ei.model.Method.POST
@@ -35,4 +36,17 @@ data class DataSample(
     val body: String
 ) : DeviceMessage() {
     override val type = HTTP
+
+    data class Headers(
+        @SerializedName("x-api-key")
+        val xApiKey: String,
+        @SerializedName("x-label")
+        val xLabel: String,
+        @SerializedName("x-file-name")
+        val xFileName: String,
+        @SerializedName("Content-Type")
+        val contentType: String,
+        @SerializedName("x-disallow-duplicates")
+        val xDisallowDuplicates: Int
+    )
 }
