@@ -40,6 +40,7 @@ import no.nordicsemi.android.ei.*
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Category
 import no.nordicsemi.android.ei.model.Device
+import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.Message.Sample.Finished
 import no.nordicsemi.android.ei.model.Message.Sample.Unknown
 import no.nordicsemi.android.ei.ui.layouts.CollapsibleFloatingActionButton
@@ -108,6 +109,7 @@ private fun LargeScreen(
         viewModel = viewModel,
         scope = rememberCoroutineScope(),
         connectedDevices = connectedDevices,
+        samplingState = samplingState,
         isBackHandlerEnabled = false,
         selectedScreen = selectedScreen,
         onScreenChanged = onScreenChanged,
@@ -271,6 +273,7 @@ private fun SmallScreen(
             viewModel = viewModel,
             scope = scope,
             connectedDevices = connectedDevices,
+            samplingState = samplingState,
             isBackHandlerEnabled = modalBottomSheetState.isVisible,
             selectedScreen = selectedScreen,
             onScreenChanged = onScreenChanged,
@@ -297,6 +300,7 @@ private fun ProjectContent(
     viewModel: ProjectViewModel,
     scope: CoroutineScope,
     connectedDevices: List<Device>,
+    samplingState: Message.Sample,
     isBackHandlerEnabled: Boolean,
     selectedScreen: BottomNavigationScreen,
     onScreenChanged: (BottomNavigationScreen) -> Unit,
@@ -380,7 +384,7 @@ private fun ProjectContent(
             navController = navController,
             startDestination = BottomNavigationScreen.DEVICES.route
         ) {
-            composable(route = BottomNavigationScreen.DEVICES.route) { backStackEntry ->
+            composable(route = BottomNavigationScreen.DEVICES.route) {
                 val devicesViewModel = hiltViewModel<DevicesViewModel>()
                 Devices(
                     modifier = Modifier
@@ -395,7 +399,7 @@ private fun ProjectContent(
                     connect = { viewModel.connect(device = it) }
                 )
             }
-            composable(route = BottomNavigationScreen.DATA_ACQUISITION.route) { backStackEntry ->
+            composable(route = BottomNavigationScreen.DATA_ACQUISITION.route) {
                 val dataAcquisitionViewModel = hiltViewModel<DataAcquisitionViewModel>()
                 BackHandler(
                     enabled = isBackHandlerEnabled,
@@ -411,10 +415,10 @@ private fun ProjectContent(
                         dataAcquisitionViewModel.trainingSamples,
                         dataAcquisitionViewModel.testingSamples,
                     ),
-                    snackbarHostState = snackbarHostState,
+                    samplingState = samplingState
                 )
             }
-            composable(route = BottomNavigationScreen.DEPLOYMENT.route) { backStackEntry ->
+            composable(route = BottomNavigationScreen.DEPLOYMENT.route) {
                 val logs by remember { viewModel.logs }
                 val buildState by remember { viewModel.buildState }
                 Deployment(

@@ -11,7 +11,6 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
@@ -30,6 +29,7 @@ import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.flow.Flow
 import no.nordicsemi.android.ei.HorizontalPagerTab
 import no.nordicsemi.android.ei.R
+import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.Sample
 import no.nordicsemi.android.ei.ui.layouts.InfoLayout
 import no.nordicsemi.android.ei.util.asMessage
@@ -42,7 +42,7 @@ fun DataAcquisition(
     pagerState: PagerState,
     listStates: List<LazyListState>,
     samples: List<Flow<PagingData<Sample>>>,
-    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+    samplingState: Message.Sample,
 ) {
     HorizontalPager(
         modifier = modifier,
@@ -52,7 +52,7 @@ fun DataAcquisition(
             state = listStates[page],
             pagingDataFlow = samples[page],
             tab = HorizontalPagerTab.indexed(page),
-            snackbarHostState = snackbarHostState,
+            samplingState = samplingState
         )
     }
 }
@@ -62,11 +62,17 @@ fun DataAcquisition(
 private fun CollectedDataList(
     modifier: Modifier = Modifier,
     state: LazyListState,
+    samplingState: Message.Sample,
     pagingDataFlow: Flow<PagingData<Sample>>,
     tab: HorizontalPagerTab,
-    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     val samples: LazyPagingItems<Sample> = pagingDataFlow.collectAsLazyPagingItems()
+    // Refresh the samples when after a successful sampling
+    samplingState.takeIf {
+        it is Message.Sample.Finished && it.sampleFinished && it.error != null
+    }?.let {
+        samples.refresh()
+    }
     samples.let { lazyPagingItems ->
         LazyColumn(
             modifier = modifier
