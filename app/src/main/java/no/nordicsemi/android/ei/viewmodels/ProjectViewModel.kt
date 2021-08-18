@@ -35,7 +35,6 @@ import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.viewmodels.event.Event
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import okhttp3.OkHttpClient
-import okhttp3.internal.filterList
 import javax.inject.Inject
 
 
@@ -68,14 +67,6 @@ class ProjectViewModel @Inject constructor(
 
     /** A list of configured devices obtained from the service. */
     var configuredDevices = mutableStateListOf<Device>()
-        private set
-
-    /** A list of connected devices derived using the configuredDevices and the commsManagers. */
-    var connectedDevices = derivedStateOf {
-        configuredDevices.filterList {
-            dataAcquisitionManagers[deviceId]?.state == DeviceState.AUTHENTICATED
-        }
-    }
         private set
 
     /** Whether the list of configured devices is refreshing. */
@@ -248,6 +239,12 @@ class ProjectViewModel @Inject constructor(
     fun disconnect(device: DiscoveredBluetoothDevice) {
         dataAcquisitionManagers[device.deviceId]?.disconnect()
         dataAcquisitionManagers.remove(device.deviceId)
+    }
+
+    fun disconnectAllDevices(){
+        dataAcquisitionManagers.onEach {
+            it.value.disconnect()
+        }
     }
 
     fun startSampling(category: Category) {

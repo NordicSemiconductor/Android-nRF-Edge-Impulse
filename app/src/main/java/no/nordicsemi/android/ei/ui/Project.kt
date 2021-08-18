@@ -39,6 +39,7 @@ import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.*
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Category
+import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Message.Sample.Finished
 import no.nordicsemi.android.ei.model.Message.Sample.Unknown
 import no.nordicsemi.android.ei.ui.layouts.CollapsibleFloatingActionButton
@@ -48,6 +49,8 @@ import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel
 import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
 import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Event
+import no.nordicsemi.android.ei.viewmodels.state.DeviceState
+import okhttp3.internal.filterList
 import java.net.UnknownHostException
 import java.util.*
 
@@ -63,10 +66,18 @@ fun Project(
             BottomNavigationScreen.DEVICES
         )
     }
+    val connectedDevices by remember {
+        derivedStateOf {
+            viewModel.configuredDevices.filterList {
+                viewModel.dataAcquisitionManagers[deviceId]?.state == DeviceState.AUTHENTICATED
+            }
+        }
+    }
 
     if (isLargeScreen) {
         LargeScreen(
             viewModel = viewModel,
+            connectedDevices = connectedDevices,
             selectedScreen = selectedScreen,
             onScreenChanged = { selectedScreen = it },
             onBackPressed = onBackPressed
@@ -74,6 +85,7 @@ fun Project(
     } else {
         SmallScreen(
             viewModel = viewModel,
+            connectedDevices = connectedDevices,
             selectedScreen = selectedScreen,
             onScreenChanged = { selectedScreen = it },
             onBackPressed = onBackPressed
@@ -84,6 +96,7 @@ fun Project(
 @Composable
 private fun LargeScreen(
     viewModel: ProjectViewModel,
+    connectedDevices: List<Device>,
     selectedScreen: BottomNavigationScreen,
     onScreenChanged: (BottomNavigationScreen) -> Unit,
     onBackPressed: () -> Unit
@@ -91,10 +104,10 @@ private fun LargeScreen(
     var isDialogVisible by rememberSaveable { mutableStateOf(false) }
     var category by rememberSaveable { mutableStateOf(Category.TRAINING) }
     val samplingState by remember { viewModel.samplingState }
-    val connectedDevices by remember { viewModel.connectedDevices }
     ProjectContent(
         viewModel = viewModel,
         scope = rememberCoroutineScope(),
+        connectedDevices = connectedDevices,
         isBackHandlerEnabled = false,
         selectedScreen = selectedScreen,
         onScreenChanged = onScreenChanged,
@@ -146,7 +159,7 @@ private fun LargeScreen(
                                 }
                             ) {
                                 Text(
-                                    text = stringResource(R.string.action_dialog_cancel).uppercase(
+                                    text = stringResource(R.string.action_cancel).uppercase(
                                         Locale.US
                                     ),
                                     style = MaterialTheme.typography.button
@@ -181,6 +194,7 @@ private fun LargeScreen(
 @Composable
 private fun SmallScreen(
     viewModel: ProjectViewModel,
+    connectedDevices: List<Device>,
     selectedScreen: BottomNavigationScreen,
     onScreenChanged: (BottomNavigationScreen) -> Unit,
     onBackPressed: () -> Unit
@@ -195,7 +209,6 @@ private fun SmallScreen(
                 else (samplingState is Finished || samplingState is Unknown)
             }
         )
-    val connectedDevices by remember { viewModel.connectedDevices }
     var category by rememberSaveable { mutableStateOf(Category.TRAINING) }
 
     ModalBottomSheetLayout(
@@ -257,6 +270,7 @@ private fun SmallScreen(
         ProjectContent(
             viewModel = viewModel,
             scope = scope,
+            connectedDevices = connectedDevices,
             isBackHandlerEnabled = modalBottomSheetState.isVisible,
             selectedScreen = selectedScreen,
             onScreenChanged = onScreenChanged,
@@ -267,7 +281,7 @@ private fun SmallScreen(
                     modalBottomSheetState = modalBottomSheetState,
                     isLandsScape = isLandscape,
                 )
-            },// && !modalBottomSheetState.isVisible,
+            },
             onBackPressed = {
                 if (modalBottomSheetState.isVisible && (samplingState is Finished || samplingState is Unknown))
                     hideBottomSheet(scope = scope, modalBottomSheetState = modalBottomSheetState)
@@ -282,6 +296,7 @@ private fun SmallScreen(
 private fun ProjectContent(
     viewModel: ProjectViewModel,
     scope: CoroutineScope,
+    connectedDevices: List<Device>,
     isBackHandlerEnabled: Boolean,
     selectedScreen: BottomNavigationScreen,
     onScreenChanged: (BottomNavigationScreen) -> Unit,
@@ -300,7 +315,9 @@ private fun ProjectContent(
     val trainingListState = rememberLazyListState()
     val testingListState = rememberLazyListState()
     val listStates = listOf(trainingListState, testingListState)
-
+    var isWarningDialogVisible by rememberSaveable {
+        mutableStateOf(false)
+    }
 
     LocalLifecycleOwner.current.lifecycleScope.launchWhenStarted {
         viewModel.eventFlow.runCatching {
@@ -331,7 +348,13 @@ private fun ProjectContent(
                 projectName = viewModel.project.name,
                 selectedScreen = selectedScreen,
                 pagerState = pagerState,
-                onBackPressed = onBackPressed,
+                onBackPressed = {
+                    if (connectedDevices.isNotEmpty()) {
+                        isWarningDialogVisible = true
+                    } else {
+                        onBackPressed()
+                    }
+                },
             )
         },
         bottomBar = {
@@ -392,7 +415,6 @@ private fun ProjectContent(
                 )
             }
             composable(route = BottomNavigationScreen.DEPLOYMENT.route) { backStackEntry ->
-                val connectedDevices by remember { viewModel.connectedDevices }
                 val logs by remember { viewModel.logs }
                 val buildState by remember { viewModel.buildState }
                 Deployment(
@@ -417,6 +439,15 @@ private fun ProjectContent(
                 )
             }
         }
+    }
+    if (isWarningDialogVisible) {
+        ShowWarningDialog(message = "Leaving the project screen will disconnect all connected devices. Would you like to continue?",
+            onDismissed = { isWarningDialogVisible = !isWarningDialogVisible },
+            onContinue = {
+                isWarningDialogVisible = !isWarningDialogVisible
+                viewModel.disconnectAllDevices()
+                onBackPressed()
+            })
     }
 }
 

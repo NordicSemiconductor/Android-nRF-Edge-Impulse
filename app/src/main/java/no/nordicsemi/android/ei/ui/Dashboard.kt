@@ -58,6 +58,7 @@ import no.nordicsemi.android.ei.ui.theme.NordicMiddleGrey
 import no.nordicsemi.android.ei.viewmodels.DashboardViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Event
 import java.net.UnknownHostException
+import java.util.*
 
 @Composable
 fun Dashboard(
@@ -319,9 +320,9 @@ private fun CreateProjectDialog(
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
-                        dismissOnBackPress = !isCreateClicked,
-                        dismissOnClickOutside = !isCreateClicked
-                     )
+            dismissOnBackPress = !isCreateClicked,
+            dismissOnClickOutside = !isCreateClicked
+        )
     ) {
         Column(
             modifier = modifier
@@ -377,7 +378,11 @@ private fun CreateProjectDialog(
                     modifier = Modifier
                         .padding(all = 8.dp),
                     onClick = { onDismiss() }) {
-                    Text(text = stringResource(R.string.action_dialog_cancel))
+                    Text(
+                        text = stringResource(R.string.action_cancel).uppercase(
+                            Locale.US
+                        )
+                    )
                 }
                 TextButton(
                     modifier = Modifier
@@ -389,7 +394,11 @@ private fun CreateProjectDialog(
                         onCreateProject(projectName)
                     }
                 ) {
-                    Text(text = stringResource(R.string.action_dialog_create))
+                    Text(
+                        text = stringResource(R.string.action_create).uppercase(
+                            Locale.US
+                        )
+                    )
                 }
             }
         }
