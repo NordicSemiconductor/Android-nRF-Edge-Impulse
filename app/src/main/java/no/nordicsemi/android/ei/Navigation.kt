@@ -4,7 +4,6 @@ import android.app.Activity
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
-import androidx.hilt.navigation.HiltViewModelFactory
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
@@ -27,11 +26,9 @@ fun Navigation(
 ) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = Route.splashscreen) {
-        composable(Route.splashscreen) { backStackEntry ->
+        composable(Route.splashscreen) {
             var progressMessage by rememberSaveable { mutableStateOf("") }
-            val viewModel: SplashscreenViewModel = viewModel(
-                factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
-            )
+            val viewModel = hiltViewModel<SplashscreenViewModel>()
             Login(
                 viewModel = viewModel,
                 onProgressChanged = { progressMessage = it },
@@ -49,10 +46,8 @@ fun Navigation(
             )
         }
 
-        composable(Route.dashboard) { backStackEntry ->
-            val viewModel: DashboardViewModel = viewModel(
-                factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
-            )
+        composable(Route.dashboard) {
+            val viewModel = hiltViewModel<DashboardViewModel>()
             Dashboard(
                 viewModel = viewModel,
                 onProjectSelected = {
@@ -63,7 +58,6 @@ fun Navigation(
                 }
             )
         }
-
         composable(Route.project) {
             val viewModel = hiltViewModel<ProjectViewModel>()
             Project(

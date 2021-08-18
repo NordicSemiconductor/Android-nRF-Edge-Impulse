@@ -107,7 +107,6 @@ private fun LargeScreen(
     val samplingState by remember { viewModel.samplingState }
     ProjectContent(
         viewModel = viewModel,
-        scope = rememberCoroutineScope(),
         connectedDevices = connectedDevices,
         samplingState = samplingState,
         isBackHandlerEnabled = false,
@@ -298,7 +297,7 @@ private fun SmallScreen(
 @Composable
 private fun ProjectContent(
     viewModel: ProjectViewModel,
-    scope: CoroutineScope,
+    scope: CoroutineScope = rememberCoroutineScope(),
     connectedDevices: List<Device>,
     samplingState: Message.Sample,
     isBackHandlerEnabled: Boolean,

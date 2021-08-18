@@ -241,7 +241,7 @@ class ProjectViewModel @Inject constructor(
         dataAcquisitionManagers.remove(device.deviceId)
     }
 
-    fun disconnectAllDevices(){
+    fun disconnectAllDevices() {
         dataAcquisitionManagers.onEach {
             it.value.disconnect()
         }
