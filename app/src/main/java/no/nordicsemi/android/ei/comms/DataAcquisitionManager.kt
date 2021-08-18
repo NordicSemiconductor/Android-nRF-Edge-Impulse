@@ -325,18 +325,23 @@ class DataAcquisitionManager(
         client.newCall(request = request)
             .enqueue(responseCallback = object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
-                    Log.e("AAAA", "Error while posting data sample: ${e.message}")
                     samplingState = Finished(false, e.message)
                 }
 
                 override fun onResponse(call: Call, response: okhttp3.Response) {
+
                     samplingState = Finished(
                         sampleFinished = true,
-                        error = "Error while uploading sample. ${
-                            response.body?.let { body ->
-                                String(body.bytes())
-                            }
-                        }")
+                        error = (response.takeIf {
+                            !it.isSuccessful
+                        }?.apply {
+                            "Error while uploading sample. ${
+                                body?.let { body ->
+                                    String(body.bytes())
+                                }
+                            }"
+                        } ?: run { "Data sample successfully stored." }).toString()
+                    )
                 }
             })
     }
