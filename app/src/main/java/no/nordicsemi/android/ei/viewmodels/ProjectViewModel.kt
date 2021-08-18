@@ -3,7 +3,6 @@ package no.nordicsemi.android.ei.viewmodels
 import android.app.Application
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.compose.runtime.*
 import androidx.compose.ui.focus.FocusRequester
 import androidx.lifecycle.AndroidViewModel
@@ -12,7 +11,6 @@ import com.google.gson.Gson
 import dagger.hilt.EntryPoints
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -20,7 +18,10 @@ import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.comms.DataAcquisitionManager
 import no.nordicsemi.android.ei.comms.DeploymentManager
-import no.nordicsemi.android.ei.di.*
+import no.nordicsemi.android.ei.di.ProjectComponentEntryPoint
+import no.nordicsemi.android.ei.di.ProjectManager
+import no.nordicsemi.android.ei.di.UserComponentEntryPoint
+import no.nordicsemi.android.ei.di.UserManager
 import no.nordicsemi.android.ei.model.Category
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Message.Sample
@@ -44,8 +45,7 @@ class ProjectViewModel @Inject constructor(
     private val userManager: UserManager,
     private val projectRepository: ProjectRepository,
     private val client: OkHttpClient,
-    private val gson: Gson,
-    @IODispatcher private val ioDispatcher: CoroutineDispatcher
+    private val gson: Gson
 ) : AndroidViewModel(context as Application) {
 
     /** The channel for emitting one-time events. */
@@ -185,7 +185,6 @@ class ProjectViewModel @Inject constructor(
                         it.deviceId
                     }
                 }.onEach { device ->
-                    Log.d("AAAA", "Device: $device")
                     dataAcquisitionManagers.remove(device.deviceId)?.apply {
                         state.takeIf {
                             it == DeviceState.CONNECTING ||
