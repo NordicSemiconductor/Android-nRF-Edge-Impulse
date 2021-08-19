@@ -40,7 +40,11 @@ import java.util.*
 fun RecordSampleLargeScreen(
     content: @Composable () -> Unit
 ) {
-    Surface(modifier = Modifier.wrapContentSize().clip(shape = RoundedCornerShape(4.dp))) {
+    Surface(
+        modifier = Modifier
+            .wrapContentSize()
+            .clip(shape = RoundedCornerShape(4.dp))
+    ) {
         Column {
             Row(
                 modifier = Modifier
@@ -328,7 +332,7 @@ fun RecordSampleContent(
         singleLine = true
     )
     OutlinedTextField(
-        value = "$sampleLength ms",
+        value = stringResource(id = R.string.label_ms, sampleLength),
         onValueChange = {},
         modifier = Modifier
             .fillMaxWidth()
@@ -441,29 +445,27 @@ fun RecordSampleContent(
                 Text(
                     modifier = Modifier.weight(1.0f), text = when (samplingState) {
                         is Request -> {
-                            "Sending sample request to device..."
+                            stringResource(R.string.label_sending_sample_request)
                         }
                         is Response -> {
-                            "Response to sample request received..."
+                            stringResource(R.string.label_sampling_response_received)
                         }
                         is ProgressEvent.Started -> {
-                            "Sampling started..."
+                            stringResource(R.string.label_sampling_started)
                         }
                         is ProgressEvent.Processing -> {
-                            "Sample processing..."
+                            stringResource(R.string.label_sampling_processing)
                         }
                         is ProgressEvent.Uploading -> {
-                            "Uploading sample..."
+                            stringResource(R.string.label_uploading_started)
                         }
-                        is Finished -> {
-                            "Sampling Finished${
-                                samplingState.error?.let {
-                                    " : $it"
-                                }
-                            }"
-                        }
+                        is Finished -> stringResource(R.string.label_sampling_finished).plus(
+                            if (samplingState.error != null)
+                                " : ${samplingState.error}"
+                            else "."
+                        )
                         else -> {
-                            "Unknown."
+                            stringResource(R.string.unknown)
                         }
                     }
                 )
