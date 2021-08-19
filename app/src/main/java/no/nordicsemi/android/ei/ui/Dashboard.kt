@@ -14,6 +14,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -78,6 +79,7 @@ fun Dashboard(
     val lazyListState = rememberLazyListState()
 
     var isCreateProjectDialogVisible by rememberSaveable { mutableStateOf(false) }
+    var isAboutDialogVisible by rememberSaveable { mutableStateOf(false) }
 
     coroutineScope.launchWhenStarted {
         viewModel.eventFlow.runCatching {
@@ -122,6 +124,7 @@ fun Dashboard(
                     Text(text = stringResource(id = R.string.label_welcome))
                 },
                 user = user,
+                onAboutClick = { isAboutDialogVisible = !isAboutDialogVisible },
                 onLogoutClick = {
                     onLogout(viewModel.logout())
                 },
@@ -203,7 +206,14 @@ fun Dashboard(
                     viewModel.createProject(projectName)
                 },
                 onDismiss = {
-                    isCreateProjectDialogVisible = false
+                    isCreateProjectDialogVisible = !isCreateProjectDialogVisible
+                }
+            )
+        }
+        if (isAboutDialogVisible) {
+            ShowAboutDialog(
+                onDismiss = {
+                    isAboutDialogVisible = !isAboutDialogVisible
                 }
             )
         }
@@ -351,7 +361,12 @@ private fun CreateProjectDialog(
                 colors = TextFieldDefaults.outlinedTextFieldColors(textColor = MaterialTheme.colors.onSurface)
             )
             Spacer(modifier = Modifier.height(height = 16.dp))
-            Row(modifier = Modifier.fillMaxWidth().padding(end = 8.dp), horizontalArrangement = Arrangement.End) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(end = 8.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
                 TextButton(
                     onClick = { onDismiss() }) {
                     Text(
@@ -379,6 +394,45 @@ private fun CreateProjectDialog(
             }
         })
 }
+
+@Composable
+private fun ShowAboutDialog(onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    ShowDialog(
+        imageVector = Icons.Outlined.Info,
+        title = stringResource(id = R.string.action_about),
+        onDismissed = onDismiss,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true
+        ),
+        content = {
+            Column {
+                Row(modifier = Modifier.padding(end = 16.dp, bottom = 16.dp)) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(modifier = Modifier.weight(1.0f), text = "Version")
+                    Text(
+                        modifier = Modifier.weight(1.0f),
+                        text = context.packageManager.getPackageInfo(
+                            context.packageName,
+                            0
+                        ).versionName,
+                        textAlign = TextAlign.End
+                    )
+                }
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text(
+                        text = stringResource(R.string.action_ok)
+                    )
+                }
+            }
+        }
+    )
+}
+
 
 @Composable
 private fun ShowDownloadingDevelopmentKeysDialog(

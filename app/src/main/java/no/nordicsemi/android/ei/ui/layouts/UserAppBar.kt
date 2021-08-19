@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.coil.rememberCoilPainter
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.User
+import no.nordicsemi.android.ei.ui.ShowDropdown
 
 private val AppBarHeight = 56.dp
 
@@ -35,6 +36,7 @@ fun UserAppBar(
     backgroundColor: Color = MaterialTheme.colors.primarySurface,
     contentColor: Color = contentColorFor(backgroundColor),
     elevation: Dp = AppBarDefaults.TopAppBarElevation,
+    onAboutClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
 ) {
     val imageSizePx = with(LocalDensity.current) {
@@ -86,10 +88,13 @@ fun UserAppBar(
                             IconButton(onClick = { showMenu = true }) {
                                 Icon(Icons.Default.MoreVert, contentDescription = null)
                             }
-                            DropdownMenu(
+                            ShowDropdown(
+                                modifier = Modifier.wrapContentWidth(),
                                 expanded = showMenu,
-                                onDismissRequest = { showMenu = false },
-                            ) {
+                                onDismiss = { showMenu = false }) {
+                                DropdownMenuItem(onClick = onAboutClick) {
+                                    Text(text = stringResource(id = R.string.action_about))
+                                }
                                 DropdownMenuItem(onClick = onLogoutClick) {
                                     Text(text = stringResource(id = R.string.action_logout))
                                 }
@@ -115,7 +120,11 @@ fun UserAppBar(
                 ) {
                     Image(
                         painter = rememberCoilPainter(
-                            request = user.photo ?: Image(Icons.Filled.AccountCircle, contentDescription = null, alpha = 0.1f),
+                            request = user.photo ?: Image(
+                                Icons.Filled.AccountCircle,
+                                contentDescription = null,
+                                alpha = 0.1f
+                            ),
                             shouldRefetchOnSizeChange = { _, _ -> false },
                         ),
                         contentDescription = stringResource(R.string.content_description_user_image),

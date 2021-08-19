@@ -17,4 +17,5 @@
     <string name="label_logs">Logs</string>
     <string name="action_dialog_continue">Continue</string>
     <string name="title_warning">Warning</string>
+    <string name="dialog_title_about">About</string>
 </resources>

@@ -20,7 +20,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -113,7 +115,8 @@ fun RecordSampleContent(
     var isDevicesMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var isSensorsMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var isFrequencyMenuExpanded by rememberSaveable { mutableStateOf(false) }
-
+    val categories = listOf(Category.TRAINING, Category.TESTING)
+    var width by rememberSaveable { mutableStateOf(0) }
     //TODO clear data when if the device gets disconnected?
     connectedDevices.takeIf { it.isEmpty() }?.apply {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -145,6 +148,7 @@ fun RecordSampleContent(
         enabled = (samplingState is Finished || samplingState is Unknown),
         modifier = Modifier
             .fillMaxWidth()
+            .onSizeChanged { width = it.width }
             .focusRequester(focusRequester = focusRequester),
         readOnly = true,
         label = {
@@ -172,17 +176,31 @@ fun RecordSampleContent(
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = null
                 )
-                if (isCategoryExpanded) {
-                    ShowCategoryDropdown(
-                        onCategorySelected = {
-                            onCategorySelected(it)
-                            isCategoryExpanded = false
-                        },
-                        onDismiss = {
-                            isCategoryExpanded = false
-                            focusManager.clearFocus()
+                ShowDropdown(
+                    modifier = Modifier.width(with(LocalDensity.current) { width.toDp() }),
+                    expanded = isCategoryExpanded,
+                    onDismiss = {
+                        isCategoryExpanded = false
+                        focusManager.clearFocus()
+                    }) {
+                    categories.forEach { category ->
+                        DropdownMenuItem(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            onClick = {
+                                onCategorySelected(category)
+                                isCategoryExpanded = false
+                            }
+                        ) {
+                            Text(
+                                modifier = Modifier.weight(1.0f),
+                                text = category.type.replaceFirstChar {
+                                    if (it.isLowerCase()) it.titlecase(
+                                        Locale.US
+                                    ) else it.toString()
+                                }
+                            )
                         }
-                    )
+                    }
                 }
             }
         },
@@ -222,19 +240,19 @@ fun RecordSampleContent(
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = null
                 )
-                if (isDevicesMenuExpanded) {
-                    ShowDevicesDropdown(
-                        connectedDevices = connectedDevices,
-                        onDeviceSelected = { device ->
-                            onDeviceSelected(device)
-                            isDevicesMenuExpanded = false
-                        },
-                        onDismiss = {
-                            isDevicesMenuExpanded = false
-                            focusManager.clearFocus()
-                        }
-                    )
-                }
+                ShowDevicesDropdown(
+                    modifier = Modifier.width(with(LocalDensity.current) { width.toDp() }),
+                    expanded = isDevicesMenuExpanded,
+                    connectedDevices = connectedDevices,
+                    onDeviceSelected = { device ->
+                        onDeviceSelected(device)
+                        isDevicesMenuExpanded = false
+                    },
+                    onDismiss = {
+                        isDevicesMenuExpanded = false
+                        focusManager.clearFocus()
+                    }
+                )
             }
         },
         singleLine = true
@@ -290,19 +308,28 @@ fun RecordSampleContent(
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = null
                 )
-                if (isSensorsMenuExpanded) {
-                    selectedDevice?.let { device ->
-                        ShowSensorsDropdown(
-                            sensors = device.sensors,
-                            onSensorSelected = { sensor ->
-                                onSensorSelected(sensor)
-                                isSensorsMenuExpanded = false
-                            },
-                            onDismiss = {
-                                isSensorsMenuExpanded = false
-                                focusManager.clearFocus()
+                selectedDevice?.let { device ->
+                    ShowDropdown(
+                        modifier = Modifier.width(with(LocalDensity.current) { width.toDp() }),
+                        expanded = isSensorsMenuExpanded,
+                        onDismiss = {
+                            isSensorsMenuExpanded = false
+                            focusManager.clearFocus()
+                        }) {
+                        device.sensors.forEach { sensor ->
+                            DropdownMenuItem(
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                                onClick = {
+                                    onSensorSelected(sensor)
+                                    isSensorsMenuExpanded = false
+                                }
+                            ) {
+                                Text(
+                                    modifier = Modifier.weight(1.0f),
+                                    text = sensor.name
+                                )
                             }
-                        )
+                        }
                     }
                 }
 
@@ -391,21 +418,31 @@ fun RecordSampleContent(
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = null
                 )
-                if (isFrequencyMenuExpanded) {
-                    selectedSensor?.let { sensor ->
-                        ShowFrequenciesDropdown(
-                            frequencies = sensor.frequencies,
-                            onFrequencySelected = { frequency ->
-                                onFrequencySelected(frequency)
-                                isFrequencyMenuExpanded = false
-                            }
-                        ) {
+                selectedSensor?.let { sensor ->
+                    ShowDropdown(
+                        modifier = Modifier.width(with(LocalDensity.current) { width.toDp() }),
+                        expanded = isFrequencyMenuExpanded,
+                        onDismiss = {
                             isFrequencyMenuExpanded = false
                             focusManager.clearFocus()
+                        }) {
+                        sensor.frequencies.forEach { frequency ->
+                            DropdownMenuItem(
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally),
+                                onClick = {
+                                    onFrequencySelected(frequency)
+                                    isFrequencyMenuExpanded = false
+                                }
+                            ) {
+                                Text(
+                                    modifier = Modifier.weight(1.0f),
+                                    text = frequency.toString()
+                                )
+                            }
                         }
                     }
                 }
-
             }
         },
         singleLine = true
@@ -458,116 +495,51 @@ fun RecordSampleContent(
 }
 
 @Composable
-fun ShowCategoryDropdown(
-    onCategorySelected: (Category) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val categories = listOf(Category.TRAINING, Category.TESTING)
-    DropdownMenu(
-        modifier = Modifier
-            .fillMaxWidth(),
-        expanded = true,
-        onDismissRequest = onDismiss
-    ) {
-        categories.forEach { category ->
-            DropdownMenuItem(
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                onClick = { onCategorySelected(category) }
-            ) {
-                Text(
-                    modifier = Modifier.weight(1.0f),
-                    text = category.type.replaceFirstChar {
-                        if (it.isLowerCase()) it.titlecase(
-                            Locale.US
-                        ) else it.toString()
-                    }
-                )
-            }
-        }
-    }
-}
-
-@Composable
 fun ShowDevicesDropdown(
+    modifier: Modifier,
     connectedDevices: List<Device>,
+    expanded: Boolean,
     onDeviceSelected: (Device) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    DropdownMenu(
-        modifier = Modifier
-            .fillMaxWidth(),
-        expanded = true,
-        onDismissRequest = onDismiss
-    ) {
-        connectedDevices.forEach { device ->
-            DropdownMenuItem(
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                onClick = { onDeviceSelected(device) }
-            ) {
-                Text(
-                    modifier = Modifier.weight(1.0f),
-                    text = device.name
-                )
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .background(color = NordicGrass, shape = CircleShape)
-                )
+    ShowDropdown(
+        modifier = modifier,
+        expanded = expanded,
+        onDismiss = onDismiss,
+        content = {
+            connectedDevices.forEach { device ->
+                DropdownMenuItem(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    onClick = { onDeviceSelected(device) }
+                ) {
+                    Text(
+                        modifier = Modifier.weight(1.0f),
+                        text = device.name
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .background(color = NordicGrass, shape = CircleShape)
+                    )
+                }
             }
         }
-    }
+    )
 }
 
 @Composable
-private fun ShowSensorsDropdown(
-    sensors: List<Sensor>,
-    onSensorSelected: (Sensor) -> Unit,
+fun ShowDropdown(
+    modifier: Modifier,
+    expanded: Boolean,
     onDismiss: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit
 ) {
     DropdownMenu(
-        modifier = Modifier
-            .fillMaxWidth(),
-        expanded = true,
+        modifier = modifier,
+        expanded = expanded,
         onDismissRequest = onDismiss
     ) {
-        sensors.forEach { sensor ->
-            DropdownMenuItem(
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                onClick = { onSensorSelected(sensor) }
-            ) {
-                Text(
-                    modifier = Modifier.weight(1.0f),
-                    text = sensor.name
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ShowFrequenciesDropdown(
-    frequencies: List<Number>,
-    onFrequencySelected: (Number) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    DropdownMenu(
-        modifier = Modifier
-            .fillMaxWidth(),
-        expanded = true,
-        onDismissRequest = onDismiss
-    ) {
-        frequencies.forEach { frequency ->
-            DropdownMenuItem(
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally),
-                onClick = { onFrequencySelected(frequency) }
-            ) {
-                Text(
-                    modifier = Modifier.weight(1.0f),
-                    text = frequency.toString()
-                )
-            }
-        }
+        content()
     }
 }
 

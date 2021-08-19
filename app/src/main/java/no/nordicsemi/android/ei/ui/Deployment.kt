@@ -20,7 +20,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -175,6 +177,7 @@ private fun SelectDevice(
     onDeviceSelected: (Device) -> Unit
 ) {
     var isDevicesMenuExpanded by remember { mutableStateOf(false) }
+    var width by rememberSaveable { mutableStateOf(0) }
 
     CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice != null && buildState != BuildState.Started) ContentAlpha.high else ContentAlpha.disabled) {
         Text(
@@ -186,6 +189,7 @@ private fun SelectDevice(
     OutlinedTextField(
         modifier = Modifier
             .fillMaxWidth()
+            .onSizeChanged { width = it.width }
             .padding(bottom = 16.dp),
         value = selectedDevice?.name ?: stringResource(id = R.string.empty),
         onValueChange = { },
@@ -215,18 +219,18 @@ private fun SelectDevice(
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = null
                 )
-                if (isDevicesMenuExpanded) {
-                    ShowDevicesDropdown(
-                        connectedDevices = connectedDevices,
-                        onDeviceSelected = {
-                            isDevicesMenuExpanded = false
-                            onDeviceSelected(it)
-                        },
-                        onDismiss = {
-                            isDevicesMenuExpanded = false
-                        }
-                    )
-                }
+                ShowDevicesDropdown(
+                    modifier = Modifier.width(with(LocalDensity.current) { width.toDp() }),
+                    expanded = isDevicesMenuExpanded,
+                    connectedDevices = connectedDevices,
+                    onDeviceSelected = {
+                        isDevicesMenuExpanded = false
+                        onDeviceSelected(it)
+                    },
+                    onDismiss = {
+                        isDevicesMenuExpanded = false
+                    }
+                )
             }
         },
         singleLine = true
@@ -254,9 +258,10 @@ private fun SelectOptimizations(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp)
+                .padding(bottom = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1.0f)) {
                 CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice != null && buildState != BuildState.Started) ContentAlpha.high else ContentAlpha.disabled) {
                     Text(
                         text = stringResource(R.string.label_enable_eon_compiler)
@@ -270,9 +275,7 @@ private fun SelectOptimizations(
             Switch(
                 checked = engine == Engine.TFLITE_EON,
                 modifier = Modifier
-                    .weight(1.0f)
-                    .padding(start = 8.dp)
-                    .align(Alignment.CenterVertically),
+                    .padding(start = 8.dp),
                 enabled = selectedDevice != null,
                 onCheckedChange = { checked ->
                     engine = when (checked) {
