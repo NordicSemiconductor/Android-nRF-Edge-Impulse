@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
@@ -49,6 +48,7 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.flow.collect
 import no.nordicsemi.android.ei.R
+import no.nordicsemi.android.ei.ShowDialog
 import no.nordicsemi.android.ei.model.Collaborator
 import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.showSnackbar
@@ -310,7 +310,6 @@ private fun Collaborator(collaborators: List<Collaborator>) {
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun CreateProjectDialog(
-    modifier: Modifier = Modifier,
     onCreateProject: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -318,95 +317,67 @@ private fun CreateProjectDialog(
     var isCreateClicked by rememberSaveable { mutableStateOf(false) }
     val focusRequester = FocusRequester()
     val keyboardController = LocalSoftwareKeyboardController.current
-    Dialog(
-        onDismissRequest = onDismiss,
+    ShowDialog(
+        drawableRes = R.drawable.ic_project_diagram,
+        title = stringResource(id = R.string.dialog_title_create_project),
+        onDismissed = onDismiss,
         properties = DialogProperties(
             dismissOnBackPress = !isCreateClicked,
             dismissOnClickOutside = !isCreateClicked
-        )
-    ) {
-
-        Surface(modifier = Modifier.wrapContentSize().clip(shape = RoundedCornerShape(4.dp))) {
-            Column(
-                modifier = modifier
-                    .padding(start = 24.dp, end = 8.dp, bottom = 8.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(64.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        modifier = Modifier.size(24.dp),
-                        painter = painterResource(id = R.drawable.ic_project_diagram),
-                        contentDescription = null,
-                        tint = MaterialTheme.colors.onSurface
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
+        ), content = {
+            Text(
+                modifier = Modifier.padding(top = 8.dp, bottom = 8.dp),
+                text = stringResource(R.string.label_enter_project_name),
+                color = MaterialTheme.colors.onSurface
+            )
+            OutlinedTextField(
+                value = projectName,
+                onValueChange = { projectName = it },
+                modifier = Modifier
+                    .focusRequester(focusRequester = focusRequester)
+                    .focusOrder(focusRequester = focusRequester)
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, bottom = 8.dp, end = 16.dp),
+                label = { Text(stringResource(R.string.field_project_name)) },
+                keyboardOptions = KeyboardOptions(
+                    autoCorrect = false,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(onNext = {
+                    focusRequester.freeFocus()
+                    keyboardController?.hide()
+                }),
+                singleLine = true,
+                colors = TextFieldDefaults.outlinedTextFieldColors(textColor = MaterialTheme.colors.onSurface)
+            )
+            Spacer(modifier = Modifier.height(height = 16.dp))
+            Row(modifier = Modifier.fillMaxWidth().padding(end = 8.dp), horizontalArrangement = Arrangement.End) {
+                TextButton(
+                    onClick = { onDismiss() }) {
                     Text(
-                        text = stringResource(id = R.string.dialog_title_create_project),
-                        color = MaterialTheme.colors.onSurface,
-                        style = MaterialTheme.typography.h6,
-                        fontWeight = FontWeight.SemiBold
+                        text = stringResource(R.string.action_cancel).uppercase(
+                            Locale.US
+                        )
                     )
                 }
-                Text(
-                    modifier = modifier.padding(top = 8.dp, bottom = 8.dp),
-                    text = stringResource(R.string.label_enter_project_name),
-                    color = MaterialTheme.colors.onSurface
-                )
-                OutlinedTextField(
-                    value = projectName,
-                    onValueChange = { projectName = it },
+                Spacer(modifier = Modifier.width(8.dp))
+                TextButton(
                     modifier = Modifier
                         .focusRequester(focusRequester = focusRequester)
-                        .focusOrder(focusRequester = focusRequester)
-                        .fillMaxWidth()
-                        .padding(top = 8.dp, bottom = 8.dp, end = 16.dp),
-                    label = { Text(stringResource(R.string.field_project_name)) },
-                    keyboardOptions = KeyboardOptions(
-                        autoCorrect = false,
-                        imeAction = ImeAction.Next
-                    ),
-                    keyboardActions = KeyboardActions(onNext = {
-                        focusRequester.freeFocus()
-                        keyboardController?.hide()
-                    }),
-                    singleLine = true,
-                    colors = TextFieldDefaults.outlinedTextFieldColors(textColor = MaterialTheme.colors.onSurface)
-                )
-                Spacer(modifier = Modifier.height(height = 16.dp))
-                Row(modifier = Modifier.align(alignment = Alignment.End)) {
-                    TextButton(
-                        onClick = { onDismiss() }) {
-                        Text(
-                            text = stringResource(R.string.action_cancel).uppercase(
-                                Locale.US
-                            )
-                        )
+                        .focusOrder(focusRequester = focusRequester),
+                    onClick = {
+                        isCreateClicked = !isCreateClicked
+                        onCreateProject(projectName)
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    TextButton(
-                        modifier = Modifier
-                            .focusRequester(focusRequester = focusRequester)
-                            .focusOrder(focusRequester = focusRequester),
-                        onClick = {
-                            isCreateClicked = !isCreateClicked
-                            onCreateProject(projectName)
-                        }
-                    ) {
-                        Text(
-                            modifier = modifier.padding(end = 8.dp),
-                            text = stringResource(R.string.action_create).uppercase(
-                                Locale.US
-                            )
+                ) {
+                    Text(
+                        text = stringResource(R.string.action_create).uppercase(
+                            Locale.US
                         )
-                    }
+                    )
                 }
             }
-        }
-    }
+        })
 }
 
 @Composable

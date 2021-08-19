@@ -10,6 +10,8 @@ import androidx.compose.material.ModalBottomSheetValue.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.rounded.Sensors
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -21,7 +23,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
@@ -118,73 +119,73 @@ private fun LargeScreen(
     )
     if (isDialogVisible) when (selectedScreen) {
         BottomNavigationScreen.DATA_ACQUISITION -> {
-            Dialog(
-                onDismissRequest = { isDialogVisible = false },
+            ShowDialog(
+                imageVector = Icons.Rounded.Sensors,
+                title = stringResource(R.string.title_record_new_data),
+                onDismissed = { isDialogVisible = false },
                 properties = DialogProperties(
                     dismissOnBackPress = false,
                     dismissOnClickOutside = false
-                )
-            ) {
-                RecordSampleLargeScreen(
-                    content = {
-                        RecordSampleContent(
-                            samplingState = samplingState,
-                            connectedDevices = connectedDevices,
-                            focusRequester = viewModel.focusRequester,
-                            category = category,
-                            onCategorySelected = { category = it },
-                            selectedDevice = viewModel.selectedDevice,
-                            onDeviceSelected = { viewModel.onDeviceSelected(device = it) },
-                            label = viewModel.label,
-                            onLabelChanged = { viewModel.onLabelChanged(label = it) },
-                            selectedSensor = viewModel.selectedSensor,
-                            onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
-                            sampleLength = viewModel.sampleLength,
-                            onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
-                            selectedFrequency = viewModel.selectedFrequency,
-                            onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) }
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 16.dp),
-                            horizontalArrangement = Arrangement.End
-                        ) {
-                            TextButton(
-                                enabled = samplingState is Finished || samplingState is Unknown,
-                                onClick = {
-                                    isDialogVisible =
-                                        !(samplingState is Finished || samplingState is Unknown)
-                                    viewModel.resetSamplingState()
-                                }
+                ),
+                content = {
+                    RecordSampleLargeScreen(
+                        content = {
+                            RecordSampleContent(
+                                samplingState = samplingState,
+                                connectedDevices = connectedDevices,
+                                focusRequester = viewModel.focusRequester,
+                                category = category,
+                                onCategorySelected = { category = it },
+                                selectedDevice = viewModel.selectedDevice,
+                                onDeviceSelected = { viewModel.onDeviceSelected(device = it) },
+                                label = viewModel.label,
+                                onLabelChanged = { viewModel.onLabelChanged(label = it) },
+                                selectedSensor = viewModel.selectedSensor,
+                                onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
+                                sampleLength = viewModel.sampleLength,
+                                onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
+                                selectedFrequency = viewModel.selectedFrequency,
+                                onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) }
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
                             ) {
-                                Text(
-                                    text = stringResource(R.string.action_cancel).uppercase(
-                                        Locale.US
-                                    ),
-                                    style = MaterialTheme.typography.button
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(32.dp))
-                            TextButton(
-                                enabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
-                                        (samplingState is Finished || samplingState is Unknown),
-                                onClick = {
-                                    viewModel.startSampling(category = category)
+                                TextButton(
+                                    enabled = samplingState is Finished || samplingState is Unknown,
+                                    onClick = {
+                                        isDialogVisible =
+                                            !(samplingState is Finished || samplingState is Unknown)
+                                        viewModel.resetSamplingState()
+                                    }
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.action_cancel).uppercase(
+                                            Locale.US
+                                        ),
+                                        style = MaterialTheme.typography.button
+                                    )
                                 }
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.action_start_sampling).uppercase(
-                                        Locale.US
-                                    ),
-                                    style = MaterialTheme.typography.button
-                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                TextButton(
+                                    enabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
+                                            (samplingState is Finished || samplingState is Unknown),
+                                    onClick = {
+                                        viewModel.startSampling(category = category)
+                                    }
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.action_start_sampling).uppercase(
+                                            Locale.US
+                                        ),
+                                        style = MaterialTheme.typography.button
+                                    )
+                                }
                             }
                         }
-                    }
-                )
-            }
+                    )
+                })
         }
         else -> {
         }
@@ -444,12 +445,51 @@ private fun ProjectContent(
         }
     }
     if (isWarningDialogVisible) {
-        ShowWarningDialog(message = "Leaving the project screen will disconnect all connected devices. Would you like to continue?",
+        ShowDialog(
+            imageVector = Icons.Rounded.Warning,
+            title = stringResource(R.string.title_warning),
             onDismissed = { isWarningDialogVisible = !isWarningDialogVisible },
-            onContinue = {
-                isWarningDialogVisible = !isWarningDialogVisible
-                viewModel.disconnectAllDevices()
-                onBackPressed()
+            properties = DialogProperties(
+                dismissOnBackPress = false,
+                dismissOnClickOutside = false
+            ),
+            content = {
+                Text(
+                    modifier = Modifier.padding(end = 8.dp),
+                    text = stringResource(R.string.label_warning_projects),
+                    style = MaterialTheme.typography.body1
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(
+                        onClick = { isWarningDialogVisible = !isWarningDialogVisible }
+                    ) {
+                        Text(
+                            text = stringResource(R.string.action_cancel).uppercase(
+                                Locale.US
+                            )
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    TextButton(
+                        onClick = {
+                            isWarningDialogVisible = !isWarningDialogVisible
+                            viewModel.disconnectAllDevices()
+                            onBackPressed()
+                        }
+                    ) {
+                        Text(
+                            text = stringResource(R.string.action_dialog_continue).uppercase(
+                                Locale.US
+                            )
+                        )
+                    }
+                }
             })
     }
 }

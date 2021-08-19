@@ -40,34 +40,13 @@ import java.util.*
 fun RecordSampleLargeScreen(
     content: @Composable () -> Unit
 ) {
-    Surface(
+    Column(
         modifier = Modifier
             .wrapContentSize()
-            .clip(shape = RoundedCornerShape(4.dp))
+            .verticalScroll(state = rememberScrollState())
+            .padding(end = 16.dp)
     ) {
-        Column {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .padding(horizontal = 32.dp, vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.title_record_new_data),
-                    style = MaterialTheme.typography.h6,
-                    color = MaterialTheme.colors.onSurface
-                )
-            }
-            Column(
-                modifier = Modifier
-                    .wrapContentSize()
-                    .verticalScroll(state = rememberScrollState())
-                    .padding(start = 32.dp, bottom = 16.dp, end = 32.dp)
-            ) {
-                content()
-            }
-        }
+        content()
     }
 }
 

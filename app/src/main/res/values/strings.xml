@@ -16,5 +16,5 @@
     <string name="label_optimization_performance_summary">This optimization is recommended for best performance</string>
     <string name="label_logs">Logs</string>
     <string name="action_dialog_continue">Continue</string>
-    <string name="label_warning">warning</string>
+    <string name="title_warning">Warning</string>
 </resources>
