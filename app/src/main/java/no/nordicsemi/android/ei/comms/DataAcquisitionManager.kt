@@ -340,7 +340,7 @@ class DataAcquisitionManager(
                                     String(body.bytes())
                                 }
                             }"
-                        } ?: run { "Data sample successfully stored." }).toString()
+                        } ?: run { "Data sample successfully uploaded." }).toString()
                     )
                 }
             })
