@@ -16,7 +16,7 @@ enum class DeviceState {
 }
 
 fun DeviceState.indicatorColor() = when (this) {
-    DeviceState.NOT_IN_RANGE -> NordicRed
+    DeviceState.NOT_IN_RANGE -> NordicDarkGrey
     DeviceState.IN_RANGE -> NordicLake
     DeviceState.CONNECTING -> NordicFall
     DeviceState.AUTHENTICATING -> NordicSun

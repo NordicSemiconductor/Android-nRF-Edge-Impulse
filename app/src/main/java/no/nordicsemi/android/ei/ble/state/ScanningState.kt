@@ -10,6 +10,7 @@ sealed class ScanningState {
 
         sealed class Reason {
             object BluetoothDisabled : Reason()
+            object BluetoothScanPermissionNotGranted : Reason()
             object LocationPermissionNotGranted : Reason()
             object LocationTurnedOff : Reason()
         }

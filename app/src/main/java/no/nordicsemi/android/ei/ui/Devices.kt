@@ -1,6 +1,8 @@
 package no.nordicsemi.android.ei.ui
 
+import android.os.Build
 import androidx.annotation.DrawableRes
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -40,6 +42,7 @@ import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import no.nordicsemi.android.ei.viewmodels.state.indicatorColor
 import kotlin.math.roundToInt
 
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun Devices(
     modifier: Modifier = Modifier,
@@ -391,13 +394,37 @@ private fun getRssiRes(rssi: Int): Int = when (rssi) {
     else -> R.drawable.ic_signal_4_bar
 }
 
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun ScanningStoppedInfo(
     modifier: Modifier,
     reason: Reason,
     onScanningStarted: () -> Unit
 ) = when (reason) {
-    is Reason.BluetoothDisabled -> BluetoothDisabledInfo(modifier)
+    is Reason.BluetoothDisabled -> {
+        // TODO https://developer.android.com/about/versions/12/features/bluetooth-permissions
+        // States that android:maxSdkVersion="30" is required for the legacy android:name="android.permission.BLUETOOTH"
+        // However adding this makes the app crash on Android 12. Seems like a platform bug so let's wait on that.
+        // P.S. do not remove the following snippet for now.
+        /* if(Utils.isAndroidS()){
+            if(DevicesViewModel.isBluetoothScanPermissionGranted(LocalContext.current)){
+                BluetoothDisabledInfo()
+            } else {
+                BluetoothPermissionInfo(
+                    modifier = modifier,
+                    onScanningStarted = onScanningStarted
+                )
+            }
+        } else {
+        } */
+        BluetoothDisabledInfo(modifier)
+    }
+    is Reason.BluetoothScanPermissionNotGranted -> {
+        BluetoothPermissionInfo(
+            modifier = modifier,
+            onScanningStarted = onScanningStarted
+        )
+    }
     is Reason.LocationTurnedOff -> LocationTurnedOffInfo(modifier)
     is Reason.LocationPermissionNotGranted -> {
         LocationPermissionInfo(

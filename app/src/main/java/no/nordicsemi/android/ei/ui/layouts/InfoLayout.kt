@@ -3,15 +3,16 @@ package no.nordicsemi.android.ei.ui.layouts
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
+import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
@@ -149,6 +150,53 @@ fun BluetoothDisabledInfo(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.S)
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun BluetoothPermissionInfo(
+    modifier: Modifier = Modifier,
+    onScanningStarted: () -> Unit
+) {
+    InfoLayout(
+        modifier = modifier,
+        iconPainter = painterResource(id = R.drawable.ic_location_off)
+    ) {
+        val launcher = rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissions ->
+            permissions.values.takeIf { values -> values.all { it == true } }?.let {
+                onScanningStarted()
+            }
+        }
+        Text(
+            text = stringResource(id = R.string.bluetooth_scan_connect_permission_title),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.h6
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        Text(
+            text = stringResource(id = R.string.bluetooth_scan_connect_permission_info),
+            style = MaterialTheme.typography.body1
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(
+            onClick = {
+                launcher.launch(
+                    arrayOf(
+                        Manifest.permission.BLUETOOTH_SCAN,
+                        Manifest.permission.BLUETOOTH_CONNECT
+                    )
+                )
+            }
+        ) {
+            Text(
+                text = stringResource(R.string.action_grant_permission).uppercase(Locale.US),
+                style = MaterialTheme.typography.button
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun LocationPermissionInfo(
@@ -159,7 +207,6 @@ fun LocationPermissionInfo(
         modifier = modifier,
         iconPainter = painterResource(id = R.drawable.ic_location_off)
     ) {
-        var showRationale by rememberSaveable { mutableStateOf(false) }
         val launcher = rememberLauncherForActivityResult(
             ActivityResultContracts.RequestPermission()
         ) { isGranted ->
@@ -172,34 +219,19 @@ fun LocationPermissionInfo(
             style = MaterialTheme.typography.h6
         )
         Spacer(modifier = Modifier.height(32.dp))
+        Text(
+            text = stringResource(id = R.string.location_permission_info),
+            style = MaterialTheme.typography.body1
+        )
+        Spacer(modifier = Modifier.height(32.dp))
         Button(
             onClick = {
                 launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             }
         ) {
             Text(
-                text = stringResource(R.string.action_location_permission).uppercase(Locale.US),
+                text = stringResource(R.string.action_grant_permission).uppercase(Locale.US),
                 style = MaterialTheme.typography.button
-            )
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        AnimatedVisibility(visible = !showRationale) {
-            Button(
-                onClick = { showRationale = true }
-            ) {
-                Text(
-                    text = stringResource(R.string.action_show_location_rationale).uppercase(
-                        Locale.US
-                    ),
-                    style = MaterialTheme.typography.button
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        AnimatedVisibility(visible = showRationale) {
-            Text(
-                text = stringResource(id = R.string.location_permission_info),
-                style = MaterialTheme.typography.body1
             )
         }
     }

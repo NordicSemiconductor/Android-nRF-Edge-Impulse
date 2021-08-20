@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="no.nordicsemi.android.ei">
 
     <!-- Make the app only available for devices supporting BLE -->
@@ -20,9 +21,29 @@
         android:name="android.permission.AUTHENTICATE_ACCOUNTS"
         android:maxSdkVersion="22" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Request legacy Bluetooth permissions on older devices. -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH" />
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" />
+    <!-- Include "neverForLocation" only if you can strongly assert that
+         your app never derives physical location from Bluetooth scan results. -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="s" />
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_CONNECT"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="s" />
+    <!-- Not needed if you can strongly assert that your app never derives
+         physical location from Bluetooth scan results and doesn't need location
+         access for any other purpose. However pre Android 12 devices need this permission-->
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:maxSdkVersion="30"
+        tools:ignore="CoarseFineLocation" />
 
     <application
         android:name=".di.MainApplication"

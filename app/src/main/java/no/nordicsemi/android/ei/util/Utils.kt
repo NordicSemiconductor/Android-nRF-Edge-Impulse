@@ -1,10 +1,16 @@
 package no.nordicsemi.android.ei.util
 
+import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
+import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
+import androidx.core.content.ContextCompat
+import androidx.core.location.LocationManagerCompat
 import no.nordicsemi.android.ei.R
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
@@ -15,8 +21,30 @@ object Utils {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
     }
 
+    fun isAndroidS(): Boolean {
+        return Build.VERSION.SDK_INT == Build.VERSION_CODES.S
+    }
+
     fun isBluetoothEnabled(): Boolean =
         BluetoothAdapter.getDefaultAdapter()?.isEnabled ?: false
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    fun isBluetoothPermissionsGranted(context: Context) =
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.BLUETOOTH_SCAN
+        ) == PackageManager.PERMISSION_GRANTED
+
+    fun isLocationEnabled(context: Context) =
+        !isMarshMellowOrAbove() || LocationManagerCompat.isLocationEnabled(
+            context.getSystemService(LocationManager::class.java)
+        )
+
+    fun isLocationPermissionGranted(context: Context) =
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
 
 }
 

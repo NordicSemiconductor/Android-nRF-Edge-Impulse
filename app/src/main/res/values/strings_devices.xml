@@ -8,11 +8,15 @@
     <string name="label_location_permission_disabled"><![CDATA[From Android 6.0 Marshmallow onwards the application requires Location permission in order to scan for Bluetooth Low Energy devices.       \n\nThis is because Bluetooth LE beacons, for example iBeacons or Eddystone, may be used to determine the phone\'s and user\'s location. <b>nRF Edge Impulse</b> will not use this information in any way.</string>]]></string>
     <string name="label_location_services_disabled">Location services disabled</string>
 
-    <string name="location_permission_title">Location permission required</string>
+    <string name="bluetooth_scan_connect_permission_title">Bluetooth Permission Required</string>
+    <string name="bluetooth_scan_connect_permission_info">From Android 12 onwards, an application requires Bluetooth Scan and Bluetooth Connect permissions
+        to scan and connect for Bluetooth Low Energy devices. \n\nHowever app will never use these permissions to derive physical location from Bluetooth Scan results.</string>
+
+    <string name="location_permission_title">Location Permission Required</string>
     <string name="location_permission_info">From Android 6.0 Marshmallow onwards the application requires Location permission in order to scan for Bluetooth Low Energy devices.
       \n\nThis is because Bluetooth LE beacons, for example iBeacons or Eddystone, may be used to determine the phone\'s and user\'s location.
       \n\nThis app will not use this information in any way.</string>
-    <string name="action_location_permission">Grant Permission</string>
+    <string name="action_grant_permission">Grant Permission</string>
     <string name="action_show_location_rationale">Location? Why?!</string>
     <string name="action_location_permission_settings">Settings</string>
 
