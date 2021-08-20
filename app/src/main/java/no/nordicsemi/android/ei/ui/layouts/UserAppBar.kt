@@ -85,14 +85,17 @@ fun UserAppBar(
                         verticalAlignment = Alignment.Top,
                         content = {
                             var showMenu by remember { mutableStateOf(false) }
-                            IconButton(onClick = { showMenu = true }) {
+                            IconButton(onClick = { showMenu = !showMenu }) {
                                 Icon(Icons.Default.MoreVert, contentDescription = null)
                             }
                             ShowDropdown(
                                 modifier = Modifier.wrapContentWidth(),
                                 expanded = showMenu,
-                                onDismiss = { showMenu = false }) {
-                                DropdownMenuItem(onClick = onAboutClick) {
+                                onDismiss = { showMenu = !showMenu }) {
+                                DropdownMenuItem(onClick = {
+                                    showMenu = !showMenu
+                                    onAboutClick()
+                                }) {
                                     Text(text = stringResource(id = R.string.action_about))
                                 }
                                 DropdownMenuItem(onClick = onLogoutClick) {
