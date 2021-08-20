@@ -410,7 +410,7 @@ private fun ShowAboutDialog(onDismiss: () -> Unit) {
             Column {
                 Row(modifier = Modifier.padding(end = 16.dp, bottom = 16.dp)) {
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(modifier = Modifier.weight(1.0f), text = "Version")
+                    Text(modifier = Modifier.weight(1.0f), text = stringResource(R.string.label_version))
                     Text(
                         modifier = Modifier.weight(1.0f),
                         text = context.packageManager.getPackageInfo(
