@@ -33,4 +33,22 @@
 		If you are sure your Thingy:53 is advertising and it doesn\'t show up here, click the button below to enable Location.</string>
     <string name="thingy_guide_location_action">Enable</string>
     <string name="action_enable">Enable</string>
+
+
+    <string name="label_id">Id</string>
+    <string name="label_type">Type</string>
+    <string name="label_created_at">Created at</string>
+    <string name="label_last_seen">Last seen</string>
+    <string name="label_connectivity">Connectivity</string>
+    <string name="label_connected_to_remote_management">Connected to remote management</string>
+    <string name="label_capabilities">Capabilities</string>
+    <string name="label_supports_snapshot_streaming">Supports snapshot streaming</string>
+    <string name="label_max_sample_length">Maximum sample length</string>
+    <string name="label_frequencies">Frequencies</string>
+    <string name="label_unit_hertz">&#160;Hz</string>
+    <string name="label_frequencies_separator">,&#160;</string>
+    <string name="label_sample_duration">%d ms</string>
+    <string name="action_connect">Connect</string>
+    <string name="action_disconnect">Disconnect</string>
+    <string name="label_device_information">Device Information</string>
 </resources>

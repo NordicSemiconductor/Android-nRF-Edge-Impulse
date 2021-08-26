@@ -13,15 +13,19 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.location.LocationManager
 import android.os.ParcelUuid
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import dagger.hilt.EntryPoints
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import no.nordicsemi.android.ei.ble.BleDevice
+import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.ble.state.ScannerState
 import no.nordicsemi.android.ei.ble.state.ScanningState
 import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.Reason
+import no.nordicsemi.android.ei.comms.DataAcquisitionManager
 import no.nordicsemi.android.ei.di.ProjectComponentEntryPoint
 import no.nordicsemi.android.ei.di.ProjectManager
 import no.nordicsemi.android.ei.di.UserComponentEntryPoint
@@ -36,6 +40,7 @@ import no.nordicsemi.android.ei.util.Utils.isLocationEnabled
 import no.nordicsemi.android.ei.util.Utils.isLocationPermissionGranted
 import no.nordicsemi.android.ei.util.Utils.isMarshMellowOrAbove
 import no.nordicsemi.android.ei.util.guard
+import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import javax.inject.Inject
 
 @HiltViewModel
@@ -57,10 +62,10 @@ class DevicesViewModel @Inject constructor(
             .get(projectManager.projectComponent!!, ProjectComponentEntryPoint::class.java)
             .projectDataRepository()
 
-    var configuredDevices = mutableStateListOf<Device>()
-        private set
-
     val scannerState = ScannerState(ScanningState.Initializing)
+
+    var device by mutableStateOf<Device?>(null)
+        private set
 
     private val bluetoothManager =
         context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
@@ -201,5 +206,22 @@ class DevicesViewModel @Inject constructor(
             is Reason.LocationPermissionNotGranted -> scannerState.onLocationPermissionNotGranted()
             is Reason.LocationTurnedOff -> scannerState.onLocationTurnedOff()
         }
+    }
+
+    fun discoveredBluetoothDevice(configuredDevice: Device): DiscoveredBluetoothDevice? =
+        scannerState.discoveredDevices.find { it.deviceId == configuredDevice.deviceId }
+
+    fun deviceState(
+        configuredDevice: Device,
+        activeDevices: Map<String, DataAcquisitionManager>
+    ): DeviceState =
+        discoveredBluetoothDevice(configuredDevice = configuredDevice)
+            ?.let {
+                activeDevices[configuredDevice.deviceId]?.state
+                    ?: DeviceState.IN_RANGE
+            } ?: DeviceState.NOT_IN_RANGE
+
+    fun onDeviceSelected(device: Device) {
+        this.device = device
     }
 }

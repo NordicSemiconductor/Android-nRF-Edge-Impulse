@@ -386,7 +386,9 @@ private fun ProjectContent(
         ) {
             composable(route = BottomNavigationScreen.DEVICES.route) {
                 val devicesViewModel = hiltViewModel<DevicesViewModel>()
-                Devices(
+                DevicesTab(
+                    scope = scope,
+                    viewModel = devicesViewModel,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues = innerPadding),
@@ -396,7 +398,9 @@ private fun ProjectContent(
                     onRefresh = { viewModel.listDevices() },
                     scannerState = devicesViewModel.scannerState,
                     onScannerStarted = { devicesViewModel.startScan() },
-                    connect = { viewModel.connect(device = it) }
+                    screen = selectedScreen,
+                    connect = { viewModel.connect(device = it) },
+                    disconnect = { viewModel.disconnect(device = it) }
                 )
             }
             composable(route = BottomNavigationScreen.DATA_ACQUISITION.route) {
@@ -637,7 +641,7 @@ private fun showBottomSheet(
 }
 
 @OptIn(ExperimentalMaterialApi::class)
-private fun showBottomSheet(
+fun showBottomSheet(
     scope: CoroutineScope,
     modalBottomSheetState: ModalBottomSheetState,
     targetValue: ModalBottomSheetValue
@@ -648,7 +652,7 @@ private fun showBottomSheet(
 }
 
 @OptIn(ExperimentalMaterialApi::class)
-private fun hideBottomSheet(
+fun hideBottomSheet(
     scope: CoroutineScope,
     modalBottomSheetState: ModalBottomSheetState
 ) {

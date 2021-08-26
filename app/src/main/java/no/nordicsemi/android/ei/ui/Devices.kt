@@ -1,8 +1,6 @@
 package no.nordicsemi.android.ei.ui
 
-import android.os.Build
 import androidx.annotation.DrawableRes
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,6 +26,9 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import no.nordicsemi.android.ei.BottomNavigationScreen
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.ble.rssiAsPercent
@@ -37,12 +38,214 @@ import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.Reason
 import no.nordicsemi.android.ei.comms.DataAcquisitionManager
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.ui.layouts.*
+import no.nordicsemi.android.ei.util.Utils
 import no.nordicsemi.android.ei.util.exhaustive
+import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import no.nordicsemi.android.ei.viewmodels.state.indicatorColor
 import kotlin.math.roundToInt
 
-@RequiresApi(Build.VERSION_CODES.S)
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun DevicesTab(
+    scope: CoroutineScope,
+    viewModel: DevicesViewModel,
+    modifier: Modifier = Modifier,
+    configuredDevices: List<Device>,
+    activeDevices: Map<String, DataAcquisitionManager>,
+    refreshingState: Boolean,
+    onRefresh: () -> Unit,
+    scannerState: ScannerState,
+    onScannerStarted: () -> Unit,
+    screen: BottomNavigationScreen,
+    connect: (DiscoveredBluetoothDevice) -> Unit,
+    disconnect: (DiscoveredBluetoothDevice) -> Unit
+) {
+    val scanningState = scannerState.scanningState
+    val backdropScaffoldState = rememberBackdropScaffoldState(initialValue = BackdropValue.Revealed)
+    if (screen != BottomNavigationScreen.DEVICES) {
+        animateBottomsheet(
+            scope = scope,
+            scaffoldState = backdropScaffoldState,
+            BackdropValue.Revealed
+        )
+    }
+    BackdropScaffold(
+        scaffoldState = backdropScaffoldState,
+        appBar = {
+            TopAppBar(
+                title = {
+                    Text(text = stringResource(R.string.label_device_information))
+                },
+                backgroundColor = MaterialTheme.colors.surface,
+                elevation = 0.dp
+            )
+        },
+        backLayerContent = {
+            SwipeRefresh(
+                state = rememberSwipeRefreshState(refreshingState),
+                onRefresh = onRefresh,
+                modifier = modifier,
+                // TODO After Compose is stable, try removing this and swiping in Scanner tab.
+                // Those 3 properties below copy the default values from SwipeRefresh.
+                // Without them, the Scanner page crashes when devices are displayed and Swipe is used.
+                indicator = { s, trigger ->
+                    SwipeRefreshIndicator(s, trigger)
+                },
+                indicatorAlignment = Alignment.TopCenter,
+                indicatorPadding = PaddingValues(0.dp)
+            ) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    item {
+                        Text(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            text = stringResource(R.string.label_devices),
+                            style = MaterialTheme.typography.h6
+                        )
+                    }
+                    configuredDevices.takeIf { it.isNotEmpty() }?.let { configuredDevices ->
+                        items(
+                            items = configuredDevices,
+                            key = { it.deviceId }
+                        ) { configuredDevice ->
+                            SwipeableConfiguredDeviceRow(
+                                device = configuredDevice,
+                                state = viewModel.deviceState(
+                                    configuredDevice = configuredDevice,
+                                    activeDevices = activeDevices
+                                ),
+                                onDeviceClicked = { device ->
+                                    viewModel.onDeviceSelected(device)
+                                    animateBottomsheet(
+                                        scope = scope,
+                                        scaffoldState = backdropScaffoldState,
+                                        BackdropValue.Concealed
+                                    )
+                                },
+                                onDisconnectClicked = { activeDevices[it.deviceId]?.disconnect() }
+                            )
+                            Divider()
+                        }
+                    } ?: item {
+                        NoConfiguredDevicesInfo(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        )
+                    }
+
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                modifier = Modifier
+                                    .weight(1.0f),
+                                text = stringResource(R.string.label_scanner),
+                                style = MaterialTheme.typography.h6
+                            )
+                            if (scanningState == ScanningState.Started) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .align(Alignment.CenterVertically)
+                                )
+                            }
+                        }
+                    }
+
+                    when (scanningState) {
+                        is ScanningState.Initializing -> {
+                        }
+                        is ScanningState.Started -> {
+                            scannerState.discoveredDevices
+                                // Filter only devices that have not been configured.
+                                .filter { discoveredDevice ->
+                                    configuredDevices.find { configuredDevice ->
+                                        configuredDevice.deviceId == discoveredDevice.bluetoothDevice.address
+                                    } == null
+                                }
+                                // Display only if at least one was found.
+                                .takeIf { it.isNotEmpty() }?.let { discoveredDevices ->
+                                    items(
+                                        items = discoveredDevices,
+                                        key = { it.bluetoothDevice.address }
+                                    ) { discoveredDevice ->
+                                        DiscoveredDeviceRow(
+                                            device = discoveredDevice,
+                                            state = activeDevices[discoveredDevice.deviceId]?.state
+                                                ?: DeviceState.IN_RANGE,
+                                            onDeviceClicked = { connect(it) },
+                                            onDeviceAuthenticated = { onRefresh() }
+                                        )
+                                        Divider()
+                                    }
+                                }
+                            // Else, show a placeholder.
+                                ?: item {
+                                    NoDevicesInRangeInfo(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp)
+                                    )
+                                }
+                        }
+                        is ScanningState.Stopped -> {
+                            item {
+                                ScanningStoppedInfo(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp),
+                                    reason = scanningState.reason,
+                                    onScanningStarted = onScannerStarted,
+                                )
+                            }
+                        }
+                    }.exhaustive
+                }
+            }
+        },
+        persistentAppBar = false,
+        frontLayerElevation = 6.dp,
+        frontLayerShape = MaterialTheme.shapes.large,
+        frontLayerContent = {
+            viewModel.device?.let { device ->
+                DeviceDetails(
+                    device = device,
+                    deviceState = viewModel.deviceState(
+                        configuredDevice = device,
+                        activeDevices = activeDevices
+                    ),
+                    onConnectClick = {
+                        animateBottomsheet(
+                            scope = scope,
+                            scaffoldState = backdropScaffoldState,
+                            targetValue = BackdropValue.Revealed
+                        )
+                        viewModel.discoveredBluetoothDevice(device)?.let(connect)
+                    }
+                ) {
+                    animateBottomsheet(
+                        scope = scope,
+                        scaffoldState = backdropScaffoldState,
+                        targetValue = BackdropValue.Revealed
+                    )
+                    viewModel.discoveredBluetoothDevice(device)?.let(disconnect)
+                }
+            }
+        },
+        headerHeight = 0.dp,
+        backLayerBackgroundColor = MaterialTheme.colors.surface
+    )
+}
+
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun Devices(
     modifier: Modifier = Modifier,
@@ -52,9 +255,10 @@ fun Devices(
     onRefresh: () -> Unit,
     scannerState: ScannerState,
     onScannerStarted: () -> Unit,
-    connect: (DiscoveredBluetoothDevice) -> Unit
+    connect: (DiscoveredBluetoothDevice) -> Unit,
 ) {
     val scanningState = scannerState.scanningState
+
     SwipeRefresh(
         state = rememberSwipeRefreshState(refreshingState),
         onRefresh = onRefresh,
@@ -94,7 +298,7 @@ fun Devices(
                             activeDevices[configuredDevice.deviceId]?.state
                                 ?: DeviceState.IN_RANGE
                         } ?: DeviceState.NOT_IN_RANGE,
-                        onDeviceClicked = {
+                        onDeviceClicked = { clickedDevice ->
                             discoveredBluetoothDevice?.let {
                                 connect(it)
                             }
@@ -185,6 +389,7 @@ fun Devices(
     }
 }
 
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SwipeableConfiguredDeviceRow(
@@ -272,7 +477,7 @@ private fun ConfiguredDeviceRow(
             modifier = Modifier
                 .size(40.dp)
                 .background(
-                    color = MaterialTheme.colors.primary,
+                    color = state.indicatorColor(),
                     shape = CircleShape
                 )
                 .padding(8.dp)
@@ -295,23 +500,12 @@ private fun ConfiguredDeviceRow(
             )
         }
         Spacer(modifier = Modifier.width(16.dp))
-        when (state) {
-            DeviceState.CONNECTING -> {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .align(Alignment.CenterVertically)
-                )
-            }
-            else -> {
-                Surface(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .padding(8.dp),
-                    color = state.indicatorColor(),
-                    shape = CircleShape
-                ) {}
-            }
+        if (state == DeviceState.CONNECTING) {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .size(24.dp)
+                    .align(Alignment.CenterVertically)
+            )
         }
     }
 }
@@ -394,7 +588,6 @@ private fun getRssiRes(rssi: Int): Int = when (rssi) {
     else -> R.drawable.ic_signal_4_bar
 }
 
-@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun ScanningStoppedInfo(
     modifier: Modifier,
@@ -420,10 +613,13 @@ fun ScanningStoppedInfo(
         BluetoothDisabledInfo(modifier)
     }
     is Reason.BluetoothScanPermissionNotGranted -> {
-        BluetoothPermissionInfo(
-            modifier = modifier,
-            onScanningStarted = onScanningStarted
-        )
+        if (Utils.isAndroidS()) {
+            BluetoothPermissionInfo(
+                modifier = modifier,
+                onScanningStarted = onScanningStarted
+            )
+        } else {
+        }
     }
     is Reason.LocationTurnedOff -> LocationTurnedOffInfo(modifier)
     is Reason.LocationPermissionNotGranted -> {
@@ -431,5 +627,16 @@ fun ScanningStoppedInfo(
             modifier = modifier,
             onScanningStarted = onScanningStarted
         )
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+private fun animateBottomsheet(
+    scope: CoroutineScope,
+    scaffoldState: BackdropScaffoldState,
+    targetValue: BackdropValue
+) {
+    scope.launch {
+        scaffoldState.animateTo(targetValue)
     }
 }
