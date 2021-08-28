@@ -67,6 +67,21 @@ interface EiService {
     ): ListDevicesResponse
 
     /**
+     * Sets the current name for a device.
+     *
+     * @param apiKey       Token received during the login.
+     * @param projectId Project ID.
+     */
+    @Headers("Accept: application/json", "Content-Type: application/json")
+    @GET("api/{projectId}/devices")
+    suspend fun renameDevice(
+        @Header("x-api-key") apiKey: String,
+        @Path("projectId") projectId: Int,
+        @Path("deviceId") deviceId: String,
+        @Body renameDeviceRequest: RenameDeviceRequest
+    ): RenameDeviceResponse
+
+    /**
      * Retrieve all the samples for a project.
      *
      * @param apiKey       Token received during the login.
