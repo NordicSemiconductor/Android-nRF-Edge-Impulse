@@ -85,6 +85,22 @@ interface EiService {
     ): RenameDeviceResponse
 
     /**
+     * Deletes a device
+     *
+     * @param apiKey                Token received during the login.
+     * @param projectId             Project ID.
+     * @param deviceId              Device ID.
+     */
+    @Headers("Accept: application/json", "Content-Type: application/json")
+    @DELETE("api/{projectId}/device/{deviceId}")
+    suspend fun deleteDevice(
+        @Header("x-api-key") apiKey: String,
+        @Path("projectId") projectId: Int,
+        //Set value as encoded already as retrofit seem to encode colons with %253A instead of %3A
+        @Path("deviceId", encoded = true) deviceId: String
+    ): DeleteDeviceResponse
+
+    /**
      * Retrieve all the samples for a project.
      *
      * @param apiKey       Token received during the login.
