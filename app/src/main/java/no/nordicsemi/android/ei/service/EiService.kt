@@ -69,15 +69,18 @@ interface EiService {
     /**
      * Sets the current name for a device.
      *
-     * @param apiKey       Token received during the login.
-     * @param projectId Project ID.
+     * @param apiKey                Token received during the login.
+     * @param projectId             Project ID.
+     * @param deviceId              Device ID
+     * @param renameDeviceRequest   Device rename request parameters
      */
     @Headers("Accept: application/json", "Content-Type: application/json")
-    @GET("api/{projectId}/devices")
+    @POST("api/{projectId}/devices/{deviceId}/rename")
     suspend fun renameDevice(
         @Header("x-api-key") apiKey: String,
         @Path("projectId") projectId: Int,
-        @Path("deviceId") deviceId: String,
+        //Set value as encoded already as retrofit seem to encode colons with %253A instead of %3A
+        @Path("deviceId", encoded = true) deviceId: String,
         @Body renameDeviceRequest: RenameDeviceRequest
     ): RenameDeviceResponse
 
