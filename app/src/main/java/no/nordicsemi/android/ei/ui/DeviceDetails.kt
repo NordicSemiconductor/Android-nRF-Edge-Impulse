@@ -119,7 +119,12 @@ private fun DeviceName(
                         isError = deviceName.isBlank()
                     )
                     Spacer(modifier = Modifier.width(16.dp))
-                    IconButton(onClick = { onEditClick = !onEditClick }) {
+                    IconButton(
+                        onClick = {
+                            deviceName = device.name
+                            onEditClick = !onEditClick
+                        }
+                    ) {
                         Icon(
                             modifier = Modifier
                                 .size(24.dp),
