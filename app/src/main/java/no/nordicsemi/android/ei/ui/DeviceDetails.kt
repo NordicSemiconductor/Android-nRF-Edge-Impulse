@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import no.nordicsemi.android.ei.R
@@ -171,7 +172,9 @@ private fun DeviceName(
                         )
                         Text(
                             text = deviceName,
-                            style = MaterialTheme.typography.body2
+                            style = MaterialTheme.typography.body2,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                     IconButton(onClick = { onEditClick = !onEditClick }) {
