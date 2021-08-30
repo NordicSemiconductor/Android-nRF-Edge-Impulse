@@ -282,7 +282,7 @@ fun ConfiguredDeviceRow(
             .fillMaxWidth()
             .background(color = MaterialTheme.colors.surface)
             .clickable(
-                enabled = state == DeviceState.IN_RANGE || state == DeviceState.AUTHENTICATED,
+                /*enabled = state == DeviceState.IN_RANGE || state == DeviceState.AUTHENTICATED,*/
                 onClick = { onDeviceClicked(device) },
             )
             .padding(16.dp),
