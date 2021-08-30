@@ -248,7 +248,7 @@ private fun Connectivity(
                     }
                 ) {
                     Text(
-                        text = stringResource(R.string.action_disconnect).uppercase(Locale.US),
+                        text = stringResource(R.string.action_disconnect),
                         style = TextStyle(fontSize = 18.sp)
                     )
                 }
