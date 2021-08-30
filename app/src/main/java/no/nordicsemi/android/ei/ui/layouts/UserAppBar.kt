@@ -144,7 +144,7 @@ fun UserAppBar(
                         color = MaterialTheme.colors.onPrimary,
                         style = MaterialTheme.typography.h6,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         modifier = Modifier
@@ -153,7 +153,7 @@ fun UserAppBar(
                         color = MaterialTheme.colors.onPrimary,
                         style = MaterialTheme.typography.caption,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
