@@ -1,6 +1,10 @@
 package no.nordicsemi.android.ei.viewmodels.state
 
-import no.nordicsemi.android.ei.ui.theme.*
+import androidx.compose.ui.graphics.Color
+import no.nordicsemi.android.ei.ui.theme.NordicDarkGrey
+import no.nordicsemi.android.ei.ui.theme.NordicFall
+import no.nordicsemi.android.ei.ui.theme.NordicLake
+import no.nordicsemi.android.ei.ui.theme.NordicSun
 
 enum class DeviceState {
     /** The device is not in range, or does not support Bluetooth LE. */
@@ -20,5 +24,5 @@ fun DeviceState.indicatorColor() = when (this) {
     DeviceState.IN_RANGE -> NordicLake
     DeviceState.CONNECTING -> NordicFall
     DeviceState.AUTHENTICATING -> NordicSun
-    DeviceState.AUTHENTICATED -> NordicGrass
+    DeviceState.AUTHENTICATED -> Color.Green
 }
