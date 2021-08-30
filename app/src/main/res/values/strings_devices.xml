@@ -47,7 +47,7 @@
     <string name="label_frequencies">Frequencies</string>
     <string name="label_unit_hertz">&#160;Hz</string>
     <string name="label_frequencies_separator">,&#160;</string>
-    <string name="label_sample_duration">%d ms</string>
+    <string name="label_sample_duration">%d s</string>
     <string name="action_connect">Connect</string>
     <string name="action_disconnect">Disconnect</string>
     <string name="label_device_information">Device Information</string>

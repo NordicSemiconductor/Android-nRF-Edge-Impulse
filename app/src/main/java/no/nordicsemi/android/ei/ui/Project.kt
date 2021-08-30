@@ -386,7 +386,7 @@ private fun ProjectContent(
         ) {
             composable(route = BottomNavigationScreen.DEVICES.route) {
                 val devicesViewModel = hiltViewModel<DevicesViewModel>()
-                DevicesTab(
+                Devices(
                     scope = scope,
                     viewModel = devicesViewModel,
                     modifier = Modifier
@@ -400,7 +400,9 @@ private fun ProjectContent(
                     onScannerStarted = { devicesViewModel.startScan() },
                     screen = selectedScreen,
                     connect = { viewModel.connect(device = it) },
-                    disconnect = { viewModel.disconnect(device = it) }
+                    disconnect = { viewModel.disconnect(device = it) },
+                    onRenameClick = { device, name -> viewModel.rename(device = device, name = name) },
+                    onDeleteClick = { viewModel.delete(it) }
                 )
             }
             composable(route = BottomNavigationScreen.DATA_ACQUISITION.route) {

@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.net.Uri
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.focus.FocusRequester
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -71,6 +72,10 @@ class ProjectViewModel @Inject constructor(
 
     /** Whether the list of configured devices is refreshing. */
     var isRefreshing: Boolean by mutableStateOf(false)
+        private set
+
+    /** Whether a device rename is been requested. */
+    var isDeviceRenameRequested: Boolean by mutableStateOf(false)
         private set
 
     /** Whether the list of configured devices is refreshing. */
@@ -175,17 +180,8 @@ class ProjectViewModel @Inject constructor(
                     device.deviceId !in response.devices.map {
                         it.deviceId
                     }
-                }.onEach { device ->
-                    dataAcquisitionManagers.remove(device.deviceId)?.apply {
-                        state.takeIf {
-                            it == DeviceState.CONNECTING ||
-                                    it == DeviceState.AUTHENTICATING ||
-                                    it == DeviceState.AUTHENTICATED
-                        }?.apply {
-                            disconnect()
-                        }
-                    }
-
+                }.onEach {
+                    dataAcquisitionManagers.disconnect(it.deviceId)
                 }
                 configuredDevices.apply {
                     clear()
@@ -237,7 +233,7 @@ class ProjectViewModel @Inject constructor(
         }
 
     fun disconnect(device: DiscoveredBluetoothDevice) {
-        dataAcquisitionManagers[device.deviceId]?.disconnect()
+        dataAcquisitionManagers.disconnect(device.deviceId)
         dataAcquisitionManagers.remove(device.deviceId)
     }
 
@@ -342,6 +338,66 @@ class ProjectViewModel @Inject constructor(
      */
     private fun resetSamplingState(device: Device) {
         dataAcquisitionManagers[device.deviceId]?.resetSamplingState()
+    }
+
+    fun rename(device: Device, name: String) {
+        viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
+            viewModelScope
+                .launch {
+                    eventChannel.send(Event.Error(throwable))
+                        .also { isDeviceRenameRequested = false }
+                }
+        }) {
+            projectRepository.renameDevice(
+                apiKey = keys.apiKey,
+                projectId = project.id,
+                deviceId = device.deviceId,
+                name = name
+            ).let { response ->
+                guard(response.success) {
+                    throw Throwable(response.error)
+                }
+                listDevices()
+            }
+        }
+    }
+
+    fun delete(device: Device) {
+        viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
+            viewModelScope
+                .launch {
+                    eventChannel.send(Event.Error(throwable))
+                        .also { isDeviceRenameRequested = false }
+                }
+        }) {
+            projectRepository.deleteDevice(
+                apiKey = keys.apiKey,
+                projectId = project.id,
+                deviceId = device.deviceId
+            ).let { response ->
+                guard(response.success) {
+                    throw Throwable(response.error)
+                }
+                dataAcquisitionManagers.disconnect(deviceId = device.deviceId)
+                configuredDevices.remove(device)
+            }
+        }
+    }
+
+}
+
+/**
+ * Disconnect device
+ */
+private fun SnapshotStateMap<String, DataAcquisitionManager>.disconnect(deviceId: String) {
+    remove(deviceId)?.apply {
+        state.takeIf {
+            it == DeviceState.CONNECTING ||
+                    it == DeviceState.AUTHENTICATING ||
+                    it == DeviceState.AUTHENTICATED
+        }?.apply {
+            disconnect()
+        }
     }
 }
 

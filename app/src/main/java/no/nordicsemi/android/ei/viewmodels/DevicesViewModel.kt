@@ -17,7 +17,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
-import dagger.hilt.EntryPoints
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import no.nordicsemi.android.ei.ble.BleDevice
@@ -26,13 +25,7 @@ import no.nordicsemi.android.ei.ble.state.ScannerState
 import no.nordicsemi.android.ei.ble.state.ScanningState
 import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.Reason
 import no.nordicsemi.android.ei.comms.DataAcquisitionManager
-import no.nordicsemi.android.ei.di.ProjectComponentEntryPoint
-import no.nordicsemi.android.ei.di.ProjectManager
-import no.nordicsemi.android.ei.di.UserComponentEntryPoint
-import no.nordicsemi.android.ei.di.UserManager
 import no.nordicsemi.android.ei.model.Device
-import no.nordicsemi.android.ei.repository.ProjectDataRepository
-import no.nordicsemi.android.ei.repository.ProjectRepository
 import no.nordicsemi.android.ei.util.Utils.isAndroidS
 import no.nordicsemi.android.ei.util.Utils.isBluetoothEnabled
 import no.nordicsemi.android.ei.util.Utils.isBluetoothPermissionsGranted
@@ -46,21 +39,7 @@ import javax.inject.Inject
 @HiltViewModel
 class DevicesViewModel @Inject constructor(
     @ApplicationContext context: Context,
-    private val userManager: UserManager,
-    private val projectRepository: ProjectRepository
 ) : AndroidViewModel(context as Application) {
-
-    // TODO This needs to be fixed: Possible NPE when switching back to the app.
-    private val projectManager: ProjectManager
-        get() = EntryPoints
-            .get(userManager.userComponent!!, UserComponentEntryPoint::class.java)
-            .getProjectManager()
-
-    // TODO This needs to be fixed: Possible NPE when switching back to the app.
-    private val projectDataRepository: ProjectDataRepository
-        get() = EntryPoints
-            .get(projectManager.projectComponent!!, ProjectComponentEntryPoint::class.java)
-            .projectDataRepository()
 
     val scannerState = ScannerState(ScanningState.Initializing)
 

@@ -1,8 +1,9 @@
 package no.nordicsemi.android.ei.ui
 
 import androidx.annotation.DrawableRes
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.*
@@ -15,6 +16,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -31,7 +33,9 @@ fun DeviceDetails(
     device: Device,
     deviceState: DeviceState?,
     onConnectClick: () -> Unit,
-    onDisconnectClick: () -> Unit
+    onDisconnectClick: () -> Unit,
+    onRenameClick: (Device, String) -> Unit,
+    onDeleteClick: (Device) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier
@@ -39,7 +43,10 @@ fun DeviceDetails(
             .padding(bottom = 56.dp)
     ) {
         item {
-            DeviceName(device = device)
+            DeviceName(
+                device = device,
+                onRenameClick = onRenameClick
+            )
             Connectivity(
                 device = device,
                 deviceState = deviceState,
@@ -50,104 +57,135 @@ fun DeviceDetails(
             Capabilities(device = device)
             DeviceInformation(device = device)
         }
+        item {
+            Row(
+                modifier = Modifier
+                    .background(color = MaterialTheme.colors.surface)
+                    .fillMaxWidth()
+                    .padding(32.dp), horizontalArrangement = Arrangement.Center
+            ) {
+                Button(
+                    onClick = { onDeleteClick(device) },
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red)
+                ) {
+                    Text(text = stringResource(R.string.action_delete))
+                }
+            }
+        }
     }
 
 }
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-private fun DeviceName(device: Device) {
+private fun DeviceName(
+    device: Device,
+    onRenameClick: (Device, String) -> Unit,
+) {
 
     var onEditClick by rememberSaveable {
         mutableStateOf(false)
     }
 
-    var deviceName by rememberSaveable {
+    var deviceName by rememberSaveable(device) {
         mutableStateOf(device.name)
     }
-    AnimatedVisibility(visible = onEditClick) {
-        Row(
-            modifier = Modifier.wrapContentHeight().padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlinedTextField(
-                value = deviceName,
-                onValueChange = { deviceName = it },
-                modifier = Modifier
-                    .weight(1.0f),
-                label = {
-                    Text(text = stringResource(R.string.label_name))
-                },
-                leadingIcon = {
-                    Icon(
-                        modifier = Modifier.size(24.dp),
-                        imageVector = Icons.Outlined.Label,
-                        contentDescription = null
+    Crossfade(targetState = onEditClick) {
+        when (it) {
+            true -> {
+                Row(
+                    modifier = Modifier
+                        .wrapContentHeight()
+                        .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = deviceName,
+                        onValueChange = { deviceName = it },
+                        modifier = Modifier
+                            .weight(1.0f),
+                        label = {
+                            Text(text = stringResource(R.string.label_name))
+                        },
+                        leadingIcon = {
+                            Icon(
+                                modifier = Modifier.size(24.dp),
+                                imageVector = Icons.Outlined.Label,
+                                contentDescription = null
+                            )
+                        },
+                        singleLine = true,
+                        isError = deviceName.isBlank()
                     )
-                },
-                singleLine = true
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            IconButton(onClick = { onEditClick = !onEditClick }) {
-                Icon(
-                    modifier = Modifier
-                        .size(24.dp),
-                    imageVector = Icons.Outlined.Close,
-                    contentDescription = null,
-                    tint = MaterialTheme.colors.primary
-                )
-            }
-            IconButton(onClick = { onEditClick = !onEditClick }) {
-                Icon(
-                    modifier = Modifier
-                        .size(24.dp),
-                    imageVector = Icons.Outlined.Check,
-                    contentDescription = null,
-                    tint = MaterialTheme.colors.primary
-                )
-            }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    IconButton(onClick = { onEditClick = !onEditClick }) {
+                        Icon(
+                            modifier = Modifier
+                                .size(24.dp),
+                            imageVector = Icons.Outlined.Close,
+                            contentDescription = null,
+                            tint = MaterialTheme.colors.primary
+                        )
+                    }
+                    IconButton(
+                        onClick = {
+                            onRenameClick(device, deviceName)
+                            onEditClick = !onEditClick
+                        },
+                        enabled = deviceName.isNotBlank()
+                    ) {
+                        Icon(
+                            modifier = Modifier
+                                .size(24.dp),
+                            imageVector = Icons.Outlined.Check,
+                            contentDescription = null,
+                            tint = MaterialTheme.colors.primary
+                        )
+                    }
 
-        }
-    }
-    if (!onEditClick) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 24.dp, top = 16.dp, end = 16.dp, bottom = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start
-        ) {
-            Icon(
-                modifier = Modifier
-                    .size(24.dp),
-                imageVector = Icons.Outlined.Label,
-                contentDescription = null,
-                tint = MaterialTheme.colors.onSurface
-            )
-            Column(
-                modifier = Modifier
-                    .weight(1.0f)
-                    .padding(start = 16.dp)
-            ) {
-                Text(
-                    text = stringResource(id = R.string.label_name),
-                    style = MaterialTheme.typography.body1
-                )
-                Text(
-                    text = deviceName,
-                    style = MaterialTheme.typography.body2
-                )
+                }
             }
-            IconButton(onClick = { onEditClick = !onEditClick }) {
-                Icon(
+            false -> {
+                Row(
                     modifier = Modifier
-                        .size(24.dp),
-                    imageVector = Icons.Outlined.Edit,
-                    contentDescription = null
-                )
+                        .fillMaxWidth()
+                        .padding(start = 24.dp, top = 16.dp, end = 16.dp, bottom = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start
+                ) {
+                    Icon(
+                        modifier = Modifier
+                            .size(24.dp),
+                        imageVector = Icons.Outlined.Label,
+                        contentDescription = null,
+                        tint = MaterialTheme.colors.onSurface
+                    )
+                    Column(
+                        modifier = Modifier
+                            .weight(1.0f)
+                            .padding(start = 16.dp)
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.label_name),
+                            style = MaterialTheme.typography.body1
+                        )
+                        Text(
+                            text = deviceName,
+                            style = MaterialTheme.typography.body2
+                        )
+                    }
+                    IconButton(onClick = { onEditClick = !onEditClick }) {
+                        Icon(
+                            modifier = Modifier
+                                .size(24.dp),
+                            imageVector = Icons.Outlined.Edit,
+                            contentDescription = null
+                        )
+                    }
+                }
+                Divider()
             }
         }
-        Divider()
     }
 }
 

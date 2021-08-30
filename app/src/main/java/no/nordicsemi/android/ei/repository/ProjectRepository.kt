@@ -7,6 +7,7 @@ import no.nordicsemi.android.ei.model.Category
 import no.nordicsemi.android.ei.model.DevelopmentKeys
 import no.nordicsemi.android.ei.service.EiService
 import no.nordicsemi.android.ei.service.param.BuildOnDeviceModelRequest
+import no.nordicsemi.android.ei.service.param.RenameDeviceRequest
 import no.nordicsemi.android.ei.service.param.StartSamplingRequest
 import no.nordicsemi.android.ei.util.Engine
 import no.nordicsemi.android.ei.util.ModelType
@@ -86,6 +87,34 @@ class ProjectRepository @Inject constructor(
             apiKey = keys.apiKey,
             projectId = projectId/*,
             modelType = modelType.modelType,*/
+        )
+    }
+
+    suspend fun renameDevice(
+        apiKey: String,
+        projectId: Int,
+        deviceId: String,
+        name: String
+    ) = withContext(ioDispatcher) {
+        service.renameDevice(
+            apiKey = apiKey,
+            projectId = projectId,
+            /*Encode thr url manually as retrofit does not correctly encode https://github.com/square/retrofit/issues/3080*/
+            deviceId = deviceId.replace(":", "%3A"),
+            renameDeviceRequest = RenameDeviceRequest(name = name)
+        )
+    }
+
+    suspend fun deleteDevice(
+        apiKey: String,
+        projectId: Int,
+        deviceId: String
+    ) = withContext(ioDispatcher) {
+        service.deleteDevice(
+            apiKey = apiKey,
+            projectId = projectId,
+            /*Encode thr url manually as retrofit does not correctly encode https://github.com/square/retrofit/issues/3080*/
+            deviceId = deviceId.replace(":", "%3A")
         )
     }
 }

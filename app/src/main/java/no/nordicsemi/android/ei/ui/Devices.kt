@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,7 +48,7 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun DevicesTab(
+fun Devices(
     scope: CoroutineScope,
     viewModel: DevicesViewModel,
     modifier: Modifier = Modifier,
@@ -59,12 +60,15 @@ fun DevicesTab(
     onScannerStarted: () -> Unit,
     screen: BottomNavigationScreen,
     connect: (DiscoveredBluetoothDevice) -> Unit,
-    disconnect: (DiscoveredBluetoothDevice) -> Unit
+    disconnect: (DiscoveredBluetoothDevice) -> Unit,
+    onRenameClick: (Device, String) -> Unit,
+    onDeleteClick: (Device) -> Unit,
 ) {
     val scanningState = scannerState.scanningState
     val backdropScaffoldState = rememberBackdropScaffoldState(initialValue = BackdropValue.Revealed)
+
     if (screen != BottomNavigationScreen.DEVICES) {
-        animateBottomsheet(
+        animateBottomSheet(
             scope = scope,
             scaffoldState = backdropScaffoldState,
             BackdropValue.Revealed
@@ -74,8 +78,28 @@ fun DevicesTab(
         scaffoldState = backdropScaffoldState,
         appBar = {
             TopAppBar(
-                title = {
-                    Text(text = stringResource(R.string.label_device_information))
+                content = {
+                    Text(
+                        modifier = Modifier
+                            .padding(start = 16.dp)
+                            .weight(1.0f),
+                        text = stringResource(R.string.label_device_information),
+                        style = MaterialTheme.typography.h6
+                    )
+                    IconButton(onClick = {
+                        animateBottomSheet(
+                            scope = scope,
+                            scaffoldState = backdropScaffoldState,
+                            BackdropValue.Revealed
+                        )
+                    }) {
+                        Icon(
+                            modifier = Modifier
+                                .padding(end = 16.dp),
+                            imageVector = Icons.Outlined.ExpandMore,
+                            contentDescription = null
+                        )
+                    }
                 },
                 backgroundColor = MaterialTheme.colors.surface,
                 elevation = 0.dp
@@ -120,7 +144,7 @@ fun DevicesTab(
                                 ),
                                 onDeviceClicked = { device ->
                                     viewModel.onDeviceSelected(device)
-                                    animateBottomsheet(
+                                    animateBottomSheet(
                                         scope = scope,
                                         scaffoldState = backdropScaffoldState,
                                         BackdropValue.Concealed
@@ -223,172 +247,37 @@ fun DevicesTab(
                         activeDevices = activeDevices
                     ),
                     onConnectClick = {
-                        animateBottomsheet(
+                        animateBottomSheet(
                             scope = scope,
                             scaffoldState = backdropScaffoldState,
                             targetValue = BackdropValue.Revealed
                         )
                         viewModel.discoveredBluetoothDevice(device)?.let(connect)
-                    }
-                ) {
-                    animateBottomsheet(
-                        scope = scope,
-                        scaffoldState = backdropScaffoldState,
-                        targetValue = BackdropValue.Revealed
-                    )
-                    viewModel.discoveredBluetoothDevice(device)?.let(disconnect)
-                }
+                    },
+                    onDisconnectClick = {
+                        animateBottomSheet(
+                            scope = scope,
+                            scaffoldState = backdropScaffoldState,
+                            targetValue = BackdropValue.Revealed
+                        )
+                        viewModel.discoveredBluetoothDevice(device)?.let(disconnect)
+                    },
+                    onRenameClick = onRenameClick,
+                    onDeleteClick = {
+                        onDeleteClick(it)
+                        animateBottomSheet(
+                            scope = scope,
+                            scaffoldState = backdropScaffoldState,
+                            BackdropValue.Revealed
+                        )
+                    },
+                )
             }
         },
         headerHeight = 0.dp,
         backLayerBackgroundColor = MaterialTheme.colors.surface
     )
 }
-
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-fun Devices(
-    modifier: Modifier = Modifier,
-    configuredDevices: List<Device>,
-    activeDevices: Map<String, DataAcquisitionManager>,
-    refreshingState: Boolean,
-    onRefresh: () -> Unit,
-    scannerState: ScannerState,
-    onScannerStarted: () -> Unit,
-    connect: (DiscoveredBluetoothDevice) -> Unit,
-) {
-    val scanningState = scannerState.scanningState
-
-    SwipeRefresh(
-        state = rememberSwipeRefreshState(refreshingState),
-        onRefresh = onRefresh,
-        modifier = modifier,
-        // TODO After Compose is stable, try removing this and swiping in Scanner tab.
-        // Those 3 properties below copy the default values from SwipeRefresh.
-        // Without them, the Scanner page crashes when devices are displayed and Swipe is used.
-        indicator = { s, trigger ->
-            SwipeRefreshIndicator(s, trigger)
-        },
-        indicatorAlignment = Alignment.TopCenter,
-        indicatorPadding = PaddingValues(0.dp)
-    ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            item {
-                Text(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    text = stringResource(R.string.label_devices),
-                    style = MaterialTheme.typography.h6
-                )
-            }
-
-            configuredDevices.takeIf { it.isNotEmpty() }?.let { configuredDevices ->
-                items(
-                    items = configuredDevices,
-                    key = { it.deviceId }
-                ) { configuredDevice ->
-                    val discoveredBluetoothDevice =
-                        scannerState.discoveredDevices.find { it.deviceId == configuredDevice.deviceId }
-                    SwipeableConfiguredDeviceRow(
-                        device = configuredDevice,
-                        state = discoveredBluetoothDevice?.let {
-                            activeDevices[configuredDevice.deviceId]?.state
-                                ?: DeviceState.IN_RANGE
-                        } ?: DeviceState.NOT_IN_RANGE,
-                        onDeviceClicked = { clickedDevice ->
-                            discoveredBluetoothDevice?.let {
-                                connect(it)
-                            }
-                        },
-                        onDisconnectClicked = { activeDevices[it.deviceId]?.disconnect() }
-                    )
-                    Divider()
-                }
-            } ?: item {
-                NoConfiguredDevicesInfo(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                )
-            }
-
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        modifier = Modifier
-                            .weight(1.0f),
-                        text = stringResource(R.string.label_scanner),
-                        style = MaterialTheme.typography.h6
-                    )
-                    if (scanningState == ScanningState.Started) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .align(Alignment.CenterVertically)
-                        )
-                    }
-                }
-            }
-
-            when (scanningState) {
-                is ScanningState.Initializing -> {
-                }
-                is ScanningState.Started -> {
-                    scannerState.discoveredDevices
-                        // Filter only devices that have not been configured.
-                        .filter { discoveredDevice ->
-                            configuredDevices.find { configuredDevice ->
-                                configuredDevice.deviceId == discoveredDevice.bluetoothDevice.address
-                            } == null
-                        }
-                        // Display only if at least one was found.
-                        .takeIf { it.isNotEmpty() }?.let { discoveredDevices ->
-                            items(
-                                items = discoveredDevices,
-                                key = { it.bluetoothDevice.address }
-                            ) { discoveredDevice ->
-                                DiscoveredDeviceRow(
-                                    device = discoveredDevice,
-                                    state = activeDevices[discoveredDevice.deviceId]?.state
-                                        ?: DeviceState.IN_RANGE,
-                                    onDeviceClicked = { connect(it) },
-                                    onDeviceAuthenticated = { onRefresh() }
-                                )
-                                Divider()
-                            }
-                        }
-                    // Else, show a placeholder.
-                        ?: item {
-                            NoDevicesInRangeInfo(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                            )
-                        }
-                }
-                is ScanningState.Stopped -> {
-                    item {
-                        ScanningStoppedInfo(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            reason = scanningState.reason,
-                            onScanningStarted = onScannerStarted,
-                        )
-                    }
-                }
-            }.exhaustive
-        }
-    }
-}
-
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -406,7 +295,7 @@ fun SwipeableConfiguredDeviceRow(
                     .fillMaxWidth()
                     .background(color = MaterialTheme.colors.surface)
                     .clickable(
-                        enabled = state == DeviceState.IN_RANGE || state == DeviceState.AUTHENTICATED,
+                        /*enabled = state == DeviceState.IN_RANGE || state == DeviceState.AUTHENTICATED,*/
                         onClick = { onDeviceClicked(device) },
                     )
                     .padding(16.dp),
@@ -483,22 +372,14 @@ private fun ConfiguredDeviceRow(
                 .padding(8.dp)
         )
         Spacer(modifier = Modifier.width(16.dp))
-        Column(modifier = Modifier.weight(1.0f)) {
-            Text(
-                text = device.name,
-                color = MaterialTheme.colors.onSurface,
-                style = MaterialTheme.typography.body1,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = device.deviceId,
-                color = MaterialTheme.colors.onSurface,
-                style = MaterialTheme.typography.caption,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
+        Text(
+            modifier = Modifier.weight(1.0f),
+            text = device.name,
+            color = MaterialTheme.colors.onSurface,
+            style = MaterialTheme.typography.body1,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
         Spacer(modifier = Modifier.width(16.dp))
         if (state == DeviceState.CONNECTING) {
             CircularProgressIndicator(
@@ -631,7 +512,7 @@ fun ScanningStoppedInfo(
 }
 
 @OptIn(ExperimentalMaterialApi::class)
-private fun animateBottomsheet(
+private fun animateBottomSheet(
     scope: CoroutineScope,
     scaffoldState: BackdropScaffoldState,
     targetValue: BackdropValue
