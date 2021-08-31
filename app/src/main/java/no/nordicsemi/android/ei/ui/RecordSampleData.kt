@@ -140,7 +140,9 @@ fun RecordSampleContent(
         }
         Spacer(modifier = Modifier.height(height = 16.dp))
     } ?: run {
-        onDeviceSelected(connectedDevices[0])
+        if(selectedDevice == null){
+            onDeviceSelected(connectedDevices[0])
+        }
     }
     OutlinedTextField(
         value = category.type.replaceFirstChar {
