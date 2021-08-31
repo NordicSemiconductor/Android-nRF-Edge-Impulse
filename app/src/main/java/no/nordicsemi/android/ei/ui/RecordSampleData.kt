@@ -8,10 +8,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Label
-import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -26,6 +28,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Category
@@ -116,6 +119,9 @@ fun RecordSampleContent(
     var isSensorsMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var isFrequencyMenuExpanded by rememberSaveable { mutableStateOf(false) }
     val categories = listOf(Category.TRAINING, Category.TESTING)
+    val maxSampleLengthMs = selectedSensor?.let { it.maxSampleLengths.toFloat() * 1000 }
+        ?: MAX_SAMPLE_LENGTH_MS
+    var sliderPosition by rememberSaveable { mutableStateOf(1f * 1000)}
     var width by rememberSaveable { mutableStateOf(0) }
     //TODO clear data when if the device gets disconnected?
     connectedDevices.takeIf { it.isEmpty() }?.apply {
@@ -134,9 +140,7 @@ fun RecordSampleContent(
         }
         Spacer(modifier = Modifier.height(height = 16.dp))
     } ?: run {
-        if (selectedDevice == null) {
-            onDeviceSelected(connectedDevices[0])
-        }
+        onDeviceSelected(connectedDevices[0])
     }
     OutlinedTextField(
         value = category.type.replaceFirstChar {
@@ -337,57 +341,30 @@ fun RecordSampleContent(
         },
         singleLine = true
     )
-    OutlinedTextField(
-        value = stringResource(id = R.string.label_ms, sampleLength),
-        onValueChange = {},
+    Spacer(modifier = Modifier.height(16.dp))
+    Row {
+        Text(
+            modifier = Modifier.weight(1f),
+            text = stringResource(R.string.label_sample_length),
+            textAlign = TextAlign.Start
+        )
+        Text(
+            modifier = Modifier.weight(1f),
+            text = stringResource(id = R.string.label_ms, sliderPosition.toInt()),
+            textAlign = TextAlign.End
+        )
+    }
+    Slider(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp),
+            .fillMaxWidth(),
+        value = sliderPosition,
+        onValueChange = { sliderPosition = it },
+        onValueChangeFinished = {onSampleLengthChanged(sliderPosition.toInt())},
         enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
-        readOnly = true,
-        label = {
-            Text(text = stringResource(R.string.label_sample_length))
-        },
-        leadingIcon = {
-            Icon(
-                modifier = Modifier.size(24.dp),
-                imageVector = Icons.Outlined.Timer,
-                contentDescription = null
-            )
-        },
-        trailingIcon = {
-            Row {
-                IconButton(
-                    onClick = {
-                        selectedSensor?.let { sensor ->
-                            if (sampleLength + SAMPLE_LENGTH_DELTA <= sensor.maxSampleLengths)
-                                onSampleLengthChanged(sampleLength + SAMPLE_LENGTH_DELTA)
-                        }
-                    },
-                    enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null
-                    )
-                }
-                IconButton(
-                    onClick = {
-                        if (sampleLength - SAMPLE_LENGTH_DELTA > MIN_SAMPLE_LENGTH)
-                            onSampleLengthChanged(sampleLength - SAMPLE_LENGTH_DELTA)
-                    },
-                    enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown)
-                ) {
-                    Icon(
-                        modifier = Modifier.size(24.dp),
-                        imageVector = Icons.Default.Remove,
-                        contentDescription = null
-                    )
-                }
-            }
-        },
-        singleLine = true
+        steps = 10000,
+        valueRange = MIN_SAMPLE_LENGTH..maxSampleLengthMs
     )
+
     OutlinedTextField(
         value = selectedFrequency?.toString() ?: stringResource(id = R.string.empty),
         onValueChange = { },
@@ -543,5 +520,6 @@ fun ShowDropdown(
     }
 }
 
-private const val MIN_SAMPLE_LENGTH = 0
+private const val MIN_SAMPLE_LENGTH = 1f * 1000
 private const val SAMPLE_LENGTH_DELTA = 10
+private const val MAX_SAMPLE_LENGTH_MS = 10f * 1000

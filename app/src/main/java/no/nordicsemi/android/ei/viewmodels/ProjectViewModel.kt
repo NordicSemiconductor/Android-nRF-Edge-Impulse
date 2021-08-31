@@ -208,12 +208,13 @@ class ProjectViewModel @Inject constructor(
             ?: run { selectedFrequency = null }
     }
 
-    fun onSampleLengthChanged(sampleLength: Int) {
-        this.sampleLength = sampleLength
-    }
-
     fun onFrequencySelected(frequency: Number) {
         this.selectedFrequency = frequency
+        onSampleLengthChanged(2000)
+    }
+
+    fun onSampleLengthChanged(sampleLength: Int) {
+        this.sampleLength = sampleLength
     }
 
     //TODO need to finalize the api
