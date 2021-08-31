@@ -22,4 +22,6 @@
     <string name="action_rename">Rename</string>
     <string name="label_name">Name</string>
     <string name="action_delete">Delete</string>
+    <string name="label_supported">Supported</string>
+    <string name="label_unsupported">Unsupported</string>
 </resources>

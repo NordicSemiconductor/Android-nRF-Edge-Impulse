@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
+import no.nordicsemi.android.ei.viewmodels.state.DeviceState.*
 import java.util.*
 
 @Composable
@@ -235,7 +236,7 @@ private fun Connectivity(
 ) {
     SectionTitle(text = stringResource(R.string.label_connectivity), content = {
         when (deviceState) {
-            DeviceState.IN_RANGE -> {
+            IN_RANGE -> {
                 TextButton(
                     onClick = {
                         onConnectClick()
@@ -247,9 +248,9 @@ private fun Connectivity(
                     )
                 }
             }
-            DeviceState.CONNECTING,
-            DeviceState.AUTHENTICATING,
-            DeviceState.AUTHENTICATED -> {
+            CONNECTING,
+            AUTHENTICATING,
+            AUTHENTICATED -> {
                 TextButton(
                     onClick = {
                         onDisconnectClick()
@@ -268,7 +269,13 @@ private fun Connectivity(
     RowItem(
         imageVector = Icons.Outlined.Cloud,
         text = stringResource(R.string.label_connected_to_remote_management),
-        subText = device.remoteMgmtConnected.toString()
+        subText = when (deviceState) {
+            NOT_IN_RANGE, IN_RANGE -> device.remoteMgmtConnected.toString()
+            CONNECTING -> stringResource(R.string.label_connecting)
+            AUTHENTICATING -> stringResource(R.string.label_authenticating)
+            AUTHENTICATED -> stringResource(R.string.label_connected)
+            else -> stringResource(id = R.string.unknown)
+        }
     )
 }
 
@@ -277,8 +284,11 @@ private fun Capabilities(device: Device) {
     SectionTitle(text = stringResource(R.string.label_capabilities))
     RowItem(
         imageVector = Icons.Outlined.SettingsEthernet,
-        text = stringResource(R.string.label_supports_snapshot_streaming),
-        subText = device.remoteMgmtConnected.toString()
+        text = stringResource(R.string.label_snapshot_streaming),
+        subText = when(device.supportsSnapshotStreaming){
+            true -> stringResource(R.string.label_supported)
+            false -> stringResource(R.string.label_unsupported)
+        }
     )
 }
 
