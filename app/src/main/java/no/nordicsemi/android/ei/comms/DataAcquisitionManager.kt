@@ -329,18 +329,17 @@ class DataAcquisitionManager(
                 }
 
                 override fun onResponse(call: Call, response: okhttp3.Response) {
-
                     samplingState = Finished(
                         sampleFinished = true,
-                        error = (response.takeIf {
+                        error = response.takeIf {
                             !it.isSuccessful
-                        }?.apply {
+                        }?.let {
                             "Error while uploading sample. ${
-                                body?.let { body ->
+                                it.body?.let { body ->
                                     String(body.bytes())
                                 }
                             }"
-                        } ?: run { "Data sample successfully uploaded." }).toString()
+                        } ?: run { "Data sample successfully uploaded." }
                     )
                 }
             })
