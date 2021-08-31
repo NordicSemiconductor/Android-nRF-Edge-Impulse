@@ -116,7 +116,7 @@ dependencies {
     // https://square.github.io/okhttp/changelog/
     implementation 'com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.2'
     // https://github.com/google/gson/releases
-    implementation 'com.google.code.gson:gson:2.8.7'
+    implementation 'com.google.code.gson:gson:2.8.8'
 
     // So google decided to remove coil from accompanist version 0.16.0 onwards
     implementation 'com.google.accompanist:accompanist-coil:0.15.0'
