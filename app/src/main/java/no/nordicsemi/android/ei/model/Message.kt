@@ -40,7 +40,7 @@ sealed class Message {
             val length: Int,
             val path: String = "/api/training/data",
             val hmacKey: String,
-            val interval: Int,
+            val interval: Number,
             val sensor: String
         ) : Sample()
 
