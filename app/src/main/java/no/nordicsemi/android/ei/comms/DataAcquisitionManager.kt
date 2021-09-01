@@ -64,6 +64,9 @@ class DataAcquisitionManager(
     }
 
     var samplingState by mutableStateOf<Sample>(Unknown)
+        private set
+
+    var isSamplingRequestedFromDevice by mutableStateOf(false)
 
     /** The device ID. Initially set to device MAC address. */
     private val deviceId: String = device.deviceId
@@ -234,11 +237,17 @@ class DataAcquisitionManager(
                             }
                             is Response -> {
                                 samplingState = deviceMessage.message
+                                send(json = json)
                             }
                             is ProgressEvent -> {
                                 samplingState = deviceMessage.message
+                                send(json = json)
+                            }
+                            is Finished -> {
+                                isSamplingRequestedFromDevice = false
                             }
                             else -> {
+                                send(json = json)
                             }
                         }.exhaustive
                     }
@@ -257,11 +266,11 @@ class DataAcquisitionManager(
             }
     }
 
-    //TODO sending messages from the phone to the device
-    fun send(deviceMessage: DeviceMessage) {
-        scope.launch {
-            val deviceMessageJson = JsonParser.parseString(gson.toJson(deviceMessage)).asJsonObject
-            dataAcquisitionWebSocket.send(deviceMessageJson.get(MESSAGE))
+    fun send(json: String) {
+        isSamplingRequestedFromDevice.takeIf { !it }?.let {
+            scope.launch {
+                dataAcquisitionWebSocket.send(JsonParser.parseString(json).asJsonObject.get(MESSAGE))
+            }
         }
     }
 
@@ -345,4 +354,6 @@ class DataAcquisitionManager(
     }
 }
 
+
+private val regex = Regex("^[0-9]+")
 private const val MESSAGE = "message"

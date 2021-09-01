@@ -249,13 +249,11 @@ class ProjectViewModel @Inject constructor(
             viewModelScope
                 .launch {
                     eventChannel.send(Event.Error(throwable))
-                        .also { isStartSamplingRequested = false }
                 }
         }) {
             selectedDevice?.let { device ->
                 selectedSensor?.let { sensor ->
                     selectedFrequency?.let { frequency ->
-                        isStartSamplingRequested = true
                         resetSamplingState(device = device)
                         projectRepository.startSampling(
                             keys = keys,
@@ -270,8 +268,8 @@ class ProjectViewModel @Inject constructor(
                             guard(response.success) {
                                 throw Throwable(response.error)
                             }
-                        }.also {
-                            isStartSamplingRequested = false
+                            dataAcquisitionManagers[device.deviceId]?.isSamplingRequestedFromDevice =
+                                true
                         }
                     }
                 }
