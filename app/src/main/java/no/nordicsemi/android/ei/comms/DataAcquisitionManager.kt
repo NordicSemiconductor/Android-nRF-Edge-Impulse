@@ -175,7 +175,6 @@ class DataAcquisitionManager(
 
     private suspend fun registerToDeviceStateChanges() {
         bleDevice.stateAsFlow().collect { bleState ->
-            Log.d("AAAA", "New state: $bleState")
             when (bleState) {
                 // Device started to connect.
                 ConnectionState.Connecting -> state = DeviceState.CONNECTING
