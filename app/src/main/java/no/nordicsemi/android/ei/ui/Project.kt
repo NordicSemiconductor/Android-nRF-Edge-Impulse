@@ -68,11 +68,9 @@ fun Project(
             BottomNavigationScreen.DEVICES
         )
     }
-    val connectedDevices by remember {
-        derivedStateOf {
-            viewModel.configuredDevices.filterList {
-                viewModel.dataAcquisitionManagers[deviceId]?.state == DeviceState.AUTHENTICATED
-            }
+    val connectedDevices by derivedStateOf {
+        viewModel.configuredDevices.filterList {
+            viewModel.dataAcquisitionManagers[deviceId]?.state == DeviceState.AUTHENTICATED
         }
     }
 
@@ -212,6 +210,9 @@ private fun SmallScreen(
             }
         )
     var category by rememberSaveable { mutableStateOf(Category.TRAINING) }
+    val isBackHandlerEnabled by derivedStateOf {
+        modalBottomSheetState.isVisible
+    }
 
     ModalBottomSheetLayout(
         sheetState = modalBottomSheetState,
@@ -274,7 +275,7 @@ private fun SmallScreen(
             scope = scope,
             connectedDevices = connectedDevices,
             samplingState = samplingState,
-            isBackHandlerEnabled = modalBottomSheetState.isVisible,
+            isBackHandlerEnabled = isBackHandlerEnabled,
             selectedScreen = selectedScreen,
             onScreenChanged = onScreenChanged,
             isFabVisible = selectedScreen.shouldFabBeVisible,
@@ -353,10 +354,9 @@ private fun ProjectContent(
                 selectedScreen = selectedScreen,
                 pagerState = pagerState,
                 onBackPressed = {
-                    if (connectedDevices.isNotEmpty()) {
-                        isWarningDialogVisible = true
-                    } else {
-                        onBackPressed()
+                    when (connectedDevices.isNotEmpty()) {
+                        true -> isWarningDialogVisible = true
+                        false -> onBackPressed()
                     }
                 },
             )
@@ -386,6 +386,15 @@ private fun ProjectContent(
         ) {
             composable(route = BottomNavigationScreen.DEVICES.route) {
                 val devicesViewModel = hiltViewModel<DevicesViewModel>()
+                BackHandler(
+                    enabled = selectedScreen == BottomNavigationScreen.DEVICES,
+                    onBack = {
+                        when (connectedDevices.isNotEmpty()) {
+                            true -> isWarningDialogVisible = true
+                            false -> onBackPressed()
+                        }
+                    }
+                )
                 Devices(
                     scope = scope,
                     viewModel = devicesViewModel,
@@ -401,7 +410,12 @@ private fun ProjectContent(
                     screen = selectedScreen,
                     connect = { viewModel.connect(device = it) },
                     disconnect = { viewModel.disconnect(device = it) },
-                    onRenameClick = { device, name -> viewModel.rename(device = device, name = name) },
+                    onRenameClick = { device, name ->
+                        viewModel.rename(
+                            device = device,
+                            name = name
+                        )
+                    },
                     onDeleteClick = { viewModel.delete(it) }
                 )
             }

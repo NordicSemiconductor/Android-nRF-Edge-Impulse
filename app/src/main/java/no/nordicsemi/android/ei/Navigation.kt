@@ -1,6 +1,7 @@
 package no.nordicsemi.android.ei
 
 import android.app.Activity
+import android.util.Log
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
@@ -63,6 +64,7 @@ fun Navigation(
             Project(
                 viewModel = viewModel,
                 onBackPressed = {
+                    Log.d("AAAA", "Popping backstack ${it.destination.route}")
                     navController.popBackStack()
                 }
             )
