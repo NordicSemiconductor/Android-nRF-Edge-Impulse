@@ -206,7 +206,7 @@ class DeviceMessageTest {
                 gson.toJson(
                     WebSocketMessage(
                         direction = RECEIVE,
-                        message = Message.SampleRequest(
+                        message = Message.Sample.Request(
                             label = "wave",
                             length = 10000,
                             path = "/api/training/data",
