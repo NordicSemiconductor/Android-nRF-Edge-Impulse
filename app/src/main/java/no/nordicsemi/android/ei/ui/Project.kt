@@ -477,7 +477,7 @@ private fun ProjectContent(
                 Text(
                     modifier = Modifier.padding(end = 8.dp),
                     text = stringResource(R.string.label_warning_projects),
-                    style = MaterialTheme.typography.body1
+                    style = MaterialTheme.typography.subtitle1
                 )
 
                 Row(
@@ -611,7 +611,7 @@ private fun ProjectBottomNavigation(
                         painter = painterResource(id = screen.drawableRes),
                         contentDescription = null,
                         modifier = Modifier
-                            .requiredSize(32.dp)
+                            .size(32.dp)
                             .padding(8.dp)
                     )
                 },

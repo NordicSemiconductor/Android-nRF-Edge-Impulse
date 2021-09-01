@@ -10,7 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,7 +89,7 @@ fun Devices(
                         Icon(
                             modifier = Modifier
                                 .padding(end = 16.dp),
-                            imageVector = Icons.Outlined.ExpandMore,
+                            imageVector = Icons.Rounded.ExpandMore,
                             contentDescription = null
                         )
                     }

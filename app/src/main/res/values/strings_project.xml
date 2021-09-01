@@ -3,5 +3,5 @@
     <string name="label_devices">Devices</string>
     <string name="label_data_acquisition">Data Acquisition</string>
     <string name="label_deployment">Deployment</string>
-    <string name="label_warning_projects">Leaving the project screen will disconnect all connected devices. Would you like to continue?</string>
+    <string name="label_warning_projects">Leaving the project screen will disconnect all connected devices. \n\nWould you like to continue?</string>
 </resources>

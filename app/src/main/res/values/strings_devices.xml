@@ -24,8 +24,8 @@
     <string name="bluetooth_disabled_info">The Bluetooth adapter is turned off. Click the button below to enable it.</string>
 
     <string name="thingy_guide_title">Can\'t see your Thingy:53?</string>
-    <string name="thingy_guide_info">1. Make sure the device is <b>powered on</b> or connected to a power source.
-        \n\n2. Make sure the correct <b>firmware</b> is flashed.</string>
+    <string name="thingy_guide_info">1. Make sure the device is <b>powered on</b> and charged.
+        \n\n2. Make sure the correct <b>firmware</b> is flashed on the device.</string>
 
     <string name="location_turned_off_title">Location turned off</string>
     <string name="location_turned_off_info">Some Android phones require Location to be enabled in order to scan for Bluetooth LE devices.
