@@ -44,7 +44,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.lifecycleScope
-import com.google.accompanist.coil.rememberCoilPainter
+import coil.annotation.ExperimentalCoilApi
+import coil.compose.rememberImagePainter
+import coil.transform.CircleCropTransformation
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.flow.collect
@@ -259,6 +261,7 @@ fun ProjectRow(
     }
 }
 
+@OptIn(ExperimentalCoilApi::class)
 @Composable
 private fun Collaborator(collaborators: List<Collaborator>) {
     var startPadding = 0.dp
@@ -278,8 +281,8 @@ private fun Collaborator(collaborators: List<Collaborator>) {
                 // lets limit the images to max collaborators
                 if (index in 0 until maxImages) {
                     Image(
-                        painter = rememberCoilPainter(
-                            request = if (collaborator.photo.isNotBlank()) {
+                        painter = rememberImagePainter(
+                            data = if (collaborator.photo.isNotBlank()) {
                                 collaborator.photo
                             } else {
                                 Image(
@@ -289,8 +292,11 @@ private fun Collaborator(collaborators: List<Collaborator>) {
                                     contentScale = ContentScale.FillBounds
                                 )
                             },
-                            shouldRefetchOnSizeChange = { _, _ -> false },
-                        ),
+                            builder = {
+                                crossfade(true)
+                                placeholder(R.drawable.ic_outline_account_circle_24)
+                                transformations(CircleCropTransformation())
+                            }),
                         contentDescription = null,
                         modifier = Modifier.requiredSize(imageSize),
                     )
@@ -410,7 +416,10 @@ private fun ShowAboutDialog(onDismiss: () -> Unit) {
             Column {
                 Row(modifier = Modifier.padding(end = 16.dp, bottom = 16.dp)) {
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(modifier = Modifier.weight(1.0f), text = stringResource(R.string.label_version))
+                    Text(
+                        modifier = Modifier.weight(1.0f),
+                        text = stringResource(R.string.label_version)
+                    )
                     Text(
                         modifier = Modifier.weight(1.0f),
                         text = context.packageManager.getPackageInfo(

@@ -20,13 +20,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.coil.rememberCoilPainter
+import coil.annotation.ExperimentalCoilApi
+import coil.compose.rememberImagePainter
+import coil.transform.CircleCropTransformation
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.ui.ShowDropdown
 
 private val AppBarHeight = 56.dp
 
+@OptIn(ExperimentalCoilApi::class)
 @Composable
 fun UserAppBar(
     title: @Composable () -> Unit,
@@ -122,13 +125,17 @@ fun UserAppBar(
                     shape = CircleShape,
                 ) {
                     Image(
-                        painter = rememberCoilPainter(
-                            request = user.photo ?: Image(
+                        painter = rememberImagePainter(
+                            data = user.photo ?: Image(
                                 Icons.Filled.AccountCircle,
                                 contentDescription = null,
                                 alpha = 0.1f
                             ),
-                            shouldRefetchOnSizeChange = { _, _ -> false },
+                            builder = {
+                                crossfade(true)
+                                placeholder(R.drawable.ic_outline_account_circle_24)
+                                transformations(CircleCropTransformation())
+                            }
                         ),
                         contentDescription = stringResource(R.string.content_description_user_image),
                         alignment = Alignment.Center,
