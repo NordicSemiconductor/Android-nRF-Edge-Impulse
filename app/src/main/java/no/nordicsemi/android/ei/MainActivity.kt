@@ -48,7 +48,7 @@ fun showSnackbar(
 }
 
 @Composable
-fun  ShowDialog(
+fun ShowDialog(
     @DrawableRes drawableRes: Int,
     title: String,
     onDismissed: () -> Unit,
