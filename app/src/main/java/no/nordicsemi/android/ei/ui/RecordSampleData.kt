@@ -1,6 +1,8 @@
 package no.nordicsemi.android.ei.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -8,12 +10,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Sensors
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Label
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -28,7 +28,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Category
@@ -119,10 +118,8 @@ fun RecordSampleContent(
     var isSensorsMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var isFrequencyMenuExpanded by rememberSaveable { mutableStateOf(false) }
     val categories = listOf(Category.TRAINING, Category.TESTING)
-    val maxSampleLengthMs = selectedSensor?.let { it.maxSampleLengths.toFloat() * 1000 }
-        ?: MAX_SAMPLE_LENGTH_MS
-    var sliderPosition by rememberSaveable { mutableStateOf(1f * 1000)}
     var width by rememberSaveable { mutableStateOf(0) }
+
     //TODO clear data when if the device gets disconnected?
     connectedDevices.takeIf { it.isEmpty() }?.apply {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -140,7 +137,7 @@ fun RecordSampleContent(
         }
         Spacer(modifier = Modifier.height(height = 16.dp))
     } ?: run {
-        if(selectedDevice == null){
+        if (selectedDevice == null) {
             onDeviceSelected(connectedDevices[0])
         }
     }
@@ -280,6 +277,7 @@ fun RecordSampleContent(
                 contentDescription = null
             )
         },
+        isError = label.isEmpty(),
         singleLine = true
     )
     OutlinedTextField(
@@ -343,28 +341,83 @@ fun RecordSampleContent(
         },
         singleLine = true
     )
-    Spacer(modifier = Modifier.height(16.dp))
-    Row {
-        Text(
-            modifier = Modifier.weight(1f),
-            text = stringResource(R.string.label_sample_length),
-            textAlign = TextAlign.Start
-        )
-        Text(
-            modifier = Modifier.weight(1f),
-            text = stringResource(id = R.string.label_ms, sliderPosition.toInt()),
-            textAlign = TextAlign.End
-        )
-    }
-    Slider(
+    OutlinedTextField(
+        value = sampleLength.toString(),
+        onValueChange = {},
         modifier = Modifier
-            .fillMaxWidth(),
-        value = sliderPosition,
-        onValueChange = { sliderPosition = it },
-        onValueChangeFinished = {onSampleLengthChanged(sliderPosition.toInt())},
-        enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
-        steps = 10000,
-        valueRange = MIN_SAMPLE_LENGTH..maxSampleLengthMs
+            .fillMaxWidth()
+            .padding(top = 16.dp),
+        colors = TextFieldDefaults.outlinedTextFieldColors(
+            disabledTextColor = LocalContentColor.current.copy(LocalContentAlpha.current),
+            disabledBorderColor =  MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.disabled),
+            disabledLabelColor = MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
+        ),
+        enabled = false,
+        readOnly = true,
+        label = {
+            Text(text = stringResource(R.string.label_sample_length))
+        },
+        leadingIcon = {
+            Icon(
+                modifier = Modifier.size(24.dp),
+                imageVector = Icons.Outlined.Timer,
+                contentDescription = null
+            )
+        },
+        trailingIcon = {
+            Row {
+                val incrementalInteractionSource = remember { MutableInteractionSource() }
+                val isPlusPressed by incrementalInteractionSource.collectIsPressedAsState()
+                val decrementalInteractionSource = remember { MutableInteractionSource() }
+                val isMinusPressed by decrementalInteractionSource.collectIsPressedAsState()
+                IconButton(
+                    onClick = {
+                        selectedSensor?.let { sensor ->
+                            if (sampleLength < sensor.maxSampleLengths * 1000)
+                                onSampleLengthChanged(sampleLength + 1)
+                        }
+                    },
+                    enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
+                    interactionSource = incrementalInteractionSource
+                ) {
+                    if (isPlusPressed) {
+                        selectedSensor?.let { sensor ->
+                            if (sampleLength + SAMPLE_LENGTH_DELTA <= sensor.maxSampleLengths * 1000) {
+                                onSampleLengthChanged(sampleLength + SAMPLE_LENGTH_DELTA)
+                            } else if (sampleLength < sensor.maxSampleLengths * 1000) {
+                                onSampleLengthChanged(sampleLength + MIN_SAMPLE_LENGTH_S)
+                            }
+                        }
+                    }
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null
+                    )
+                }
+                IconButton(
+                    onClick = {
+                        if (sampleLength > MIN_SAMPLE_LENGTH_S)
+                            onSampleLengthChanged(sampleLength - MIN_SAMPLE_LENGTH_S)
+                    },
+                    enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
+                    interactionSource = decrementalInteractionSource
+                ) {
+                    if (isMinusPressed) {
+                        if (sampleLength - SAMPLE_LENGTH_DELTA >= MIN_SAMPLE_LENGTH_S) {
+                            onSampleLengthChanged(sampleLength - SAMPLE_LENGTH_DELTA)
+                        } else if (sampleLength > MIN_SAMPLE_LENGTH_S) {
+                            onSampleLengthChanged(sampleLength - MIN_SAMPLE_LENGTH_S)
+                        }
+                    }
+                    Icon(
+                        modifier = Modifier.size(24.dp),
+                        imageVector = Icons.Default.Remove,
+                        contentDescription = null
+                    )
+                }
+            }
+        },
+        singleLine = true
     )
 
     OutlinedTextField(
@@ -522,6 +575,6 @@ fun ShowDropdown(
     }
 }
 
-private const val MIN_SAMPLE_LENGTH = 1f * 1000
-private const val SAMPLE_LENGTH_DELTA = 10
-private const val MAX_SAMPLE_LENGTH_MS = 10f * 1000
+private const val MIN_SAMPLE_LENGTH_S = 1
+private const val SAMPLE_LENGTH_DELTA = 100
+private const val MAX_SAMPLE_LENGTH_S = 10f

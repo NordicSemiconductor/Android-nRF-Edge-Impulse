@@ -78,10 +78,6 @@ class ProjectViewModel @Inject constructor(
     var isDeviceRenameRequested: Boolean by mutableStateOf(false)
         private set
 
-    /** Whether the list of configured devices is refreshing. */
-    var isStartSamplingRequested: Boolean by mutableStateOf(false)
-        private set
-
     // TODO This needs to be fixed: NPE when switching back to the app.
     private val userComponentEntryPoint: UserComponentEntryPoint
         get() = EntryPoints.get(userManager.userComponent!!, UserComponentEntryPoint::class.java)
@@ -102,11 +98,11 @@ class ProjectViewModel @Inject constructor(
     val focusRequester = FocusRequester()
     var selectedDevice: Device? by mutableStateOf(null)
         private set
-    var label: String by mutableStateOf("")
+    var label: String by mutableStateOf("Sample")
         private set
     var selectedSensor: Sensor? by mutableStateOf(null)
         private set
-    var sampleLength by mutableStateOf(2000)
+    var sampleLength by mutableStateOf(20000)
         //TODO fix hardcoded sample length
         private set
     var selectedFrequency: Number? by mutableStateOf(null)
@@ -210,7 +206,7 @@ class ProjectViewModel @Inject constructor(
 
     fun onFrequencySelected(frequency: Number) {
         this.selectedFrequency = frequency
-        onSampleLengthChanged(2000)
+        onSampleLengthChanged(20000)
     }
 
     fun onSampleLengthChanged(sampleLength: Int) {
@@ -260,7 +256,7 @@ class ProjectViewModel @Inject constructor(
                             projectId = project.id,
                             deviceId = device.deviceId,
                             label = label,
-                            lengthMs = sampleLength,
+                            lengthMs = sampleLength /** 1000*/,
                             category = category,
                             intervalMs = 1.div(frequency.toFloat()).times(1000),
                             sensor = sensor.name
