@@ -303,7 +303,7 @@ private fun SensorInformation(device: Device) {
             subText = stringResource(id = R.string.label_sample_duration, sensor.maxSampleLengths)
         )
         RowItem(
-            imageVector = Icons.Outlined.GraphicEq,
+            drawableRes = R.drawable.ic_waveform,
             text = stringResource(R.string.label_frequencies),
             subText = sensor.frequencies.joinToString(
                 separator = stringResource(R.string.label_frequencies_separator),
