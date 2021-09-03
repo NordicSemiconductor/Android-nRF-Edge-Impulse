@@ -56,7 +56,6 @@ fun RecordSampleLargeScreen(
 
 @Composable
 fun RecordSampleSmallScreen(
-    isLandscape: Boolean,
     content: @Composable () -> Unit,
     onCloseClicked: () -> Unit
 ) {
@@ -84,8 +83,7 @@ fun RecordSampleSmallScreen(
                 .fillMaxHeight()
                 .padding(16.dp)
                 .verticalScroll(
-                    state = rememberScrollState(),
-                    enabled = isLandscape
+                    state = rememberScrollState()
                 )
         ) {
             content()
@@ -373,8 +371,11 @@ fun RecordSampleContent(
                 IconButton(
                     onClick = {
                         selectedSensor?.let { sensor ->
-                            if (sampleLength < sensor.maxSampleLengths * 1000)
-                                onSampleLengthChanged(sampleLength + 1)
+                            if (sampleLength + SAMPLE_LENGTH_DELTA <= sensor.maxSampleLengths * 1000) {
+                                onSampleLengthChanged(sampleLength + SAMPLE_LENGTH_DELTA)
+                            } else if (sampleLength < sensor.maxSampleLengths * 1000) {
+                                onSampleLengthChanged(sampleLength + MIN_SAMPLE_LENGTH_S)
+                            }
                         }
                     },
                     enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
@@ -396,8 +397,11 @@ fun RecordSampleContent(
                 }
                 IconButton(
                     onClick = {
-                        if (sampleLength > MIN_SAMPLE_LENGTH_S)
+                        if (sampleLength - SAMPLE_LENGTH_DELTA >= MIN_SAMPLE_LENGTH_S) {
+                            onSampleLengthChanged(sampleLength - SAMPLE_LENGTH_DELTA)
+                        } else if (sampleLength > MIN_SAMPLE_LENGTH_S) {
                             onSampleLengthChanged(sampleLength - MIN_SAMPLE_LENGTH_S)
+                        }
                     },
                     enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
                     interactionSource = decrementalInteractionSource

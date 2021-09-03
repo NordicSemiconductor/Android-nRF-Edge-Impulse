@@ -218,7 +218,6 @@ private fun SmallScreen(
         sheetState = modalBottomSheetState,
         sheetContent = {
             RecordSampleSmallScreen(
-                isLandscape = isLandscape,
                 content = {
                     RecordSampleContent(
                         samplingState = samplingState,
