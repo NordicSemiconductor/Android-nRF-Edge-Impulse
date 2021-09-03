@@ -84,8 +84,7 @@ fun RecordSampleSmallScreen(
                 .fillMaxHeight()
                 .padding(16.dp)
                 .verticalScroll(
-                    state = rememberScrollState(),
-                    enabled = isLandscape
+                    state = rememberScrollState()
                 )
         ) {
             content()
