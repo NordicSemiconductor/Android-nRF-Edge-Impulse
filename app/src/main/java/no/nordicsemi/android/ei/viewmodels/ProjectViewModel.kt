@@ -182,6 +182,8 @@ class ProjectViewModel @Inject constructor(
                 configuredDevices.apply {
                     clear()
                     addAll(response.devices)
+                    // We need to re-assign the selected device name for record sample data screen
+                    selectedDevice = configuredDevices.find { it.deviceId == selectedDevice?.deviceId }
                 }
             }.also { isRefreshing = false }
         }
@@ -206,7 +208,6 @@ class ProjectViewModel @Inject constructor(
 
     fun onFrequencySelected(frequency: Number) {
         this.selectedFrequency = frequency
-        onSampleLengthChanged(20000)
     }
 
     fun onSampleLengthChanged(sampleLength: Int) {
