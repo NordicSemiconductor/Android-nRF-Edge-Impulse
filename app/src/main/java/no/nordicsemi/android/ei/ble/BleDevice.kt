@@ -21,9 +21,9 @@ class BleDevice(
 ) : BleManager(context) {
 
     companion object {
-        val serviceUuid: UUID = UUID.fromString("6E400001-B5A3-F393-E0A9-E50E24DCCA9E")
-        val rxUuid: UUID = UUID.fromString("6E400002-B5A3-F393-E0A9-E50E24DCCA9E")
-        val txUuid: UUID = UUID.fromString("6E400003-B5A3-F393-E0A9-E50E24DCCA9E")
+        val serviceUuid: UUID = UUID.fromString("E2A00001-EC31-4EC3-A97A-1C34D87E9878")
+        val rxUuid: UUID = UUID.fromString("E2A00002-EC31-4EC3-A97A-1C34D87E9878")
+        val txUuid: UUID = UUID.fromString("E2A00003-EC31-4EC3-A97A-1C34D87E9878")
     }
 
     private var rx: BluetoothGattCharacteristic? = null
