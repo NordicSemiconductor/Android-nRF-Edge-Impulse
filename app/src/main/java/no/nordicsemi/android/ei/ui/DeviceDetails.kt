@@ -1,5 +1,6 @@
 package no.nordicsemi.android.ei.ui
 
+
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -24,10 +25,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.datetime.Instant
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState.*
+import java.text.DateFormat
 import java.util.*
 
 @Composable
@@ -92,6 +95,7 @@ private fun DeviceName(
     var deviceName by rememberSaveable(device) {
         mutableStateOf(device.name)
     }
+
     Crossfade(targetState = onEditClick) {
         when (it) {
             true -> {
@@ -201,6 +205,7 @@ private fun DeviceName(
 @Composable
 private fun DeviceInformation(device: Device) {
     SectionTitle(text = stringResource(R.string.label_details))
+    val dateTimeInstance = DateFormat.getDateTimeInstance()
     Column {
         RowItem(
             imageVector = Icons.Outlined.PermIdentity,
@@ -217,12 +222,20 @@ private fun DeviceInformation(device: Device) {
         RowItem(
             imageVector = Icons.Outlined.History,
             text = stringResource(R.string.label_created_at),
-            subText = device.created
+            subText = dateTimeInstance.format(
+                Date(
+                    Instant.parse(device.created).toEpochMilliseconds()
+                )
+            )
         )
         RowItem(
             imageVector = Icons.Outlined.Visibility,
             text = stringResource(R.string.label_last_seen),
-            subText = device.lastSeen
+            subText = dateTimeInstance.format(
+                Date(
+                    Instant.parse(device.lastSeen).toEpochMilliseconds()
+                )
+            )
         )
     }
 }
@@ -285,7 +298,7 @@ private fun Capabilities(device: Device) {
     RowItem(
         imageVector = Icons.Outlined.SettingsEthernet,
         text = stringResource(R.string.label_snapshot_streaming),
-        subText = when(device.supportsSnapshotStreaming){
+        subText = when (device.supportsSnapshotStreaming) {
             true -> stringResource(R.string.label_supported)
             false -> stringResource(R.string.label_unsupported)
         }
