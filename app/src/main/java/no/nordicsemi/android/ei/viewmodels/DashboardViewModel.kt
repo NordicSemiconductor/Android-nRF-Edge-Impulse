@@ -97,6 +97,7 @@ class DashboardViewModel @Inject constructor(
                         throw Throwable(response.error)
                     }
                     eventChannel.send(Event.Project.Created(projectName))
+                    refreshUser()
                 }
         }
     }
