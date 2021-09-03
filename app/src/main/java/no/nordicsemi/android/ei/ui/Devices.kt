@@ -1,5 +1,6 @@
 package no.nordicsemi.android.ei.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -59,7 +60,16 @@ fun Devices(
 ) {
     val scanningState = scannerState.scanningState
     val backdropScaffoldState = rememberBackdropScaffoldState(initialValue = BackdropValue.Revealed)
-
+    BackHandler(
+        enabled = backdropScaffoldState.isConcealed,
+        onBack = {
+            animateBottomSheet(
+                scope = scope,
+                scaffoldState = backdropScaffoldState,
+                BackdropValue.Revealed
+            )
+        }
+    )
     if (screen != BottomNavigationScreen.DEVICES) {
         animateBottomSheet(
             scope = scope,
