@@ -104,7 +104,7 @@ fun Devices(
                         )
                     }
                 },
-                backgroundColor = MaterialTheme.colors.surface,
+                backgroundColor =  MaterialTheme.colors.background,
                 elevation = 0.dp
             )
         },

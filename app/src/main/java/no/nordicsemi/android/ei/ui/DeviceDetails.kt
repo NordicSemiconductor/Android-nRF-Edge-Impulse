@@ -1,6 +1,5 @@
 package no.nordicsemi.android.ei.ui
 
-
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -21,10 +20,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlinx.datetime.Instant
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Device
@@ -54,10 +51,37 @@ fun DeviceDetails(
             )
             Connectivity(
                 device = device,
-                deviceState = deviceState,
-                onConnectClick = onConnectClick,
-                onDisconnectClick = onDisconnectClick
+                deviceState = deviceState
             )
+            Row(
+                modifier = Modifier
+                    .background(color = MaterialTheme.colors.background)
+                    .fillMaxWidth()
+                    .padding(16.dp), horizontalArrangement = Arrangement.Center
+            ) {
+                Button(
+                    onClick = {
+                        when (deviceState) {
+                            IN_RANGE -> onConnectClick()
+                            CONNECTING,
+                            AUTHENTICATING,
+                            AUTHENTICATED -> onDisconnectClick()
+                            else -> {
+                            }
+                        }
+                    }
+                ) {
+                    Text(
+                        text = when (deviceState) {
+                            IN_RANGE -> stringResource(R.string.action_connect)
+                            CONNECTING,
+                            AUTHENTICATING,
+                            AUTHENTICATED -> stringResource(R.string.action_disconnect)
+                            else -> ""
+                        }
+                    )
+                }
+            }
             SensorInformation(device = device)
             Capabilities(device = device)
             DeviceInformation(device = device)
@@ -65,15 +89,18 @@ fun DeviceDetails(
         item {
             Row(
                 modifier = Modifier
-                    .background(color = MaterialTheme.colors.surface)
+                    .background(color = MaterialTheme.colors.background)
                     .fillMaxWidth()
-                    .padding(32.dp), horizontalArrangement = Arrangement.Center
+                    .padding(top = 16.dp, bottom = 32.dp), horizontalArrangement = Arrangement.Center
             ) {
                 Button(
                     onClick = { onDeleteClick(device) },
                     colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red)
                 ) {
-                    Text(text = stringResource(R.string.action_delete))
+                    Text(
+                        text = stringResource(R.string.action_delete),
+                        color = Color.White
+                    )
                 }
             }
         }
@@ -244,41 +271,8 @@ private fun DeviceInformation(device: Device) {
 private fun Connectivity(
     device: Device,
     deviceState: DeviceState?,
-    onConnectClick: () -> Unit,
-    onDisconnectClick: () -> Unit,
 ) {
-    SectionTitle(text = stringResource(R.string.label_connectivity), content = {
-        when (deviceState) {
-            IN_RANGE -> {
-                TextButton(
-                    onClick = {
-                        onConnectClick()
-                    }
-                ) {
-                    Text(
-                        text = stringResource(R.string.action_connect),
-                        style = TextStyle(fontSize = 18.sp)
-                    )
-                }
-            }
-            CONNECTING,
-            AUTHENTICATING,
-            AUTHENTICATED -> {
-                TextButton(
-                    onClick = {
-                        onDisconnectClick()
-                    }
-                ) {
-                    Text(
-                        text = stringResource(R.string.action_disconnect),
-                        style = TextStyle(fontSize = 18.sp)
-                    )
-                }
-            }
-            else -> {
-            }
-        }
-    })
+    SectionTitle(text = stringResource(R.string.label_connectivity))
     RowItem(
         imageVector = Icons.Outlined.Cloud,
         text = stringResource(R.string.label_connected_to_remote_management),
