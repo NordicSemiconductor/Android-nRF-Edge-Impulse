@@ -60,7 +60,7 @@ class DeploymentManager(
     /**
      * Disconnect from the deployment websocket
      */
-    private fun disconnect() {
+    fun disconnect() {
         deploymentWebSocket.disconnect()
     }
 

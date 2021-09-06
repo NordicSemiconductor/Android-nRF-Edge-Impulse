@@ -3,7 +3,6 @@ package no.nordicsemi.android.ei.ui
 import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -76,7 +75,6 @@ fun Deployment(
     LaunchedEffect(deploymentManager.jobId) {
         deploymentManager.buildStateAsFlow().collect { state ->
             buildState = state
-            Log.d("AAAA", "Collecting build state: $state")
             when (state) {
                 is BuildState.Error -> {
                     // TODO confirm error message to be displayed

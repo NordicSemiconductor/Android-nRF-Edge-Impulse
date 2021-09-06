@@ -124,22 +124,11 @@ class ProjectViewModel @Inject constructor(
     }
         private set
 
-    /** Whether a build is in progress. */
-    /* var buildState = derivedStateOf {
-         deploymentManager.buildState
-     }
-         private set
-
-     var logs = derivedStateOf {
-         deploymentManager.logs
-     }*/
-
     // ---- Implementation ------------------------------------
     init {
         // When the view model is created, load the configured devices from the service.
         listDevices(swipedToRefresh = false)
     }
-
     /**
      * Lists configured devices from the service.
      *
@@ -241,6 +230,8 @@ class ProjectViewModel @Inject constructor(
         dataAcquisitionManagers.onEach {
             it.value.disconnect()
         }
+        dataAcquisitionManagers.clear()
+        deploymentManager.disconnect()
     }
 
     fun startSampling(category: Category) {
