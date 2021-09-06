@@ -438,14 +438,11 @@ private fun ProjectContent(
                 )
             }
             composable(route = BottomNavigationScreen.DEPLOYMENT.route) {
-                val logs by remember { viewModel.logs }
-                val buildState by remember { viewModel.buildState }
                 Deployment(
                     snackbarHostState = snackbarHostState,
+                    deploymentManager = viewModel.deploymentManager,
                     projectName = viewModel.project.name,
                     connectedDevices = connectedDevices,
-                    logs = logs,
-                    buildState = buildState,
                     onBuildFirmware = { engine, modelType ->
                         viewModel.buildOnDeviceModel(
                             engine = engine,

@@ -3,6 +3,7 @@ package no.nordicsemi.android.ei.ui
 import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -15,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
@@ -30,8 +30,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.flow.collect
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.comms.BuildState
+import no.nordicsemi.android.ei.comms.DeploymentManager
 import no.nordicsemi.android.ei.model.BuildLog
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.showSnackbar
@@ -42,20 +44,15 @@ import java.util.*
 @Composable
 fun Deployment(
     snackbarHostState: SnackbarHostState,
+    deploymentManager: DeploymentManager,
     projectName: String,
     connectedDevices: List<Device>,
-    logs: SnapshotStateList<BuildLog>,
-    buildState: BuildState,
     onBuildFirmware: (Engine, ModelType) -> Unit,
     onFirmwareDownload: (ModelType, Uri) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-    var selectedDevice by remember {
-        mutableStateOf(connectedDevices.firstOrNull())
-    }
     var modelType by rememberSaveable { mutableStateOf(ModelType.INT_8) }
-
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -65,26 +62,43 @@ fun Deployment(
             }
         }
     }
-    when (buildState) {
-        is BuildState.Error -> {
-            // TODO confirm error message to be displayed
-            showSnackbar(
-                snackbarHostState = snackbarHostState,
-                coroutineScope = coroutineScope,
-                message = stringResource(R.string.error_building_firmware) + (buildState.reason
-                    ?: context.getString(R.string.error_unknown))
-            )
+    val logs by remember(deploymentManager.jobId) {
+        derivedStateOf {
+            deploymentManager.logs
         }
-        is BuildState.Finished -> {
-            launcher.launch(
-                Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
-                    .setType("application/zip").putExtra(
-                        Intent.EXTRA_TITLE,
-                        "$projectName-thingy-53".replace(" ", "-").lowercase(Locale.US)
+    }
+    var buildState by remember {
+        mutableStateOf<BuildState>(BuildState.Unknown)
+    }
+    var selectedDevice by remember {
+        mutableStateOf(connectedDevices.firstOrNull())
+    }
+    LaunchedEffect(deploymentManager.jobId) {
+        deploymentManager.buildStateAsFlow().collect { state ->
+            buildState = state
+            Log.d("AAAA", "Collecting build state: $state")
+            when (state) {
+                is BuildState.Error -> {
+                    // TODO confirm error message to be displayed
+                    showSnackbar(
+                        snackbarHostState = snackbarHostState,
+                        coroutineScope = coroutineScope,
+                        message = context.getString(R.string.error_building_firmware) + ((buildState as BuildState.Error).reason
+                                ?: context.getString(R.string.error_unknown))
                     )
-            )
-        }
-        else -> {
+                }
+                is BuildState.Finished -> {
+                    launcher.launch(
+                        Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+                            .setType("application/zip").putExtra(
+                                Intent.EXTRA_TITLE,
+                                "$projectName-thingy-53".replace(" ", "-").lowercase(Locale.US)
+                            )
+                    )
+                }
+                else -> {
+                }
+            }
         }
     }
 

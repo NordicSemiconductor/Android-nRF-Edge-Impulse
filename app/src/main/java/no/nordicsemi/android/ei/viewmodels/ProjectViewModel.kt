@@ -109,13 +109,13 @@ class ProjectViewModel @Inject constructor(
         private set
 
     /** Creates a deployment manager */
-    private var deploymentManager = DeploymentManager(
-        context = context,
+    var deploymentManager = DeploymentManager(
         scope = viewModelScope,
         gson = gson,
         socketToken = projectDataRepository.socketToken,
         client = client
     )
+        private set
 
     var samplingState = derivedStateOf {
         selectedDevice?.let {
@@ -125,13 +125,14 @@ class ProjectViewModel @Inject constructor(
         private set
 
     /** Whether a build is in progress. */
-    var buildState = derivedStateOf {
-        deploymentManager.buildState
-    }
+    /* var buildState = derivedStateOf {
+         deploymentManager.buildState
+     }
+         private set
 
-    var logs = derivedStateOf {
-        deploymentManager.logs
-    }
+     var logs = derivedStateOf {
+         deploymentManager.logs
+     }*/
 
     // ---- Implementation ------------------------------------
     init {
@@ -183,7 +184,8 @@ class ProjectViewModel @Inject constructor(
                     clear()
                     addAll(response.devices)
                     // We need to re-assign the selected device name for record sample data screen
-                    selectedDevice = configuredDevices.find { it.deviceId == selectedDevice?.deviceId }
+                    selectedDevice =
+                        configuredDevices.find { it.deviceId == selectedDevice?.deviceId }
                 }
             }.also { isRefreshing = false }
         }
@@ -257,7 +259,9 @@ class ProjectViewModel @Inject constructor(
                             projectId = project.id,
                             deviceId = device.deviceId,
                             label = label,
-                            lengthMs = sampleLength /** 1000*/,
+                            lengthMs = sampleLength
+                            /** 1000*/
+                            ,
                             category = category,
                             intervalMs = 1.div(frequency.toFloat()).times(1000),
                             sensor = sensor.name

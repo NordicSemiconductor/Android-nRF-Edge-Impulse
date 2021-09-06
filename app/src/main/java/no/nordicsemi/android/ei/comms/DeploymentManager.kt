@@ -1,15 +1,13 @@
 package no.nordicsemi.android.ei.comms
 
-import android.content.Context
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.model.BuildLog
@@ -24,7 +22,6 @@ import okhttp3.Request
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DeploymentManager(
-    private val context: Context,
     private val scope: CoroutineScope,
     private val gson: Gson,
     socketToken: SocketToken,
@@ -36,16 +33,22 @@ class DeploymentManager(
             .url("wss://studio.edgeimpulse.com/socket.io/?transport=websocket&EIO=3&token=${socketToken.socketToken}")
             .build()
     )
-    private var jobId = 0
-    var buildState by mutableStateOf<BuildState>(BuildState.Unknown)
+    var jobId = 0
         private set
+    private var _buildState = MutableSharedFlow<BuildState>()
     var logs = mutableStateListOf<BuildLog>()
         private set
 
     init {
+        _buildState.tryEmit(BuildState.Unknown)
         scope.launch { registerToWebSocketStateChanges() }
         scope.launch { registerToWebSocketMessages() }
     }
+
+    /**
+     * Returns the build state as a flow
+     */
+    fun buildStateAsFlow(): Flow<BuildState> = _buildState
 
     /**
      * Initiates a websocket connection to obtain deployment messages.
@@ -78,7 +81,7 @@ class DeploymentManager(
                 is WebSocketState.Failed -> {
                     // We need to stop pinging when the WebSocket throws an error.
                     deploymentWebSocket.stopPinging()
-                    buildState = BuildState.Error(webSocketState.throwable.message)
+                    _buildState.tryEmit(BuildState.Error(webSocketState.throwable.message))
                 }
             }
         }
@@ -110,10 +113,12 @@ class DeploymentManager(
                                 )?.let { finished ->
                                     logs.add(finished)
                                     //Set the build state before disconnecting
-                                    buildState = when (finished.success) {
-                                        true -> BuildState.Finished
-                                        false -> BuildState.Error(reason = "Error while building")
-                                    }
+                                    _buildState.emit(
+                                        when (finished.success) {
+                                            true -> BuildState.Finished
+                                            false -> BuildState.Error(reason = "Error while building")
+                                        }
+                                    )
                                     disconnect()
                                 }
                             }
@@ -133,9 +138,9 @@ class DeploymentManager(
      */
     fun build(buildOnDeviceModel: suspend () -> BuildOnDeviceModelResponse) {
         // Establish a socket connection right before calling build to avoid timeout
-        connect()
         scope.launch {
-            buildState = BuildState.Started
+            connect()
+            _buildState.emit(BuildState.Started)
             buildOnDeviceModel().let { response ->
                 guard(response.success) {
                     // Disconnect the websocket in case the build command fails
