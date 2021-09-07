@@ -20,14 +20,14 @@ enum class BottomNavigationScreen(
     DEVICES(
         route = Route.devices,
         resourceId = R.string.label_devices,
-        drawableRes = R.drawable.ic_devices,
+        drawableRes = R.drawable.ic_round_developer_board_24,
         shouldFabBeVisible = false
     ),
 
     DATA_ACQUISITION(
         route = Route.dataAcquisition,
         resourceId = R.string.label_data_acquisition,
-        drawableRes = R.drawable.ic_database,
+        drawableRes = R.drawable.ic_round_storage_24,
         shouldFabBeVisible = true
     ),
 
@@ -35,7 +35,7 @@ enum class BottomNavigationScreen(
         route = Route.deployment,
         resourceId = R.string.label_deployment,
         //TODO find the correct edge impulse icon
-        drawableRes = R.drawable.ic_devices,
+        drawableRes = R.drawable.ic_deployment_24,
         shouldFabBeVisible = false
     );
 

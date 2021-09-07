@@ -11,12 +11,17 @@ import androidx.annotation.RequiresApi
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.BluetoothDisabled
+import androidx.compose.material.icons.rounded.BluetoothSearching
+import androidx.compose.material.icons.rounded.LocationOff
+import androidx.compose.material.icons.rounded.DeveloperBoard
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -26,7 +31,7 @@ import java.util.*
 
 @Composable
 fun InfoLayout(
-    iconPainter: Painter,
+    imageVector: ImageVector,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
@@ -39,7 +44,7 @@ fun InfoLayout(
     ) {
         CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
             Icon(
-                painter = iconPainter,
+                imageVector = imageVector,
                 contentDescription = null,
                 modifier = Modifier.size(72.dp)
             )
@@ -83,7 +88,7 @@ fun NoConfiguredDevicesInfo(
 ) {
     InfoLayout(
         modifier = modifier,
-        iconPainter = painterResource(id = R.drawable.ic_devices)
+        imageVector = Icons.Rounded.DeveloperBoard
     ) {
         Text(
             text = stringResource(R.string.label_no_devices_connected),
@@ -98,7 +103,7 @@ fun NoDevicesInRangeInfo(
 ) {
     InfoLayout(
         modifier = modifier,
-        iconPainter = painterResource(id = R.drawable.ic_bluetooth_searching)
+        imageVector = Icons.Rounded.BluetoothSearching
     ) {
         Text(
             text = stringResource(id = R.string.thingy_guide_title),
@@ -119,7 +124,7 @@ fun BluetoothDisabledInfo(
 ) {
     InfoLayout(
         modifier = modifier,
-        iconPainter = painterResource(id = R.drawable.ic_bluetooth_disabled)
+        imageVector = Icons.Rounded.BluetoothDisabled
     ) {
         val launcher = rememberLauncherForActivityResult(
             ActivityResultContracts.StartActivityForResult()
@@ -159,7 +164,7 @@ fun BluetoothPermissionInfo(
 ) {
     InfoLayout(
         modifier = modifier,
-        iconPainter = painterResource(id = R.drawable.ic_location_off)
+        imageVector = Icons.Rounded.LocationOff
     ) {
         val launcher = rememberLauncherForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
@@ -205,7 +210,7 @@ fun LocationPermissionInfo(
 ) {
     InfoLayout(
         modifier = modifier,
-        iconPainter = painterResource(id = R.drawable.ic_location_off)
+        imageVector = Icons.Rounded.LocationOff
     ) {
         val launcher = rememberLauncherForActivityResult(
             ActivityResultContracts.RequestPermission()
@@ -243,7 +248,7 @@ fun LocationTurnedOffInfo(
 ) {
     InfoLayout(
         modifier = modifier,
-        iconPainter = painterResource(id = R.drawable.ic_location_off)
+        imageVector = Icons.Rounded.LocationOff
     ) {
         val launcher = rememberLauncherForActivityResult(
             ActivityResultContracts.StartActivityForResult()

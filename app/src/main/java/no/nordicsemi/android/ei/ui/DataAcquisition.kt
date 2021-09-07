@@ -220,7 +220,7 @@ private fun Error(
     onClickRetry: () -> Unit
 ) {
     InfoLayout(
-        iconPainter = rememberVectorPainter(image = Icons.Outlined.ErrorOutline),
+        imageVector = Icons.Outlined.ErrorOutline,
         modifier = modifier,
     ) {
         Text(

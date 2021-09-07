@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Label
 import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material.icons.rounded.DeveloperBoard
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -224,7 +225,7 @@ fun RecordSampleContent(
                 modifier = Modifier
                     .size(24.dp)
                     .padding(4.dp),
-                painter = painterResource(id = R.drawable.ic_devices),
+                imageVector = Icons.Rounded.DeveloperBoard,
                 contentDescription = null
             )
         },

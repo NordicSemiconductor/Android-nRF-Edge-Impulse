@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.rounded.DeveloperBoard
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -22,7 +23,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -213,10 +213,10 @@ private fun SelectDevice(
         leadingIcon = {
             Icon(
                 modifier = Modifier
-                    .size(24.dp)
-                    .padding(4.dp),
-                painter = painterResource(id = R.drawable.ic_devices),
-                contentDescription = null
+                    .size(24.dp),
+                imageVector = Icons.Rounded.DeveloperBoard,
+                contentDescription = null,
+                tint = MaterialTheme.colors.onSurface
             )
         },
         trailingIcon = {

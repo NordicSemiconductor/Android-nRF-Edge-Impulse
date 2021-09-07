@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.rounded.DeveloperBoard
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -256,7 +257,8 @@ private fun DeviceInformation(device: Device) {
             subText = device.deviceId
         )
         RowItem(
-            drawableRes = R.drawable.ic_devices,
+            modifier = Modifier.size(24.dp),
+            imageVector = Icons.Rounded.DeveloperBoard,
             text = stringResource(R.string.label_type),
             subText = device.deviceType
         )

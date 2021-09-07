@@ -605,10 +605,7 @@ private fun ProjectBottomNavigation(
                 icon = {
                     Icon(
                         painter = painterResource(id = screen.drawableRes),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(32.dp)
-                            .padding(8.dp)
+                        contentDescription = null
                     )
                 },
                 label = {

@@ -11,10 +11,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.DeveloperBoard
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -104,7 +107,7 @@ fun Devices(
                         )
                     }
                 },
-                backgroundColor =  MaterialTheme.colors.background,
+                backgroundColor = MaterialTheme.colors.background,
                 elevation = 0.dp
             )
         },
@@ -299,7 +302,7 @@ fun ConfiguredDeviceRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
-            painter = painterResource(id = R.drawable.ic_devices),
+            imageVector = Icons.Rounded.DeveloperBoard,
             contentDescription = null,
             modifier = Modifier
                 .size(40.dp)
@@ -307,7 +310,8 @@ fun ConfiguredDeviceRow(
                     color = state.indicatorColor(),
                     shape = CircleShape
                 )
-                .padding(8.dp)
+                .padding(8.dp),
+            colorFilter = ColorFilter.tint(Color.White)
         )
         Spacer(modifier = Modifier.width(16.dp))
         Text(
