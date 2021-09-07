@@ -226,7 +226,7 @@ class DataAcquisitionManager(
                                         )
                                     )
                                 } ?: run {
-                                    deviceMessage.message.deviceId = bleDevice.device.address
+                                    //deviceMessage.message.deviceId = bleDevice.device.address
                                     dataAcquisitionWebSocket.send(
                                         gson.toJsonTree(
                                             deviceMessage.message,
