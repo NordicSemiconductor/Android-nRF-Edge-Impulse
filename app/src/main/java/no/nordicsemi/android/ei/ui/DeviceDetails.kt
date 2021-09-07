@@ -75,7 +75,7 @@ fun DeviceDetails(
                         }
                     },
                     enabled = when (deviceState) {
-                        IN_RANGE -> true
+                        IN_RANGE, CONNECTING, AUTHENTICATING, AUTHENTICATED -> true
                         else -> false
                     },
                     colors = ButtonDefaults.buttonColors(deviceState.buttonBackgroundColor())
