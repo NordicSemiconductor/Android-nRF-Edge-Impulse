@@ -74,16 +74,20 @@ fun DeviceDetails(
                             }
                         }
                     },
+                    enabled = when (deviceState) {
+                        IN_RANGE -> true
+                        else -> false
+                    },
                     colors = ButtonDefaults.buttonColors(deviceState.buttonBackgroundColor())
                 ) {
                     Row {
                         Text(
                             text = when (deviceState) {
-                                IN_RANGE -> stringResource(R.string.action_connect)
+                                IN_RANGE, NOT_IN_RANGE -> stringResource(id = R.string.action_connect)
                                 CONNECTING,
                                 AUTHENTICATING -> stringResource(id = R.string.action_cancel)
-                                AUTHENTICATED -> stringResource(R.string.action_disconnect)
-                                else -> ""
+                                AUTHENTICATED -> stringResource(id = R.string.action_disconnect)
+                                else -> stringResource(id = R.string.action_connect)
                             },
                             color = Color.White
                         )
