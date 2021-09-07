@@ -112,6 +112,12 @@ class ProjectViewModel @Inject constructor(
     var deploymentManager = DeploymentManager(
         scope = viewModelScope,
         gson = gson,
+        exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+            viewModelScope.launch {
+                eventChannel
+                    .send(Event.Error(throwable = throwable))
+            }
+        },
         socketToken = projectDataRepository.socketToken,
         client = client
     )
@@ -129,6 +135,7 @@ class ProjectViewModel @Inject constructor(
         // When the view model is created, load the configured devices from the service.
         listDevices(swipedToRefresh = false)
     }
+
     /**
      * Lists configured devices from the service.
      *
@@ -214,7 +221,12 @@ class ProjectViewModel @Inject constructor(
                 developmentKeys = keys,
                 device = device,
                 client = client,
-                eventChannel = eventChannel,
+                exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+                    viewModelScope.launch {
+                        eventChannel
+                            .send(Event.Error(throwable = throwable))
+                    }
+                },
                 context = getApplication()
             )
         }).run {
@@ -374,8 +386,8 @@ class ProjectViewModel @Inject constructor(
             }
         }
     }
-
 }
+
 
 /**
  * Disconnect device

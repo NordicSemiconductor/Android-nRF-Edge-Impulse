@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateListOf
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -24,6 +25,7 @@ import okhttp3.Request
 class DeploymentManager(
     private val scope: CoroutineScope,
     private val gson: Gson,
+    private val exceptionHandler: CoroutineExceptionHandler,
     socketToken: SocketToken,
     client: OkHttpClient
 ) {
@@ -41,8 +43,8 @@ class DeploymentManager(
 
     init {
         _buildState.tryEmit(BuildState.Unknown)
-        scope.launch { registerToWebSocketStateChanges() }
-        scope.launch { registerToWebSocketMessages() }
+        scope.launch(exceptionHandler) { registerToWebSocketStateChanges() }
+        scope.launch(exceptionHandler) { registerToWebSocketMessages() }
     }
 
     /**
@@ -138,7 +140,7 @@ class DeploymentManager(
      */
     fun build(buildOnDeviceModel: suspend () -> BuildOnDeviceModelResponse) {
         // Establish a socket connection right before calling build to avoid timeout
-        scope.launch {
+        scope.launch(exceptionHandler) {
             connect()
             _buildState.emit(BuildState.Started)
             buildOnDeviceModel().let { response ->

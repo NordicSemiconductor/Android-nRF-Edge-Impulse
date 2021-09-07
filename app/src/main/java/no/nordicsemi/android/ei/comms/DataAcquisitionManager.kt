@@ -12,7 +12,6 @@ import com.google.gson.JsonParser
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
@@ -25,7 +24,6 @@ import no.nordicsemi.android.ei.model.Message.*
 import no.nordicsemi.android.ei.model.Message.Sample
 import no.nordicsemi.android.ei.model.Message.Sample.*
 import no.nordicsemi.android.ei.util.exhaustive
-import no.nordicsemi.android.ei.viewmodels.event.Event
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import no.nordicsemi.android.ei.websocket.EiWebSocket
 import no.nordicsemi.android.ei.websocket.WebSocketState
@@ -44,7 +42,7 @@ class DataAcquisitionManager(
     private val gson: Gson,
     private val developmentKeys: DevelopmentKeys,
     private val client: OkHttpClient,
-    private val eventChannel: Channel<Event>,
+    private val exceptionHandler: CoroutineExceptionHandler,
     context: Context,
 ) {
     private val bleDevice = BleDevice(
@@ -55,13 +53,6 @@ class DataAcquisitionManager(
         client = client,
         request = okhttp3.Request.Builder().url("wss://remote-mgmt.edgeimpulse.com").build()
     )
-
-    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
-        scope.launch {
-            eventChannel
-                .send(Event.Error(throwable = throwable))
-        }
-    }
 
     var samplingState by mutableStateOf<Sample>(Unknown)
         private set
