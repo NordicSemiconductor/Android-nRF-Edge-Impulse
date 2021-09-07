@@ -101,7 +101,10 @@ fun UserAppBar(
                                 }) {
                                     Text(text = stringResource(id = R.string.action_about))
                                 }
-                                DropdownMenuItem(onClick = onLogoutClick) {
+                                DropdownMenuItem(onClick = {
+                                    showMenu = !showMenu
+                                    onLogoutClick()
+                                }) {
                                     Text(text = stringResource(id = R.string.action_logout))
                                 }
                             }
