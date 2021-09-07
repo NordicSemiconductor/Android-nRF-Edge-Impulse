@@ -140,7 +140,9 @@ class DashboardViewModel @Inject constructor(
     }
 
     fun logout() {
-        AccountHelper.invalidateAuthToken(userDataRepo.token, getApplication())
-        userManager.logout()
+        viewModelScope.launch {
+            AccountHelper.invalidateAuthToken(userDataRepo.token, getApplication())
+            userManager.logout()
+        }
     }
 }
