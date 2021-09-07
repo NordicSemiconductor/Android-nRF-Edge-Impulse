@@ -52,8 +52,9 @@
     <string name="label_device_information">Device Information</string>
 
     <string name="label_not_in_range">Not in range</string>
-    <string name="label_in_range">In range</string>
-    <string name="label_connecting">Connecting</string>
-    <string name="label_authenticating">Authenticating</string>
+    <string name="label_in_range">In range…</string>
+    <string name="label_connecting">Connecting…</string>
+    <string name="label_authenticating">Authenticating…</string>
     <string name="label_connected">Connected</string>
+    <string name="label_disconnected">Disconnected</string>
 </resources>

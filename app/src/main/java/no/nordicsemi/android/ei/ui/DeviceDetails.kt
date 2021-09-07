@@ -3,6 +3,7 @@ package no.nordicsemi.android.ei.ui
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,6 +28,8 @@ import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState.*
+import no.nordicsemi.android.ei.viewmodels.state.buttonBackgroundColor
+import no.nordicsemi.android.ei.viewmodels.state.indicatorColor
 import java.text.DateFormat
 import java.util.*
 
@@ -50,7 +53,6 @@ fun DeviceDetails(
                 onRenameClick = onRenameClick
             )
             Connectivity(
-                device = device,
                 deviceState = deviceState
             )
             Row(
@@ -60,6 +62,8 @@ fun DeviceDetails(
                     .padding(16.dp), horizontalArrangement = Arrangement.Center
             ) {
                 Button(
+                    modifier = Modifier
+                        .width(120.dp),
                     onClick = {
                         when (deviceState) {
                             IN_RANGE -> onConnectClick()
@@ -69,17 +73,21 @@ fun DeviceDetails(
                             else -> {
                             }
                         }
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(deviceState.buttonBackgroundColor())
                 ) {
-                    Text(
-                        text = when (deviceState) {
-                            IN_RANGE -> stringResource(R.string.action_connect)
-                            CONNECTING,
-                            AUTHENTICATING,
-                            AUTHENTICATED -> stringResource(R.string.action_disconnect)
-                            else -> ""
-                        }
-                    )
+                    Row {
+                        Text(
+                            text = when (deviceState) {
+                                IN_RANGE -> stringResource(R.string.action_connect)
+                                CONNECTING,
+                                AUTHENTICATING -> stringResource(id = R.string.action_cancel)
+                                AUTHENTICATED -> stringResource(R.string.action_disconnect)
+                                else -> ""
+                            },
+                            color = Color.White
+                        )
+                    }
                 }
             }
             SensorInformation(device = device)
@@ -91,7 +99,8 @@ fun DeviceDetails(
                 modifier = Modifier
                     .background(color = MaterialTheme.colors.background)
                     .fillMaxWidth()
-                    .padding(top = 16.dp, bottom = 32.dp), horizontalArrangement = Arrangement.Center
+                    .padding(top = 16.dp, bottom = 32.dp),
+                horizontalArrangement = Arrangement.Center
             ) {
                 Button(
                     onClick = { onDeleteClick(device) },
@@ -235,6 +244,7 @@ private fun DeviceInformation(device: Device) {
     val dateTimeInstance = DateFormat.getDateTimeInstance()
     Column {
         RowItem(
+            modifier = Modifier.size(24.dp),
             imageVector = Icons.Outlined.PermIdentity,
             text = stringResource(R.string.label_id).uppercase(
                 Locale.US
@@ -247,6 +257,7 @@ private fun DeviceInformation(device: Device) {
             subText = device.deviceType
         )
         RowItem(
+            modifier = Modifier.size(24.dp),
             imageVector = Icons.Outlined.History,
             text = stringResource(R.string.label_created_at),
             subText = dateTimeInstance.format(
@@ -256,6 +267,7 @@ private fun DeviceInformation(device: Device) {
             )
         )
         RowItem(
+            modifier = Modifier.size(24.dp),
             imageVector = Icons.Outlined.Visibility,
             text = stringResource(R.string.label_last_seen),
             subText = dateTimeInstance.format(
@@ -269,15 +281,18 @@ private fun DeviceInformation(device: Device) {
 
 @Composable
 private fun Connectivity(
-    device: Device,
     deviceState: DeviceState?,
 ) {
     SectionTitle(text = stringResource(R.string.label_connectivity))
     RowItem(
+        modifier = Modifier
+            .size(24.dp)
+            .animateContentSize(),
         imageVector = Icons.Outlined.Cloud,
+        tint = deviceState?.indicatorColor() ?: MaterialTheme.colors.onSurface,
         text = stringResource(R.string.label_connected_to_remote_management),
         subText = when (deviceState) {
-            NOT_IN_RANGE, IN_RANGE -> device.remoteMgmtConnected.toString()
+            NOT_IN_RANGE, IN_RANGE -> stringResource(R.string.label_disconnected)
             CONNECTING -> stringResource(R.string.label_connecting)
             AUTHENTICATING -> stringResource(R.string.label_authenticating)
             AUTHENTICATED -> stringResource(R.string.label_connected)
@@ -290,6 +305,7 @@ private fun Connectivity(
 private fun Capabilities(device: Device) {
     SectionTitle(text = stringResource(R.string.label_capabilities))
     RowItem(
+        modifier = Modifier.size(24.dp),
         imageVector = Icons.Outlined.SettingsEthernet,
         text = stringResource(R.string.label_snapshot_streaming),
         subText = when (device.supportsSnapshotStreaming) {
@@ -305,6 +321,7 @@ private fun SensorInformation(device: Device) {
     device.sensors.takeIf { sensors -> sensors.isNotEmpty() }?.onEach { sensor ->
         SectionTitle(text = sensor.name)
         RowItem(
+            modifier = Modifier.size(24.dp),
             imageVector = Icons.Outlined.Timer,
             text = stringResource(R.string.label_max_sample_length),
             subText = stringResource(id = R.string.label_sample_duration, sensor.maxSampleLengths)
@@ -336,7 +353,13 @@ private fun SectionTitle(text: String, content: @Composable () -> Unit = {}) {
 }
 
 @Composable
-private fun RowItem(imageVector: ImageVector, text: String, subText: String?) {
+private fun RowItem(
+    modifier: Modifier,
+    imageVector: ImageVector,
+    tint: Color = MaterialTheme.colors.onSurface,
+    text: String,
+    subText: String?
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -345,11 +368,10 @@ private fun RowItem(imageVector: ImageVector, text: String, subText: String?) {
         horizontalArrangement = Arrangement.Start
     ) {
         Icon(
-            modifier = Modifier
-                .size(24.dp),
+            modifier = modifier,
             imageVector = imageVector,
             contentDescription = null,
-            tint = MaterialTheme.colors.onSurface
+            tint = tint
         )
         Column(
             modifier = Modifier
