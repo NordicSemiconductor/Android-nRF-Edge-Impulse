@@ -89,7 +89,7 @@ fun DeviceDetails(
                                 AUTHENTICATING -> stringResource(id = R.string.action_cancel)
                                 AUTHENTICATED -> stringResource(id = R.string.action_disconnect)
                                 else -> stringResource(id = R.string.action_connect)
-                            },
+                            }.uppercase(Locale.US),
                             color = Color.White
                         )
                     }
@@ -112,7 +112,7 @@ fun DeviceDetails(
                     colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red)
                 ) {
                     Text(
-                        text = stringResource(R.string.action_delete),
+                        text = stringResource(R.string.action_delete).uppercase(Locale.US),
                         color = Color.White
                     )
                 }
