@@ -78,6 +78,16 @@ class ProjectRepository @Inject constructor(
         )
     }
 
+    suspend fun deploymentInfo(
+        projectId: Int,
+        keys: DevelopmentKeys
+    ) = withContext(ioDispatcher) {
+        service.deploymentInfo(
+            apiKey = keys.apiKey,
+            projectId = projectId
+        )
+    }
+
     suspend fun downloadBuild(
         projectId: Int,
         keys: DevelopmentKeys,

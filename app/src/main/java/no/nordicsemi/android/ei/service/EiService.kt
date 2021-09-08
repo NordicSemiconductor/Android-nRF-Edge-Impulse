@@ -161,7 +161,14 @@ interface EiService {
         @Body buildOnDeviceModels: BuildOnDeviceModelRequest,
     ): BuildOnDeviceModelResponse
 
-    // TODO downloading builds work with accelerometer projects so far. Microphone projects needs testing
+    @Headers("Accept: application/json", "Content-Type: application/json")
+    @GET("api/{projectId}/deployment")
+    suspend fun deploymentInfo(
+        @Header("x-api-key") apiKey: String,
+        @Path("projectId") projectId: Int,
+        @Query("type") type: String = "nordic-thingy53"
+    ): DeploymentInfoResponse
+
     @Streaming
     @Headers("Accept: application/zip")
     @GET("api/{projectId}/deployment/download")
