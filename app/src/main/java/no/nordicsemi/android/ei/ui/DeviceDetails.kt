@@ -64,7 +64,7 @@ fun DeviceDetails(
             ) {
                 Button(
                     modifier = Modifier
-                        .width(120.dp),
+                        .width(130.dp),
                     onClick = {
                         when (deviceState) {
                             IN_RANGE -> onConnectClick()
@@ -81,18 +81,16 @@ fun DeviceDetails(
                     },
                     colors = ButtonDefaults.buttonColors(deviceState.buttonBackgroundColor())
                 ) {
-                    Row {
-                        Text(
-                            text = when (deviceState) {
-                                IN_RANGE, NOT_IN_RANGE -> stringResource(id = R.string.action_connect)
-                                CONNECTING,
-                                AUTHENTICATING -> stringResource(id = R.string.action_cancel)
-                                AUTHENTICATED -> stringResource(id = R.string.action_disconnect)
-                                else -> stringResource(id = R.string.action_connect)
-                            }.uppercase(Locale.US),
-                            color = Color.White
-                        )
-                    }
+                    Text(
+                        text = when (deviceState) {
+                            IN_RANGE, NOT_IN_RANGE -> stringResource(id = R.string.action_connect)
+                            CONNECTING,
+                            AUTHENTICATING -> stringResource(id = R.string.action_cancel)
+                            AUTHENTICATED -> stringResource(id = R.string.action_disconnect)
+                            else -> stringResource(id = R.string.action_connect)
+                        }.uppercase(Locale.US),
+                        color = Color.White
+                    )
                 }
             }
             SensorInformation(device = device)
