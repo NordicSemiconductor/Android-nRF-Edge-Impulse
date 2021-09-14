@@ -3,6 +3,7 @@ package no.nordicsemi.android.ei.service
 import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.service.param.*
 import okhttp3.ResponseBody
+import retrofit2.Response
 import retrofit2.http.*
 
 interface EiService {
@@ -169,12 +170,12 @@ interface EiService {
         @Query("type") type: String = "nordic-thingy53"
     ): DeploymentInfoResponse
 
-    @Streaming
+    //@Streaming
     @Headers("Accept: application/zip")
     @GET("api/{projectId}/deployment/download")
     suspend fun downloadBuild(
         @Header("x-api-key") apiKey: String,
         @Path("projectId") projectId: Int,
         @Query("type") type: String = "nordic-thingy53"
-    ): ResponseBody
+    ): Response<ResponseBody>
 }

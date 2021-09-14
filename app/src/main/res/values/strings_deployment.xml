@@ -2,10 +2,29 @@
 <resources>
     <string name="build">Build</string>
     <string name="label_enable_eon_compiler">Enable Eon Compiler</string>
-    <string name="label_deploy_impulse">Deploy your impulse</string>
+    <string name="title_deploy_impulse">Deploy your impulse</string>
     <string name="label_select_device">Select Device</string>
+    <string name="label_select_firmware">Select Firmware</string>
+    <string name="label_select_firmware_rationale">Download or select a ZIP file containing the firmware to deploy your impulse.</string>
     <string name="title_available_optimizations">Available optimizations for NN Classifier</string>
     <string name="label_neural_classifier_quantized_int8">Quantized (int8)</string>
     <string name="label_neural_classifier_unoptimized_float32">Unoptimized (float32)</string>
     <string name="error_building_firmware">\"Failed to build firmware: \"</string>
+    <string name="action_download">Download</string>
+    <string name="action_select_file">Select File</string>
+    <string name="title_design_impulse">Design your impulse</string>
+    <string name="title_create_impulse">Create Impulse</string>
+    <string name="label_create_impulse_rationale">An impulse takes raw data, uses signal processing to extract features,
+        and then uses a learning block to classify new data.</string>
+    <string name="title_download_impulse">Download your impulse</string>
+    <string name="action_deploy">Deploy</string>
+    <string name="label_file_name">File name:</string>
+    <string name="label_file_size">File size:</string>
+    <string name="label_kb">%d KB</string>
+    <string name="action_ei_studio">visit EI studio</string>
+    <string name="label_downloading_firmware">Downloading firmware from Edge Impulse…</string>
+    <string name="title_downloading_firmware">Downloading Firmware</string>
+    <string name="error_fw_download">Error while downloading firmware!</string>
+    <string name="error_firmware">Error while downloading firmware</string>
+
 </resources>

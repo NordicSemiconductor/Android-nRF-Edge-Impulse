@@ -120,7 +120,7 @@ private fun LargeScreen(
             ShowDialog(
                 imageVector = Icons.Rounded.Sensors,
                 title = stringResource(R.string.title_record_new_data),
-                onDismissed = { isDialogVisible = false },
+                onDismissRequest = { isDialogVisible = false },
                 properties = DialogProperties(
                     dismissOnBackPress = false,
                     dismissOnClickOutside = false
@@ -322,7 +322,6 @@ private fun ProjectContent(
     var isWarningDialogVisible by rememberSaveable {
         mutableStateOf(false)
     }
-
     LocalLifecycleOwner.current.lifecycleScope.launchWhenStarted {
         viewModel.eventFlow.runCatching {
             this.collect { event ->
@@ -438,7 +437,7 @@ private fun ProjectContent(
                 )
             }
             composable(route = BottomNavigationScreen.DEPLOYMENT.route) {
-                Deployment(
+                /*Deployment(
                     snackbarHostState = snackbarHostState,
                     deploymentManager = viewModel.deploymentManager,
                     projectName = viewModel.project.name,
@@ -456,6 +455,15 @@ private fun ProjectContent(
                             uri = uri
                         )
                     }
+                )*/
+                Deployment(
+                    project = viewModel.project,
+                    connectedDevices = connectedDevices,
+                    downloadState = viewModel.downloadState,
+                    onDownloadFirmwareClick = { ->
+                        viewModel.downloadFirmware()
+                    },
+                    onSaveClick = { uri, data -> viewModel.saveFile(context, uri, data) }
                 )
             }
         }
@@ -464,7 +472,7 @@ private fun ProjectContent(
         ShowDialog(
             imageVector = Icons.Rounded.Warning,
             title = stringResource(R.string.title_warning),
-            onDismissed = { isWarningDialogVisible = !isWarningDialogVisible },
+            onDismissRequest = { isWarningDialogVisible = !isWarningDialogVisible },
             properties = DialogProperties(
                 dismissOnBackPress = false,
                 dismissOnClickOutside = false

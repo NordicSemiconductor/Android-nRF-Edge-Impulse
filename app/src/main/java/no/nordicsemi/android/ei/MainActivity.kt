@@ -99,12 +99,12 @@ fun ShowDialog(
 fun ShowDialog(
     imageVector: ImageVector,
     title: String,
-    onDismissed: () -> Unit,
+    onDismissRequest: () -> Unit,
     properties: DialogProperties,
     content: @Composable () -> Unit
 ) {
     Dialog(
-        onDismissRequest = onDismissed,
+        onDismissRequest = onDismissRequest,
         properties = properties,
         content = {
             Surface(

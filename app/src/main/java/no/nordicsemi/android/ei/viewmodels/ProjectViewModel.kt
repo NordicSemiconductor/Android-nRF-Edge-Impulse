@@ -31,10 +31,10 @@ import no.nordicsemi.android.ei.repository.ProjectDataRepository
 import no.nordicsemi.android.ei.repository.ProjectRepository
 import no.nordicsemi.android.ei.repository.UserDataRepository
 import no.nordicsemi.android.ei.util.Engine
-import no.nordicsemi.android.ei.util.ModelType
 import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.viewmodels.event.Event
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
+import no.nordicsemi.android.ei.viewmodels.state.DownloadState
 import okhttp3.OkHttpClient
 import javax.inject.Inject
 
@@ -71,7 +71,7 @@ class ProjectViewModel @Inject constructor(
         private set
 
     /** Whether the list of configured devices is refreshing. */
-    var isRefreshing: Boolean by mutableStateOf(false)
+    var isRefreshing by mutableStateOf(false)
         private set
 
     /** Whether a device rename is been requested. */
@@ -87,6 +87,12 @@ class ProjectViewModel @Inject constructor(
 
     private val projectManager: ProjectManager
         get() = userComponentEntryPoint.getProjectManager()
+
+    /** Whether a firmware download is in progress. */
+    var isFirmwareDownloading by mutableStateOf(false)
+        private set
+    var downloadState by mutableStateOf<DownloadState>(DownloadState.Unknown)
+        private set
 
     // TODO This needs to be fixed: Possible NPE when switching back to the app.
     private val projectDataRepository: ProjectDataRepository
@@ -284,45 +290,96 @@ class ProjectViewModel @Inject constructor(
     /**
      * Build device firmware.
      * @param engine        Engine type
-     * @param modelType     ModelType to download.
      */
     fun buildOnDeviceModel(
-        engine: Engine,
-        modelType: ModelType
+        engine: Engine
     ) {
         deploymentManager.build(buildOnDeviceModel = {
             projectRepository.buildOnDeviceModels(
                 projectId = project.id,
                 keys = keys,
-                engine = engine,
-                modelType = modelType
+                engine = engine
             )
         })
     }
 
+    fun downloadFirmware(){
+        deploymentInfo()
+    }
+
     /**
-     * Download build.
-     * @param context       Context.
-     * @param modelType     ModelType to download.
-     * @param uri           Uri to save the file to.
+     * Checks if there is a firmware available to download.
      */
-    fun downloadBuild(context: Context, modelType: ModelType, uri: Uri) {
+    private fun deploymentInfo() {
         viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
             viewModelScope
                 .launch { eventChannel.send(Event.Error(throwable)) }
         }) {
-            projectRepository.downloadBuild(
+            projectRepository.deploymentInfo(
                 projectId = project.id,
-                keys = keys,
-                modelType = modelType
+                keys = keys
             ).let { response ->
-                val bytes = response.byteStream().readBytes()
-                response.byteStream().close()
-                context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                    outputStream.write(bytes)
-                    outputStream.close()
+                guard(response.success) {
+                    throw Throwable(response.error)
+                }
+                if(response.hasDeployment){
+                  downloadBuild()
                 }
             }
+        }
+    }
+
+    /**
+     * Download build.
+     */
+    @Suppress("BlockingMethodInNonBlockingContext")
+    private fun downloadBuild() {
+        downloadState = DownloadState.Downloading
+        isFirmwareDownloading = true
+        var fileName = ""
+        var data: ByteArray
+        viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
+            viewModelScope
+                .launch { eventChannel.send(Event.Error(throwable)) }
+                .also { isFirmwareDownloading = false }
+        }) {
+            projectRepository.downloadBuild(
+                projectId = project.id,
+                keys = keys
+            ).let { response ->
+                guard(response.isSuccessful) {
+                    downloadState = DownloadState.Unknown
+                    throw Throwable(
+                        response.errorBody()?.string() ?: "Error while download firmware"
+                    )
+                }
+                //attachment; filename*=utf-8''accelerometer-project-thingy53-v200.zip
+                response.headers().find { it.first == ATTACHMENT_HEADER }?.let { header ->
+                    fileName = header.second.split("''")[1]
+                }
+                response.body()?.byteStream()?.let { inputStream ->
+                    data = inputStream.readBytes()
+                    inputStream.close()
+                    downloadState = DownloadState.Saving(fileName = fileName, data = data)
+                }
+            }.also {
+                isFirmwareDownloading = false
+            }
+        }
+    }
+
+    fun saveFile(context: Context, uri: Uri, data: ByteArray) {
+        viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
+            viewModelScope
+                .launch { eventChannel.send(Event.Error(throwable)) }
+                .also { downloadState = DownloadState.Finished }
+        }) {
+            context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                outputStream.write(data)
+                outputStream.flush()
+                outputStream.close()
+            }
+            downloadState = DownloadState.Finished
         }
     }
 
@@ -403,5 +460,7 @@ private fun SnapshotStateMap<String, DataAcquisitionManager>.disconnect(deviceId
         }
     }
 }
+
+private val ATTACHMENT_HEADER = "content-disposition"
 
 

@@ -407,7 +407,7 @@ private fun ShowAboutDialog(onDismiss: () -> Unit) {
     ShowDialog(
         imageVector = Icons.Outlined.Info,
         title = stringResource(id = R.string.action_about),
-        onDismissed = onDismiss,
+        onDismissRequest = onDismiss,
         properties = DialogProperties(
             dismissOnBackPress = true,
             dismissOnClickOutside = true

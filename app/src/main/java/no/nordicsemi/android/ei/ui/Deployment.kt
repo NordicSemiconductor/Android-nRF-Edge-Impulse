@@ -1,386 +1,300 @@
 package no.nordicsemi.android.ei.ui
 
-import android.app.Activity.RESULT_OK
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
+import androidx.annotation.CallSuper
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.outlined.FileDownload
+import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.rounded.DeveloperBoard
+import androidx.compose.material.icons.rounded.Launch
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.flow.collect
 import no.nordicsemi.android.ei.R
-import no.nordicsemi.android.ei.comms.BuildState
-import no.nordicsemi.android.ei.comms.DeploymentManager
-import no.nordicsemi.android.ei.model.BuildLog
 import no.nordicsemi.android.ei.model.Device
-import no.nordicsemi.android.ei.showSnackbar
-import no.nordicsemi.android.ei.util.Engine
-import no.nordicsemi.android.ei.util.ModelType
+import no.nordicsemi.android.ei.model.Project
+import no.nordicsemi.android.ei.viewmodels.state.DownloadState
 import java.util.*
 
 @Composable
 fun Deployment(
-    snackbarHostState: SnackbarHostState,
-    deploymentManager: DeploymentManager,
-    projectName: String,
+    project: Project,
     connectedDevices: List<Device>,
-    onBuildFirmware: (Engine, ModelType) -> Unit,
-    onFirmwareDownload: (ModelType, Uri) -> Unit
+    downloadState: DownloadState,
+    onDownloadFirmwareClick: () -> Unit,
+    onSaveClick: (Uri, ByteArray) -> Unit
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
-    var modelType by rememberSaveable { mutableStateOf(ModelType.INT_8) }
-    val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == RESULT_OK) {
-            result.data?.data?.let { uri ->
-                onFirmwareDownload(modelType, uri)
-            }
-        }
-    }
-    val logs by remember(deploymentManager.jobId) {
-        derivedStateOf {
-            deploymentManager.logs
-        }
-    }
-    var buildState by remember {
-        mutableStateOf<BuildState>(BuildState.Unknown)
-    }
     var selectedDevice by remember {
         mutableStateOf(connectedDevices.firstOrNull())
     }
-    LaunchedEffect(deploymentManager.jobId) {
-        deploymentManager.buildStateAsFlow().collect { state ->
-            buildState = state
-            when (state) {
-                is BuildState.Error -> {
-                    // TODO confirm error message to be displayed
-                    showSnackbar(
-                        snackbarHostState = snackbarHostState,
-                        coroutineScope = coroutineScope,
-                        message = context.getString(R.string.error_building_firmware) + ((buildState as BuildState.Error).reason
-                                ?: context.getString(R.string.error_unknown))
-                    )
-                }
-                is BuildState.Finished -> {
-                    launcher.launch(
-                        Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
-                            .setType("application/zip").putExtra(
-                                Intent.EXTRA_TITLE,
-                                "$projectName-thingy-53".replace(" ", "-").lowercase(Locale.US)
-                            )
-                    )
-                }
-                else -> {
-                }
-            }
-        }
-    }
-
-    LazyColumn(contentPadding = PaddingValues(bottom = 56.dp)) {
-        item {
-            BuildFirmware(
-                connectedDevices = connectedDevices,
-                selectedDevice = selectedDevice,
-                onDeviceSelected = {
-                    selectedDevice = it
-                },
-                modelType = modelType,
-                onModelTypeSelected = { modelType = it },
-                buildState = buildState,
-                onBuildFirmware = onBuildFirmware
-            )
-        }
-        logs.takeIf { it.isNotEmpty() }?.let { notEmptyLogs ->
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        modifier = Modifier
-                            .weight(1.0f),
-                        text = stringResource(R.string.label_logs),
-                        style = MaterialTheme.typography.h6
-                    )
-                    if (buildState is BuildState.Started) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .align(Alignment.CenterVertically)
-                        )
-                    }
-                }
-            }
-            items(items = notEmptyLogs) { log ->
-                LogRow(buildLog = log)
-                Divider()
-            }
-        }
-    }
-}
-
-@Composable
-private fun BuildFirmware(
-    connectedDevices: List<Device>,
-    selectedDevice: Device?,
-    onDeviceSelected: (Device) -> Unit,
-    modelType: ModelType,
-    onModelTypeSelected: (ModelType) -> Unit,
-    buildState: BuildState,
-    onBuildFirmware: (Engine, ModelType) -> Unit
-) {
-    Text(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-        text = stringResource(R.string.label_deploy_impulse),
-        style = MaterialTheme.typography.h6
-    )
-    Surface {
-        Column(
-            modifier = Modifier
-                .padding(all = 16.dp)
-        ) {
-            SelectDevice(
-                connectedDevices = connectedDevices,
-                selectedDevice = selectedDevice,
-                buildState = buildState,
-                onDeviceSelected = onDeviceSelected
-            )
-            SelectOptimizations(
-                selectedDevice = selectedDevice,
-                modelType = modelType,
-                onModelTypeSelected = onModelTypeSelected,
-                buildState = buildState,
-                onBuildFirmware = onBuildFirmware
-            )
-        }
-    }
-}
-
-@Composable
-private fun SelectDevice(
-    connectedDevices: List<Device>,
-    selectedDevice: Device?,
-    buildState: BuildState,
-    onDeviceSelected: (Device) -> Unit
-) {
-    var isDevicesMenuExpanded by remember { mutableStateOf(false) }
-    var width by rememberSaveable { mutableStateOf(0) }
-
-    CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice != null && buildState != BuildState.Started) ContentAlpha.high else ContentAlpha.disabled) {
-        Text(
-            text = stringResource(R.string.label_select_device),
-            style = TextStyle(fontSize = 18.sp),
+    Column(modifier = Modifier.verticalScroll(state = rememberScrollState())) {
+        DesignImpulse(project = project)
+        DeployImpulse(
+            connectedDevices = connectedDevices,
+            selectedDevice = selectedDevice,
+            onDeviceSelected = {
+                selectedDevice = it
+            },
+            downloadState = downloadState,
+            onDownloadFirmwareClick = onDownloadFirmwareClick,
+            onSaveClick = onSaveClick,
         )
     }
-    Spacer(modifier = Modifier.size(16.dp))
-    OutlinedTextField(
-        modifier = Modifier
-            .fillMaxWidth()
-            .onSizeChanged { width = it.width }
-            .padding(bottom = 16.dp),
-        value = selectedDevice?.name ?: stringResource(id = R.string.empty),
-        onValueChange = { },
-        enabled = connectedDevices.isNotEmpty() && buildState != BuildState.Started,
-        readOnly = true,
-        label = {
-            Text(text = stringResource(R.string.label_device))
-        },
-        leadingIcon = {
-            Icon(
-                modifier = Modifier
-                    .size(24.dp),
-                imageVector = Icons.Rounded.DeveloperBoard,
-                contentDescription = null,
-                tint = MaterialTheme.colors.onSurface
-            )
-        },
-        trailingIcon = {
-            IconButton(
-                enabled = connectedDevices.isNotEmpty(),
-                onClick = {
-                    isDevicesMenuExpanded = true
-                }
-            ) {
-                Icon(
-                    modifier = Modifier.rotate(if (isDevicesMenuExpanded) 180f else 0f),
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = null
-                )
-                ShowDevicesDropdown(
-                    modifier = Modifier.width(with(LocalDensity.current) { width.toDp() }),
-                    expanded = isDevicesMenuExpanded,
-                    connectedDevices = connectedDevices,
-                    onDeviceSelected = {
-                        isDevicesMenuExpanded = false
-                        onDeviceSelected(it)
-                    },
-                    onDismiss = {
-                        isDevicesMenuExpanded = false
-                    }
-                )
-            }
-        },
-        singleLine = true
-    )
 }
 
 @Composable
-private fun SelectOptimizations(
-    selectedDevice: Device?,
-    modelType: ModelType,
-    onModelTypeSelected: (ModelType) -> Unit,
-    buildState: BuildState,
-    onBuildFirmware: (Engine, ModelType) -> Unit
+private fun DesignImpulse(
+    project: Project
 ) {
-    var engine by rememberSaveable { mutableStateOf(Engine.TFLITE_EON) }
+    val localUriHandler = LocalUriHandler.current
+    val uri by remember { mutableStateOf("https://studio.edgeimpulse.com/studio/${project.id}/create-impulse") }
     Column {
-        CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice != null && buildState != BuildState.Started) ContentAlpha.high else ContentAlpha.disabled) {
-            Text(
-                text = stringResource(R.string.title_select_optional_optimizations),
-                style = TextStyle(fontSize = 18.sp),
-                textAlign = TextAlign.Start
-            )
+        Text(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+            text = stringResource(R.string.title_design_impulse),
+            style = MaterialTheme.typography.h6
+        )
+        Surface(elevation = 2.dp) {
+            Column(
+                modifier = Modifier
+                    .padding(all = 16.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.title_create_impulse),
+                    style = MaterialTheme.typography.h6
+                )
+                Spacer(modifier = Modifier.size(size = 16.dp))
+                Text(
+                    text = stringResource(R.string.label_create_impulse_rationale)
+                )
+
+            }
         }
-        Spacer(modifier = Modifier.size(16.dp))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(vertical = 16.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Column(modifier = Modifier.weight(1.0f)) {
-                CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice != null && buildState != BuildState.Started) ContentAlpha.high else ContentAlpha.disabled) {
+            Button(
+                onClick = {
+                    localUriHandler.openUri(uri = uri)
+                }) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = stringResource(R.string.label_enable_eon_compiler)
+                        text = stringResource(id = R.string.action_ei_studio).uppercase(
+                            Locale.US
+                        )
                     )
-                    Text(
-                        text = stringResource(R.string.label_eon_compiler_summary),
-                        style = MaterialTheme.typography.caption
-                    )
-                }
-            }
-            Switch(
-                checked = engine == Engine.TFLITE_EON,
-                modifier = Modifier
-                    .padding(start = 8.dp),
-                enabled = selectedDevice != null,
-                onCheckedChange = { checked ->
-                    engine = when (checked) {
-                        true -> Engine.TFLITE_EON
-                        false -> Engine.TFLITE
-                    }
-                }
-            )
-        }
-        CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice != null && buildState != BuildState.Started) ContentAlpha.high else ContentAlpha.disabled) {
-            Text(
-                text = stringResource(R.string.title_available_optimizations),
-                style = TextStyle(fontSize = 18.sp)
-            )
-        }
-        Row(
-            modifier = Modifier.padding(top = 8.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            RadioButton(
-                selected = modelType == ModelType.INT_8,
-                onClick = { onModelTypeSelected(modelType) },
-                enabled = selectedDevice != null && buildState != BuildState.Started
-            )
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        onClick = { onModelTypeSelected(modelType) })
-                    .padding(start = 8.dp)
-            ) {
-                CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice != null && buildState != BuildState.Started) ContentAlpha.high else ContentAlpha.disabled) {
-                    Text(
-                        text = AnnotatedString(text = stringResource(R.string.label_neural_classifier_quantized_int8))
-                    )
-                    Text(
-                        text = AnnotatedString(text = stringResource(R.string.label_optimization_performance_summary)),
-                        style = MaterialTheme.typography.caption
+                    Icon(
+                        modifier = Modifier.padding(start = 8.dp),
+                        imageVector = Icons.Rounded.Launch,
+                        contentDescription = null
                     )
                 }
             }
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            RadioButton(
-                selected = modelType == ModelType.FLOAT_32,
-                onClick = { onModelTypeSelected(modelType) },
-                enabled = selectedDevice != null && buildState != BuildState.Started
-            )
-            CompositionLocalProvider(LocalContentAlpha provides if (selectedDevice != null && buildState != BuildState.Started) ContentAlpha.high else ContentAlpha.disabled) {
-                Text(
-                    text = AnnotatedString(text = stringResource(R.string.label_neural_classifier_unoptimized_float32)),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(
-                            enabled = selectedDevice != null,
-                            onClick = { onModelTypeSelected(modelType) })
-                        .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
-                )
-            }
-        }
-        Spacer(modifier = Modifier.size(16.dp))
-        Button(
-            modifier = Modifier
-                .wrapContentWidth()
-                .align(CenterHorizontally),
-            onClick = {
-                onBuildFirmware(
-                    engine,
-                    modelType
-                )
-            },
-            enabled = selectedDevice != null && buildState != BuildState.Started
-        ) {
-            Text(text = stringResource(R.string.build))
-        }
+
     }
 }
 
 @Composable
-private fun LogRow(buildLog: BuildLog) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(color = MaterialTheme.colors.surface)
-            .padding(16.dp),
-    ) {
-        when (buildLog) {
-            is BuildLog.Data -> {
-                Text(text = buildLog.data.replace("\n", ""))
+private fun DeployImpulse(
+    connectedDevices: List<Device>,
+    selectedDevice: Device?,
+    onDeviceSelected: (Device) -> Unit,
+    downloadState: DownloadState,
+    onDownloadFirmwareClick: () -> Unit,
+    onSaveClick: (Uri, ByteArray) -> Unit
+) {
+    val context = LocalContext.current
+    var isDevicesMenuExpanded by remember { mutableStateOf(false) }
+    var width by rememberSaveable { mutableStateOf(0) }
+    var fileName by rememberSaveable {
+        mutableStateOf("")
+    }
+    var fileSize by rememberSaveable {
+        mutableStateOf(0)
+    }
+    val fileSaveLauncher = rememberLauncherForActivityResult(
+        contract = CreateZipFile("application/zip"),
+        onResult = { uri ->
+            if (downloadState is DownloadState.Saving) {
+                context.contentResolver?.query(uri, null, null, null, null)?.let { cursor ->
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    cursor.getColumnIndex(OpenableColumns.SIZE)
+                    cursor.moveToFirst()
+                    fileName = cursor.getString(nameIndex)
+                    fileSize = downloadState.data.size/1000
+                    cursor.close()
+                }
+                onSaveClick(uri, downloadState.data)
             }
-            is BuildLog.Finished -> {
-                Text(text = buildLog.success.takeIf { it }?.let { "Success" } ?: "Failed")
+        }
+    )
+    if (downloadState is DownloadState.Saving) {
+        SideEffect {
+            fileName = downloadState.fileName
+            fileSaveLauncher.launch(fileName)
+        }
+    }
+    Column(modifier = Modifier.padding(bottom = 72.dp)) {
+        Surface(elevation = 2.dp) {
+            Column(
+                modifier = Modifier.padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        modifier = Modifier.weight(1.0f),
+                        text = stringResource(R.string.label_select_firmware),
+                        style = MaterialTheme.typography.h6
+                    )
+                    if (downloadState !is DownloadState.Downloading || downloadState !is DownloadState.Saving) {
+                        IconButton(
+                            onClick = { onDownloadFirmwareClick() }) {
+                            Icon(
+                                imageVector = Icons.Outlined.FileDownload,
+                                contentDescription = null
+                            )
+                        }
+                    } else {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    IconButton(
+                        onClick = { }) {
+                        Icon(imageVector = Icons.Outlined.FolderOpen, contentDescription = null)
+                    }
+                }
+                Text(
+                    modifier = Modifier.padding(top = 8.dp),
+                    text = stringResource(R.string.label_select_firmware_rationale)
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = stringResource(R.string.label_file_name),
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1
+                        )
+                        Spacer(modifier = Modifier.height(height = 8.dp))
+                        Text(
+                            text = stringResource(R.string.label_file_size),
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1
+                        )
+                    }
+                    Column(modifier = Modifier.padding(start = 8.dp)) {
+                        if (fileName.isNotEmpty())
+                            Text(
+                                text = fileName,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        Spacer(modifier = Modifier.height(height = 8.dp))
+                        if (fileSize != 0)
+                            Text(
+                                text = stringResource(R.string.label_kb, fileSize),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                    }
+                }
+                OutlinedTextField(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp)
+                        .onSizeChanged { width = it.width },
+                    value = selectedDevice?.name ?: stringResource(id = R.string.empty),
+                    onValueChange = { },
+                    readOnly = true,
+                    label = {
+                        Text(text = stringResource(R.string.label_device))
+                    },
+                    leadingIcon = {
+                        Icon(
+                            modifier = Modifier
+                                .size(24.dp),
+                            imageVector = Icons.Rounded.DeveloperBoard,
+                            contentDescription = null,
+                            tint = MaterialTheme.colors.onSurface
+                        )
+                    },
+                    trailingIcon = {
+                        IconButton(
+                            enabled = connectedDevices.isNotEmpty(),
+                            onClick = {
+                                isDevicesMenuExpanded = true
+                            }
+                        ) {
+                            Icon(
+                                modifier = Modifier.rotate(if (isDevicesMenuExpanded) 180f else 0f),
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = null
+                            )
+                            ShowDevicesDropdown(
+                                modifier = Modifier.width(with(LocalDensity.current) { width.toDp() }),
+                                expanded = isDevicesMenuExpanded,
+                                connectedDevices = connectedDevices,
+                                onDeviceSelected = {
+                                    isDevicesMenuExpanded = false
+                                    onDeviceSelected(it)
+                                },
+                                onDismiss = {
+                                    isDevicesMenuExpanded = false
+                                }
+                            )
+                        }
+                    },
+                    singleLine = true
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Button(
+                onClick = {}) {
+                Text(
+                    text = stringResource(id = R.string.action_deploy).uppercase(
+                        Locale.US
+                    )
+                )
             }
         }
     }
+}
+private class CreateZipFile(private val fileType:String) : CreateDocument() {
+    @CallSuper
+    override fun createIntent(context: Context, input: String): Intent =
+        super.createIntent(context, input).setType(fileType)
 }
