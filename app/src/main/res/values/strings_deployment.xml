@@ -26,5 +26,13 @@
     <string name="title_downloading_firmware">Downloading Firmware</string>
     <string name="error_fw_download">Error while downloading firmware!</string>
     <string name="error_firmware">Error while downloading firmware</string>
+    <string name="label_building">Building…</string>
+    <string name="label_downloading">Downloading…</string>
+    <string name="label_verifying">Verifying…</string>
+    <string name="label_uploading">Uploading…</string>
+    <string name="label_testing">Testing…</string>
+    <string name="label_applying_update">Applying Update…</string>
+    <string name="label_confirming">Confirming…</string>
+    <string name="label_completed">Completed</string>
 
 </resources>

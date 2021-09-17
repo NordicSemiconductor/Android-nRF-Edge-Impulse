@@ -9,7 +9,6 @@ import no.nordicsemi.android.ei.service.EiService
 import no.nordicsemi.android.ei.service.param.BuildOnDeviceModelRequest
 import no.nordicsemi.android.ei.service.param.RenameDeviceRequest
 import no.nordicsemi.android.ei.service.param.StartSamplingRequest
-import no.nordicsemi.android.ei.util.Engine
 import javax.inject.Inject
 
 class ProjectRepository @Inject constructor(
@@ -64,15 +63,12 @@ class ProjectRepository @Inject constructor(
 
     suspend fun buildOnDeviceModels(
         projectId: Int,
-        keys: DevelopmentKeys,
-        engine: Engine
+        keys: DevelopmentKeys
     ) = withContext(ioDispatcher) {
         service.buildOnDevice(
             apiKey = keys.apiKey,
             projectId = projectId,
-            buildOnDeviceModels = BuildOnDeviceModelRequest(
-                engine = engine.engine
-            )
+            buildOnDeviceModels = BuildOnDeviceModelRequest()
         )
     }
 

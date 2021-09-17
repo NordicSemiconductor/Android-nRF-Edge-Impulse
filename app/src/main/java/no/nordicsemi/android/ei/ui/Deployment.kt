@@ -2,9 +2,6 @@ package no.nordicsemi.android.ei.ui
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
-import android.provider.OpenableColumns
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import androidx.annotation.CallSuper
 import androidx.compose.foundation.layout.*
@@ -13,8 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.outlined.FileDownload
-import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.rounded.DeveloperBoard
 import androidx.compose.material.icons.rounded.Launch
 import androidx.compose.runtime.*
@@ -22,27 +18,26 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import no.nordicsemi.android.ei.R
+import no.nordicsemi.android.ei.comms.DeploymentState
+import no.nordicsemi.android.ei.comms.DeploymentState.*
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Project
-import no.nordicsemi.android.ei.viewmodels.state.DownloadState
 import java.util.*
 
 @Composable
 fun Deployment(
     project: Project,
     connectedDevices: List<Device>,
-    downloadState: DownloadState,
-    onDownloadFirmwareClick: () -> Unit,
-    onSaveClick: (Uri, ByteArray) -> Unit
+    deploymentState: DeploymentState,
+    onDeployClick: () -> Unit
 ) {
     var selectedDevice by remember {
         mutableStateOf(connectedDevices.firstOrNull())
@@ -55,9 +50,8 @@ fun Deployment(
             onDeviceSelected = {
                 selectedDevice = it
             },
-            downloadState = downloadState,
-            onDownloadFirmwareClick = onDownloadFirmwareClick,
-            onSaveClick = onSaveClick,
+            deploymentState = deploymentState,
+            onDeployClick = onDeployClick
         )
     }
 }
@@ -123,108 +117,20 @@ private fun DeployImpulse(
     connectedDevices: List<Device>,
     selectedDevice: Device?,
     onDeviceSelected: (Device) -> Unit,
-    downloadState: DownloadState,
-    onDownloadFirmwareClick: () -> Unit,
-    onSaveClick: (Uri, ByteArray) -> Unit
+    deploymentState: DeploymentState,
+    onDeployClick: () -> Unit
 ) {
-    val context = LocalContext.current
     var isDevicesMenuExpanded by remember { mutableStateOf(false) }
     var width by rememberSaveable { mutableStateOf(0) }
-    var fileName by rememberSaveable {
-        mutableStateOf("")
-    }
-    var fileSize by rememberSaveable {
-        mutableStateOf(0)
-    }
-    val fileSaveLauncher = rememberLauncherForActivityResult(
-        contract = CreateZipFile("application/zip"),
-        onResult = { uri ->
-            if (downloadState is DownloadState.Saving) {
-                context.contentResolver?.query(uri, null, null, null, null)?.let { cursor ->
-                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                    cursor.getColumnIndex(OpenableColumns.SIZE)
-                    cursor.moveToFirst()
-                    fileName = cursor.getString(nameIndex)
-                    fileSize = downloadState.data.size/1000
-                    cursor.close()
-                }
-                onSaveClick(uri, downloadState.data)
-            }
-        }
-    )
-    if (downloadState is DownloadState.Saving) {
-        SideEffect {
-            fileName = downloadState.fileName
-            fileSaveLauncher.launch(fileName)
-        }
-    }
     Column(modifier = Modifier.padding(bottom = 72.dp)) {
         Surface(elevation = 2.dp) {
             Column(
                 modifier = Modifier.padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        modifier = Modifier.weight(1.0f),
-                        text = stringResource(R.string.label_select_firmware),
-                        style = MaterialTheme.typography.h6
-                    )
-                    if (downloadState !is DownloadState.Downloading || downloadState !is DownloadState.Saving) {
-                        IconButton(
-                            onClick = { onDownloadFirmwareClick() }) {
-                            Icon(
-                                imageVector = Icons.Outlined.FileDownload,
-                                contentDescription = null
-                            )
-                        }
-                    } else {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                    IconButton(
-                        onClick = { }) {
-                        Icon(imageVector = Icons.Outlined.FolderOpen, contentDescription = null)
-                    }
-                }
                 Text(
-                    modifier = Modifier.padding(top = 8.dp),
-                    text = stringResource(R.string.label_select_firmware_rationale)
+                    text = stringResource(R.string.title_deploy_impulse),
+                    style = MaterialTheme.typography.h6
                 )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp)
-                ) {
-                    Column {
-                        Text(
-                            text = stringResource(R.string.label_file_name),
-                            fontWeight = FontWeight.Medium,
-                            maxLines = 1
-                        )
-                        Spacer(modifier = Modifier.height(height = 8.dp))
-                        Text(
-                            text = stringResource(R.string.label_file_size),
-                            fontWeight = FontWeight.Medium,
-                            maxLines = 1
-                        )
-                    }
-                    Column(modifier = Modifier.padding(start = 8.dp)) {
-                        if (fileName.isNotEmpty())
-                            Text(
-                                text = fileName,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        Spacer(modifier = Modifier.height(height = 8.dp))
-                        if (fileSize != 0)
-                            Text(
-                                text = stringResource(R.string.label_kb, fileSize),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                    }
-                }
                 OutlinedTextField(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -273,9 +179,92 @@ private fun DeployImpulse(
                     },
                     singleLine = true
                 )
+                RowDeploymentState(
+                    color = when (deploymentState) {
+                        is Building, is Downloading, is Verifying -> MaterialTheme.colors.primary
+                        else -> Color.Gray
+                    },
+                    alpha = when (deploymentState) {
+                        is Building, is Downloading, is Verifying -> ContentAlpha.high
+                        else -> ContentAlpha.disabled
+                    },
+                    text = stringResource(id = R.string.label_building)
+                ) {
+                    when (deploymentState) {
+                        is Building.Started -> LinearProgressIndicator(
+                            modifier = Modifier
+                                .padding(top = 4.dp)
+                                .height(height = 2.dp)
+                                .fillMaxWidth()
+                        )
+                        is Building.Finished, is Downloading, is Verifying -> {
+                            LinearProgressIndicator(
+                                modifier = Modifier
+                                    .padding(top = 4.dp)
+                                    .height(height = 2.dp)
+                                    .fillMaxWidth(),
+                                progress = 1f
+                            )
+                        }
+                        else -> {
+                        }
+                    }
+                }
+                RowDeploymentState(
+                    color = when (deploymentState) {
+                        is Downloading, is Verifying -> MaterialTheme.colors.primary
+                        else -> Color.Gray
+                    },
+                    alpha = when (deploymentState) {
+                        is Downloading, is Verifying -> ContentAlpha.high
+                        else -> ContentAlpha.disabled
+                    },
+                    text = stringResource(id = R.string.label_downloading)
+                ) {
+                    when (deploymentState) {
+                        is Downloading.Started -> LinearProgressIndicator(
+                            modifier = Modifier
+                                .padding(top = 4.dp)
+                                .height(height = 2.dp)
+                                .fillMaxWidth()
+                        )
+                        is Downloading.Finished, is Verifying -> LinearProgressIndicator(
+                            modifier = Modifier
+                                .padding(top = 4.dp)
+                                .height(height = 2.dp)
+                                .fillMaxWidth(),
+                            progress = 1f
+                        )
+                        else -> {
+                        }
+                    }
+                }
+                RowDeploymentState(text = stringResource(id = R.string.label_verifying))
+                RowDeploymentState(
+                    color = when (deploymentState) {
+                        is Uploading -> MaterialTheme.colors.primary
+                        else -> Color.Gray
+                    },
+                    alpha = when (deploymentState) {
+                        is Uploading -> ContentAlpha.high
+                        else -> ContentAlpha.disabled
+                    },
+                    text = stringResource(id = R.string.label_uploading)
+                ) {
+                    if (deploymentState is Uploading)
+                        LinearProgressIndicator(
+                            modifier = Modifier
+                                .padding(top = 4.dp)
+                                .height(height = 2.dp)
+                                .fillMaxWidth()
+                        )
+                }
+                RowDeploymentState(text = stringResource(id = R.string.label_testing))
+                RowDeploymentState(text = stringResource(id = R.string.label_applying_update))
+                RowDeploymentState(text = stringResource(id = R.string.label_confirming))
+                RowDeploymentState(text = stringResource(id = R.string.label_completed))
             }
         }
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -283,7 +272,10 @@ private fun DeployImpulse(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             Button(
-                onClick = {}) {
+                enabled = deploymentState is Unknown || deploymentState is Completed,
+                onClick = {
+                    onDeployClick()
+                }) {
                 Text(
                     text = stringResource(id = R.string.action_deploy).uppercase(
                         Locale.US
@@ -293,8 +285,51 @@ private fun DeployImpulse(
         }
     }
 }
-private class CreateZipFile(private val fileType:String) : CreateDocument() {
+
+@Composable
+private fun RowDeploymentState(
+    color: Color = Color.Gray,
+    alpha: Float = ContentAlpha.disabled,
+    text: String,
+    progressText: String = "",
+    content: @Composable () -> Unit = {}
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Check,
+            contentDescription = null,
+            tint = color
+        )
+        Column(
+            modifier = Modifier
+                .weight(1.0f)
+                .padding(start = 16.dp)
+        ) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                CompositionLocalProvider(LocalContentAlpha provides alpha) {
+                    Text(modifier = Modifier.weight(1.0f), text = text, textAlign = TextAlign.Start)
+                    Text(
+                        modifier = Modifier.weight(1.0f),
+                        text = progressText,
+                        textAlign = TextAlign.End
+                    )
+                }
+            }
+            content()
+        }
+    }
+}
+
+private class CreateZipFile : CreateDocument() {
     @CallSuper
     override fun createIntent(context: Context, input: String): Intent =
-        super.createIntent(context, input).setType(fileType)
+        super.createIntent(context, input).setType(MIME_TYPE)
 }
+
+private const val MIME_TYPE = "application/zip"

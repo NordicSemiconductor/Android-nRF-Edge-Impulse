@@ -437,33 +437,13 @@ private fun ProjectContent(
                 )
             }
             composable(route = BottomNavigationScreen.DEPLOYMENT.route) {
-                /*Deployment(
-                    snackbarHostState = snackbarHostState,
-                    deploymentManager = viewModel.deploymentManager,
-                    projectName = viewModel.project.name,
-                    connectedDevices = connectedDevices,
-                    onBuildFirmware = { engine, modelType ->
-                        viewModel.buildOnDeviceModel(
-                            engine = engine,
-                            modelType = modelType
-                        )
-                    },
-                    onFirmwareDownload = { modelType, uri ->
-                        viewModel.downloadBuild(
-                            context = context,
-                            modelType = modelType,
-                            uri = uri
-                        )
-                    }
-                )*/
                 Deployment(
                     project = viewModel.project,
                     connectedDevices = connectedDevices,
-                    downloadState = viewModel.downloadState,
-                    onDownloadFirmwareClick = { ->
-                        viewModel.downloadFirmware()
-                    },
-                    onSaveClick = { uri, data -> viewModel.saveFile(context, uri, data) }
+                    deploymentState = viewModel.deploymentState,
+                    onDeployClick = {
+                        viewModel.deploy()
+                    }
                 )
             }
         }

@@ -7,14 +7,14 @@ import com.google.gson.JsonParser
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import no.nordicsemi.android.ei.comms.DeploymentState.Building
 import no.nordicsemi.android.ei.model.BuildLog
 import no.nordicsemi.android.ei.model.SocketToken
-import no.nordicsemi.android.ei.service.param.BuildOnDeviceModelResponse
-import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.websocket.EiWebSocket
 import no.nordicsemi.android.ei.websocket.WebSocketState
 import okhttp3.OkHttpClient
@@ -22,10 +22,10 @@ import okhttp3.Request
 
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class DeploymentManager(
-    private val scope: CoroutineScope,
+class BuildManager(
     private val gson: Gson,
-    private val exceptionHandler: CoroutineExceptionHandler,
+    scope: CoroutineScope,
+    exceptionHandler: CoroutineExceptionHandler,
     socketToken: SocketToken,
     client: OkHttpClient
 ) {
@@ -37,12 +37,15 @@ class DeploymentManager(
     )
     var jobId = 0
         private set
-    private var _buildState = MutableSharedFlow<BuildState>()
+    private var _buildState = MutableSharedFlow<Building>(
+        extraBufferCapacity = 10,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
     var logs = mutableStateListOf<BuildLog>()
         private set
 
     init {
-        _buildState.tryEmit(BuildState.Unknown)
+        _buildState.tryEmit(Building.Unknown)
         scope.launch(exceptionHandler) { registerToWebSocketStateChanges() }
         scope.launch(exceptionHandler) { registerToWebSocketMessages() }
     }
@@ -50,19 +53,21 @@ class DeploymentManager(
     /**
      * Returns the build state as a flow
      */
-    fun buildStateAsFlow(): Flow<BuildState> = _buildState
+    fun buildStateAsFlow(): Flow<Building> = _buildState
 
     /**
      * Initiates a websocket connection to obtain deployment messages.
      */
-    private fun connect() {
+    fun start(jobId: Int) {
+        this.jobId = jobId
+        _buildState.tryEmit(Building.Started)
         deploymentWebSocket.connect()
     }
 
     /**
      * Disconnect from the deployment websocket
      */
-    fun disconnect() {
+    fun stop() {
         deploymentWebSocket.disconnect()
     }
 
@@ -83,7 +88,7 @@ class DeploymentManager(
                 is WebSocketState.Failed -> {
                     // We need to stop pinging when the WebSocket throws an error.
                     deploymentWebSocket.stopPinging()
-                    _buildState.tryEmit(BuildState.Error(webSocketState.throwable.message))
+                    _buildState.tryEmit(Building.Error(webSocketState.throwable.message))
                 }
             }
         }
@@ -115,41 +120,20 @@ class DeploymentManager(
                                 )?.let { finished ->
                                     logs.add(finished)
                                     //Set the build state before disconnecting
-                                    _buildState.emit(
+                                    _buildState.tryEmit(
                                         when (finished.success) {
-                                            true -> BuildState.Finished
-                                            false -> BuildState.Error(reason = "Error while building")
+                                            true -> Building.Finished
+                                            false -> Building.Error(reason = "Error while building")
                                         }
                                     )
-                                    disconnect()
+                                    stop()
                                 }
                             }
                             else -> {
-
                             }
                         }
                     }
                 }
-            }
-        }
-    }
-
-    /**
-     * Calls buildOnDeviceModel api on the Edge impulse backend
-     * @param buildOnDeviceModel buildOnDeviceModel API call as a suspending lambda.
-     */
-    fun build(buildOnDeviceModel: suspend () -> BuildOnDeviceModelResponse) {
-        // Establish a socket connection right before calling build to avoid timeout
-        scope.launch(exceptionHandler) {
-            connect()
-            _buildState.emit(BuildState.Started)
-            buildOnDeviceModel().let { response ->
-                guard(response.success) {
-                    // Disconnect the websocket in case the build command fails
-                    disconnect()
-                    throw Throwable(response.error)
-                }
-                jobId = response.id
             }
         }
     }
