@@ -254,9 +254,8 @@ private fun DeployImpulse(
                                 .fillMaxWidth()
                         )
                 }
-                RowDeploymentState(text = stringResource(id = R.string.label_testing))
-                RowDeploymentState(text = stringResource(id = R.string.label_applying_update))
                 RowDeploymentState(text = stringResource(id = R.string.label_confirming))
+                RowDeploymentState(text = stringResource(id = R.string.label_applying_update))
                 RowDeploymentState(text = stringResource(id = R.string.label_completed))
             }
         }

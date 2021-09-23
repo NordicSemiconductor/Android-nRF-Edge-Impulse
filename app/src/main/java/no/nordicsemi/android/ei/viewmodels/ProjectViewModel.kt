@@ -176,10 +176,10 @@ class ProjectViewModel @Inject constructor(
                     initialBytes = 0
                     deploymentState = DeploymentState.Uploading
                 }
-                TEST -> deploymentState = DeploymentState.Testing
-                RESET, CONFIRM -> deploymentState = DeploymentState.Confirming
-                SUCCESS -> DeploymentState.Completed
-                null -> TODO()
+                TEST, RESET -> deploymentState = DeploymentState.ApplyingUpdate
+                CONFIRM -> DeploymentState.Confirming
+                else -> {
+                }
             }
         }
 
