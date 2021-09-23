@@ -27,5 +27,9 @@ sealed class DeploymentState {
 
     object Confirming : DeploymentState()
 
+    object Cancelled : DeploymentState()
+
     object Completed : DeploymentState()
+
+    object Failed : DeploymentState()
 }

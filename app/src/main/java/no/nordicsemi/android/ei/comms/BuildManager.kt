@@ -1,6 +1,5 @@
 package no.nordicsemi.android.ei.comms
 
-import androidx.compose.runtime.mutableStateListOf
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
@@ -41,8 +40,6 @@ class BuildManager(
         extraBufferCapacity = 10,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
-    var logs = mutableStateListOf<BuildLog>()
-        private set
 
     init {
         _buildState.tryEmit(Building.Unknown)
@@ -103,22 +100,11 @@ class BuildManager(
                 } else if (jsonElement.isJsonArray) {
                     jsonElement.asJsonArray.let { jsonArray ->
                         when (jsonArray.first().asString) {
-                            "job-data-$jobId" -> {
-                                gson.fromJson(
-                                    jsonArray[1] as JsonObject,
-                                    BuildLog.Data::class.java
-                                )?.takeIf { dataLog ->
-                                    dataLog.data != "\n"
-                                }?.let { data ->
-                                    logs.add(data)
-                                }
-                            }
                             "job-finished-$jobId" -> {
                                 gson.fromJson(
                                     jsonArray[1] as JsonObject,
                                     BuildLog.Finished::class.java
                                 )?.let { finished ->
-                                    logs.add(finished)
                                     //Set the build state before disconnecting
                                     _buildState.tryEmit(
                                         when (finished.success) {

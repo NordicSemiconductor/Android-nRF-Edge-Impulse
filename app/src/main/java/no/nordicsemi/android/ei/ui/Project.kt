@@ -441,9 +441,7 @@ private fun ProjectContent(
                     project = viewModel.project,
                     connectedDevices = connectedDevices,
                     deploymentState = viewModel.deploymentState,
-                    onDeployClick = {
-                        viewModel.deploy()
-                    }
+                    onDeployClick = { viewModel.deploy(it) }
                 )
             }
         }

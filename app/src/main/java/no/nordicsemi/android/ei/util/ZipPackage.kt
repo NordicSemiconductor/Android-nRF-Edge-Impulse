@@ -6,13 +6,18 @@ import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
 import timber.log.Timber
-import java.io.*
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.io.IOException
+import java.io.InputStreamReader
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 
 
-class ZipPackage(@NonNull data: ByteArray?) {
-    private val MANIFEST = "manifest.json"
+private const val MANIFEST = "manifest.json"
+
+class ZipPackage(@NonNull data: ByteArray) {
+
     private val gson = GsonBuilder()
         .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
         .create()
@@ -38,7 +43,7 @@ class ZipPackage(@NonNull data: ByteArray?) {
     }
 
     @Throws(IOException::class)
-    private fun initZipPackage(@NonNull data: ByteArray?) {
+    private fun initZipPackage(@NonNull data: ByteArray) {
         var ze: ZipEntry
         val entries: MutableMap<String?, ByteArray> = HashMap()
 
@@ -68,19 +73,6 @@ class ZipPackage(@NonNull data: ByteArray?) {
             val content = entries[name] ?: throw IOException("File not found: $name")
             binaries.add(android.util.Pair(file.imageIndex, content))
         }
-    }
-
-    @Throws(IOException::class)
-    private fun getData(@NonNull zis: ZipInputStream): ByteArray {
-        val buffer = ByteArray(1024)
-
-        // Read file content to byte array
-        val os = ByteArrayOutputStream()
-        var count: Int
-        while (zis.read(buffer).also { count = it } != -1) {
-            os.write(buffer, 0, count)
-        }
-        return os.toByteArray()
     }
 
     /**
@@ -116,6 +108,10 @@ class ZipPackage(@NonNull data: ByteArray?) {
                 throw IllegalStateException("File is outside extraction target directory.")
             }
         }
+    }
+
+    init {
+        initZipPackage(data = data)
     }
 
 }

@@ -37,19 +37,12 @@ fun Deployment(
     project: Project,
     connectedDevices: List<Device>,
     deploymentState: DeploymentState,
-    onDeployClick: () -> Unit
+    onDeployClick: (Device?) -> Unit
 ) {
-    var selectedDevice by remember {
-        mutableStateOf(connectedDevices.firstOrNull())
-    }
     Column(modifier = Modifier.verticalScroll(state = rememberScrollState())) {
         DesignImpulse(project = project)
         DeployImpulse(
             connectedDevices = connectedDevices,
-            selectedDevice = selectedDevice,
-            onDeviceSelected = {
-                selectedDevice = it
-            },
             deploymentState = deploymentState,
             onDeployClick = onDeployClick
         )
@@ -115,11 +108,13 @@ private fun DesignImpulse(
 @Composable
 private fun DeployImpulse(
     connectedDevices: List<Device>,
-    selectedDevice: Device?,
-    onDeviceSelected: (Device) -> Unit,
     deploymentState: DeploymentState,
-    onDeployClick: () -> Unit
+    onDeployClick: (Device?) -> Unit
 ) {
+
+    var selectedDevice by remember {
+        mutableStateOf(connectedDevices.firstOrNull())
+    }
     var isDevicesMenuExpanded by remember { mutableStateOf(false) }
     var width by rememberSaveable { mutableStateOf(0) }
     Column(modifier = Modifier.padding(bottom = 72.dp)) {
@@ -169,7 +164,7 @@ private fun DeployImpulse(
                                 connectedDevices = connectedDevices,
                                 onDeviceSelected = {
                                     isDevicesMenuExpanded = false
-                                    onDeviceSelected(it)
+                                    selectedDevice = it
                                 },
                                 onDismiss = {
                                     isDevicesMenuExpanded = false
@@ -272,9 +267,9 @@ private fun DeployImpulse(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             Button(
-                enabled = deploymentState is Unknown || deploymentState is Completed,
+                //enabled = deploymentState is Unknown || deploymentState is Completed,
                 onClick = {
-                    onDeployClick()
+                    onDeployClick(selectedDevice)
                 }) {
                 Text(
                     text = stringResource(id = R.string.action_deploy).uppercase(
