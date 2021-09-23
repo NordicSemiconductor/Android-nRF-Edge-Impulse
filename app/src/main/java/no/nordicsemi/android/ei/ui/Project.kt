@@ -444,6 +444,9 @@ private fun ProjectContent(
                     onDeployClick = { viewModel.deploy(it) }
                 )
             }
+            composable(route = BottomNavigationScreen.INFERENCING.route) {
+                InferencingScreen(connectedDevices = connectedDevices, results = arrayListOf())
+            }
         }
     }
     if (isWarningDialogVisible) {
@@ -581,7 +584,8 @@ private fun ProjectBottomNavigation(
     val screens = listOf(
         BottomNavigationScreen.DEVICES,
         BottomNavigationScreen.DATA_ACQUISITION,
-        BottomNavigationScreen.DEPLOYMENT
+        BottomNavigationScreen.DEPLOYMENT,
+        BottomNavigationScreen.INFERENCING
     )
     BottomNavigation(
         backgroundColor = MaterialTheme.colors.surface
@@ -595,7 +599,7 @@ private fun ProjectBottomNavigation(
                     )
                 },
                 label = {
-                    Text(text = stringResource(id = screen.resourceId))
+                    Text(text = stringResource(id = screen.resourceId), /*overflow = TextOverflow.Ellipsis,*/ maxLines = 1)
                 },
                 selected = currentRoute == screen.route,
                 onClick = {

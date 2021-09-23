@@ -34,8 +34,14 @@ enum class BottomNavigationScreen(
     DEPLOYMENT(
         route = Route.deployment,
         resourceId = R.string.label_deployment,
-        //TODO find the correct edge impulse icon
         drawableRes = R.drawable.ic_deployment_24,
+        shouldFabBeVisible = false
+    ),
+
+    INFERENCING(
+        route = Route.inferencing,
+        resourceId = R.string.title_inferencing,
+        drawableRes = R.drawable.ic_outline_inferencing_24,
         shouldFabBeVisible = false
     );
 
@@ -44,6 +50,7 @@ enum class BottomNavigationScreen(
             DEVICES.route -> DEVICES
             DATA_ACQUISITION.route -> DATA_ACQUISITION
             DEPLOYMENT.route -> DEPLOYMENT
+            INFERENCING.route -> INFERENCING
             else -> throw IllegalArgumentException("$navDestination.route is not a valid route")
         }
     }

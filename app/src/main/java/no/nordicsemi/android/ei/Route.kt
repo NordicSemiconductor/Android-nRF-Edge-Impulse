@@ -9,6 +9,7 @@ object Route {
     const val devices = "devices"
     const val dataAcquisition = "dataAcquisition"
     const val deployment = "deployment"
+    const val inferencing = "inferencing"
 
     const val device = "device"
 }
