@@ -5,4 +5,4 @@ package no.nordicsemi.android.ei.model
  * @param label Type of classification
  * @param value Value of classification, defines the certainty
  */
-data class Classification(val label: String, val value: Float)
+data class Classification(val label: String, val value: Double)

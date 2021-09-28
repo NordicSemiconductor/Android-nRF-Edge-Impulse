@@ -81,7 +81,7 @@ sealed class InferencingMessage : DeviceMessage() {
 
     data class InferencingResults(
         val classification: List<Classification>,
-        val anomaly: Number
+        val anomaly: Double
     ) : DeviceMessage() {
         override val type: Type = INFERENCING_RESULTS
     }

@@ -27,6 +27,8 @@ import no.nordicsemi.android.ei.model.InferencingMessage.InferencingRequest
 import no.nordicsemi.android.ei.model.InferencingMessage.InferencingResults
 import no.nordicsemi.android.ei.ui.layouts.InfoDeviceDisconnectedLayout
 import no.nordicsemi.android.ei.viewmodels.state.InferencingState
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.*
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -197,15 +199,24 @@ fun InferencingScreen(
                 ) {
                     inferenceResult.classification.forEach { classification ->
                         Text(
-                            text = classification.value.toString(),
+                            text = BigDecimal(classification.value).setScale(
+                                2,
+                                RoundingMode.HALF_EVEN
+                            ).toString(),
                             modifier = Modifier.weight(0.5f),
                             textAlign = TextAlign.Center,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis/*,
+                            color = if (classification.value < 0.6) {
+                                Color.Red
+                            } else MaterialTheme.colors.onSurface*/
                         )
                     }
                     Text(
-                        text = inferenceResult.anomaly.toString(),
+                        text = BigDecimal(inferenceResult.anomaly).setScale(
+                            2,
+                            RoundingMode.HALF_EVEN
+                        ).toString(),
                         modifier = Modifier.weight(0.5f),
                         textAlign = TextAlign.Center,
                         maxLines = 1,
