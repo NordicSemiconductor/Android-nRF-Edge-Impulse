@@ -50,3 +50,39 @@ data class DataSample(
         val xDisallowDuplicates: Int
     )
 }
+
+sealed class InferencingMessage : DeviceMessage() {
+
+    sealed class InferencingRequest : DeviceMessage() {
+        class Start : InferencingRequest() {
+            override val type: Type = START_INFERENCING
+        }
+
+        class Stop : InferencingRequest() {
+            override val type: Type = STOP_INFERENCING
+        }
+    }
+
+    sealed class InferencingResponse : DeviceMessage() {
+        data class Start(
+            val ok: Boolean,
+            val error: String?
+        ) : InferencingRequest() {
+            override val type: Type = START_INFERENCING_RESPONSE
+        }
+
+        data class Stop(
+            val ok: Boolean,
+            val error: String?
+        ) : InferencingRequest() {
+            override val type: Type = STOP_INFERENCING_RESPONSE
+        }
+    }
+
+    data class InferencingResults(
+        val classification: List<Classification>,
+        val anomaly: Number
+    ) : DeviceMessage() {
+        override val type: Type = INFERENCING_RESULTS
+    }
+}

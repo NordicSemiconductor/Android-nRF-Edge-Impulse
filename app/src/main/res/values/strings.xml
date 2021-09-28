@@ -24,5 +24,6 @@
     <string name="action_delete">Delete</string>
     <string name="label_supported">Supported</string>
     <string name="label_unsupported">Unsupported</string>
-    <string name="label_start_inferencing">Start Inferencing</string>
+    <string name="action_start_inferencing">Start Inferencing</string>
+    <string name="action_stop_inferencing">Stop Inferencing</string>
 </resources>

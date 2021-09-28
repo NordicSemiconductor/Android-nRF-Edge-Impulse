@@ -16,5 +16,21 @@ enum class Type {
     HTTP,
 
     @SerializedName("invalid")
-    INVALID
+    INVALID,
+
+    @SerializedName("start-inferencing")
+    START_INFERENCING,
+
+    @SerializedName("start-inferencing-respons")
+    START_INFERENCING_RESPONSE,
+
+    @SerializedName("stop-inferencing")
+    STOP_INFERENCING,
+
+    @SerializedName("stop-inferencing-response")
+    STOP_INFERENCING_RESPONSE,
+
+    @SerializedName("inference-results")
+    INFERENCING_RESULTS
+
 }

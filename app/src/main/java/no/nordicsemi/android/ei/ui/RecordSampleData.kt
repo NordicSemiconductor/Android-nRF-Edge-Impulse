@@ -11,7 +11,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Label
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material.icons.rounded.DeveloperBoard
@@ -37,7 +36,7 @@ import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.Message.Sample.*
 import no.nordicsemi.android.ei.model.Sensor
-import no.nordicsemi.android.ei.ui.theme.NordicRed
+import no.nordicsemi.android.ei.ui.layouts.InfoDeviceDisconnectedLayout
 import java.util.*
 
 
@@ -99,8 +98,8 @@ fun RecordSampleContent(
     focusRequester: FocusRequester,
     category: Category,
     onCategorySelected: (Category) -> Unit,
-    selectedDevice: Device?,
-    onDeviceSelected: (Device) -> Unit,
+    dataAcquisitionTarget: Device?,
+    onDataAcquisitionTargetSelected: (Device) -> Unit,
     label: String,
     onLabelChanged: (String) -> Unit,
     selectedSensor: Sensor?,
@@ -121,23 +120,13 @@ fun RecordSampleContent(
 
     //TODO clear data when if the device gets disconnected?
     connectedDevices.takeIf { it.isEmpty() }?.apply {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
-                Icon(
-                    modifier = Modifier
-                        .size(36.dp),
-                    tint = NordicRed,
-                    imageVector = Icons.Outlined.ErrorOutline,
-                    contentDescription = context.getString(R.string.connect_device_for_data_acquisition)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Text(text = context.getString(R.string.connect_device_for_data_acquisition))
-            }
+        CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
+            InfoDeviceDisconnectedLayout(text = context.getString(R.string.connect_device_for_data_acquisition))
         }
         Spacer(modifier = Modifier.height(height = 16.dp))
     } ?: run {
-        if (selectedDevice == null) {
-            onDeviceSelected(connectedDevices[0])
+        if (dataAcquisitionTarget == null) {
+            onDataAcquisitionTargetSelected(connectedDevices[0])
         }
     }
     OutlinedTextField(
@@ -209,7 +198,7 @@ fun RecordSampleContent(
         singleLine = true
     )
     OutlinedTextField(
-        value = selectedDevice?.name ?: stringResource(id = R.string.empty),
+        value = dataAcquisitionTarget?.name ?: stringResource(id = R.string.empty),
         onValueChange = { },
         enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
         modifier = Modifier
@@ -247,7 +236,7 @@ fun RecordSampleContent(
                     expanded = isDevicesMenuExpanded,
                     connectedDevices = connectedDevices,
                     onDeviceSelected = { device ->
-                        onDeviceSelected(device)
+                        onDataAcquisitionTargetSelected(device)
                         isDevicesMenuExpanded = false
                     },
                     onDismiss = {
@@ -311,7 +300,7 @@ fun RecordSampleContent(
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = null
                 )
-                selectedDevice?.let { device ->
+                dataAcquisitionTarget?.let { device ->
                     ShowDropdown(
                         modifier = Modifier.width(with(LocalDensity.current) { width.toDp() }),
                         expanded = isSensorsMenuExpanded,

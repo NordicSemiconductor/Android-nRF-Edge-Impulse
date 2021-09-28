@@ -4,6 +4,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -16,9 +18,15 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Device
+import no.nordicsemi.android.ei.model.InferencingMessage.InferencingRequest
+import no.nordicsemi.android.ei.model.InferencingMessage.InferencingResults
+import no.nordicsemi.android.ei.ui.layouts.InfoDeviceDisconnectedLayout
+import no.nordicsemi.android.ei.viewmodels.state.InferencingState
 import java.util.*
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -26,13 +34,16 @@ import java.util.*
 fun InferencingScreen(
     modifier: Modifier = Modifier,
     connectedDevices: List<Device>,
-    results: List<Int>
+    results: List<InferencingResults>,
+    inferencingTarget: Device?,
+    onInferencingTargetSelected: (Device) -> Unit,
+    inferencingState: InferencingState,
+    sendInferencingRequest: (InferencingRequest) -> Unit
 ) {
-    var selectedDevice by remember {
-        mutableStateOf(connectedDevices.firstOrNull())
-    }
+
     var isDevicesMenuExpanded by remember { mutableStateOf(false) }
     var width by rememberSaveable { mutableStateOf(0) }
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize(),
@@ -48,12 +59,23 @@ fun InferencingScreen(
             )
         }
         item {
+            connectedDevices.takeIf { it.isEmpty() }?.let {
+                InfoDeviceDisconnectedLayout(
+                    text = stringResource(R.string.connect_device_for_inferencing),
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            } ?: run {
+                if (inferencingTarget == null) {
+                    onInferencingTargetSelected(connectedDevices.first())
+                }
+            }
             OutlinedTextField(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp)
+                    .padding(start = 16.dp, top = 16.dp, end = 16.dp)
                     .onSizeChanged { width = it.width },
-                value = selectedDevice?.name ?: stringResource(id = R.string.empty),
+                value = inferencingTarget?.name ?: stringResource(id = R.string.empty),
+                enabled = connectedDevices.isNotEmpty(),
                 onValueChange = { },
                 readOnly = true,
                 label = {
@@ -84,9 +106,9 @@ fun InferencingScreen(
                             modifier = Modifier.width(with(LocalDensity.current) { width.toDp() }),
                             expanded = isDevicesMenuExpanded,
                             connectedDevices = connectedDevices,
-                            onDeviceSelected = {
+                            onDeviceSelected = { device ->
                                 isDevicesMenuExpanded = false
-                                selectedDevice = it
+                                onInferencingTargetSelected(device)
                             },
                             onDismiss = {
                                 isDevicesMenuExpanded = false
@@ -102,43 +124,97 @@ fun InferencingScreen(
                     .padding(start = 16.dp, end = 16.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
-                Button(modifier = Modifier.padding(vertical = 16.dp), onClick = { /*TODO*/ }) {
+                Button(
+                    modifier = Modifier
+                        .width(width = 200.dp)
+                        .padding(vertical = 16.dp),
+                    enabled = connectedDevices.isNotEmpty(),
+                    onClick = {
+                        sendInferencingRequest(
+                            when (inferencingState) {
+                                InferencingState.Started -> InferencingRequest.Stop()
+                                InferencingState.Stopped -> InferencingRequest.Start()
+                            }
+                        )
+                    }) {
                     Text(
-                        text = stringResource(id = R.string.label_start_inferencing).uppercase(
+                        text = stringResource(
+                            id = when (inferencingState) {
+                                InferencingState.Started -> R.string.action_stop_inferencing
+                                InferencingState.Stopped -> R.string.action_start_inferencing
+                            }
+                        ).uppercase(
                             Locale.US
                         )
                     )
                 }
             }
         }
-
-        results.takeIf { it.isNotEmpty() }?.let {
+        results.takeIf { it.isNotEmpty() }?.let { inferenceResults ->
             stickyHeader {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(MaterialTheme.colors.background)
-                        .padding(16.dp)
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    // TODO fix the columns
+                    inferenceResults.first().classification.forEach { classification ->
+                        Text(
+                            text = classification.label/*.replaceFirstChar {
+                                if (it.isLowerCase()) it.titlecase(
+                                    Locale.US
+                                ) else it.toString()
+                            }*/,
+                            modifier = Modifier.weight(0.5f),
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                     Text(
-                        text = stringResource(id = R.string.label_col_sample_name),
+                        text = "anomaly",
                         modifier = Modifier.weight(0.5f),
                         fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
+                }
+                Divider()
+            }
+            items(items = inferenceResults) { inferenceResult ->
+                LazyRow {
+
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colors.surface)
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    inferenceResult.classification.forEach { classification ->
+                        Text(
+                            text = classification.value.toString(),
+                            modifier = Modifier.weight(0.5f),
+                            textAlign = TextAlign.Center,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                     Text(
-                        text = stringResource(id = R.string.label_col_label),
+                        text = inferenceResult.anomaly.toString(),
                         modifier = Modifier.weight(0.5f),
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = stringResource(id = R.string.label_col_length),
-                        modifier = Modifier.width(60.dp),
-                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
                 Divider()
             }
         }
     }
+
 }

@@ -1,6 +1,5 @@
 package no.nordicsemi.android.ei.viewmodels
 
-import android.annotation.SuppressLint
 import android.app.Application
 import android.bluetooth.BluetoothDevice
 import android.content.Context
@@ -39,10 +38,9 @@ import no.nordicsemi.android.ei.di.ProjectComponentEntryPoint
 import no.nordicsemi.android.ei.di.ProjectManager
 import no.nordicsemi.android.ei.di.UserComponentEntryPoint
 import no.nordicsemi.android.ei.di.UserManager
-import no.nordicsemi.android.ei.model.Category
-import no.nordicsemi.android.ei.model.Device
+import no.nordicsemi.android.ei.model.*
+import no.nordicsemi.android.ei.model.InferencingMessage.*
 import no.nordicsemi.android.ei.model.Message.Sample
-import no.nordicsemi.android.ei.model.Sensor
 import no.nordicsemi.android.ei.repository.ProjectDataRepository
 import no.nordicsemi.android.ei.repository.ProjectRepository
 import no.nordicsemi.android.ei.repository.UserDataRepository
@@ -50,11 +48,10 @@ import no.nordicsemi.android.ei.util.ZipPackage
 import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.viewmodels.event.Event
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
+import no.nordicsemi.android.ei.viewmodels.state.InferencingState
 import okhttp3.OkHttpClient
 import javax.inject.Inject
 
-
-@SuppressLint("LogNotTimber")
 @HiltViewModel
 class ProjectViewModel @Inject constructor(
     @ApplicationContext context: Context,
@@ -112,16 +109,15 @@ class ProjectViewModel @Inject constructor(
 
     // ---- Fields used for Recording New Sample --------------
     val focusRequester = FocusRequester()
-    var selectedDevice: Device? by mutableStateOf(null)
+    var dataAcquisitionTarget: Device? by mutableStateOf(null)
         private set
     var label: String by mutableStateOf("Sample")
         private set
-    var selectedSensor: Sensor? by mutableStateOf(null)
+    var sensor: Sensor? by mutableStateOf(null)
         private set
     var sampleLength by mutableStateOf(20000)
-        //TODO fix hardcoded sample length
         private set
-    var selectedFrequency: Number? by mutableStateOf(null)
+    var frequency: Number? by mutableStateOf(null)
         private set
 
     /** Creates a deployment manager */
@@ -143,9 +139,25 @@ class ProjectViewModel @Inject constructor(
         private set
 
     var samplingState = derivedStateOf {
-        selectedDevice?.let {
+        dataAcquisitionTarget?.let {
             dataAcquisitionManagers[it.deviceId]?.samplingState
         } ?: Sample.Unknown
+    }
+        private set
+
+    var inferencingTarget: Device? by mutableStateOf(null)
+        private set
+
+    var inferencingState = derivedStateOf {
+        inferencingTarget?.let {
+            dataAcquisitionManagers[it.deviceId]?.inferencingState
+        } ?: InferencingState.Stopped
+    }
+        private set
+    var inferencingResults = derivedStateOf {
+        inferencingTarget?.let {
+            dataAcquisitionManagers[it.deviceId]?.inferenceResults
+        } ?: mutableStateListOf<InferencingResults>()
     }
         private set
 
@@ -276,8 +288,8 @@ class ProjectViewModel @Inject constructor(
                     clear()
                     addAll(response.devices)
                     // We need to re-assign the selected device name for record sample data screen
-                    selectedDevice =
-                        configuredDevices.find { it.deviceId == selectedDevice?.deviceId }
+                    dataAcquisitionTarget =
+                        configuredDevices.find { it.deviceId == dataAcquisitionTarget?.deviceId }
                 }
             }.also { isRefreshing = false }
         }
@@ -313,7 +325,7 @@ class ProjectViewModel @Inject constructor(
     }
 
     fun onDeviceSelected(device: Device) {
-        selectedDevice = device
+        dataAcquisitionTarget = device
         device.sensors.firstOrNull()
             ?.let { onSensorSelected(sensor = it) }
     }
@@ -323,14 +335,14 @@ class ProjectViewModel @Inject constructor(
     }
 
     fun onSensorSelected(sensor: Sensor) {
-        this.selectedSensor = sensor
+        this.sensor = sensor
         sensor.frequencies.firstOrNull()
             ?.let { onFrequencySelected(frequency = it) }
-            ?: run { selectedFrequency = null }
+            ?: run { frequency = null }
     }
 
     fun onFrequencySelected(frequency: Number) {
-        this.selectedFrequency = frequency
+        this.frequency = frequency
     }
 
     fun onSampleLengthChanged(sampleLength: Int) {
@@ -378,9 +390,9 @@ class ProjectViewModel @Inject constructor(
                     eventChannel.send(Event.Error(throwable))
                 }
         }) {
-            selectedDevice?.let { device ->
-                selectedSensor?.let { sensor ->
-                    selectedFrequency?.let { frequency ->
+            dataAcquisitionTarget?.let { device ->
+                sensor?.let { sensor ->
+                    frequency?.let { frequency ->
                         resetSamplingState(device = device)
                         projectRepository.startSampling(
                             keys = keys,
@@ -501,7 +513,7 @@ class ProjectViewModel @Inject constructor(
      */
     fun resetSamplingState() {
         // We should reset the sampling state before starting a new sampling session.
-        selectedDevice?.let { device ->
+        dataAcquisitionTarget?.let { device ->
             resetSamplingState(device = device)
         }
     }
@@ -555,6 +567,16 @@ class ProjectViewModel @Inject constructor(
                 configuredDevices.remove(device)
             }
         }
+    }
+
+    fun sendInferencingRequest(inferencingRequest: InferencingRequest) {
+        inferencingTarget?.let { device ->
+            dataAcquisitionManagers[device.deviceId]?.sendInferencingRequest(inferencingRequest)
+        }
+    }
+
+    fun onInferencingTargetSelected(device: Device) {
+        inferencingTarget = device
     }
 }
 

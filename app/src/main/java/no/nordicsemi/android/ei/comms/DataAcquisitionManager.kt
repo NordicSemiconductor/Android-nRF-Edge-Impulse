@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Base64
 import android.util.Log
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.google.gson.Gson
@@ -20,11 +21,14 @@ import no.nordicsemi.android.ble.ktx.stateAsFlow
 import no.nordicsemi.android.ei.ble.BleDevice
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.model.*
+import no.nordicsemi.android.ei.model.InferencingMessage.InferencingRequest
+import no.nordicsemi.android.ei.model.InferencingMessage.InferencingResponse
 import no.nordicsemi.android.ei.model.Message.*
 import no.nordicsemi.android.ei.model.Message.Sample
 import no.nordicsemi.android.ei.model.Message.Sample.*
 import no.nordicsemi.android.ei.util.exhaustive
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
+import no.nordicsemi.android.ei.viewmodels.state.InferencingState
 import no.nordicsemi.android.ei.websocket.EiWebSocket
 import no.nordicsemi.android.ei.websocket.WebSocketState
 import okhttp3.Call
@@ -58,6 +62,12 @@ class DataAcquisitionManager(
         private set
 
     var isSamplingRequestedFromDevice by mutableStateOf(false)
+
+    var inferencingState by mutableStateOf<InferencingState>(InferencingState.Stopped)
+        private set
+
+    var inferenceResults = mutableStateListOf<InferencingMessage.InferencingResults>()
+        private set
 
     /** The device ID. Initially set to device MAC address. */
     private val deviceId: String = device.deviceId
@@ -198,6 +208,7 @@ class DataAcquisitionManager(
     private suspend fun registerToDeviceNotifications() {
         bleDevice.messagesAsFlow()
             .collect { json ->
+                Log.d("AAAA", "Device notification $json")
                 val deviceMessage = gson.fromJson(json, DeviceMessage::class.java)
                 when (deviceMessage) {
                     is WebSocketMessage -> {
@@ -249,6 +260,16 @@ class DataAcquisitionManager(
                             ),
                             dataSample = deviceMessage
                         )
+                    }
+                    is InferencingResponse.Start -> {
+                        inferencingState = InferencingState.Started
+                    }
+                    is InferencingResponse.Stop -> {
+                        inferencingState = InferencingState.Stopped
+                    }
+                    is InferencingMessage.InferencingResults -> {
+                        inferencingState = InferencingState.Started
+                        inferenceResults.add(deviceMessage)
                     }
                     else -> {
                         //TODO check other messages
@@ -342,6 +363,10 @@ class DataAcquisitionManager(
                     )
                 }
             })
+    }
+
+    fun sendInferencingRequest(inferencingMessage: InferencingRequest) {
+        bleDevice.send(generateDeviceMessage(message = inferencingMessage))
     }
 }
 

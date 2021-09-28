@@ -134,15 +134,19 @@ private fun LargeScreen(
                                 focusRequester = viewModel.focusRequester,
                                 category = category,
                                 onCategorySelected = { category = it },
-                                selectedDevice = viewModel.selectedDevice,
-                                onDeviceSelected = { viewModel.onDeviceSelected(device = it) },
+                                dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
+                                onDataAcquisitionTargetSelected = {
+                                    viewModel.onDeviceSelected(
+                                        device = it
+                                    )
+                                },
                                 label = viewModel.label,
                                 onLabelChanged = { viewModel.onLabelChanged(label = it) },
-                                selectedSensor = viewModel.selectedSensor,
+                                selectedSensor = viewModel.sensor,
                                 onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
                                 sampleLength = viewModel.sampleLength,
                                 onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
-                                selectedFrequency = viewModel.selectedFrequency,
+                                selectedFrequency = viewModel.frequency,
                                 onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) }
                             )
                             Spacer(modifier = Modifier.height(16.dp))
@@ -225,15 +229,15 @@ private fun SmallScreen(
                         focusRequester = viewModel.focusRequester,
                         category = category,
                         onCategorySelected = { category = it },
-                        selectedDevice = viewModel.selectedDevice,
-                        onDeviceSelected = { viewModel.onDeviceSelected(device = it) },
+                        dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
+                        onDataAcquisitionTargetSelected = { viewModel.onDeviceSelected(device = it) },
                         label = viewModel.label,
                         onLabelChanged = { viewModel.onLabelChanged(label = it) },
-                        selectedSensor = viewModel.selectedSensor,
+                        selectedSensor = viewModel.sensor,
                         onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
                         sampleLength = viewModel.sampleLength,
                         onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
-                        selectedFrequency = viewModel.selectedFrequency,
+                        selectedFrequency = viewModel.frequency,
                         onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) }
                     )
                     Spacer(modifier = Modifier.height(32.dp))
@@ -319,9 +323,10 @@ private fun ProjectContent(
     val trainingListState = rememberLazyListState()
     val testingListState = rememberLazyListState()
     val listStates = listOf(trainingListState, testingListState)
-    var isWarningDialogVisible by rememberSaveable {
-        mutableStateOf(false)
-    }
+    var isWarningDialogVisible by rememberSaveable { mutableStateOf(false) }
+    val inferencingState by remember { viewModel.inferencingState }
+    val inferencingResults by remember { viewModel.inferencingResults }
+
     LocalLifecycleOwner.current.lifecycleScope.launchWhenStarted {
         viewModel.eventFlow.runCatching {
             this.collect { event ->
@@ -445,7 +450,18 @@ private fun ProjectContent(
                 )
             }
             composable(route = BottomNavigationScreen.INFERENCING.route) {
-                InferencingScreen(connectedDevices = connectedDevices, results = arrayListOf())
+                InferencingScreen(
+                    connectedDevices = connectedDevices,
+                    inferencingTarget = viewModel.inferencingTarget,
+                    results = inferencingResults,
+                    onInferencingTargetSelected = { viewModel.onInferencingTargetSelected(it) },
+                    inferencingState = inferencingState,
+                    sendInferencingRequest = { inferencingRequest ->
+                        viewModel.sendInferencingRequest(
+                            inferencingRequest = inferencingRequest
+                        )
+                    }
+                )
             }
         }
     }
@@ -599,7 +615,10 @@ private fun ProjectBottomNavigation(
                     )
                 },
                 label = {
-                    Text(text = stringResource(id = screen.resourceId), /*overflow = TextOverflow.Ellipsis,*/ maxLines = 1)
+                    Text(
+                        text = stringResource(id = screen.resourceId), /*overflow = TextOverflow.Ellipsis,*/
+                        maxLines = 1
+                    )
                 },
                 selected = currentRoute == screen.route,
                 onClick = {

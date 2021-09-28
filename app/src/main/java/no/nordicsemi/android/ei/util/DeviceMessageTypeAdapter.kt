@@ -4,9 +4,10 @@ import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
 import no.nordicsemi.android.ei.model.*
+import no.nordicsemi.android.ei.model.InferencingMessage.*
 import java.lang.reflect.Type
 
-class DeviceMessageTypeAdapter: JsonDeserializer<DeviceMessage> {
+class DeviceMessageTypeAdapter : JsonDeserializer<DeviceMessage> {
 
     override fun deserialize(
         json: JsonElement?,
@@ -18,6 +19,18 @@ class DeviceMessageTypeAdapter: JsonDeserializer<DeviceMessage> {
             "configure" -> ConfigureMessage::class.java
             "http" -> {
                 DataSample::class.java
+            }
+            "start-inferencing" -> {
+                InferencingRequest::class.java
+            }
+            "start-inferencing-respons" -> {
+                InferencingResponse.Start::class.java
+            }
+            "stop-inferencing-response" -> {
+                InferencingResponse.Stop::class.java
+            }
+            "inference-results" -> {
+                InferencingResults::class.java
             }
             else -> return InvalidMessage
         }

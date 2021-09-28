@@ -1,11 +1,11 @@
 package no.nordicsemi.android.ei.util
 
+import android.util.Log
 import androidx.annotation.Keep
 import androidx.annotation.NonNull
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
-import timber.log.Timber
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.IOException
@@ -62,7 +62,7 @@ class ZipPackage(@NonNull data: ByteArray) {
                     entries[name] = content
                 }
                 else -> {
-                    Timber.w("Unsupported file found: %s", name)
+                    Log.d("AAAA","Unsupported file found: $name")
                 }
             }
         }
