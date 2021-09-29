@@ -452,16 +452,15 @@ private fun ProjectContent(
             composable(route = BottomNavigationScreen.INFERENCING.route) {
                 InferencingScreen(
                     connectedDevices = connectedDevices,
+                    inferenceResults = inferencingResults,
                     inferencingTarget = viewModel.inferencingTarget,
-                    results = inferencingResults,
                     onInferencingTargetSelected = { viewModel.onInferencingTargetSelected(it) },
-                    inferencingState = inferencingState,
-                    sendInferencingRequest = { inferencingRequest ->
-                        viewModel.sendInferencingRequest(
-                            inferencingRequest = inferencingRequest
-                        )
-                    }
-                )
+                    inferencingState = inferencingState
+                ) { inferencingRequest ->
+                    viewModel.sendInferencingRequest(
+                        inferencingRequest = inferencingRequest
+                    )
+                }
             }
         }
     }

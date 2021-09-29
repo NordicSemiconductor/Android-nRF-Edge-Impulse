@@ -262,6 +262,7 @@ class DataAcquisitionManager(
                         )
                     }
                     is InferencingResponse.Start -> {
+                        inferenceResults.clear()
                         inferencingState = InferencingState.Started
                     }
                     is InferencingResponse.Stop -> {

@@ -290,6 +290,8 @@ class ProjectViewModel @Inject constructor(
                     // We need to re-assign the selected device name for record sample data screen
                     dataAcquisitionTarget =
                         configuredDevices.find { it.deviceId == dataAcquisitionTarget?.deviceId }
+                    inferencingTarget =
+                        configuredDevices.find { it.deviceId == inferencingTarget?.deviceId }
                 }
             }.also { isRefreshing = false }
         }
