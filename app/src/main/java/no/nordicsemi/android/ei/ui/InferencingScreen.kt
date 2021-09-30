@@ -2,11 +2,14 @@ package no.nordicsemi.android.ei.ui
 
 import android.content.res.Configuration
 import android.util.Log
-import androidx.compose.foundation.*
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -57,17 +60,15 @@ fun InferencingScreen(
             .fillMaxSize()
             .padding(bottom = 56.dp)
     ) {
-        Column(modifier = Modifier.verticalScroll(state = rememberScrollState())) {
-            StartInferencing(
-                isLargeScreen = isLargeScreen,
-                isLandscape = isLandscape,
-                connectedDevices = connectedDevices,
-                inferencingTarget = inferencingTarget,
-                onInferencingTargetSelected = onInferencingTargetSelected,
-                inferencingState = inferencingState,
-                sendInferencingRequest = sendInferencingRequest
-            )
-        }
+        StartInferencing(
+            isLargeScreen = isLargeScreen,
+            isLandscape = isLandscape,
+            connectedDevices = connectedDevices,
+            inferencingTarget = inferencingTarget,
+            onInferencingTargetSelected = onInferencingTargetSelected,
+            inferencingState = inferencingState,
+            sendInferencingRequest = sendInferencingRequest
+        )
         connectedDevices.takeIf { it.isEmpty() }?.let {
             InfoDeviceDisconnectedLayout(
                 text = stringResource(R.string.connect_device_for_inferencing),
