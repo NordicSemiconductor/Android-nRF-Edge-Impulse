@@ -261,7 +261,10 @@ private fun StartInferencing(
                             InferencingState.Stopped -> InferencingRequest.Start()
                         }
                     )
-                }) {
+                },
+                colors = ButtonDefaults.buttonColors(if( inferencingState is InferencingState.Started) Color.Red
+                else MaterialTheme.colors.primary)
+            ) {
                 Text(
                     text = stringResource(
                         id = when (inferencingState) {
@@ -270,7 +273,8 @@ private fun StartInferencing(
                         }
                     ).uppercase(
                         Locale.US
-                    )
+                    ),
+                    color = Color.White
                 )
             }
         }
@@ -363,7 +367,7 @@ private fun TableRow(inferenceResults: InferenceResults, cellWidth: Dp) {
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = classification.value.color()
+                color = inferenceResults.classification.all { it.value < 0.6 }.takeIf { it }?.let { Color.Red } ?: run {classification.value.color()}
             )
         }
         Text(
