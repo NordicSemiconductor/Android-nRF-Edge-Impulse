@@ -23,7 +23,7 @@ class DeviceMessageTypeAdapter : JsonDeserializer<DeviceMessage> {
             "start-inferencing" -> {
                 InferencingRequest::class.java
             }
-            "start-inferencing-respons" -> {
+            "start-inferencing-response" -> {
                 InferencingResponse.Start::class.java
             }
             "stop-inferencing-response" -> {
