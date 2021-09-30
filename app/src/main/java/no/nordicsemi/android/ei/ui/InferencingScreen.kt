@@ -100,7 +100,7 @@ private fun StartInferencing(
     var isDevicesMenuExpanded by remember { mutableStateOf(false) }
     var width by rememberSaveable { mutableStateOf(0) }
 
-    if (!isLargeScreen && isLandscape) {
+    if (isLargeScreen || isLandscape) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -288,14 +288,9 @@ private fun InferencingResults(
     val listState = rememberLazyListState()
     val screenWidth = LocalConfiguration.current.screenWidthDp
     val scrollState = rememberScrollState()
-    inferenceResults.takeIf { it.isNotEmpty() }?.let { inferenceResult ->
-        val cellCount = inferenceResult.first().classification.size + 1
-        val cellWidth = if (isLandscape || isLargeScreen) {
-            (screenWidth / cellCount).dp
-        } else {
-            CELL_WIDTH
-        }
-
+    inferenceResults.takeIf { it.isNotEmpty() }?.let { results ->
+        val cellCount = results.first().classification.size
+        val cellWidth = calculateWith(cellCount, screenWidth, isLargeScreen, isLandscape)
         Log.d("AAAA", "Cell width: $cellWidth")
         LazyColumn(
             modifier = Modifier
@@ -309,7 +304,7 @@ private fun InferencingResults(
                         .fillMaxWidth()
                         .background(MaterialTheme.colors.background)
                 ) {
-                    inferenceResult.first().let { result ->
+                    results.firstOrNull()?.let { result ->
                         result.classification.forEach {
                             Text(
                                 text = it.label,
@@ -336,7 +331,7 @@ private fun InferencingResults(
                 }
                 Divider()
             }
-            items(items = inferenceResult) { results ->
+            items(items = results) { results ->
                 TableRow(inferenceResults = results, cellWidth = cellWidth)
             }
         }
@@ -384,6 +379,25 @@ private fun TableRow(inferenceResults: InferenceResults, cellWidth: Dp) {
     Divider()
 }
 
+private fun calculateWith(
+    cellCount:Int,
+    screenWidth: Int,
+    isLargeScreen: Boolean,
+    isLandscape: Boolean,
+): Dp = if (isLandscape) {
+    if (isLargeScreen) {
+        if (cellCount == 5) {
+            (screenWidth / cellCount).dp
+        } else {
+            MAX_CELL_WIDTH
+        }
+    } else {
+        MIN_CELL_WIDTH
+    }
+} else {
+    MIN_CELL_WIDTH
+}
+
 @Composable
 private fun Double.color(): Color {
     return if (this < 0.6) {
@@ -391,4 +405,5 @@ private fun Double.color(): Color {
     } else MaterialTheme.colors.onSurface
 }
 
-private val CELL_WIDTH = 100.dp
+private val MIN_CELL_WIDTH = 100.dp
+private val MAX_CELL_WIDTH = 140.dp
