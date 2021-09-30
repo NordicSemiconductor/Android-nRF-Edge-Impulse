@@ -2,14 +2,11 @@ package no.nordicsemi.android.ei.ui
 
 import android.content.res.Configuration
 import android.util.Log
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -60,15 +57,17 @@ fun InferencingScreen(
             .fillMaxSize()
             .padding(bottom = 56.dp)
     ) {
-        StartInferencing(
-            isLargeScreen = isLargeScreen,
-            isLandscape = isLandscape,
-            connectedDevices = connectedDevices,
-            inferencingTarget = inferencingTarget,
-            onInferencingTargetSelected = onInferencingTargetSelected,
-            inferencingState = inferencingState,
-            sendInferencingRequest = sendInferencingRequest
-        )
+        Column(modifier = Modifier.verticalScroll(state = rememberScrollState())) {
+            StartInferencing(
+                isLargeScreen = isLargeScreen,
+                isLandscape = isLandscape,
+                connectedDevices = connectedDevices,
+                inferencingTarget = inferencingTarget,
+                onInferencingTargetSelected = onInferencingTargetSelected,
+                inferencingState = inferencingState,
+                sendInferencingRequest = sendInferencingRequest
+            )
+        }
         connectedDevices.takeIf { it.isEmpty() }?.let {
             InfoDeviceDisconnectedLayout(
                 text = stringResource(R.string.connect_device_for_inferencing),
@@ -289,7 +288,7 @@ private fun InferencingResults(
     val screenWidth = LocalConfiguration.current.screenWidthDp
     val scrollState = rememberScrollState()
     inferenceResults.takeIf { it.isNotEmpty() }?.let { results ->
-        val cellCount = results.first().classification.size
+        val cellCount = results.first().classification.size + 1
         val cellWidth = calculateWith(cellCount, screenWidth, isLargeScreen, isLandscape)
         Log.d("AAAA", "Cell width: $cellWidth")
         LazyColumn(
@@ -380,7 +379,7 @@ private fun TableRow(inferenceResults: InferenceResults, cellWidth: Dp) {
 }
 
 private fun calculateWith(
-    cellCount:Int,
+    cellCount: Int,
     screenWidth: Int,
     isLargeScreen: Boolean,
     isLandscape: Boolean,
@@ -392,10 +391,23 @@ private fun calculateWith(
             MAX_CELL_WIDTH
         }
     } else {
-        MIN_CELL_WIDTH
+        if (cellCount <= 5) {
+            (screenWidth / cellCount).dp
+        } else {
+            MAX_CELL_WIDTH
+        }
     }
 } else {
-    MIN_CELL_WIDTH
+    // MIN_CELL_WIDTH
+    if (isLargeScreen) {
+        if (cellCount <= 5) {
+            (screenWidth / cellCount).dp
+        } else {
+            MAX_CELL_WIDTH
+        }
+    } else {
+        MIN_CELL_WIDTH
+    }
 }
 
 @Composable
