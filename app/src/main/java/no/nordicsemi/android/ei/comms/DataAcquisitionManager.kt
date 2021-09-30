@@ -66,7 +66,7 @@ class DataAcquisitionManager(
     var inferencingState by mutableStateOf<InferencingState>(InferencingState.Stopped)
         private set
 
-    var inferenceResults = mutableStateListOf<InferencingMessage.InferencingResults>()
+    var inferenceResults = mutableStateListOf<InferencingMessage.InferenceResults>()
         private set
 
     /** The device ID. Initially set to device MAC address. */
@@ -268,7 +268,7 @@ class DataAcquisitionManager(
                     is InferencingResponse.Stop -> {
                         inferencingState = InferencingState.Stopped
                     }
-                    is InferencingMessage.InferencingResults -> {
+                    is InferencingMessage.InferenceResults -> {
                         inferencingState = InferencingState.Started
                         inferenceResults.add(deviceMessage)
                     }

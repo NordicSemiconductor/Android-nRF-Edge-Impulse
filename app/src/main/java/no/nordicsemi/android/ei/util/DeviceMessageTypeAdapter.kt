@@ -30,7 +30,7 @@ class DeviceMessageTypeAdapter : JsonDeserializer<DeviceMessage> {
                 InferencingResponse.Stop::class.java
             }
             "inference-results" -> {
-                InferencingResults::class.java
+                InferenceResults::class.java
             }
             else -> return InvalidMessage
         }

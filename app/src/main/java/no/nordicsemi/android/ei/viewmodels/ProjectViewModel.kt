@@ -157,7 +157,7 @@ class ProjectViewModel @Inject constructor(
     var inferencingResults = derivedStateOf {
         inferencingTarget?.let {
             dataAcquisitionManagers[it.deviceId]?.inferenceResults
-        } ?: mutableStateListOf<InferencingResults>()
+        } ?: mutableStateListOf<InferenceResults>()
     }
         private set
 

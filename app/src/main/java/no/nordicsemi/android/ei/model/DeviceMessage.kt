@@ -79,7 +79,7 @@ sealed class InferencingMessage : DeviceMessage() {
         }
     }
 
-    data class InferencingResults(
+    data class InferenceResults(
         val classification: List<Classification>,
         val anomaly: Double
     ) : DeviceMessage() {
