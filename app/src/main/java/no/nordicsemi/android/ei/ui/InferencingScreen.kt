@@ -288,6 +288,11 @@ private fun InferencingResults(
     val listState = rememberLazyListState()
     val screenWidth = LocalConfiguration.current.screenWidthDp
     val scrollState = rememberScrollState()
+    LaunchedEffect(key1 = inferenceResults.size) {
+        if (inferenceResults.isNotEmpty()) {
+            listState.scrollToItem(inferenceResults.size - 1)
+        }
+    }
     inferenceResults.takeIf { it.isNotEmpty() }?.let { results ->
         val cellCount = results.first().classification.size + 1
         val cellWidth = calculateWith(cellCount, screenWidth, isLargeScreen, isLandscape)
@@ -413,9 +418,9 @@ private fun calculateWith(
 
 @Composable
 private fun Double.color(): Color {
-    return if (this < 0.6) {
-        MaterialTheme.colors.onSurface.copy(alpha = 0.8f)
-    } else MaterialTheme.colors.onSurface
+    return if (this > 0.6) {
+        Color.Green.copy(red = 0.14f, green = 0.86f, blue = 0f)
+    } else MaterialTheme.colors.onSurface.copy(0.6f)
 }
 
 private val MIN_CELL_WIDTH = 100.dp
