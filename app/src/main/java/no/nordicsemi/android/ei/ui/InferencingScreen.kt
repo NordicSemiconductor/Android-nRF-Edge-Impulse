@@ -1,7 +1,6 @@
 package no.nordicsemi.android.ei.ui
 
 import android.content.res.Configuration
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -79,7 +78,7 @@ fun InferencingScreen(
                 onInferencingTargetSelected(connectedDevices.first())
             }
         }
-        InferencingResults(
+        InferencingTable(
             isLargeScreen = isLargeScreen,
             isLandscape = isLandscape,
             inferenceResults = inferenceResults
@@ -284,7 +283,7 @@ private fun StartInferencing(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun InferencingResults(
+private fun InferencingTable(
     isLargeScreen: Boolean,
     isLandscape: Boolean,
     inferenceResults: List<InferenceResults>
@@ -300,7 +299,6 @@ private fun InferencingResults(
     inferenceResults.takeIf { it.isNotEmpty() }?.let { results ->
         val cellCount = results.first().classification.size + 1
         val cellWidth = calculateWith(cellCount, screenWidth, isLargeScreen, isLandscape)
-        Log.d("AAAA", "Cell width: $cellWidth")
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -327,7 +325,7 @@ private fun InferencingResults(
                             )
                         }
                         Text(
-                            text = "anomaly",
+                            text = stringResource(R.string.label_anomaly),
                             modifier = Modifier
                                 .width(width = cellWidth)
                                 .padding(all = 16.dp),
@@ -388,6 +386,13 @@ private fun TableRow(inferenceResults: InferenceResults, cellWidth: Dp) {
     Divider()
 }
 
+@Composable
+private fun Double.color(): Color {
+    return if (this > 0.6) {
+        Color.Green.copy(red = 0.14f, green = 0.86f, blue = 0f)
+    } else MaterialTheme.colors.onSurface.copy(0.6f)
+}
+
 private fun calculateWith(
     cellCount: Int,
     screenWidth: Int,
@@ -418,13 +423,6 @@ private fun calculateWith(
     } else {
         MIN_CELL_WIDTH
     }
-}
-
-@Composable
-private fun Double.color(): Color {
-    return if (this > 0.6) {
-        Color.Green.copy(red = 0.14f, green = 0.86f, blue = 0f)
-    } else MaterialTheme.colors.onSurface.copy(0.6f)
 }
 
 private val MIN_CELL_WIDTH = 100.dp

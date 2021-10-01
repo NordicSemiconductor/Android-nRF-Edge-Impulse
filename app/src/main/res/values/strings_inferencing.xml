@@ -2,4 +2,5 @@
 <resources>
     <string name="title_inferencing">Inferencing</string>
     <string name="connect_device_for_inferencing">Please connect to a configured device or add a new device on the Devices tab to start inferencing.</string>
+    <string name="label_anomaly">anomaly</string>
 </resources>
