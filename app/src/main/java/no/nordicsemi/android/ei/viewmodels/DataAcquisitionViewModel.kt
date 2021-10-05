@@ -59,8 +59,6 @@ class DataAcquisitionViewModel @Inject constructor(
                 projectRepository
             )
         }.flow.cachedIn(viewModelScope)
-
-    companion object {
-        const val PAGE_SIZE = 30
-    }
 }
+
+const val PAGE_SIZE = 30

@@ -45,6 +45,7 @@ fun DataAcquisition(
     samplingState: Message.Sample,
 ) {
     HorizontalPager(
+        count = pagerState.pageCount,
         modifier = modifier,
         state = pagerState
     ) { page ->
