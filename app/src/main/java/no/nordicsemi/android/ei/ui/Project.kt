@@ -319,7 +319,7 @@ private fun ProjectContent(
         onScreenChanged(BottomNavigationScreen.fromNav(destination))
     }
     val snackbarHostState = remember { SnackbarHostState() }
-    val pagerState = rememberPagerState(pageCount = 2)
+    val pagerState = rememberPagerState(initialPage = 0)
     val trainingListState = rememberLazyListState()
     val testingListState = rememberLazyListState()
     val listStates = listOf(trainingListState, testingListState)

@@ -35,6 +35,8 @@ import no.nordicsemi.android.ei.ui.layouts.InfoLayout
 import no.nordicsemi.android.ei.util.asMessage
 import java.util.*
 
+private const val PAGE_COUNT = 2
+
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun DataAcquisition(
@@ -45,7 +47,7 @@ fun DataAcquisition(
     samplingState: Message.Sample,
 ) {
     HorizontalPager(
-        count = pagerState.pageCount,
+        count = PAGE_COUNT,
         modifier = modifier,
         state = pagerState
     ) { page ->
