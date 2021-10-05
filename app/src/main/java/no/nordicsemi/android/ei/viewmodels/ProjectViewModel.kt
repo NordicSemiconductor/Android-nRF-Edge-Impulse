@@ -43,7 +43,6 @@ import no.nordicsemi.android.ei.model.InferencingMessage.*
 import no.nordicsemi.android.ei.model.Message.Sample
 import no.nordicsemi.android.ei.repository.ProjectDataRepository
 import no.nordicsemi.android.ei.repository.ProjectRepository
-import no.nordicsemi.android.ei.repository.UserDataRepository
 import no.nordicsemi.android.ei.util.ZipPackage
 import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.viewmodels.event.Event
@@ -94,9 +93,6 @@ class ProjectViewModel @Inject constructor(
     // TODO This needs to be fixed: NPE when switching back to the app.
     private val userComponentEntryPoint: UserComponentEntryPoint
         get() = EntryPoints.get(userManager.userComponent!!, UserComponentEntryPoint::class.java)
-
-    private val userDataRepository: UserDataRepository
-        get() = userComponentEntryPoint.userDataRepository()
 
     private val projectManager: ProjectManager
         get() = userComponentEntryPoint.getProjectManager()
@@ -163,11 +159,12 @@ class ProjectViewModel @Inject constructor(
 
     private var initialBytes = 0
     private var uploadStartTimestamp: Long = 0
-    private lateinit var target: BluetoothDevice
+    private lateinit var deploymentTarget: BluetoothDevice
     private var controller: FirmwareUpgradeController? = null
     var transferSpeed by mutableStateOf(0f)
         private set
     var progress by mutableStateOf(0)
+        private set
 
     private val dfuCallback = object : FirmwareUpgradeCallback {
 
@@ -190,13 +187,10 @@ class ProjectViewModel @Inject constructor(
                 }
                 TEST, RESET -> deploymentState = DeploymentState.ApplyingUpdate
                 CONFIRM -> DeploymentState.Confirming
-                else -> {
-                }
             }
         }
 
         override fun onUploadProgressChanged(bytesSent: Int, imageSize: Int, timestamp: Long) {
-            Log.d("AAAA", "On upload progress changed")
             if (initialBytes == 0) {
                 uploadStartTimestamp = timestamp
                 initialBytes = bytesSent
@@ -205,7 +199,7 @@ class ProjectViewModel @Inject constructor(
                 val timeSinceUploadStarted: Long = timestamp - uploadStartTimestamp
                 // bytes / ms = KB/s
                 transferSpeed =
-                    bytesSentSinceUploadStarted.toFloat() / timeSinceUploadStarted.toFloat()
+                    (bytesSentSinceUploadStarted / timeSinceUploadStarted).toFloat()
             }
             // When done, reset the counter.
             if (bytesSent == imageSize) {
@@ -216,12 +210,10 @@ class ProjectViewModel @Inject constructor(
         }
 
         override fun onUpgradeCompleted() {
-            Log.d("AAAA", "On upgrade completed")
             deploymentState = DeploymentState.Completed
         }
 
         override fun onUpgradeCanceled(state: FirmwareUpgradeManager.State?) {
-            Log.d("AAAA", "On upgrade cancelled")
             progress = 0
             deploymentState = DeploymentState.Cancelled
         }
@@ -230,7 +222,7 @@ class ProjectViewModel @Inject constructor(
             state: FirmwareUpgradeManager.State?,
             error: McuMgrException?
         ) {
-            Log.d("AAAA", "On upgrade failed $error")
+            Log.d("AAAA", "On upgrade failed")
             progress = 0
             deploymentState = DeploymentState.Failed
         }
@@ -375,6 +367,7 @@ class ProjectViewModel @Inject constructor(
     fun disconnect(device: DiscoveredBluetoothDevice) {
         dataAcquisitionManagers.disconnect(device.deviceId)
         dataAcquisitionManagers.remove(device.deviceId)
+        deploymentState = DeploymentState.Unknown
     }
 
     fun disconnectAllDevices() {
@@ -420,7 +413,11 @@ class ProjectViewModel @Inject constructor(
 
     fun deploy(target: Device?) {
         target?.let {
-            this.target = dataAcquisitionManagers[it.deviceId]?.device?.bluetoothDevice!!
+            dataAcquisitionManagers[it.deviceId]?.let { dataAcquisitionManager ->
+                deploymentTarget = dataAcquisitionManager.device.bluetoothDevice
+                deploymentState = DeploymentState.Unknown
+            }
+
         }
         viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
             viewModelScope
@@ -480,7 +477,7 @@ class ProjectViewModel @Inject constructor(
         }.also {
             if (deploymentState is DeploymentState.Downloading.Finished) {
                 //val data = (deploymentState as DeploymentState.Downloading.Finished).data
-                val data = (getApplication() as Context).assets.open("v092_rc3.zip").readBytes()
+                val data = (getApplication() as Context).assets.open("v092_rc4.zip").readBytes()
                 startFirmwareUpgrade(data = data)
             }
         }
@@ -488,7 +485,7 @@ class ProjectViewModel @Inject constructor(
 
     private fun startFirmwareUpgrade(data: ByteArray) {
         val context = getApplication() as Context
-        val transport: McuMgrTransport = McuMgrBleTransport(context, target)
+        val transport: McuMgrTransport = McuMgrBleTransport(context, deploymentTarget)
         val dfuManager = FirmwareUpgradeManager(transport, dfuCallback)
         var images = arrayListOf<Pair<Int, ByteArray>>()
         try {

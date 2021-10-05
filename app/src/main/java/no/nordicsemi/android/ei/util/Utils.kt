@@ -12,6 +12,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
 import no.nordicsemi.android.ei.R
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
@@ -60,11 +62,9 @@ fun Throwable.asMessage(
     else -> localizedMessage ?: defaultMessage
 }
 
-fun Throwable.asMessage(
-    context: Context,
-    defaultMessage: String = context.getString(R.string.error_unknown)
-): String = when (this) {
-    is UnknownHostException -> context.getString(R.string.error_no_internet)
-    is SocketTimeoutException -> context.getString(R.string.error_timeout)
-    else -> localizedMessage ?: defaultMessage
+fun Double.round(decimalPoints: Int = 4): BigDecimal {
+    return BigDecimal(this).setScale(
+        decimalPoints,
+        RoundingMode.HALF_EVEN
+    )
 }

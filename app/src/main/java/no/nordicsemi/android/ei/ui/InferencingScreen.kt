@@ -33,9 +33,8 @@ import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.InferencingMessage.InferenceResults
 import no.nordicsemi.android.ei.model.InferencingMessage.InferencingRequest
 import no.nordicsemi.android.ei.ui.layouts.InfoDeviceDisconnectedLayout
+import no.nordicsemi.android.ei.util.round
 import no.nordicsemi.android.ei.viewmodels.state.InferencingState
-import java.math.BigDecimal
-import java.math.RoundingMode
 import java.util.*
 
 
@@ -354,10 +353,7 @@ private fun TableRow(inferenceResults: InferenceResults, cellWidth: Dp) {
     ) {
         inferenceResults.classification.forEach { classification ->
             Text(
-                text = BigDecimal(classification.value).setScale(
-                    4,
-                    RoundingMode.HALF_EVEN
-                ).toString(),
+                text = classification.value.round().toString(),
                 modifier = Modifier
                     .width(cellWidth)
                     .padding(16.dp),
@@ -369,10 +365,7 @@ private fun TableRow(inferenceResults: InferenceResults, cellWidth: Dp) {
             )
         }
         Text(
-            text = BigDecimal(inferenceResults.anomaly).setScale(
-                4,
-                RoundingMode.HALF_EVEN
-            ).toString(),
+            text = inferenceResults.anomaly.round().toString(),
             modifier = Modifier
                 .width(cellWidth)
                 .padding(16.dp),

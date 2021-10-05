@@ -351,7 +351,7 @@ fun DiscoveredDeviceRow(
             .padding(16.dp),
     ) {
         Image(
-            painter = painterResource(id = R.drawable.ic_uart),
+            imageVector = Icons.Rounded.DeveloperBoard,
             contentDescription = null,
             modifier = Modifier
                 .size(40.dp)
@@ -359,7 +359,8 @@ fun DiscoveredDeviceRow(
                     color = MaterialTheme.colors.primary,
                     shape = CircleShape
                 )
-                .padding(8.dp)
+                .padding(8.dp),
+            colorFilter = ColorFilter.tint(Color.White)
         )
         Spacer(modifier = Modifier.width(width = 16.dp))
         Column(modifier = Modifier.weight(weight = 1.0f)) {

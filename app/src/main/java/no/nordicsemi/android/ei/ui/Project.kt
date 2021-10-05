@@ -446,7 +446,9 @@ private fun ProjectContent(
                     project = viewModel.project,
                     connectedDevices = connectedDevices,
                     deploymentState = viewModel.deploymentState,
-                    onDeployClick = { viewModel.deploy(it) }
+                    onDeployClick = { viewModel.deploy(it) },
+                    progress = viewModel.progress,
+                    transferSpeed = viewModel.transferSpeed
                 )
             }
             composable(route = BottomNavigationScreen.INFERENCING.route) {
