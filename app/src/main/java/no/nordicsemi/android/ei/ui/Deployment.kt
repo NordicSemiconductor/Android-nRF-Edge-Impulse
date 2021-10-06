@@ -1,9 +1,5 @@
 package no.nordicsemi.android.ei.ui
 
-import android.content.Context
-import android.content.Intent
-import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
-import androidx.annotation.CallSuper
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -196,8 +192,8 @@ private fun DeployImpulse(
                     if (deploymentState is Unknown || deploymentState is Cancelled || deploymentState is Completed || deploymentState is Failed)
                         CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
                             InfoDeviceDisconnectedLayout(text = context.getString(R.string.connect_device_for_data_acquisition))
+                            Spacer(modifier = Modifier.height(height = 16.dp))
                         }
-                    Spacer(modifier = Modifier.height(height = 16.dp))
                 } ?: run {
                     if (deploymentTarget == null) {
                         onDeploymentTargetSelected(connectedDevices[0])
@@ -215,7 +211,8 @@ private fun DeployImpulse(
                         else -> Color.Gray
                     },
                     contentAlpha = when (deploymentState) {
-                        is Building, is Downloading, is Verifying, is Uploading, is Confirming, is ApplyingUpdate, is Completed -> ContentAlpha.high
+                        is Building.Started, is Building.Finished, is Downloading, is Verifying,
+                        is Uploading, is Confirming, is ApplyingUpdate, is Completed -> ContentAlpha.high
                         else -> ContentAlpha.disabled
                     },
                     text = stringResource(id = R.string.label_building)
@@ -374,17 +371,29 @@ private fun DeployImpulse(
             Button(
                 enabled = connectedDevices.isNotEmpty(),
                 onClick = {
-                    when (deploymentState) {
-                        is Unknown, is Completed, is Cancelled, is Failed -> onDeployClick(
-                            deploymentTarget
-                        )
-                        else -> onCancelDeployClick()
-                    }
-                }) {
+                    if (deploymentState is Unknown || deploymentState is Building.Unknown ||
+                        deploymentState is Building.Error || deploymentState is Downloading.Error || deploymentState is Downloading.Finished ||
+                        deploymentState is Completed || deploymentState is Cancelled || deploymentState is Failed) onDeployClick(deploymentTarget)
+                    else onCancelDeployClick()
+                },
+                colors = ButtonDefaults.buttonColors(
+                    if (deploymentState is Unknown || deploymentState is Building.Unknown ||
+                        deploymentState is Building.Error || deploymentState is Downloading.Error || deploymentState is Downloading.Finished ||
+                        deploymentState is Completed || deploymentState is Cancelled || deploymentState is Failed) MaterialTheme.colors.primary
+                    else Color.Red
+                )
+            ) {
                 Text(
-                    text = stringResource(id = R.string.action_deploy).uppercase(
+                    modifier = Modifier.defaultMinSize(minWidth = 80.dp),
+                    text = stringResource(
+                        id = if (deploymentState is Unknown || deploymentState is Building.Unknown ||
+                            deploymentState is Building.Error || deploymentState is Downloading.Error || deploymentState is Downloading.Finished ||
+                            deploymentState is Completed || deploymentState is Cancelled || deploymentState is Failed) R.string.action_deploy
+                        else R.string.action_cancel
+                    ).uppercase(
                         Locale.US
-                    )
+                    ),
+                    textAlign = TextAlign.Center
                 )
             }
         }
@@ -431,17 +440,3 @@ private fun RowDeploymentState(
         }
     }
 }
-
-@Composable
-private fun getColor(deploymentState: DeploymentState): Color = when (deploymentState) {
-    is Building, is Downloading, is Verifying, is Uploading, is Confirming, is ApplyingUpdate, is Completed -> MaterialTheme.colors.primary
-    else -> Color.Gray
-}
-
-private class CreateZipFile : CreateDocument() {
-    @CallSuper
-    override fun createIntent(context: Context, input: String): Intent =
-        super.createIntent(context, input).setType(MIME_TYPE)
-}
-
-private const val MIME_TYPE = "application/zip"

@@ -22,6 +22,7 @@ import io.runtime.mcumgr.dfu.FirmwareUpgradeManager.State.*
 import io.runtime.mcumgr.exception.McuMgrException
 import io.runtime.mcumgr.image.McuMgrImage
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -35,9 +36,12 @@ import no.nordicsemi.android.ei.di.ProjectComponentEntryPoint
 import no.nordicsemi.android.ei.di.ProjectManager
 import no.nordicsemi.android.ei.di.UserComponentEntryPoint
 import no.nordicsemi.android.ei.di.UserManager
-import no.nordicsemi.android.ei.model.*
-import no.nordicsemi.android.ei.model.InferencingMessage.*
+import no.nordicsemi.android.ei.model.Category
+import no.nordicsemi.android.ei.model.Device
+import no.nordicsemi.android.ei.model.InferencingMessage.InferenceResults
+import no.nordicsemi.android.ei.model.InferencingMessage.InferencingRequest
 import no.nordicsemi.android.ei.model.Message.Sample
+import no.nordicsemi.android.ei.model.Sensor
 import no.nordicsemi.android.ei.repository.ProjectDataRepository
 import no.nordicsemi.android.ei.repository.ProjectRepository
 import no.nordicsemi.android.ei.util.ZipPackage
@@ -112,6 +116,7 @@ class ProjectViewModel @Inject constructor(
         private set
     var frequency: Number? by mutableStateOf(null)
         private set
+    private lateinit var  deploymentJob: Job
 
     /** Creates a deployment manager */
     private var buildManager = BuildManager(
@@ -157,7 +162,7 @@ class ProjectViewModel @Inject constructor(
     private var uploadStartTimestamp: Long = 0
     var deploymentTarget: Device? by mutableStateOf(null)
         private set
-    private var controller: FirmwareUpgradeController? = null
+    private var firmwareUpgradeController: FirmwareUpgradeController? = null
     var transferSpeed by mutableStateOf(0f)
         private set
     var progress by mutableStateOf(0)
@@ -168,7 +173,6 @@ class ProjectViewModel @Inject constructor(
         // When the view model is created, load the configured devices from the service.
         listDevices(swipedToRefresh = false)
         registerForBuildManager()
-
     }
 
     /**
@@ -225,25 +229,14 @@ class ProjectViewModel @Inject constructor(
     }
 
     private fun registerForBuildManager() {
-        viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
+        deploymentJob = viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
             viewModelScope
                 .launch { eventChannel.send(Event.Error(throwable)) }
         }) {
             buildManager.buildStateAsFlow().collect {
                 deploymentState = it
-                when (it) {
-                    is DeploymentState.Building.Started -> {
-                        Log.d("AAAA", "Started")
-                    }
-                    is DeploymentState.Building.Finished -> {
-                        downloadBuild()
-                    }
-                    is DeploymentState.Building.Error -> {
-                        throw Throwable(it.reason ?: "Error while building firmware")
-                    }
-                    else -> {
-
-                    }
+                if (it is DeploymentState.Building.Finished) {
+                    downloadBuild()
                 }
             }
         }
@@ -368,7 +361,7 @@ class ProjectViewModel @Inject constructor(
      * Starts firmware deployment
      */
     fun deploy() {
-        viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
+        deploymentJob = viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
             viewModelScope
                 .launch { eventChannel.send(Event.Error(throwable)) }
         }) {
@@ -390,7 +383,11 @@ class ProjectViewModel @Inject constructor(
     }
 
     fun cancelDeploy() {
-        buildManager.stop()
+        if(deploymentState is DeploymentState.Building.Started){
+            buildManager.stop()
+        }
+        firmwareUpgradeController?.cancel()
+        deploymentJob.cancel()
     }
 
     /**
@@ -545,8 +542,7 @@ class ProjectViewModel @Inject constructor(
     }
 
     override fun onUpgradeStarted(controller: FirmwareUpgradeController?) {
-        Log.d("AAAA", "On upgrade started")
-        this@ProjectViewModel.controller = controller
+        firmwareUpgradeController = controller
         deploymentState = DeploymentState.Verifying
     }
 

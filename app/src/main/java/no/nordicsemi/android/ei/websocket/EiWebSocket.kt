@@ -34,28 +34,28 @@ class EiWebSocket @Inject constructor(
     private val webSocketListener = object : WebSocketListener() {
 
         override fun onOpen(webSocket: WebSocket, response: Response) {
-            Log.i("AAAA", "onOpen webSocket")
+            //Log.i("AAAA", "onOpen webSocket")
             _webSocketState.tryEmit(Open(response = response))
         }
 
         override fun onMessage(webSocket: WebSocket, text: String) {
-            Log.i("AAAA", "onMessage webSocket: $text")
+            //Log.i("AAAA", "onMessage webSocket: $text")
             _message.tryEmit(text)
         }
 
         override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
             stopPinging()
-            Log.i("AAAA", "onClosing webSocket: $reason ($code)")
+            //Log.i("AAAA", "onClosing webSocket: $reason ($code)")
             _webSocketState.tryEmit(Closing(code = code, reason = reason))
         }
 
         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-            Log.i("AAAA", "onClosed webSocket: $reason ($code)")
+            //Log.i("AAAA", "onClosed webSocket: $reason ($code)")
             _webSocketState.tryEmit(Closed(code = code, reason = reason))
         }
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-            Log.i("AAAA", "onFailure webSocket", t)
+            //Log.i("AAAA", "onFailure webSocket", t)
             _webSocketState.tryEmit(Failed(throwable = t, response = response))
         }
     }

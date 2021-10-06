@@ -6,9 +6,8 @@ import com.google.gson.JsonParser
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.comms.DeploymentState.Building
@@ -36,13 +35,9 @@ class BuildManager(
     )
     var jobId = 0
         private set
-    private var _buildState = MutableSharedFlow<Building>(
-        extraBufferCapacity = 10,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
+    private var _buildState = MutableStateFlow<Building>(Building.Unknown)
 
     init {
-        _buildState.tryEmit(Building.Unknown)
         scope.launch(exceptionHandler) { registerToWebSocketStateChanges() }
         scope.launch(exceptionHandler) { registerToWebSocketMessages() }
     }
@@ -50,7 +45,7 @@ class BuildManager(
     /**
      * Returns the build state as a flow
      */
-    fun buildStateAsFlow(): Flow<Building> = _buildState
+    fun buildStateAsFlow(): StateFlow<Building> = _buildState
 
     /**
      * Initiates a websocket connection to obtain deployment messages.
@@ -66,6 +61,10 @@ class BuildManager(
      */
     fun stop() {
         _buildState.tryEmit(Building.Error("User Cancellation"))
+        disconnect()
+    }
+
+    private fun disconnect() {
         deploymentWebSocket.disconnect()
     }
 
@@ -113,7 +112,7 @@ class BuildManager(
                                             false -> Building.Error(reason = "Error while building")
                                         }
                                     )
-                                    stop()
+                                    disconnect()
                                 }
                             }
                             else -> {
