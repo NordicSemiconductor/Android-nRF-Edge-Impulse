@@ -6,7 +6,6 @@ import android.util.Log
 import android.util.Pair
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateMap
-import androidx.compose.ui.focus.FocusRequester
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
@@ -105,7 +104,6 @@ class ProjectViewModel @Inject constructor(
             .projectDataRepository()
 
     // ---- Fields used for Recording New Sample --------------
-    val focusRequester = FocusRequester()
     var dataAcquisitionTarget: Device? by mutableStateOf(null)
         private set
     var label: String by mutableStateOf("Sample")

@@ -131,7 +131,6 @@ private fun LargeScreen(
                             RecordSampleContent(
                                 samplingState = samplingState,
                                 connectedDevices = connectedDevices,
-                                focusRequester = viewModel.focusRequester,
                                 category = category,
                                 onCategorySelected = { category = it },
                                 dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
@@ -146,9 +145,8 @@ private fun LargeScreen(
                                 onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
                                 sampleLength = viewModel.sampleLength,
                                 onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
-                                selectedFrequency = viewModel.frequency,
-                                onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) }
-                            )
+                                selectedFrequency = viewModel.frequency
+                            ) { viewModel.onFrequencySelected(frequency = it) }
                             Spacer(modifier = Modifier.height(16.dp))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -226,7 +224,6 @@ private fun SmallScreen(
                     RecordSampleContent(
                         samplingState = samplingState,
                         connectedDevices = connectedDevices,
-                        focusRequester = viewModel.focusRequester,
                         category = category,
                         onCategorySelected = { category = it },
                         dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
@@ -241,9 +238,8 @@ private fun SmallScreen(
                         onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
                         sampleLength = viewModel.sampleLength,
                         onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
-                        selectedFrequency = viewModel.frequency,
-                        onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) }
-                    )
+                        selectedFrequency = viewModel.frequency
+                    ) { viewModel.onFrequencySelected(frequency = it) }
                     Spacer(modifier = Modifier.height(32.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),

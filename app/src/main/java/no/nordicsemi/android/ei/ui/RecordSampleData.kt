@@ -20,8 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -95,7 +93,6 @@ fun RecordSampleSmallScreen(
 fun RecordSampleContent(
     samplingState: Message.Sample?,
     connectedDevices: List<Device>,
-    focusRequester: FocusRequester,
     category: Category,
     onCategorySelected: (Category) -> Unit,
     dataAcquisitionTarget: Device?,
@@ -139,8 +136,7 @@ fun RecordSampleContent(
         enabled = (samplingState is Finished || samplingState is Unknown),
         modifier = Modifier
             .fillMaxWidth()
-            .onSizeChanged { width = it.width }
-            .focusRequester(focusRequester = focusRequester),
+            .onSizeChanged { width = it.width },
         readOnly = true,
         label = {
             Text(text = stringResource(R.string.label_category))
@@ -148,8 +144,7 @@ fun RecordSampleContent(
         leadingIcon = {
             Icon(
                 modifier = Modifier
-                    .size(24.dp)
-                    .padding(4.dp),
+                    .size(24.dp),
                 imageVector = Icons.Default.Category,
                 contentDescription = null
             )
@@ -158,7 +153,6 @@ fun RecordSampleContent(
             IconButton(
                 enabled = (samplingState is Finished || samplingState is Unknown),
                 onClick = {
-                    focusRequester.requestFocus()
                     isCategoryExpanded = true
                 }
             ) {
@@ -203,8 +197,7 @@ fun RecordSampleContent(
         enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 16.dp)
-            .focusRequester(focusRequester = focusRequester),
+            .padding(top = 16.dp),
         readOnly = true,
         label = {
             Text(text = stringResource(R.string.label_device))
@@ -212,8 +205,7 @@ fun RecordSampleContent(
         leadingIcon = {
             Icon(
                 modifier = Modifier
-                    .size(24.dp)
-                    .padding(4.dp),
+                    .size(24.dp),
                 imageVector = Icons.Rounded.DeveloperBoard,
                 contentDescription = null
             )
@@ -222,7 +214,6 @@ fun RecordSampleContent(
             IconButton(
                 enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
                 onClick = {
-                    focusRequester.requestFocus()
                     isDevicesMenuExpanded = true
                 }
             ) {
@@ -273,8 +264,7 @@ fun RecordSampleContent(
         onValueChange = { },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 16.dp)
-            .focusRequester(focusRequester = focusRequester),
+            .padding(top = 16.dp),
         enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
         readOnly = true,
         label = {
@@ -291,7 +281,6 @@ fun RecordSampleContent(
             IconButton(
                 enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
                 onClick = {
-                    focusRequester.requestFocus()
                     isSensorsMenuExpanded = true
                 }
             ) {
@@ -419,8 +408,7 @@ fun RecordSampleContent(
         onValueChange = { },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 16.dp)
-            .focusRequester(focusRequester = focusRequester),
+            .padding(top = 16.dp),
         enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
         readOnly = true,
         label = { Text(text = stringResource(R.string.label_frequency)) },
@@ -435,7 +423,6 @@ fun RecordSampleContent(
             IconButton(
                 enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
                 onClick = {
-                    focusRequester.requestFocus()
                     isFrequencyMenuExpanded = true
                 }
             ) {
