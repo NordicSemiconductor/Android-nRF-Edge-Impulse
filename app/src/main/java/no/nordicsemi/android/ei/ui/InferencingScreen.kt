@@ -361,7 +361,7 @@ private fun TableRow(inferenceResults: InferenceResults, cellWidth: Dp) {
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = inferenceResults.classification.all { it.value < 0.6 }.takeIf { it }?.let { Color.Red } ?: run {classification.value.color()}
+                color = classification.value.color()//inferenceResults.classification.all { it.value < 0.6 }.takeIf { it }?.let { Color.Red } ?: run {classification.value.color()}
             )
         }
         Text(
