@@ -65,6 +65,7 @@ class BuildManager(
      * Disconnect from the deployment websocket
      */
     fun stop() {
+        _buildState.tryEmit(Building.Error("User Cancellation"))
         deploymentWebSocket.disconnect()
     }
 

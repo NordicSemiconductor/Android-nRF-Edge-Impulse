@@ -1,7 +1,6 @@
 package no.nordicsemi.android.ei.viewmodels
 
 import android.app.Application
-import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.util.Log
 import android.util.Pair
@@ -25,8 +24,6 @@ import io.runtime.mcumgr.image.McuMgrImage
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ble.ConnectionPriorityRequest
@@ -58,7 +55,7 @@ class ProjectViewModel @Inject constructor(
     private val projectRepository: ProjectRepository,
     private val client: OkHttpClient,
     private val gson: Gson
-) : AndroidViewModel(context as Application) {
+) : AndroidViewModel(context as Application), FirmwareUpgradeCallback {
 
     /** The channel for emitting one-time events. */
     private val eventChannel = Channel<Event>(Channel.BUFFERED)
@@ -129,7 +126,6 @@ class ProjectViewModel @Inject constructor(
         socketToken = projectDataRepository.socketToken,
         client = client
     )
-        private set
 
     var deploymentState: DeploymentState by mutableStateOf(DeploymentState.Unknown)
         private set
@@ -159,74 +155,13 @@ class ProjectViewModel @Inject constructor(
 
     private var initialBytes = 0
     private var uploadStartTimestamp: Long = 0
-    private lateinit var deploymentTarget: BluetoothDevice
+    var deploymentTarget: Device? by mutableStateOf(null)
+        private set
     private var controller: FirmwareUpgradeController? = null
     var transferSpeed by mutableStateOf(0f)
         private set
     var progress by mutableStateOf(0)
         private set
-
-    private val dfuCallback = object : FirmwareUpgradeCallback {
-
-        override fun onUpgradeStarted(controller: FirmwareUpgradeController?) {
-            Log.d("AAAA", "On upgrade started")
-            this@ProjectViewModel.controller = controller
-            deploymentState = DeploymentState.Verifying
-        }
-
-        override fun onStateChanged(
-            prevState: FirmwareUpgradeManager.State?,
-            newState: FirmwareUpgradeManager.State?
-        ) {
-            when (newState) {
-                NONE -> deploymentState = DeploymentState.Unknown
-                VALIDATE -> DeploymentState.Verifying
-                UPLOAD -> {
-                    initialBytes = 0
-                    deploymentState = DeploymentState.Uploading
-                }
-                TEST, RESET -> deploymentState = DeploymentState.ApplyingUpdate
-                CONFIRM -> DeploymentState.Confirming
-            }
-        }
-
-        override fun onUploadProgressChanged(bytesSent: Int, imageSize: Int, timestamp: Long) {
-            if (initialBytes == 0) {
-                uploadStartTimestamp = timestamp
-                initialBytes = bytesSent
-            } else {
-                val bytesSentSinceUploadStarted: Int = bytesSent - initialBytes
-                val timeSinceUploadStarted: Long = timestamp - uploadStartTimestamp
-                // bytes / ms = KB/s
-                transferSpeed =
-                    (bytesSentSinceUploadStarted / timeSinceUploadStarted).toFloat()
-            }
-            // When done, reset the counter.
-            if (bytesSent == imageSize) {
-                initialBytes = 0
-            }
-            // Convert to percent
-            progress = (bytesSent * 100f / imageSize).toInt()
-        }
-
-        override fun onUpgradeCompleted() {
-            deploymentState = DeploymentState.Completed
-        }
-
-        override fun onUpgradeCanceled(state: FirmwareUpgradeManager.State?) {
-            progress = 0
-            deploymentState = DeploymentState.Cancelled
-        }
-
-        override fun onUpgradeFailed(
-            state: FirmwareUpgradeManager.State?,
-            error: McuMgrException?
-        ) {
-            Log.d("AAAA", "On upgrade failed")
-            progress = 0
-            deploymentState = DeploymentState.Failed
-        }
-    }
 
     // ---- Implementation ------------------------------------
     init {
@@ -290,15 +225,11 @@ class ProjectViewModel @Inject constructor(
     }
 
     private fun registerForBuildManager() {
-        viewModelScope.launch {
-            buildManager.buildStateAsFlow().onEach {
-                Log.d("BBBB", "On each $it")
-            }.onCompletion {
-                Log.d("BBBB", "On completion $it")
-            }.collect {
-                Log.d("BBBB", "On collect $it")
-            }
-            /*buildManager.buildStateAsFlow().collect {
+        viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
+            viewModelScope
+                .launch { eventChannel.send(Event.Error(throwable)) }
+        }) {
+            buildManager.buildStateAsFlow().collect {
                 deploymentState = it
                 when (it) {
                     is DeploymentState.Building.Started -> {
@@ -314,11 +245,11 @@ class ProjectViewModel @Inject constructor(
 
                     }
                 }
-            }*/
+            }
         }
     }
 
-    fun onDeviceSelected(device: Device) {
+    fun onDataAcquisitionSelected(device: Device) {
         dataAcquisitionTarget = device
         device.sensors.firstOrNull()
             ?.let { onSensorSelected(sensor = it) }
@@ -364,20 +295,34 @@ class ProjectViewModel @Inject constructor(
             connect()
         }
 
+    /**
+     * Disconnects a device
+     */
     fun disconnect(device: DiscoveredBluetoothDevice) {
         dataAcquisitionManagers.disconnect(device.deviceId)
         dataAcquisitionManagers.remove(device.deviceId)
         deploymentState = DeploymentState.Unknown
     }
 
+    /**
+     * Disconnects all devices
+     */
     fun disconnectAllDevices() {
         dataAcquisitionManagers.onEach {
             it.value.disconnect()
         }
         dataAcquisitionManagers.clear()
-        buildManager.stop()
+        if (deploymentState !is DeploymentState.Unknown ||
+            deploymentState !is DeploymentState.Cancelled ||
+            deploymentState !is DeploymentState.Failed
+        )
+            cancelDeploy()
     }
 
+    /**
+     * Starts sampling via the EI backend
+     * @param category sampling category.
+     */
     fun startSampling(category: Category) {
         viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
             viewModelScope
@@ -411,14 +356,18 @@ class ProjectViewModel @Inject constructor(
         }
     }
 
-    fun deploy(target: Device?) {
-        target?.let {
-            dataAcquisitionManagers[it.deviceId]?.let { dataAcquisitionManager ->
-                deploymentTarget = dataAcquisitionManager.device.bluetoothDevice
-                deploymentState = DeploymentState.Unknown
-            }
+    /**
+     * Selects the deployment target.
+     * @param deploymentTarget Deployment target
+     */
+    fun onDeploymentTargetSelected(deploymentTarget: Device) {
+        this.deploymentTarget = deploymentTarget
+    }
 
-        }
+    /**
+     * Starts firmware deployment
+     */
+    fun deploy() {
         viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
             viewModelScope
                 .launch { eventChannel.send(Event.Error(throwable)) }
@@ -440,6 +389,13 @@ class ProjectViewModel @Inject constructor(
         }
     }
 
+    fun cancelDeploy() {
+        buildManager.stop()
+    }
+
+    /**
+     * Starts bulding a new firmware on the backend
+     */
     private suspend fun build() {
         projectRepository.buildOnDeviceModels(
             projectId = project.id,
@@ -476,35 +432,45 @@ class ProjectViewModel @Inject constructor(
             }
         }.also {
             if (deploymentState is DeploymentState.Downloading.Finished) {
-                //val data = (deploymentState as DeploymentState.Downloading.Finished).data
-                val data = (getApplication() as Context).assets.open("v092_rc4.zip").readBytes()
-                startFirmwareUpgrade(data = data)
+                deploymentTarget?.let {
+                    startFirmwareUpgrade(
+                        data = (deploymentState as DeploymentState.Downloading.Finished).data,
+                        deploymentTarget = it
+                    )
+                }
             }
         }
     }
 
-    private fun startFirmwareUpgrade(data: ByteArray) {
-        val context = getApplication() as Context
-        val transport: McuMgrTransport = McuMgrBleTransport(context, deploymentTarget)
-        val dfuManager = FirmwareUpgradeManager(transport, dfuCallback)
-        var images = arrayListOf<Pair<Int, ByteArray>>()
-        try {
-            McuMgrImage.getHash(data)
-            images.add(Pair(0, data))
-        } catch (e: Exception) {
+    /**
+     * Start firmware upgrade
+     * @param data              Byte Array containing the firmware
+     * @param deploymentTarget  Deployment target
+     */
+    private fun startFirmwareUpgrade(data: ByteArray, deploymentTarget: Device) {
+        dataAcquisitionManagers[deploymentTarget.deviceId]?.device?.bluetoothDevice?.let { bluetoothDevice ->
+            val context = getApplication() as Context
+            val transport: McuMgrTransport = McuMgrBleTransport(context, bluetoothDevice)
+            val dfuManager = FirmwareUpgradeManager(transport, this)
+            var images = arrayListOf<Pair<Int, ByteArray>>()
             try {
-                images = ZipPackage(data).binaries
-            } catch (e1: Exception) {
-                Log.d("AAAA", "Exception? $e1")
+                McuMgrImage.getHash(data)
+                images.add(Pair(0, data))
+            } catch (e: Exception) {
+                try {
+                    images = ZipPackage(data).binaries
+                } catch (e1: Exception) {
+                    Log.d("AAAA", "Exception? $e1")
+                }
             }
-        }
 
-        (transport as McuMgrBleTransport).apply {
-            setLoggingEnabled(true)
-            requestConnPriority(ConnectionPriorityRequest.CONNECTION_PRIORITY_HIGH)
+            (transport as McuMgrBleTransport).apply {
+                setLoggingEnabled(true)
+                requestConnPriority(ConnectionPriorityRequest.CONNECTION_PRIORITY_HIGH)
+            }
+            dfuManager.setMode(FirmwareUpgradeManager.Mode.CONFIRM_ONLY)
+            dfuManager.start(images, false)
         }
-        dfuManager.setMode(FirmwareUpgradeManager.Mode.CONFIRM_ONLY)
-        dfuManager.start(images, false)
     }
 
     /**
@@ -577,6 +543,65 @@ class ProjectViewModel @Inject constructor(
     fun onInferencingTargetSelected(device: Device) {
         inferencingTarget = device
     }
+
+    override fun onUpgradeStarted(controller: FirmwareUpgradeController?) {
+        Log.d("AAAA", "On upgrade started")
+        this@ProjectViewModel.controller = controller
+        deploymentState = DeploymentState.Verifying
+    }
+
+    override fun onStateChanged(
+        prevState: FirmwareUpgradeManager.State?,
+        newState: FirmwareUpgradeManager.State?
+    ) {
+        when (newState) {
+            NONE -> deploymentState = DeploymentState.Unknown
+            VALIDATE -> DeploymentState.Verifying
+            UPLOAD -> {
+                initialBytes = 0
+                deploymentState = DeploymentState.Uploading
+            }
+            TEST, RESET -> deploymentState = DeploymentState.ApplyingUpdate
+            CONFIRM -> DeploymentState.Confirming
+        }
+    }
+
+    override fun onUploadProgressChanged(bytesSent: Int, imageSize: Int, timestamp: Long) {
+        if (initialBytes == 0) {
+            uploadStartTimestamp = timestamp
+            initialBytes = bytesSent
+        } else {
+            val bytesSentSinceUploadStarted: Int = bytesSent - initialBytes
+            val timeSinceUploadStarted: Long = timestamp - uploadStartTimestamp
+            // bytes / ms = KB/s
+            transferSpeed =
+                (bytesSentSinceUploadStarted / timeSinceUploadStarted).toFloat()
+        }
+        // When done, reset the counter.
+        if (bytesSent == imageSize) {
+            initialBytes = 0
+        }
+        // Convert to percent
+        progress = (bytesSent * 100f / imageSize).toInt()
+    }
+
+    override fun onUpgradeCompleted() {
+        deploymentState = DeploymentState.Completed
+    }
+
+    override fun onUpgradeCanceled(state: FirmwareUpgradeManager.State?) {
+        progress = 0
+        deploymentState = DeploymentState.Cancelled
+    }
+
+    override fun onUpgradeFailed(
+        state: FirmwareUpgradeManager.State?,
+        error: McuMgrException?
+    ) {
+        Log.d("AAAA", "On upgrade failed")
+        progress = 0
+        deploymentState = DeploymentState.Failed
+    }
 }
 
 /**
@@ -593,5 +618,3 @@ private fun SnapshotStateMap<String, DataAcquisitionManager>.disconnect(deviceId
         }
     }
 }
-
-private const val ATTACHMENT_HEADER = "content-disposition"

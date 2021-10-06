@@ -136,7 +136,7 @@ private fun LargeScreen(
                                 onCategorySelected = { category = it },
                                 dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
                                 onDataAcquisitionTargetSelected = {
-                                    viewModel.onDeviceSelected(
+                                    viewModel.onDataAcquisitionSelected(
                                         device = it
                                     )
                                 },
@@ -230,7 +230,11 @@ private fun SmallScreen(
                         category = category,
                         onCategorySelected = { category = it },
                         dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
-                        onDataAcquisitionTargetSelected = { viewModel.onDeviceSelected(device = it) },
+                        onDataAcquisitionTargetSelected = {
+                            viewModel.onDataAcquisitionSelected(
+                                device = it
+                            )
+                        },
                         label = viewModel.label,
                         onLabelChanged = { viewModel.onLabelChanged(label = it) },
                         selectedSensor = viewModel.sensor,
@@ -445,10 +449,13 @@ private fun ProjectContent(
                 Deployment(
                     project = viewModel.project,
                     connectedDevices = connectedDevices,
+                    deploymentTarget = viewModel.deploymentTarget,
+                    onDeploymentTargetSelected = { viewModel.onDeploymentTargetSelected(it) },
                     deploymentState = viewModel.deploymentState,
-                    onDeployClick = { viewModel.deploy(it) },
+                    onDeployClick = { viewModel.deploy() },
                     progress = viewModel.progress,
-                    transferSpeed = viewModel.transferSpeed
+                    transferSpeed = viewModel.transferSpeed,
+                    onCancelDeployClick = { viewModel.cancelDeploy() }
                 )
             }
             composable(route = BottomNavigationScreen.INFERENCING.route) {
