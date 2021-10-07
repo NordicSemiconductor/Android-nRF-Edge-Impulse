@@ -91,7 +91,8 @@ fun DeviceDetails(
                             else -> stringResource(id = R.string.action_connect)
                         }.uppercase(Locale.US),
                         color = Color.White,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        maxLines = 1
                     )
                 }
             }
