@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.Instant
@@ -63,8 +64,6 @@ fun DeviceDetails(
                     .padding(16.dp), horizontalArrangement = Arrangement.Center
             ) {
                 Button(
-                    modifier = Modifier
-                        .width(130.dp),
                     onClick = {
                         when (deviceState) {
                             IN_RANGE -> onConnectClick()
@@ -82,6 +81,8 @@ fun DeviceDetails(
                     colors = ButtonDefaults.buttonColors(deviceState.buttonBackgroundColor())
                 ) {
                     Text(
+                        modifier = Modifier
+                            .defaultMinSize(minWidth = 145.dp),
                         text = when (deviceState) {
                             IN_RANGE, NOT_IN_RANGE -> stringResource(id = R.string.action_connect)
                             CONNECTING,
@@ -89,7 +90,8 @@ fun DeviceDetails(
                             AUTHENTICATED -> stringResource(id = R.string.action_disconnect)
                             else -> stringResource(id = R.string.action_connect)
                         }.uppercase(Locale.US),
-                        color = Color.White
+                        color = Color.White,
+                        textAlign = TextAlign.Center
                     )
                 }
             }
