@@ -4,10 +4,11 @@ import android.app.Activity
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
-import androidx.hilt.navigation.HiltViewModelFactory
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import no.nordicsemi.android.ei.account.AccountHelper
+import no.nordicsemi.android.ei.model.Message.Sample.*
 import no.nordicsemi.android.ei.ui.Dashboard
 import no.nordicsemi.android.ei.ui.Project
 import no.nordicsemi.android.ei.ui.Splashscreen
@@ -16,6 +17,7 @@ import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import no.nordicsemi.android.ei.viewmodels.SplashscreenViewModel
 import retrofit2.HttpException
 import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
 @Composable
@@ -24,11 +26,9 @@ fun Navigation(
 ) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = Route.splashscreen) {
-        composable(Route.splashscreen) { backStackEntry ->
+        composable(Route.splashscreen) {
             var progressMessage by rememberSaveable { mutableStateOf("") }
-            val viewModel: SplashscreenViewModel = viewModel(
-                factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
-            )
+            val viewModel = hiltViewModel<SplashscreenViewModel>()
             Login(
                 viewModel = viewModel,
                 onProgressChanged = { progressMessage = it },
@@ -46,25 +46,24 @@ fun Navigation(
             )
         }
 
-        composable(Route.dashboard) { backStackEntry ->
-            val viewModel: DashboardViewModel = viewModel(
-                factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
-            )
+        composable(Route.dashboard) {
+            val viewModel = hiltViewModel<DashboardViewModel>()
             Dashboard(
                 viewModel = viewModel,
                 onProjectSelected = {
                     navController.navigate(Route.project)
                 },
                 onLogout = {
-                    navController.navigateUp()
+                    navController.navigate(Route.splashscreen) {
+                        popUpTo(Route.dashboard) {
+                            inclusive = true
+                        }
+                    }
                 }
             )
         }
-
-        composable(Route.project) { backStackEntry ->
-            val viewModel: ProjectViewModel = viewModel(
-                factory = HiltViewModelFactory(LocalContext.current, backStackEntry)
-            )
+        composable(Route.project) {
+            val viewModel = hiltViewModel<ProjectViewModel>()
             Project(
                 viewModel = viewModel,
                 onBackPressed = {
@@ -106,8 +105,10 @@ fun Login(
                 onLoggedIn(token)
             } catch (e: UnknownHostException) {
                 onProgressChanged(activity.getString(R.string.error_no_internet))
+            } catch (e: SocketTimeoutException) {
+                onProgressChanged(activity.getString(R.string.error_timeout))
             } catch (e: HttpException) {
-                if (e.code() == HttpURLConnection.HTTP_MOVED_TEMP) {
+                if (e.code() == HttpURLConnection.HTTP_UNAUTHORIZED) {
                     AccountHelper.invalidateAuthToken(token, activity)
                     continue
                 } else {

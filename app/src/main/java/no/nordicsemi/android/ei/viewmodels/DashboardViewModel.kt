@@ -19,17 +19,13 @@ import no.nordicsemi.android.ei.account.AccountHelper
 import no.nordicsemi.android.ei.di.ProjectManager
 import no.nordicsemi.android.ei.di.UserComponentEntryPoint
 import no.nordicsemi.android.ei.di.UserManager
-import no.nordicsemi.android.ei.model.DevelopmentKeys
 import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.repository.DashboardRepository
 import no.nordicsemi.android.ei.repository.UserDataRepository
 import no.nordicsemi.android.ei.service.param.developmentKeys
 import no.nordicsemi.android.ei.util.guard
-import no.nordicsemi.android.ei.viewmodels.event.Error
 import no.nordicsemi.android.ei.viewmodels.event.Event
-import no.nordicsemi.android.ei.viewmodels.event.ProjectCreated
-import no.nordicsemi.android.ei.viewmodels.event.ProjectSelected
 import javax.inject.Inject
 
 @HiltViewModel
@@ -51,11 +47,13 @@ class DashboardViewModel @Inject constructor(
     var isDownloadingDevelopmentKeys: Boolean by mutableStateOf(false)
         private set
 
+    // TODO This needs to be fixed: Possible NPE when switching back to the app.
     private val userDataRepo: UserDataRepository
         get() = EntryPoints
             .get(userManager.userComponent!!, UserComponentEntryPoint::class.java)
             .userDataRepository()
 
+    // TODO This needs to be fixed: Possible NPE when switching back to the app.
     private val projectManager: ProjectManager
         get() = EntryPoints
             .get(userManager.userComponent!!, UserComponentEntryPoint::class.java)
@@ -65,7 +63,7 @@ class DashboardViewModel @Inject constructor(
         isRefreshing = true
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope
-                .launch { eventChannel.send(Error(throwable)) }
+                .launch { eventChannel.send(Event.Error(throwable)) }
                 .also { isRefreshing = false }
         }
         viewModelScope.launch(handler) {
@@ -86,7 +84,7 @@ class DashboardViewModel @Inject constructor(
     fun createProject(projectName: String) {
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope.launch {
-                eventChannel.send(Error(throwable))
+                eventChannel.send(Event.Error(throwable))
             }
         }
         viewModelScope.launch(handler) {
@@ -98,41 +96,53 @@ class DashboardViewModel @Inject constructor(
                     guard(response.success) {
                         throw Throwable(response.error)
                     }
-                    eventChannel.send(ProjectCreated(projectName))
+                    eventChannel.send(Event.Project.Created(projectName))
+                    refreshUser()
                 }
         }
     }
 
     fun selectProject(project: Project) {
-        getDevelopmentKeys(project = project)
-    }
-
-    private fun getDevelopmentKeys(project: Project) {
         isDownloadingDevelopmentKeys = true
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope
-                .launch { eventChannel.send(Error(throwable)) }
+                .launch { eventChannel.send(Event.Error(throwable)) }
                 .also { isDownloadingDevelopmentKeys = false }
         }
         viewModelScope.launch(handler) {
-            dashboardRepository.developmentKeys(
+            // Retrieve the development keys for the project
+            val developmentKeys = dashboardRepository.developmentKeys(
                 token = userDataRepo.token,
                 projectId = project.id
             ).let { response ->
                 guard(response.success) {
                     throw Throwable(response.error)
                 }
-                projectManager.projectSelected(
-                    project = project,
-                    keys = response.developmentKeys()
-                )
-                eventChannel.send(ProjectSelected(project))
-            }.also { isDownloadingDevelopmentKeys = false }
+                response.developmentKeys()
+            }
+            // Retrieve the socket token for the project
+            val socketToken =
+                dashboardRepository.getSocketToken(developmentKeys.apiKey, projectId = project.id)
+                    .let { response ->
+                        guard(response.success) {
+                            throw  Throwable(response.error)
+                        }
+                        response.token
+                    }
+            projectManager.projectSelected(
+                project = project,
+                keys = developmentKeys,
+                socketToken = socketToken
+            )
+            eventChannel.send(Event.Project.Selected(project))
+            isDownloadingDevelopmentKeys = false
         }
     }
 
     fun logout() {
-        AccountHelper.invalidateAuthToken(userDataRepo.token, getApplication())
-        userManager.logout()
+        viewModelScope.launch {
+            AccountHelper.invalidateAuthToken(userDataRepo.token, getApplication())
+            userManager.logout()
+        }
     }
 }

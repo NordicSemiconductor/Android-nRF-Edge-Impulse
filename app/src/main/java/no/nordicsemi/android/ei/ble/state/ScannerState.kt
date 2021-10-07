@@ -6,14 +6,14 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
-import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.*
+import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.Reason
 import kotlin.math.max
 
 /**
  * ScannerState that holds the current scanning state and the list of discovered devices.
  */
 class ScannerState(
-    initialState: ScanningState = ScanningState.Stopped(Reason.NotStarted)
+    initialState: ScanningState = ScanningState.Stopped(Reason.LocationPermissionNotGranted)
 ) {
     var scanningState: ScanningState by mutableStateOf(initialState)
         private set
@@ -23,12 +23,12 @@ class ScannerState(
 
     fun onDeviceFound(scanResult: ScanResult) {
         discoveredDevices.find {
-            it.device == scanResult.device
+            it.bluetoothDevice == scanResult.device
         }?.let {
             it.rssi = max(-128, scanResult.rssi)
             it.name = scanResult.scanRecord?.deviceName
         } ?: run {
-            discoveredDevices.add(scanResult.toDiscoveredBluetoothDevice())
+            discoveredDevices += scanResult.toDiscoveredBluetoothDevice()
         }
     }
 
@@ -39,13 +39,13 @@ class ScannerState(
         scanningState = ScanningState.Started
     }
 
-    fun onScanningNotStarted() {
-        scanningState = ScanningState.Stopped(Reason.NotStarted)
+    fun onBluetoothDisabled() {
+        scanningState = ScanningState.Stopped(Reason.BluetoothDisabled)
         clearDiscoveredDevices()
     }
 
-    fun onBluetoothDisabled() {
-        scanningState = ScanningState.Stopped(Reason.BluetoothDisabled)
+    fun onBluetoothScanPermissionNotGranted() {
+        scanningState = ScanningState.Stopped(Reason.BluetoothScanPermissionNotGranted)
         clearDiscoveredDevices()
     }
 
@@ -68,6 +68,6 @@ private fun ScanResult.toDiscoveredBluetoothDevice(): DiscoveredBluetoothDevice 
     return DiscoveredBluetoothDevice(
         name = scanRecord?.deviceName,
         rssi = rssi,
-        device = device
+        bluetoothDevice = device
     )
 }

@@ -2,6 +2,8 @@ package no.nordicsemi.android.ei.service
 
 import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.service.param.*
+import okhttp3.ResponseBody
+import retrofit2.Response
 import retrofit2.http.*
 
 interface EiService {
@@ -66,6 +68,40 @@ interface EiService {
     ): ListDevicesResponse
 
     /**
+     * Sets the current name for a device.
+     *
+     * @param apiKey                Token received during the login.
+     * @param projectId             Project ID.
+     * @param deviceId              Device ID
+     * @param renameDeviceRequest   Device rename request parameters
+     */
+    @Headers("Accept: application/json", "Content-Type: application/json")
+    @POST("api/{projectId}/devices/{deviceId}/rename")
+    suspend fun renameDevice(
+        @Header("x-api-key") apiKey: String,
+        @Path("projectId") projectId: Int,
+        //Set value as encoded already as retrofit seem to encode colons with %253A instead of %3A
+        @Path("deviceId", encoded = true) deviceId: String,
+        @Body renameDeviceRequest: RenameDeviceRequest
+    ): RenameDeviceResponse
+
+    /**
+     * Deletes a device
+     *
+     * @param apiKey                Token received during the login.
+     * @param projectId             Project ID.
+     * @param deviceId              Device ID.
+     */
+    @Headers("Accept: application/json", "Content-Type: application/json")
+    @DELETE("api/{projectId}/device/{deviceId}")
+    suspend fun deleteDevice(
+        @Header("x-api-key") apiKey: String,
+        @Path("projectId") projectId: Int,
+        //Set value as encoded already as retrofit seem to encode colons with %253A instead of %3A
+        @Path("deviceId", encoded = true) deviceId: String
+    ): DeleteDeviceResponse
+
+    /**
      * Retrieve all the samples for a project.
      *
      * @param apiKey       Token received during the login.
@@ -95,4 +131,51 @@ interface EiService {
         @Query("offset") offset: Int,
     ): ListSamplesResponse
 
+    /**
+     * Retrieve socket token for a project
+     *
+     * @param apiKey    Token received during the login.
+     * @param projectId Project ID
+     */
+    @Headers("Accept: application/json", "Content-Type: application/json")
+    @GET("api/{projectId}/socket-token")
+    suspend fun getSocketToken(
+        @Header("x-api-key") apiKey: String,
+        @Path("projectId") projectId: Int,
+    ): GetSocketTokenResponse
+
+    @Headers("Accept: application/json", "Content-Type: application/json")
+    @POST("api/{projectId}/device/{deviceId}/start-sampling")
+    suspend fun startSampling(
+        @Header("x-api-key") apiKey: String,
+        @Path("projectId") projectId: Int,
+        @Path("deviceId") deviceId: String,
+        @Body startSamplingRequest: StartSamplingRequest,
+    ): StartSamplingResponse
+
+    @Headers("Accept: application/json", "Content-Type: application/json")
+    @POST("api/{projectId}/jobs/build-ondevice-model")
+    suspend fun buildOnDevice(
+        @Header("x-api-key") apiKey: String,
+        @Path("projectId") projectId: Int,
+        @Query("type") type: String = "nordic-thingy53",
+        @Body buildOnDeviceModels: BuildOnDeviceModelRequest,
+    ): BuildOnDeviceModelResponse
+
+    @Headers("Accept: application/json", "Content-Type: application/json")
+    @GET("api/{projectId}/deployment")
+    suspend fun deploymentInfo(
+        @Header("x-api-key") apiKey: String,
+        @Path("projectId") projectId: Int,
+        @Query("type") type: String = "nordic-thingy53"
+    ): DeploymentInfoResponse
+
+    //@Streaming
+    @Headers("Accept: application/zip")
+    @GET("api/{projectId}/deployment/download")
+    suspend fun downloadBuild(
+        @Header("x-api-key") apiKey: String,
+        @Path("projectId") projectId: Int,
+        @Query("type") type: String = "nordic-thingy53"
+    ): Response<ResponseBody>
 }

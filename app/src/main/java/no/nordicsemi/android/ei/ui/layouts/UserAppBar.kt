@@ -20,12 +20,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.coil.rememberCoilPainter
+import coil.annotation.ExperimentalCoilApi
+import coil.compose.rememberImagePainter
+import coil.transform.CircleCropTransformation
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.User
+import no.nordicsemi.android.ei.ui.ShowDropdown
 
 private val AppBarHeight = 56.dp
 
+@OptIn(ExperimentalCoilApi::class)
 @Composable
 fun UserAppBar(
     title: @Composable () -> Unit,
@@ -35,6 +39,7 @@ fun UserAppBar(
     backgroundColor: Color = MaterialTheme.colors.primarySurface,
     contentColor: Color = contentColorFor(backgroundColor),
     elevation: Dp = AppBarDefaults.TopAppBarElevation,
+    onAboutClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
 ) {
     val imageSizePx = with(LocalDensity.current) {
@@ -83,14 +88,23 @@ fun UserAppBar(
                         verticalAlignment = Alignment.Top,
                         content = {
                             var showMenu by remember { mutableStateOf(false) }
-                            IconButton(onClick = { showMenu = true }) {
+                            IconButton(onClick = { showMenu = !showMenu }) {
                                 Icon(Icons.Default.MoreVert, contentDescription = null)
                             }
-                            DropdownMenu(
+                            ShowDropdown(
+                                modifier = Modifier.wrapContentWidth(),
                                 expanded = showMenu,
-                                onDismissRequest = { showMenu = false },
-                            ) {
-                                DropdownMenuItem(onClick = onLogoutClick) {
+                                onDismiss = { showMenu = !showMenu }) {
+                                DropdownMenuItem(onClick = {
+                                    showMenu = !showMenu
+                                    onAboutClick()
+                                }) {
+                                    Text(text = stringResource(id = R.string.action_about))
+                                }
+                                DropdownMenuItem(onClick = {
+                                    showMenu = !showMenu
+                                    onLogoutClick()
+                                }) {
                                     Text(text = stringResource(id = R.string.action_logout))
                                 }
                             }
@@ -114,9 +128,17 @@ fun UserAppBar(
                     shape = CircleShape,
                 ) {
                     Image(
-                        painter = rememberCoilPainter(
-                            request = user.photo ?: Image(Icons.Filled.AccountCircle, contentDescription = null, alpha = 0.1f),
-                            shouldRefetchOnSizeChange = { _, _ -> false },
+                        painter = rememberImagePainter(
+                            data = user.photo ?: Image(
+                                Icons.Filled.AccountCircle,
+                                contentDescription = null,
+                                alpha = 0.1f
+                            ),
+                            builder = {
+                                crossfade(true)
+                                placeholder(R.drawable.ic_outline_account_circle_24)
+                                transformations(CircleCropTransformation())
+                            }
                         ),
                         contentDescription = stringResource(R.string.content_description_user_image),
                         alignment = Alignment.Center,
@@ -132,7 +154,7 @@ fun UserAppBar(
                         color = MaterialTheme.colors.onPrimary,
                         style = MaterialTheme.typography.h6,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         modifier = Modifier
@@ -141,7 +163,7 @@ fun UserAppBar(
                         color = MaterialTheme.colors.onPrimary,
                         style = MaterialTheme.typography.caption,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }

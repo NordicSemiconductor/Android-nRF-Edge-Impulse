@@ -16,8 +16,9 @@ import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.Uris
 import no.nordicsemi.android.ei.ui.Login
 import no.nordicsemi.android.ei.ui.theme.NordicTheme
-import no.nordicsemi.android.ei.viewmodels.state.LoginState
+import no.nordicsemi.android.ei.util.asMessage
 import no.nordicsemi.android.ei.viewmodels.LoginViewModel
+import no.nordicsemi.android.ei.viewmodels.state.LoginState
 
 @AndroidEntryPoint
 class LoginActivity : AccountAuthenticatorActivity() {
@@ -49,20 +50,20 @@ class LoginActivity : AccountAuthenticatorActivity() {
                             state.token
                         )
                         else -> Login(
-                                    modifier = Modifier.padding(innerPadding),
-                                    enabled = state !is LoginState.InProgress,
-                                    onLogin = { username, password ->
-                                        viewModel.login(username, password, authTokenType)
-                                    },
-                                    onForgotPassword = {
-                                        open(Uris.ForgetPassword)
-                                    },
-                                    onSignUp = {
-                                        open(Uris.SignUp)
-                                    },
-                                    login = accountName ?: "",
-                                    error = if (state is LoginState.Error) state.message else null
-                                )
+                            modifier = Modifier.padding(innerPadding),
+                            enabled = state !is LoginState.InProgress,
+                            onLogin = { username, password ->
+                                viewModel.login(username, password, authTokenType)
+                            },
+                            onForgotPassword = {
+                                open(Uris.ForgetPassword)
+                            },
+                            onSignUp = {
+                                open(Uris.SignUp)
+                            },
+                            login = accountName ?: "",
+                            error = (state as? LoginState.Error)?.error?.asMessage()
+                        )
                     }
                 }
             }
@@ -98,7 +99,7 @@ class LoginActivity : AccountAuthenticatorActivity() {
 
         // If the account name has changed, rename it.
         val oldAccountName = intent.getStringExtra(KEY_ACCOUNT_NAME)
-        takeIf { accountName != oldAccountName }?.run {
+        oldAccountName?.takeIf { accountName != oldAccountName }?.run {
             accountManager.renameAccount(account, accountName, {
                 finalize(accountType, accountName, authToken)
             }, null)

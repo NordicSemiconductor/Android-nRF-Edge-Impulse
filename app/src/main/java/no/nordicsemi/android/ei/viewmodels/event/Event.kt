@@ -1,9 +1,12 @@
 package no.nordicsemi.android.ei.viewmodels.event
 
-import no.nordicsemi.android.ei.model.Project
+sealed class Event {
 
-sealed class Event
+    sealed class Project {
+        data class Created(val projectName: String): Event()
+        data class Selected(val project: no.nordicsemi.android.ei.model.Project): Event()
+    }
 
-data class ProjectCreated(val projectName: String) : Event()
-data class ProjectSelected(val project: Project) : Event()
-data class Error(val throwable: Throwable) : Event()
+    data class Error(val throwable: Throwable): Event()
+}
+

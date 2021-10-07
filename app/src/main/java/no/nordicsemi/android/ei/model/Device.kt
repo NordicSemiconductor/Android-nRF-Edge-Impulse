@@ -1,5 +1,7 @@
 package no.nordicsemi.android.ei.model
 
+import com.google.gson.annotations.SerializedName
+
 data class Device(
     val id: Int,
     val deviceId: String,
@@ -8,12 +10,7 @@ data class Device(
     val name: String,
     val deviceType: String,
     val sensors: List<Sensor>,
-    val remote_mgmt_connected: Boolean,
+    @SerializedName("remote_mgmt_connected")
+    val remoteMgmtConnected: Boolean,
     val supportsSnapshotStreaming: Boolean
-) {
-    inner class Sensor(
-        val name: String,
-        val maxSampleLengths: Int,
-        val frequencies: List<Number>
-    )
-}
+)

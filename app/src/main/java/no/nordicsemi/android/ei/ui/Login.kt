@@ -79,7 +79,7 @@ fun Login(
 
         OutlinedTextField(
             value = username,
-            onValueChange = { username = it },
+            onValueChange = { username = it.trim() },
             modifier = Modifier
                 .widthIn(max = maxWidth)
                 .fillMaxWidth(),

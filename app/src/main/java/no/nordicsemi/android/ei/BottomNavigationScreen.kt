@@ -17,33 +17,40 @@ enum class BottomNavigationScreen(
     @DrawableRes val drawableRes: Int,
     val shouldFabBeVisible: Boolean,
 ) {
-    Devices(
+    DEVICES(
         route = Route.devices,
         resourceId = R.string.label_devices,
-        drawableRes = R.drawable.ic_devices,
+        drawableRes = R.drawable.ic_round_developer_board_24,
         shouldFabBeVisible = false
     ),
 
-    DataAcquisition(
+    DATA_ACQUISITION(
         route = Route.dataAcquisition,
         resourceId = R.string.label_data_acquisition,
-        drawableRes = R.drawable.ic_database,
+        drawableRes = R.drawable.ic_round_storage_24,
         shouldFabBeVisible = true
     ),
 
-    Deployment(
+    DEPLOYMENT(
         route = Route.deployment,
         resourceId = R.string.label_deployment,
-        //TODO find the correct edge impulse icon
-        drawableRes = R.drawable.ic_devices,
+        drawableRes = R.drawable.ic_deployment_24,
+        shouldFabBeVisible = false
+    ),
+
+    INFERENCING(
+        route = Route.inferencing,
+        resourceId = R.string.title_inferencing,
+        drawableRes = R.drawable.ic_outline_inferencing_24,
         shouldFabBeVisible = false
     );
 
     companion object {
         fun fromNav(navDestination: NavDestination) = when (navDestination.route) {
-            Devices.route -> Devices
-            DataAcquisition.route -> DataAcquisition
-            Deployment.route -> Deployment
+            DEVICES.route -> DEVICES
+            DATA_ACQUISITION.route -> DATA_ACQUISITION
+            DEPLOYMENT.route -> DEPLOYMENT
+            INFERENCING.route -> INFERENCING
             else -> throw IllegalArgumentException("$navDestination.route is not a valid route")
         }
     }

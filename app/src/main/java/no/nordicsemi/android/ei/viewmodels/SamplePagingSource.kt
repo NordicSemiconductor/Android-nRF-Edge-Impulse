@@ -6,7 +6,6 @@ import no.nordicsemi.android.ei.model.DevelopmentKeys
 import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.model.Sample
 import no.nordicsemi.android.ei.repository.ProjectRepository
-import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel.Companion.PAGE_SIZE
 import retrofit2.HttpException
 import java.io.IOException
 

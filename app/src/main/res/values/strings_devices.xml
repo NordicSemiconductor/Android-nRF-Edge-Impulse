@@ -1,30 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="label_scanner">Scanner</string>
+    <string name="label_scanner">Add Device</string>
     <string name="unknown">Unknown</string>
-    <string name="label_no_devices_connected">No devices connected yet.</string>
+    <string name="label_no_devices_connected">No devices connected</string>
     <string name="label_scanning">Scanning for bluetooth devices…</string>
     <string name="label_bluetooth_disabled">Bluetooth disabled</string>
     <string name="label_location_permission_disabled"><![CDATA[From Android 6.0 Marshmallow onwards the application requires Location permission in order to scan for Bluetooth Low Energy devices.       \n\nThis is because Bluetooth LE beacons, for example iBeacons or Eddystone, may be used to determine the phone\'s and user\'s location. <b>nRF Edge Impulse</b> will not use this information in any way.</string>]]></string>
     <string name="label_location_services_disabled">Location services disabled</string>
 
-    <string name="location_permission_title">LOCATION PERMISSION REQUIRED</string>
+    <string name="bluetooth_scan_connect_permission_title">Bluetooth Permission Required</string>
+    <string name="bluetooth_scan_connect_permission_info">From Android 12 onwards, an application requires Bluetooth Scan and Bluetooth Connect permissions
+        to scan and connect for Bluetooth Low Energy devices. \n\nHowever app will never use these permissions to derive physical location from Bluetooth Scan results.</string>
+
+    <string name="location_permission_title">Location Permission Required</string>
     <string name="location_permission_info">From Android 6.0 Marshmallow onwards the application requires Location permission in order to scan for Bluetooth Low Energy devices.
-      \n\nThis is because Bluetooth LE beacons, for example iBeacons or Eddystone, may be used to determine the phone\'s and user\'s location. <b>nRF Blinky</b> will not use this information in any way.</string>
-    <string name="action_location_permission">Grant Permission</string>
+      \n\nThis is because Bluetooth LE beacons, for example iBeacons or Eddystone, may be used to determine the phone\'s and user\'s location.
+      \n\nThis app will not use this information in any way.</string>
+    <string name="action_grant_permission">Grant Permission</string>
+    <string name="action_show_location_rationale">Location? Why?!</string>
     <string name="action_location_permission_settings">Settings</string>
 
-    <string name="bluetooth_disabled_title">BLUETOOTH DISABLED</string>
+    <string name="bluetooth_disabled_title">Bluetooth Disabled</string>
     <string name="bluetooth_disabled_info">The Bluetooth adapter is turned off. Click the button below to enable it.</string>
 
-    <string name="thingy_guide_title">CAN\'T SEE YOUR Thingy:53?</string>
-    <string name="thingy_guide_info">1. Make sure the DK is <b>turned on</b> and is connected to a power source using a micro USB cable or a coin cell is plugged in.
-        \n\n2. Make sure the <b>firmware</b> is flashed.</string>
+    <string name="thingy_guide_title">Can\'t see your Thingy:53?</string>
+    <string name="thingy_guide_info">1. Make sure the device is <b>powered on</b> and charged.
+        \n\n2. Make sure the correct <b>firmware</b> is flashed on the device.</string>
 
-
-    <string name="location_turned_off_title">LOCATION TURNED OFF</string>
+    <string name="location_turned_off_title">Location turned off</string>
     <string name="location_turned_off_info">Some Android phones require Location to be enabled in order to scan for Bluetooth LE devices.
 		If you are sure your Thingy:53 is advertising and it doesn\'t show up here, click the button below to enable Location.</string>
     <string name="thingy_guide_location_action">Enable</string>
     <string name="action_enable">Enable</string>
+
+
+    <string name="label_id">Id</string>
+    <string name="label_type">Type</string>
+    <string name="label_created_at">Created at</string>
+    <string name="label_last_seen">Last seen</string>
+    <string name="label_connectivity">Connectivity</string>
+    <string name="label_connected_to_remote_management">Connected to remote management</string>
+    <string name="label_capabilities">Capabilities</string>
+    <string name="label_snapshot_streaming">Snapshot streaming</string>
+    <string name="label_max_sample_length">Maximum sample length</string>
+    <string name="label_frequencies">Frequencies</string>
+    <string name="label_unit_hertz">&#160;Hz</string>
+    <string name="label_frequencies_separator">,&#160;</string>
+    <string name="label_sample_duration">%d s</string>
+    <string name="action_connect">Connect</string>
+    <string name="action_disconnect">Disconnect</string>
+    <string name="label_device_information">Device Information</string>
+
+    <string name="label_not_in_range">Not in range</string>
+    <string name="label_in_range">In range…</string>
+    <string name="label_connecting">Connecting…</string>
+    <string name="label_authenticating">Authenticating…</string>
+    <string name="label_connected">Connected</string>
+    <string name="label_disconnected">Disconnected</string>
 </resources>

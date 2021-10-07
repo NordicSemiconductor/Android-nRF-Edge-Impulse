@@ -1,23 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="title_record_new_data">Record New Data</string>
+    <string name="label_col_sample_name">Sample Name</string>
+    <string name="label_col_label">Label</string>
+    <string name="label_col_length">Length</string>
+
+    <string name="label_category">Category</string>
     <string name="label_device">Device</string>
     <string name="label_label">Label</string>
     <string name="label_sensor">Sensor</string>
-    <string name="label_sample_length">Sample Length</string>
-    <string name="label_frequency">Frequency</string>
-    <string name="action_start_sampling">Start sampling</string>
-    <string name="label_loading_collected_data">Loading collected data…</string>
-    <string name="label_loading_training_data">Loading training data…</string>
-    <string name="label_loading_testing_data">Loading testing data…</string>
-    <string name="label_loading_anomaly_data">Loading anomaly data…</string>
+    <string name="label_sample_length">Sample Length (ms)</string>
+    <string name="label_frequency">Frequency (Hz)</string>
     <string name="label_no_collected_data_yet">No data collected yet</string>
-    <string name="action_record_new_data">RECORD NEW DATA</string>
+
     <string name="title_testing">Testing</string>
-    <string name="title_anomaly">Anomaly</string>
     <string name="title_training">Training</string>
+
     <string name="param_category_training">training</string>
     <string name="param_category_testing">testing</string>
-    <string name="param_category_anomaly">anomaly</string>
-    <string name="try_again">Try again</string>
+
+    <string name="action_record_new_data">Record new data</string>
+    <string name="action_start_sampling">Start sampling</string>
+    <string name="action_try_again">Try again</string>
+    <string name="connect_device_for_data_acquisition">Please connect to a configured device or add a new device on the Devices tab to record new data.</string>
+    <string name="label_sending_sample_request">Sending sample request to device…</string>
+    <string name="label_sampling_response_received">Response to sample request received…</string>
+    <string name="label_sampling_started">Sampling started…</string>
+    <string name="label_sampling_processing">Sample processing…</string>
+    <string name="label_uploading_started">Uploading sample…</string>
+    <string name="label_sampling_finished">Sampling Finished</string>
 </resources>

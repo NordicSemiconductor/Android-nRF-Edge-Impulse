@@ -1,218 +1,347 @@
 package no.nordicsemi.android.ei.ui
 
-import android.Manifest
-import android.bluetooth.BluetoothAdapter
-import android.content.Intent
-import android.provider.Settings
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.DeveloperBoard
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import no.nordicsemi.android.ei.BottomNavigationScreen
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
-import no.nordicsemi.android.ei.ble.state.*
-import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.*
+import no.nordicsemi.android.ei.ble.rssiAsPercent
+import no.nordicsemi.android.ei.ble.state.ScannerState
+import no.nordicsemi.android.ei.ble.state.ScanningState
+import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.Reason
+import no.nordicsemi.android.ei.comms.DataAcquisitionManager
 import no.nordicsemi.android.ei.model.Device
-import no.nordicsemi.android.ei.ui.theme.NordicRed
-import no.nordicsemi.android.ei.util.Utils.isBluetoothEnabled
+import no.nordicsemi.android.ei.ui.layouts.*
+import no.nordicsemi.android.ei.util.Utils
+import no.nordicsemi.android.ei.util.exhaustive
 import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
-import java.util.*
+import no.nordicsemi.android.ei.viewmodels.state.DeviceState
+import no.nordicsemi.android.ei.viewmodels.state.indicatorColor
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun Devices(
-    modifier: Modifier = Modifier,
+    scope: CoroutineScope,
     viewModel: DevicesViewModel,
+    modifier: Modifier = Modifier,
     configuredDevices: List<Device>,
+    activeDevices: Map<String, DataAcquisitionManager>,
     refreshingState: Boolean,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    scannerState: ScannerState,
+    onScannerStarted: () -> Unit,
+    screen: BottomNavigationScreen,
+    connect: (DiscoveredBluetoothDevice) -> Unit,
+    disconnect: (DiscoveredBluetoothDevice) -> Unit,
+    onRenameClick: (Device, String) -> Unit,
+    onDeleteClick: (Device) -> Unit,
 ) {
-    val listState = rememberLazyListState()
-    val scannerState = viewModel.scannerState
     val scanningState = scannerState.scanningState
-    val swipeRefreshState = rememberSwipeRefreshState(refreshingState)
-
-    SwipeRefresh(
-        modifier = modifier,
-        state = swipeRefreshState,
-        onRefresh = { onRefresh() },
-    ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            state = listState
-        ) {
-            item {
-                Text(
-                    modifier = Modifier.padding(16.dp),
-                    text = stringResource(R.string.label_devices),
-                    style = MaterialTheme.typography.h6
-                )
-            }
-
-            configuredDevices.takeIf { it.isNotEmpty() }?.let { isNotEmptyList ->
-                items(
-                    items = isNotEmptyList,
-                    key = { it.deviceId }
-                ) {
-                    ConfiguredDeviceRow(device = it)
-                    Divider()
-                }
-            } ?: run {
-                item {
-                    Column(
-                        modifier = modifier
-                            .fillMaxSize()
-                            .padding(top = 16.dp),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_devices),
-                                contentDescription = null,
-                                modifier = Modifier.size(72.dp)
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = stringResource(R.string.label_no_devices_connected),
-                                style = MaterialTheme.typography.h6
-                            )
-                        }
-                    }
-                }
-            }
-
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
+    val backdropScaffoldState = rememberBackdropScaffoldState(initialValue = BackdropValue.Revealed)
+    BackHandler(
+        enabled = backdropScaffoldState.isConcealed,
+        onBack = {
+            animateBottomSheet(
+                scope = scope,
+                scaffoldState = backdropScaffoldState,
+                BackdropValue.Revealed
+            )
+        }
+    )
+    if (screen != BottomNavigationScreen.DEVICES) {
+        animateBottomSheet(
+            scope = scope,
+            scaffoldState = backdropScaffoldState,
+            BackdropValue.Revealed
+        )
+    }
+    BackdropScaffold(
+        scaffoldState = backdropScaffoldState,
+        appBar = {
+            TopAppBar(
+                content = {
                     Text(
                         modifier = Modifier
+                            .padding(start = 16.dp)
                             .weight(1.0f),
-                        text = stringResource(R.string.label_scanner),
+                        text = stringResource(R.string.label_device_information),
                         style = MaterialTheme.typography.h6
                     )
-                    if (scanningState == ScanningState.Started) {
-                        CircularProgressIndicator(
+                    IconButton(onClick = {
+                        animateBottomSheet(
+                            scope = scope,
+                            scaffoldState = backdropScaffoldState,
+                            BackdropValue.Revealed
+                        )
+                    }) {
+                        Icon(
                             modifier = Modifier
-                                .size(24.dp)
-                                .align(Alignment.CenterVertically)
+                                .padding(end = 16.dp),
+                            imageVector = Icons.Rounded.ExpandMore,
+                            contentDescription = null
                         )
                     }
-                }
-            }
-
-            when (scanningState) {
-                is ScanningState.Started -> {
-                    scannerState.discoveredDevices.takeIf { it.isNotEmpty() }
-                        ?.let { isNotEmptyList ->
-                            items(items = isNotEmptyList, key = {
-                                it.device.address
-                            }) {
-                                DiscoveredDeviceRow(device = it)
-                                Divider()
-                            }
-                        } ?: run {
-                        item {
-                            ShowScanningStoppedState(
-                                modifier = modifier,
-                                scanningState = scannerState.scanningState,
-                                startScanning = {
-                                    viewModel.startScan()
+                },
+                backgroundColor = MaterialTheme.colors.background,
+                elevation = 0.dp
+            )
+        },
+        backLayerContent = {
+            SwipeRefresh(
+                state = rememberSwipeRefreshState(refreshingState),
+                onRefresh = onRefresh,
+                modifier = modifier,
+                // TODO After Compose is stable, try removing this and swiping in Scanner tab.
+                // Those 3 properties below copy the default values from SwipeRefresh.
+                // Without them, the Scanner page crashes when devices are displayed and Swipe is used.
+                indicator = { s, trigger ->
+                    SwipeRefreshIndicator(s, trigger)
+                },
+                indicatorAlignment = Alignment.TopCenter,
+                indicatorPadding = PaddingValues(0.dp)
+            ) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    item {
+                        Text(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            text = stringResource(R.string.label_devices),
+                            style = MaterialTheme.typography.h6
+                        )
+                    }
+                    configuredDevices.takeIf { it.isNotEmpty() }?.let { configuredDevices ->
+                        items(
+                            items = configuredDevices,
+                            key = { it.deviceId }
+                        ) { configuredDevice ->
+                            ConfiguredDeviceRow(
+                                device = configuredDevice,
+                                state = viewModel.deviceState(
+                                    configuredDevice = configuredDevice,
+                                    activeDevices = activeDevices
+                                ),
+                                onDeviceClicked = { device ->
+                                    viewModel.onDeviceSelected(device)
+                                    animateBottomSheet(
+                                        scope = scope,
+                                        scaffoldState = backdropScaffoldState,
+                                        BackdropValue.Concealed
+                                    )
                                 }
                             )
+                            Divider()
                         }
-                    }
-                }
-                is ScanningState.Stopped -> {
-                    item {
-                        ShowScanningStoppedState(
-                            modifier = modifier,
-                            scanningState = scanningState,
-                            startScanning = {
-                                viewModel.startScan()
-                            }
+                    } ?: item {
+                        NoConfiguredDevicesInfo(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
                         )
                     }
+
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                modifier = Modifier
+                                    .weight(1.0f),
+                                text = stringResource(R.string.label_scanner),
+                                style = MaterialTheme.typography.h6
+                            )
+                            if (scanningState == ScanningState.Started) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .align(Alignment.CenterVertically)
+                                )
+                            }
+                        }
+                    }
+
+                    when (scanningState) {
+                        is ScanningState.Initializing -> {
+                        }
+                        is ScanningState.Started -> {
+                            scannerState.discoveredDevices
+                                // Filter only devices that have not been configured.
+                                .filter { discoveredDevice ->
+                                    configuredDevices.find { configuredDevice ->
+                                        configuredDevice.deviceId == discoveredDevice.bluetoothDevice.address
+                                    } == null
+                                }
+                                // Display only if at least one was found.
+                                .takeIf { it.isNotEmpty() }?.let { discoveredDevices ->
+                                    items(
+                                        items = discoveredDevices,
+                                        key = { it.bluetoothDevice.address }
+                                    ) { discoveredDevice ->
+                                        DiscoveredDeviceRow(
+                                            device = discoveredDevice,
+                                            state = activeDevices[discoveredDevice.deviceId]?.state
+                                                ?: DeviceState.IN_RANGE,
+                                            onDeviceClicked = { connect(it) },
+                                            onDeviceAuthenticated = { onRefresh() }
+                                        )
+                                        Divider()
+                                    }
+                                }
+                            // Else, show a placeholder.
+                                ?: item {
+                                    NoDevicesInRangeInfo(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp)
+                                    )
+                                }
+                        }
+                        is ScanningState.Stopped -> {
+                            item {
+                                ScanningStoppedInfo(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp),
+                                    reason = scanningState.reason,
+                                    onScanningStarted = onScannerStarted,
+                                )
+                            }
+                        }
+                    }.exhaustive
                 }
             }
-        }
-    }
+        },
+        persistentAppBar = false,
+        frontLayerElevation = 6.dp,
+        frontLayerShape = MaterialTheme.shapes.large,
+        frontLayerContent = {
+            viewModel.device?.let { device ->
+                DeviceDetails(
+                    device = device,
+                    deviceState = viewModel.deviceState(
+                        configuredDevice = device,
+                        activeDevices = activeDevices
+                    ),
+                    onConnectClick = {
+                        viewModel.discoveredBluetoothDevice(device)?.let(connect)
+                    },
+                    onDisconnectClick = {
+                        viewModel.discoveredBluetoothDevice(device)?.let(disconnect)
+                    },
+                    onRenameClick = onRenameClick,
+                    onDeleteClick = {
+                        onDeleteClick(it)
+                        animateBottomSheet(
+                            scope = scope,
+                            scaffoldState = backdropScaffoldState,
+                            BackdropValue.Revealed
+                        )
+                    },
+                )
+            }
+        },
+        headerHeight = 0.dp,
+        backLayerBackgroundColor = MaterialTheme.colors.surface
+    )
 }
 
 @Composable
-fun ConfiguredDeviceRow(device: Device) {
+fun ConfiguredDeviceRow(
+    device: Device,
+    state: DeviceState,
+    onDeviceClicked: (Device) -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(color = MaterialTheme.colors.surface)
+            .clickable(
+                /*enabled = state == DeviceState.IN_RANGE || state == DeviceState.AUTHENTICATED,*/
+                onClick = { onDeviceClicked(device) },
+            )
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
-            painter = painterResource(id = R.drawable.ic_devices),
+            imageVector = Icons.Rounded.DeveloperBoard,
             contentDescription = null,
             modifier = Modifier
                 .size(40.dp)
                 .background(
-                    color = MaterialTheme.colors.primary,
+                    color = state.indicatorColor(),
                     shape = CircleShape
                 )
-                .padding(8.dp)
+                .padding(8.dp),
+            colorFilter = ColorFilter.tint(Color.White)
         )
         Spacer(modifier = Modifier.width(16.dp))
-        Column(modifier = Modifier.weight(1.0f)) {
-            Text(
-                text = device.name,
-                color = MaterialTheme.colors.onSurface,
-                style = MaterialTheme.typography.body1
-            )
-            Text(
-                text = device.deviceId,
-                color = MaterialTheme.colors.onSurface,
-                style = MaterialTheme.typography.caption
+        Text(
+            modifier = Modifier.weight(1.0f),
+            text = device.name,
+            color = MaterialTheme.colors.onSurface,
+            style = MaterialTheme.typography.body1,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        if (state == DeviceState.CONNECTING) {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .size(24.dp)
+                    .align(Alignment.CenterVertically)
             )
         }
-        Spacer(modifier = Modifier.width(16.dp))
-        Surface(
-            modifier = Modifier
-                .size(8.dp),
-            //TODO Add green for connected devices
-            color = NordicRed,
-            shape = CircleShape
-        ) {}
-        Spacer(modifier = Modifier.padding(end = 8.dp))
     }
 }
 
 @Composable
-fun DiscoveredDeviceRow(device: DiscoveredBluetoothDevice) {
+fun DiscoveredDeviceRow(
+    device: DiscoveredBluetoothDevice,
+    state: DeviceState,
+    onDeviceClicked: (DiscoveredBluetoothDevice) -> Unit,
+    onDeviceAuthenticated: () -> Unit,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(color = MaterialTheme.colors.surface)
-            .padding(16.dp)
+            .clickable(
+                enabled = state == DeviceState.IN_RANGE,
+                onClick = { onDeviceClicked(device) },
+            )
+            .padding(16.dp),
     ) {
         Image(
-            painter = painterResource(id = R.drawable.ic_uart),
+            imageVector = Icons.Rounded.DeveloperBoard,
             contentDescription = null,
             modifier = Modifier
                 .size(40.dp)
@@ -220,7 +349,8 @@ fun DiscoveredDeviceRow(device: DiscoveredBluetoothDevice) {
                     color = MaterialTheme.colors.primary,
                     shape = CircleShape
                 )
-                .padding(8.dp)
+                .padding(8.dp),
+            colorFilter = ColorFilter.tint(Color.White)
         )
         Spacer(modifier = Modifier.width(width = 16.dp))
         Column(modifier = Modifier.weight(weight = 1.0f)) {
@@ -230,19 +360,36 @@ fun DiscoveredDeviceRow(device: DiscoveredBluetoothDevice) {
                 style = MaterialTheme.typography.body1
             )
             Text(
-                text = device.device.address,
+                text = device.bluetoothDevice.address,
                 color = MaterialTheme.colors.onSurface,
                 style = MaterialTheme.typography.caption
             )
         }
         Spacer(modifier = Modifier.width(width = 16.dp))
-        Image(
-            painter = painterResource(id = getRssiRes((100.0f * (127.0f + device.rssi) / (127.0f + 20.0f)).toInt())),
-            contentDescription = null,
-            modifier = Modifier
-                .size(size = 24.dp)
-                .align(alignment = Alignment.CenterVertically)
-        )
+        when (state) {
+            // RSSI image can be displayed even when not in range
+            DeviceState.IN_RANGE, DeviceState.NOT_IN_RANGE -> {
+                Image(
+                    painter = painterResource(id = getRssiRes(device.rssiAsPercent())),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .align(Alignment.CenterVertically)
+                )
+            }
+            DeviceState.CONNECTING,
+            DeviceState.AUTHENTICATING -> {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .align(Alignment.CenterVertically)
+                )
+            }
+            DeviceState.AUTHENTICATED -> {
+                // Once the device is authenticated we should refresh the list of devices.
+                onDeviceAuthenticated()
+            }
+        }
     }
 }
 
@@ -256,167 +403,54 @@ private fun getRssiRes(rssi: Int): Int = when (rssi) {
 }
 
 @Composable
-fun ShowScanningStoppedState(
+fun ScanningStoppedInfo(
     modifier: Modifier,
-    scanningState: ScanningState,
-    startScanning: () -> Unit
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(start = 16.dp, top = 32.dp, end = 16.dp, bottom = 16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
-            Icon(
-                painter = painterResource(
-                    id = when (scanningState) {
-                        is ScanningState.Started -> R.drawable.ic_bluetooth_searching
-                        is ScanningState.Stopped -> scanningState.reason.toDrawable()
-                    }
-                ),
-                contentDescription = null,
-                modifier = Modifier.size(72.dp)
+    reason: Reason,
+    onScanningStarted: () -> Unit
+) = when (reason) {
+    is Reason.BluetoothDisabled -> {
+        // TODO https://developer.android.com/about/versions/12/features/bluetooth-permissions
+        // States that android:maxSdkVersion="30" is required for the legacy android:name="android.permission.BLUETOOTH"
+        // However adding this makes the app crash on Android 12. Seems like a platform bug so let's wait on that.
+        // P.S. do not remove the following snippet for now.
+        /* if(Utils.isAndroidS()){
+            if(DevicesViewModel.isBluetoothScanPermissionGranted(LocalContext.current)){
+                BluetoothDisabledInfo()
+            } else {
+                BluetoothPermissionInfo(
+                    modifier = modifier,
+                    onScanningStarted = onScanningStarted
+                )
+            }
+        } else {
+        } */
+        BluetoothDisabledInfo(modifier)
+    }
+    is Reason.BluetoothScanPermissionNotGranted -> {
+        if (Utils.isAndroidS()) {
+            BluetoothPermissionInfo(
+                modifier = modifier,
+                onScanningStarted = onScanningStarted
             )
-            Spacer(modifier = Modifier.height(16.dp))
-            when (scanningState) {
-                is ScanningState.Started -> {
-                    DisplayScanningInfo()
-                }
-                is ScanningState.Stopped -> {
-                    when (val reason = scanningState.reason) {
-                        is Reason.BluetoothDisabled -> {
-                            DisplayBluetoothDisabledInfo()
-                        }
-                        is Reason.LocationPermissionNotGranted -> {
-                            DisplayLocationPermissionInfo(startScanning = startScanning)
-                        }
-                        is Reason.LocationTurnedOff -> {
-                            DisplayLocationTurnedOffInfo()
-                        }
-                        is Reason.Unknown -> {
-                            reason.throwable.localizedMessage
-                        }
-                        is Reason.NotStarted -> startScanning()
-                    }
-                }
-
-            }
+        } else {
         }
     }
-}
-
-@Composable
-fun DisplayScanningInfo() {
-    Text(
-        text = stringResource(id = R.string.thingy_guide_title),
-        textAlign = TextAlign.Center,
-        style = MaterialTheme.typography.h6
-    )
-    Spacer(modifier = Modifier.height(16.dp))
-    Text(
-        text = stringResource(id = R.string.thingy_guide_info),
-        style = MaterialTheme.typography.body1
-    )
-}
-
-@Composable
-fun DisplayBluetoothDisabledInfo() {
-    val launcher =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
-    Text(
-        text = stringResource(id = R.string.bluetooth_disabled_title),
-        textAlign = TextAlign.Center,
-        style = MaterialTheme.typography.h6
-    )
-    Spacer(modifier = Modifier.height(16.dp))
-    Text(
-        text = stringResource(id = R.string.bluetooth_disabled_info),
-        style = MaterialTheme.typography.body1
-    )
-    Spacer(modifier = Modifier.height(32.dp))
-    Button(
-        onClick = {
-            if (!isBluetoothEnabled()) {
-                launcher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
-            }
-        }
-    ) {
-        Text(
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp),
-            text = stringResource(R.string.action_enable).toUpperCase(Locale.ROOT),
-            style = MaterialTheme.typography.button
+    is Reason.LocationTurnedOff -> LocationTurnedOffInfo(modifier)
+    is Reason.LocationPermissionNotGranted -> {
+        LocationPermissionInfo(
+            modifier = modifier,
+            onScanningStarted = onScanningStarted
         )
     }
 }
 
-@Composable
-fun DisplayLocationPermissionInfo(startScanning: () -> Unit) {
-    val launcher =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            if (isGranted)
-                startScanning()
-        }
-    Text(
-        text = stringResource(id = R.string.location_permission_title),
-        textAlign = TextAlign.Center,
-        style = MaterialTheme.typography.h6
-    )
-    Spacer(modifier = Modifier.height(16.dp))
-    Text(
-        text = stringResource(id = R.string.location_permission_info),
-        style = MaterialTheme.typography.body1
-    )
-    Spacer(modifier = Modifier.height(32.dp))
-    Button(
-        modifier = Modifier.defaultMinSize(minHeight = 36.dp),
-        onClick = {
-            launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-        }
-    ) {
-        Text(
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp),
-            text = stringResource(R.string.action_location_permission).toUpperCase(Locale.ROOT),
-            style = MaterialTheme.typography.button
-        )
+@OptIn(ExperimentalMaterialApi::class)
+private fun animateBottomSheet(
+    scope: CoroutineScope,
+    scaffoldState: BackdropScaffoldState,
+    targetValue: BackdropValue
+) {
+    scope.launch {
+        scaffoldState.animateTo(targetValue)
     }
-}
-
-@Composable
-fun DisplayLocationTurnedOffInfo() {
-    val launcher =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
-    Text(
-        text = stringResource(id = R.string.location_turned_off_title),
-        textAlign = TextAlign.Center,
-        style = MaterialTheme.typography.h6
-    )
-    Spacer(modifier = Modifier.height(16.dp))
-    Text(
-        text = stringResource(id = R.string.location_turned_off_info),
-        style = MaterialTheme.typography.body1
-    )
-    Spacer(modifier = Modifier.height(32.dp))
-    Button(
-        modifier = Modifier.defaultMinSize(minHeight = 36.dp),
-        onClick = {
-            launcher.launch(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-        }
-    ) {
-        Text(
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp),
-            text = stringResource(R.string.action_location_permission_settings).toUpperCase(Locale.ROOT),
-            style = MaterialTheme.typography.button
-        )
-    }
-}
-
-@DrawableRes
-private fun Reason.toDrawable(): Int = when (this) {
-    is Reason.NotStarted -> R.drawable.ic_bluetooth_disabled
-    is Reason.BluetoothDisabled -> R.drawable.ic_bluetooth_disabled
-    is Reason.LocationPermissionNotGranted -> R.drawable.ic_location_off
-    is Reason.LocationTurnedOff -> R.drawable.ic_location_off
-    is Reason.Unknown -> R.drawable.ic_error
 }
