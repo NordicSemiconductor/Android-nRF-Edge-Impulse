@@ -135,7 +135,7 @@ private fun LargeScreen(
                                 onCategorySelected = { category = it },
                                 dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
                                 onDataAcquisitionTargetSelected = {
-                                    viewModel.onDataAcquisitionSelected(
+                                    viewModel.onDataAcquisitionTargetSelected(
                                         device = it
                                     )
                                 },
@@ -228,7 +228,7 @@ private fun SmallScreen(
                         onCategorySelected = { category = it },
                         dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
                         onDataAcquisitionTargetSelected = {
-                            viewModel.onDataAcquisitionSelected(
+                            viewModel.onDataAcquisitionTargetSelected(
                                 device = it
                             )
                         },

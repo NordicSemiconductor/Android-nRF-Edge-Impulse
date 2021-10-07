@@ -1,6 +1,7 @@
 package no.nordicsemi.android.ei.viewmodels
 
 import android.app.Application
+import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.util.Log
 import android.util.Pair
@@ -37,7 +38,6 @@ import no.nordicsemi.android.ei.di.UserComponentEntryPoint
 import no.nordicsemi.android.ei.di.UserManager
 import no.nordicsemi.android.ei.model.Category
 import no.nordicsemi.android.ei.model.Device
-import no.nordicsemi.android.ei.model.InferencingMessage.InferenceResults
 import no.nordicsemi.android.ei.model.InferencingMessage.InferencingRequest
 import no.nordicsemi.android.ei.model.Message.Sample
 import no.nordicsemi.android.ei.model.Sensor
@@ -59,6 +59,23 @@ class ProjectViewModel @Inject constructor(
     private val client: OkHttpClient,
     private val gson: Gson
 ) : AndroidViewModel(context as Application), FirmwareUpgradeCallback {
+
+    private val bluetoothManager =
+        context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+
+    @Suppress("unused")
+    private val bluetoothAdapter = bluetoothManager.adapter
+
+    private val userComponentEntryPoint: UserComponentEntryPoint
+        get() = EntryPoints.get(userManager.userComponent!!, UserComponentEntryPoint::class.java)
+
+    private val projectManager: ProjectManager
+        get() = userComponentEntryPoint.getProjectManager()
+
+    private val projectDataRepository: ProjectDataRepository
+        get() = EntryPoints
+            .get(projectManager.projectComponent!!, ProjectComponentEntryPoint::class.java)
+            .projectDataRepository()
 
     /** The channel for emitting one-time events. */
     private val eventChannel = Channel<Event>(Channel.BUFFERED)
@@ -90,31 +107,60 @@ class ProjectViewModel @Inject constructor(
     var isDeviceRenameRequested: Boolean by mutableStateOf(false)
         private set
 
-    // TODO This needs to be fixed: NPE when switching back to the app.
-    private val userComponentEntryPoint: UserComponentEntryPoint
-        get() = EntryPoints.get(userManager.userComponent!!, UserComponentEntryPoint::class.java)
-
-    private val projectManager: ProjectManager
-        get() = userComponentEntryPoint.getProjectManager()
-
-    // TODO This needs to be fixed: Possible NPE when switching back to the app.
-    private val projectDataRepository: ProjectDataRepository
-        get() = EntryPoints
-            .get(projectManager.projectComponent!!, ProjectComponentEntryPoint::class.java)
-            .projectDataRepository()
-
     // ---- Fields used for Recording New Sample --------------
     var dataAcquisitionTarget: Device? by mutableStateOf(null)
         private set
+
+    /** Lable of the acquired data sample */
     var label: String by mutableStateOf("Sample")
         private set
+
+    /** Sensor used for data acquisition */
     var sensor: Sensor? by mutableStateOf(null)
         private set
+
+    /** Sample length used for data acquisition */
     var sampleLength by mutableStateOf(20000)
         private set
+
+    /** Frequency used for data acquisition */
     var frequency: Number? by mutableStateOf(null)
         private set
-    private lateinit var  deploymentJob: Job
+
+    /** Sampling state contain the state of sampling*/
+    var samplingState = derivedStateOf {
+        dataAcquisitionTarget?.let {
+            dataAcquisitionManagers[it.deviceId]?.samplingState
+        } ?: Sample.Unknown
+    }
+        private set
+
+    /** Contains the combined deployment state from downloading, building and DFU */
+    var deploymentState: DeploymentState by mutableStateOf(DeploymentState.Unknown)
+        private set
+
+    /** Inferencing target is the device with which inferencing can be done*/
+    var inferencingTarget: Device? by mutableStateOf(null)
+        private set
+
+    /** Contains the inferencing state */
+    var inferencingState = derivedStateOf {
+        inferencingTarget?.let {
+            dataAcquisitionManagers[it.deviceId]?.inferencingState
+        } ?: InferencingState.Stopped
+    }
+        private set
+
+    /** Inferencing result obtained from the device */
+    var inferencingResults = derivedStateOf {
+        inferencingTarget?.let {
+            dataAcquisitionManagers[it.deviceId]?.inferenceResults
+        } ?: mutableStateListOf()
+    }
+        private set
+
+    /** Deployment job */
+    private lateinit var deploymentJob: Job
 
     /** Creates a deployment manager */
     private var buildManager = BuildManager(
@@ -130,41 +176,26 @@ class ProjectViewModel @Inject constructor(
         client = client
     )
 
-    var deploymentState: DeploymentState by mutableStateOf(DeploymentState.Unknown)
-        private set
-
-    var samplingState = derivedStateOf {
-        dataAcquisitionTarget?.let {
-            dataAcquisitionManagers[it.deviceId]?.samplingState
-        } ?: Sample.Unknown
-    }
-        private set
-
-    var inferencingTarget: Device? by mutableStateOf(null)
-        private set
-
-    var inferencingState = derivedStateOf {
-        inferencingTarget?.let {
-            dataAcquisitionManagers[it.deviceId]?.inferencingState
-        } ?: InferencingState.Stopped
-    }
-        private set
-    var inferencingResults = derivedStateOf {
-        inferencingTarget?.let {
-            dataAcquisitionManagers[it.deviceId]?.inferenceResults
-        } ?: mutableStateListOf<InferenceResults>()
-    }
-        private set
-
-    private var initialBytes = 0
-    private var uploadStartTimestamp: Long = 0
+    /** DFU target */
     var deploymentTarget: Device? by mutableStateOf(null)
         private set
+
+    /** Firmware upgrade controller used to cancel a firmware upgrade */
     private var firmwareUpgradeController: FirmwareUpgradeController? = null
+
+    /** DFU transfer speed */
     var transferSpeed by mutableStateOf(0f)
         private set
+
+    /** DFU Progress */
     var progress by mutableStateOf(0)
         private set
+
+    /** Initial bytes used to calculate the DFU transfer speed */
+    private var initialBytes = 0
+
+    /** Upload timestamp used to calculate the DFU transfer speed */
+    private var uploadStartTimestamp: Long = 0
 
     // ---- Implementation ------------------------------------
     init {
@@ -226,6 +257,9 @@ class ProjectViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Registers Build manager updates
+     */
     private fun registerForBuildManager() {
         deploymentJob = viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
             viewModelScope
@@ -240,16 +274,28 @@ class ProjectViewModel @Inject constructor(
         }
     }
 
-    fun onDataAcquisitionSelected(device: Device) {
+    /**
+     * Selects a data acquisition target
+     * @param device
+     */
+    fun onDataAcquisitionTargetSelected(device: Device) {
         dataAcquisitionTarget = device
         device.sensors.firstOrNull()
             ?.let { onSensorSelected(sensor = it) }
     }
 
+    /**
+     * Updates the label
+     * @param label updated label
+     */
     fun onLabelChanged(label: String) {
         this.label = label
     }
 
+    /**
+     * Selects a sensor for data acquisition
+     * @param sensor Selected sensor
+     */
     fun onSensorSelected(sensor: Sensor) {
         this.sensor = sensor
         sensor.frequencies.firstOrNull()
@@ -257,15 +303,26 @@ class ProjectViewModel @Inject constructor(
             ?: run { frequency = null }
     }
 
+    /**
+     * Selects a frequency
+     * @param frequency frequency to do data acquisition.
+     */
     fun onFrequencySelected(frequency: Number) {
         this.frequency = frequency
     }
 
+    /**
+     * Sets the updates sample length
+     * @param sampleLength Sample length
+     */
     fun onSampleLengthChanged(sampleLength: Int) {
         this.sampleLength = sampleLength
     }
 
-    //TODO need to finalize the api
+    /**
+     * Connect to a device
+     * @param device Discovered bluetooth device.
+     */
     fun connect(device: DiscoveredBluetoothDevice): Unit =
         dataAcquisitionManagers.getOrPut(key = device.deviceId, defaultValue = {
             DataAcquisitionManager(
@@ -380,8 +437,11 @@ class ProjectViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Cancel deployment
+     */
     fun cancelDeploy() {
-        if(deploymentState is DeploymentState.Building.Started){
+        if (deploymentState is DeploymentState.Building.Started) {
             buildManager.stop()
         }
         firmwareUpgradeController?.cancel()
@@ -480,11 +540,17 @@ class ProjectViewModel @Inject constructor(
 
     /**
      * Resets the current sampling state of a DataAcquisitionManager
+     * @param device Reset sampling state for device
      */
     private fun resetSamplingState(device: Device) {
         dataAcquisitionManagers[device.deviceId]?.resetSamplingState()
     }
 
+    /**
+     * Rename device
+     * @param device    Device to be renamed
+     * @param name      New device name
+     */
     fun rename(device: Device, name: String) {
         viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
             viewModelScope
@@ -507,6 +573,10 @@ class ProjectViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Deletes a device from the EI backend
+     * @param device to be deleted.
+     */
     fun delete(device: Device) {
         viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
             viewModelScope
@@ -529,14 +599,22 @@ class ProjectViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Selects an inferencing target
+     * @param device Device to send an inferencing request
+     */
+    fun onInferencingTargetSelected(device: Device) {
+        inferencingTarget = device
+    }
+
+    /**
+     * Sends an inferencing request
+     * @param inferencingRequest Inferencing request to be send
+     */
     fun sendInferencingRequest(inferencingRequest: InferencingRequest) {
         inferencingTarget?.let { device ->
             dataAcquisitionManagers[device.deviceId]?.sendInferencingRequest(inferencingRequest)
         }
-    }
-
-    fun onInferencingTargetSelected(device: Device) {
-        inferencingTarget = device
     }
 
     override fun onUpgradeStarted(controller: FirmwareUpgradeController?) {
@@ -581,6 +659,18 @@ class ProjectViewModel @Inject constructor(
 
     override fun onUpgradeCompleted() {
         deploymentState = DeploymentState.Completed
+        // TODO clarify reconnection upon successful connection.
+        // If the upgrade successfully completes let's reconnect to the device.
+        /*deploymentTarget?.let { device ->
+            val bluetoothDevice = bluetoothAdapter.getRemoteDevice(device.deviceId)
+            connect(
+                DiscoveredBluetoothDevice(
+                    name = bluetoothDevice.name,
+                    rssi = 0,
+                    bluetoothDevice = bluetoothDevice
+                )
+            )
+        }*/
     }
 
     override fun onUpgradeCanceled(state: FirmwareUpgradeManager.State?) {
@@ -592,7 +682,6 @@ class ProjectViewModel @Inject constructor(
         state: FirmwareUpgradeManager.State?,
         error: McuMgrException?
     ) {
-        Log.d("AAAA", "On upgrade failed")
         progress = 0
         deploymentState = DeploymentState.Failed
     }
