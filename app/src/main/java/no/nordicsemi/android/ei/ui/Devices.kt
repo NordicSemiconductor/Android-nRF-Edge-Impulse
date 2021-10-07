@@ -252,19 +252,9 @@ fun Devices(
                         activeDevices = activeDevices
                     ),
                     onConnectClick = {
-                        /*animateBottomSheet(
-                            scope = scope,
-                            scaffoldState = backdropScaffoldState,
-                            targetValue = BackdropValue.Revealed
-                        )*/
                         viewModel.discoveredBluetoothDevice(device)?.let(connect)
                     },
                     onDisconnectClick = {
-                        /*animateBottomSheet(
-                            scope = scope,
-                            scaffoldState = backdropScaffoldState,
-                            targetValue = BackdropValue.Revealed
-                        )*/
                         viewModel.discoveredBluetoothDevice(device)?.let(disconnect)
                     },
                     onRenameClick = onRenameClick,
