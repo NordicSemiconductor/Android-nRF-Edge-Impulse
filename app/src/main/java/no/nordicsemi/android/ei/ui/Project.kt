@@ -99,7 +99,7 @@ fun Project(
             selectedScreen = selectedScreen,
             onScreenChanged = { selectedScreen = it },
             isSamplingMessageVisible = viewModel.samplingState !is Unknown,
-            onSamplingMessageDismissed = { viewModel.resetSamplingState()},
+            onSamplingMessageDismissed = { viewModel.resetSamplingState() },
             onBackPressed = onBackPressed
         )
     }
@@ -797,5 +797,6 @@ fun DisplaySamplingMessage(
                 }
             }
         }
+
     }
 }
