@@ -126,7 +126,7 @@ fun Devices(
                 indicatorPadding = PaddingValues(0.dp)
             ) {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     item {
                         Text(

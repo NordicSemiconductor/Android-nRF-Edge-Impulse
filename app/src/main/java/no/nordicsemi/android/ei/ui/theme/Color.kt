@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Color
 val NordicBlue = Color(0xFF00A9CE)
 val NordicBlueDark = Color(0xFF0090B0)
 val NordicSky = Color(0xFF6AD1E3)
-val NordicBlueslate = Color(0x0033A0)
+val NordicBlueSlate = Color(0xFF0033A0)
 val NordicLake = Color(0xFF0077C8)
 
 val NordicGrass = Color(0xFFD0DF00)
