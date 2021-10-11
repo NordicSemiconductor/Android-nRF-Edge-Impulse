@@ -35,6 +35,7 @@ import java.util.*
 
 @Composable
 fun Deployment(
+    modifier: Modifier,
     project: Project,
     connectedDevices: List<Device>,
     deploymentTarget: Device?,
@@ -45,7 +46,7 @@ fun Deployment(
     transferSpeed: Float,
     onCancelDeployClick: () -> Unit
 ) {
-    Column(modifier = Modifier.verticalScroll(state = rememberScrollState())) {
+    Column(modifier = modifier.verticalScroll(state = rememberScrollState())) {
         DesignImpulse(project = project)
         DeployImpulse(
             connectedDevices = connectedDevices,

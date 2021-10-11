@@ -487,6 +487,9 @@ private fun ProjectContent(
                 }
                 composable(route = BottomNavigationScreen.DEPLOYMENT.route) {
                     Deployment(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues = innerPadding),
                         project = viewModel.project,
                         connectedDevices = connectedDevices,
                         deploymentTarget = viewModel.deploymentTarget,
@@ -500,6 +503,9 @@ private fun ProjectContent(
                 }
                 composable(route = BottomNavigationScreen.INFERENCING.route) {
                     InferencingScreen(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues = innerPadding),
                         connectedDevices = connectedDevices,
                         inferenceResults = inferencingResults,
                         inferencingTarget = viewModel.inferencingTarget,

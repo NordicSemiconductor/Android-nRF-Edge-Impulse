@@ -126,7 +126,9 @@ fun Devices(
                 indicatorPadding = PaddingValues(0.dp)
             ) {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(color = MaterialTheme.colors.background)
                 ) {
                     item {
                         Text(

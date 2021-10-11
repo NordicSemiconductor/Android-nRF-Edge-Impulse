@@ -41,6 +41,7 @@ import java.util.*
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun InferencingScreen(
+    modifier:Modifier,
     connectedDevices: List<Device>,
     inferenceResults: List<InferenceResults>,
     inferencingTarget: Device?,
@@ -54,9 +55,8 @@ fun InferencingScreen(
     val isLandscape =
         LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 56.dp)
+        modifier = modifier
+            .background(color = MaterialTheme.colors.background)
     ) {
         StartInferencing(
             isLargeScreen = isLargeScreen,
@@ -308,7 +308,7 @@ private fun InferencingTable(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(MaterialTheme.colors.background)
+                        .background(color = MaterialTheme.colors.background)
                 ) {
                     results.firstOrNull()?.let { result ->
                         result.classification.forEach {
@@ -338,14 +338,15 @@ private fun InferencingTable(
                 Divider()
             }
             items(items = results) { results ->
-                TableRow(inferenceResults = results, cellWidth = cellWidth)
+                InferencingResult(inferenceResults = results, cellWidth = cellWidth)
+                Divider()
             }
         }
     }
 }
 
 @Composable
-private fun TableRow(inferenceResults: InferenceResults, cellWidth: Dp) {
+private fun InferencingResult(inferenceResults: InferenceResults, cellWidth: Dp) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -376,7 +377,6 @@ private fun TableRow(inferenceResults: InferenceResults, cellWidth: Dp) {
             color = inferenceResults.anomaly.color()
         )
     }
-    Divider()
 }
 
 @Composable
