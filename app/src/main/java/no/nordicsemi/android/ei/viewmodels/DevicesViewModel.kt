@@ -27,11 +27,10 @@ import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.Reason
 import no.nordicsemi.android.ei.comms.DataAcquisitionManager
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.util.Utils.isAndroidS
-import no.nordicsemi.android.ei.util.Utils.isBluetoothEnabled
+import no.nordicsemi.android.ei.util.Utils.isBetweenMarshmallowAndS
 import no.nordicsemi.android.ei.util.Utils.isBluetoothPermissionsGranted
 import no.nordicsemi.android.ei.util.Utils.isLocationEnabled
 import no.nordicsemi.android.ei.util.Utils.isLocationPermissionGranted
-import no.nordicsemi.android.ei.util.Utils.isMarshMellowOrAbove
 import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import javax.inject.Inject
@@ -48,11 +47,11 @@ class DevicesViewModel @Inject constructor(
 
     private val bluetoothManager =
         context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-    private val bluetoothAdapter = bluetoothManager.adapter
+    val bluetoothAdapter:BluetoothAdapter = bluetoothManager.adapter
 
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
-            result?.takeIf { isBluetoothEnabled() }?.let { scanResult ->
+            result?.takeIf { bluetoothAdapter.isEnabled }?.let { scanResult ->
                 scannerState.onDeviceFound(scanResult = scanResult)
             }
         }
@@ -110,7 +109,7 @@ class DevicesViewModel @Inject constructor(
             bluetoothStateChangedReceiver,
             IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
         )
-        if (isMarshMellowOrAbove()) {
+        if (isBetweenMarshmallowAndS()) {
             context.registerReceiver(
                 locationProviderChangedReceiver,
                 IntentFilter(LocationManager.MODE_CHANGED_ACTION)
@@ -120,13 +119,13 @@ class DevicesViewModel @Inject constructor(
 
     private fun unregisterBroadcastReceiver(context: Context) {
         context.unregisterReceiver(bluetoothStateChangedReceiver)
-        if (isMarshMellowOrAbove()) {
+        if (isBetweenMarshmallowAndS()) {
             context.unregisterReceiver(locationProviderChangedReceiver)
         }
     }
 
     fun startScan() {
-        guard(isBluetoothEnabled()) {
+        guard(bluetoothAdapter.isEnabled) {
             scannerState.onBluetoothDisabled()
             return
         }

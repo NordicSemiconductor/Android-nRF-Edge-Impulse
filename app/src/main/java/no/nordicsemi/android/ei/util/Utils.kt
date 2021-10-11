@@ -1,7 +1,7 @@
 package no.nordicsemi.android.ei.util
 
 import android.Manifest
-import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.LocationManager
@@ -19,16 +19,16 @@ import java.net.UnknownHostException
 
 object Utils {
 
-    fun isMarshMellowOrAbove(): Boolean {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-    }
+    fun isMarshMellowOrAbove(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
 
-    fun isAndroidS(): Boolean {
-        return Build.VERSION.SDK_INT == Build.VERSION_CODES.S
-    }
+    fun isBetweenMarshmallowAndS(): Boolean =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT < Build.VERSION_CODES.S
 
-    fun isBluetoothEnabled(): Boolean =
-        BluetoothAdapter.getDefaultAdapter()?.isEnabled ?: false
+    fun isAndroidS(): Boolean = Build.VERSION.SDK_INT == Build.VERSION_CODES.S
+
+    fun isBluetoothEnabled(context: Context): Boolean =
+        (context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter.isEnabled
+
 
     @RequiresApi(Build.VERSION_CODES.S)
     fun isBluetoothPermissionsGranted(context: Context) =

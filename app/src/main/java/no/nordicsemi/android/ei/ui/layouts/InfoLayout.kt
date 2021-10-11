@@ -14,14 +14,15 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BluetoothDisabled
 import androidx.compose.material.icons.rounded.BluetoothSearching
-import androidx.compose.material.icons.rounded.LocationOff
 import androidx.compose.material.icons.rounded.DeveloperBoard
+import androidx.compose.material.icons.rounded.LocationOff
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -126,6 +127,7 @@ fun BluetoothDisabledInfo(
         modifier = modifier,
         imageVector = Icons.Rounded.BluetoothDisabled
     ) {
+        val context = LocalContext.current
         val launcher = rememberLauncherForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) {}
@@ -142,7 +144,7 @@ fun BluetoothDisabledInfo(
         Spacer(modifier = Modifier.height(32.dp))
         Button(
             onClick = {
-                if (!Utils.isBluetoothEnabled()) {
+                if (!Utils.isBluetoothEnabled(context = context)) {
                     launcher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
                 }
             }
