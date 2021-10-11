@@ -47,24 +47,13 @@ class AccountAuthenticator @Inject constructor(
         account: Account?,
         authTokenType: String?,
         options: Bundle?
-    ): Bundle {
-        val accountManager = AccountManager.get(context)
-        val authToken: String? = accountManager.peekAuthToken(account!!, authTokenType)
-
-//        if (authToken == null) {
-//            val loginResponse = runBlocking {
-//                loginRepository.login(account.name, accountManager.getPassword(account))
-//            }
-//            authToken = loginResponse.token
-//        }
-        if (authToken != null) {
-            val result = Bundle()
-            result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name)
-            result.putString(AccountManager.KEY_ACCOUNT_TYPE, account.type)
-            result.putString(AccountManager.KEY_AUTHTOKEN, authToken)
-            return result
-        }
-
+    ): Bundle = AccountManager.get(context).peekAuthToken(account!!, authTokenType)?.let { authToken ->
+        val result = Bundle()
+        result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name)
+        result.putString(AccountManager.KEY_ACCOUNT_TYPE, account.type)
+        result.putString(AccountManager.KEY_AUTHTOKEN, authToken)
+        result
+    } ?: run {
         val intent = Intent(context, LoginActivity::class.java)
         intent.putExtra(LoginActivity.KEY_ACCOUNT_NAME, account.name)
         intent.putExtra(LoginActivity.KEY_ACCOUNT_TYPE, account.type)
@@ -73,8 +62,7 @@ class AccountAuthenticator @Inject constructor(
 
         val bundle = Bundle()
         bundle.putParcelable(AccountManager.KEY_INTENT, intent)
-
-        return bundle
+        bundle
     }
 
     override fun getAuthTokenLabel(authTokenType: String?): String {
