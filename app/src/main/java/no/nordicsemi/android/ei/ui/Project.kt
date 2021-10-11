@@ -3,18 +3,24 @@ package no.nordicsemi.android.ei.ui
 import android.content.res.Configuration.*
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.ModalBottomSheetValue.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Sensors
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -47,6 +53,7 @@ import no.nordicsemi.android.ei.model.Message.Sample.Unknown
 import no.nordicsemi.android.ei.ui.layouts.CollapsibleFloatingActionButton
 import no.nordicsemi.android.ei.ui.layouts.TabTopAppBar
 import no.nordicsemi.android.ei.ui.layouts.isScrollingUp
+import no.nordicsemi.android.ei.ui.theme.NordicMiddleGrey
 import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel
 import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
 import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
@@ -68,6 +75,7 @@ fun Project(
             BottomNavigationScreen.DEVICES
         )
     }
+
     val connectedDevices by derivedStateOf {
         viewModel.configuredDevices.filterList {
             viewModel.dataAcquisitionManagers[deviceId]?.state == DeviceState.AUTHENTICATED
@@ -80,6 +88,8 @@ fun Project(
             connectedDevices = connectedDevices,
             selectedScreen = selectedScreen,
             onScreenChanged = { selectedScreen = it },
+            isSamplingMessageVisible = viewModel.samplingState !is Unknown,
+            onSamplingMessageDismissed = { viewModel.resetSamplingState() },
             onBackPressed = onBackPressed
         )
     } else {
@@ -88,6 +98,8 @@ fun Project(
             connectedDevices = connectedDevices,
             selectedScreen = selectedScreen,
             onScreenChanged = { selectedScreen = it },
+            isSamplingMessageVisible = viewModel.samplingState !is Unknown,
+            onSamplingMessageDismissed = { viewModel.resetSamplingState() },
             onBackPressed = onBackPressed
         )
     }
@@ -99,18 +111,21 @@ private fun LargeScreen(
     connectedDevices: List<Device>,
     selectedScreen: BottomNavigationScreen,
     onScreenChanged: (BottomNavigationScreen) -> Unit,
+    isSamplingMessageVisible: Boolean,
+    onSamplingMessageDismissed: (Boolean) -> Unit,
     onBackPressed: () -> Unit
 ) {
     var isDialogVisible by rememberSaveable { mutableStateOf(false) }
     var category by rememberSaveable { mutableStateOf(Category.TRAINING) }
-    val samplingState by remember { viewModel.samplingState }
     ProjectContent(
         viewModel = viewModel,
         connectedDevices = connectedDevices,
-        samplingState = samplingState,
+        samplingState = viewModel.samplingState,
         isBackHandlerEnabled = false,
         selectedScreen = selectedScreen,
         onScreenChanged = onScreenChanged,
+        isSamplingMessageVisible = isSamplingMessageVisible,
+        onSamplingMessageDismissed = onSamplingMessageDismissed,
         isFabVisible = selectedScreen.shouldFabBeVisible && !isDialogVisible,
         onFabClicked = { isDialogVisible = true },
         onBackPressed = onBackPressed
@@ -128,60 +143,70 @@ private fun LargeScreen(
                 content = {
                     RecordSampleLargeScreen(
                         content = {
-                            RecordSampleContent(
-                                samplingState = samplingState,
-                                connectedDevices = connectedDevices,
-                                category = category,
-                                onCategorySelected = { category = it },
-                                dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
-                                onDataAcquisitionTargetSelected = {
-                                    viewModel.onDataAcquisitionTargetSelected(
-                                        device = it
-                                    )
-                                },
-                                label = viewModel.label,
-                                onLabelChanged = { viewModel.onLabelChanged(label = it) },
-                                selectedSensor = viewModel.sensor,
-                                onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
-                                sampleLength = viewModel.sampleLength,
-                                onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
-                                selectedFrequency = viewModel.frequency
-                            ) { viewModel.onFrequencySelected(frequency = it) }
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End
+                            Column(
+                                modifier = Modifier
+                                    .wrapContentSize()
+                                    .verticalScroll(state = rememberScrollState())
                             ) {
-                                TextButton(
-                                    enabled = samplingState is Finished || samplingState is Unknown,
-                                    onClick = {
-                                        isDialogVisible =
-                                            !(samplingState is Finished || samplingState is Unknown)
-                                        viewModel.resetSamplingState()
+                                RecordSampleContent(
+                                    samplingState = viewModel.samplingState,
+                                    isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice,
+                                    connectedDevices = connectedDevices,
+                                    category = category,
+                                    onCategorySelected = { category = it },
+                                    dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
+                                    onDataAcquisitionTargetSelected = {
+                                        viewModel.onDataAcquisitionTargetSelected(
+                                            device = it
+                                        )
+                                    },
+                                    label = viewModel.label,
+                                    onLabelChanged = { viewModel.onLabelChanged(label = it) },
+                                    selectedSensor = viewModel.sensor,
+                                    onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
+                                    sampleLength = viewModel.sampleLength,
+                                    onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
+                                    selectedFrequency = viewModel.frequency,
+                                    onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) },
+                                    isSamplingMessageVisible = isSamplingMessageVisible,
+                                    onSamplingMessageDismissed = onSamplingMessageDismissed,
+                                    buttonContent = {
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.End
+                                        ) {
+                                            TextButton(
+                                                enabled = viewModel.samplingState is Finished || viewModel.samplingState is Unknown,
+                                                onClick = {
+                                                    isDialogVisible =
+                                                        !(viewModel.samplingState is Finished || viewModel.samplingState is Unknown)
+                                                    viewModel.resetSamplingState()
+                                                }
+                                            ) {
+                                                Text(
+                                                    text = stringResource(R.string.action_cancel).uppercase(
+                                                        Locale.US
+                                                    ),
+                                                    style = MaterialTheme.typography.button
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            TextButton(
+                                                enabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
+                                                        (viewModel.samplingState is Finished || viewModel.samplingState is Unknown),
+                                                onClick = { viewModel.startSampling(category = category) }
+                                            ) {
+                                                Text(
+                                                    text = stringResource(R.string.action_start_sampling).uppercase(
+                                                        Locale.US
+                                                    ),
+                                                    style = MaterialTheme.typography.button
+                                                )
+                                            }
+                                        }
                                     }
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.action_cancel).uppercase(
-                                            Locale.US
-                                        ),
-                                        style = MaterialTheme.typography.button
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                TextButton(
-                                    enabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
-                                            (samplingState is Finished || samplingState is Unknown),
-                                    onClick = {
-                                        viewModel.startSampling(category = category)
-                                    }
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.action_start_sampling).uppercase(
-                                            Locale.US
-                                        ),
-                                        style = MaterialTheme.typography.button
-                                    )
-                                }
+                                )
                             }
                         }
                     )
@@ -199,16 +224,17 @@ private fun SmallScreen(
     connectedDevices: List<Device>,
     selectedScreen: BottomNavigationScreen,
     onScreenChanged: (BottomNavigationScreen) -> Unit,
+    isSamplingMessageVisible: Boolean,
+    onSamplingMessageDismissed: (Boolean) -> Unit,
     onBackPressed: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val isLandscape = LocalConfiguration.current.orientation == ORIENTATION_LANDSCAPE
-    val samplingState by remember { viewModel.samplingState }
     val modalBottomSheetState =
         rememberModalBottomSheetState(
             initialValue = Hidden, confirmStateChange = {
                 if (it == HalfExpanded || it == Expanded) true
-                else (samplingState is Finished || samplingState is Unknown)
+                else (viewModel.samplingState is Finished || viewModel.samplingState is Unknown)
             }
         )
     var category by rememberSaveable { mutableStateOf(Category.TRAINING) }
@@ -221,48 +247,55 @@ private fun SmallScreen(
         sheetContent = {
             RecordSampleSmallScreen(
                 content = {
-                    RecordSampleContent(
-                        samplingState = samplingState,
-                        connectedDevices = connectedDevices,
-                        category = category,
-                        onCategorySelected = { category = it },
-                        dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
-                        onDataAcquisitionTargetSelected = {
-                            viewModel.onDataAcquisitionTargetSelected(
-                                device = it
-                            )
-                        },
-                        label = viewModel.label,
-                        onLabelChanged = { viewModel.onLabelChanged(label = it) },
-                        selectedSensor = viewModel.sensor,
-                        onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
-                        sampleLength = viewModel.sampleLength,
-                        onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
-                        selectedFrequency = viewModel.frequency
-                    ) { viewModel.onFrequencySelected(frequency = it) }
-                    Spacer(modifier = Modifier.height(32.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
                     ) {
-                        Button(
-                            enabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
-                                    (samplingState is Finished || samplingState is Unknown),
-                            onClick = {
-                                viewModel.startSampling(category = category)
+                        RecordSampleContent(
+                            samplingState = viewModel.samplingState,
+                            isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice,
+                            connectedDevices = connectedDevices,
+                            category = category,
+                            onCategorySelected = { category = it },
+                            dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
+                            onDataAcquisitionTargetSelected = {
+                                viewModel.onDataAcquisitionTargetSelected(device = it)
+                            },
+                            label = viewModel.label,
+                            onLabelChanged = { viewModel.onLabelChanged(label = it) },
+                            selectedSensor = viewModel.sensor,
+                            onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
+                            sampleLength = viewModel.sampleLength,
+                            onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
+                            selectedFrequency = viewModel.frequency,
+                            onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) },
+                            isSamplingMessageVisible = isSamplingMessageVisible,
+                            onSamplingMessageDismissed = onSamplingMessageDismissed,
+                            buttonContent = {
+                                Spacer(modifier = Modifier.height(32.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Button(
+                                        enabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
+                                                (viewModel.samplingState is Finished || viewModel.samplingState is Unknown),
+                                        onClick = { viewModel.startSampling(category = category) }
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.action_start_sampling).uppercase(
+                                                Locale.US
+                                            ),
+                                            style = MaterialTheme.typography.button
+                                        )
+                                    }
+                                }
                             }
-                        ) {
-                            Text(
-                                text = stringResource(R.string.action_start_sampling).uppercase(
-                                    Locale.US
-                                ),
-                                style = MaterialTheme.typography.button
-                            )
-                        }
+                        )
                     }
                 },
                 onCloseClicked = {
-                    if (samplingState is Finished || samplingState is Unknown) {
+                    if (viewModel.samplingState is Finished || viewModel.samplingState is Unknown) {
                         hideBottomSheet(
                             scope = scope,
                             modalBottomSheetState = modalBottomSheetState
@@ -277,10 +310,12 @@ private fun SmallScreen(
             viewModel = viewModel,
             scope = scope,
             connectedDevices = connectedDevices,
-            samplingState = samplingState,
+            samplingState = viewModel.samplingState,
             isBackHandlerEnabled = isBackHandlerEnabled,
             selectedScreen = selectedScreen,
             onScreenChanged = onScreenChanged,
+            isSamplingMessageVisible = isSamplingMessageVisible,
+            onSamplingMessageDismissed = onSamplingMessageDismissed,
             isFabVisible = selectedScreen.shouldFabBeVisible,
             onFabClicked = {
                 showBottomSheet(
@@ -290,7 +325,7 @@ private fun SmallScreen(
                 )
             },
             onBackPressed = {
-                if (modalBottomSheetState.isVisible && (samplingState is Finished || samplingState is Unknown))
+                if (modalBottomSheetState.isVisible && (viewModel.samplingState is Finished || viewModel.samplingState is Unknown))
                     hideBottomSheet(scope = scope, modalBottomSheetState = modalBottomSheetState)
                 else onBackPressed()
             }
@@ -307,6 +342,8 @@ private fun ProjectContent(
     samplingState: Message.Sample,
     isBackHandlerEnabled: Boolean,
     selectedScreen: BottomNavigationScreen,
+    isSamplingMessageVisible: Boolean,
+    onSamplingMessageDismissed: (Boolean) -> Unit,
     onScreenChanged: (BottomNavigationScreen) -> Unit,
     isFabVisible: Boolean,
     onFabClicked: () -> Unit,
@@ -383,88 +420,96 @@ private fun ProjectContent(
             }
         }
     ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = BottomNavigationScreen.DEVICES.route
-        ) {
-            composable(route = BottomNavigationScreen.DEVICES.route) {
-                val devicesViewModel = hiltViewModel<DevicesViewModel>()
-                BackHandler(
-                    enabled = selectedScreen == BottomNavigationScreen.DEVICES,
-                    onBack = {
-                        when (connectedDevices.isNotEmpty()) {
-                            true -> isWarningDialogVisible = true
-                            false -> onBackPressed()
+        Column {
+            DisplaySamplingMessage(
+                isSamplingMessageVisible = isSamplingMessageVisible && !viewModel.isSamplingStartedFromDevice,
+                onSamplingMessageDismissed = onSamplingMessageDismissed,
+                samplingState = samplingState,
+                isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice
+            )
+            NavHost(
+                navController = navController,
+                startDestination = BottomNavigationScreen.DEVICES.route
+            ) {
+                composable(route = BottomNavigationScreen.DEVICES.route) {
+                    val devicesViewModel = hiltViewModel<DevicesViewModel>()
+                    BackHandler(
+                        enabled = selectedScreen == BottomNavigationScreen.DEVICES,
+                        onBack = {
+                            when (connectedDevices.isNotEmpty()) {
+                                true -> isWarningDialogVisible = true
+                                false -> onBackPressed()
+                            }
                         }
-                    }
-                )
-                Devices(
-                    scope = scope,
-                    viewModel = devicesViewModel,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues = innerPadding),
-                    configuredDevices = viewModel.configuredDevices,
-                    activeDevices = viewModel.dataAcquisitionManagers,
-                    refreshingState = viewModel.isRefreshing,
-                    onRefresh = { viewModel.listDevices() },
-                    scannerState = devicesViewModel.scannerState,
-                    onScannerStarted = { devicesViewModel.startScan() },
-                    screen = selectedScreen,
-                    connect = { viewModel.connect(device = it) },
-                    disconnect = { viewModel.disconnect(device = it) },
-                    onRenameClick = { device, name ->
-                        viewModel.rename(
-                            device = device,
-                            name = name
-                        )
-                    },
-                    onDeleteClick = { viewModel.delete(it) }
-                )
-            }
-            composable(route = BottomNavigationScreen.DATA_ACQUISITION.route) {
-                val dataAcquisitionViewModel = hiltViewModel<DataAcquisitionViewModel>()
-                BackHandler(
-                    enabled = isBackHandlerEnabled,
-                    onBack = onBackPressed
-                )
-                DataAcquisition(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues = innerPadding),
-                    pagerState = pagerState,
-                    listStates = listStates,
-                    samples = listOf(
-                        dataAcquisitionViewModel.trainingSamples,
-                        dataAcquisitionViewModel.testingSamples,
-                    ),
-                    samplingState = samplingState
-                )
-            }
-            composable(route = BottomNavigationScreen.DEPLOYMENT.route) {
-                Deployment(
-                    project = viewModel.project,
-                    connectedDevices = connectedDevices,
-                    deploymentTarget = viewModel.deploymentTarget,
-                    onDeploymentTargetSelected = { viewModel.onDeploymentTargetSelected(it) },
-                    deploymentState = viewModel.deploymentState,
-                    onDeployClick = { viewModel.deploy() },
-                    progress = viewModel.progress,
-                    transferSpeed = viewModel.transferSpeed,
-                    onCancelDeployClick = { viewModel.cancelDeploy() }
-                )
-            }
-            composable(route = BottomNavigationScreen.INFERENCING.route) {
-                InferencingScreen(
-                    connectedDevices = connectedDevices,
-                    inferenceResults = inferencingResults,
-                    inferencingTarget = viewModel.inferencingTarget,
-                    onInferencingTargetSelected = { viewModel.onInferencingTargetSelected(it) },
-                    inferencingState = inferencingState
-                ) { inferencingRequest ->
-                    viewModel.sendInferencingRequest(
-                        inferencingRequest = inferencingRequest
                     )
+                    Devices(
+                        scope = scope,
+                        viewModel = devicesViewModel,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues = innerPadding),
+                        configuredDevices = viewModel.configuredDevices,
+                        activeDevices = viewModel.dataAcquisitionManagers,
+                        refreshingState = viewModel.isRefreshing,
+                        onRefresh = { viewModel.listDevices() },
+                        scannerState = devicesViewModel.scannerState,
+                        onScannerStarted = { devicesViewModel.startScan() },
+                        screen = selectedScreen,
+                        connect = { viewModel.connect(device = it) },
+                        disconnect = { viewModel.disconnect(device = it) },
+                        onRenameClick = { device, name ->
+                            viewModel.rename(
+                                device = device,
+                                name = name
+                            )
+                        },
+                        onDeleteClick = { viewModel.delete(it) }
+                    )
+                }
+                composable(route = BottomNavigationScreen.DATA_ACQUISITION.route) {
+                    val dataAcquisitionViewModel = hiltViewModel<DataAcquisitionViewModel>()
+                    BackHandler(
+                        enabled = isBackHandlerEnabled,
+                        onBack = onBackPressed
+                    )
+                    DataAcquisition(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues = innerPadding),
+                        pagerState = pagerState,
+                        listStates = listStates,
+                        samples = listOf(
+                            dataAcquisitionViewModel.trainingSamples,
+                            dataAcquisitionViewModel.testingSamples,
+                        ),
+                        samplingState = samplingState
+                    )
+                }
+                composable(route = BottomNavigationScreen.DEPLOYMENT.route) {
+                    Deployment(
+                        project = viewModel.project,
+                        connectedDevices = connectedDevices,
+                        deploymentTarget = viewModel.deploymentTarget,
+                        onDeploymentTargetSelected = { viewModel.onDeploymentTargetSelected(it) },
+                        deploymentState = viewModel.deploymentState,
+                        onDeployClick = { viewModel.deploy() },
+                        progress = viewModel.progress,
+                        transferSpeed = viewModel.transferSpeed,
+                        onCancelDeployClick = { viewModel.cancelDeploy() }
+                    )
+                }
+                composable(route = BottomNavigationScreen.INFERENCING.route) {
+                    InferencingScreen(
+                        connectedDevices = connectedDevices,
+                        inferenceResults = inferencingResults,
+                        inferencingTarget = viewModel.inferencingTarget,
+                        onInferencingTargetSelected = { viewModel.onInferencingTargetSelected(it) },
+                        inferencingState = inferencingState
+                    ) { inferencingRequest ->
+                        viewModel.sendInferencingRequest(
+                            inferencingRequest = inferencingRequest
+                        )
+                    }
                 }
             }
         }
@@ -680,5 +725,78 @@ fun hideBottomSheet(
 ) {
     scope.launch {
         modalBottomSheetState.hide()
+    }
+}
+
+@Composable
+fun DisplaySamplingMessage(
+    isSamplingMessageVisible: Boolean,
+    onSamplingMessageDismissed: (Boolean) -> Unit,
+    samplingState: Message.Sample,
+    isSamplingStartedFromDevice: Boolean
+) {
+    if (isSamplingMessageVisible) {
+        Surface(
+            modifier = Modifier
+                .wrapContentSize()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .background(color = NordicMiddleGrey)
+                    .padding(vertical = 16.dp, horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    modifier = Modifier.weight(1f),
+                    text = when (samplingState) {
+                        is Unknown -> stringResource(R.string.unknown)
+                        is Message.Sample.Request -> {
+                            if (isSamplingStartedFromDevice) stringResource(R.string.label_sending_sample_request)
+                            else stringResource(R.string.label_ei_sending_sample_request)
+                        }
+                        is Message.Sample.Response -> {
+                            if (isSamplingStartedFromDevice) stringResource(R.string.label_sampling_response_received)
+                            else stringResource(R.string.label_ei_sampling_response_received)
+                        }
+                        is Message.Sample.ProgressEvent.Started -> {
+                            if (isSamplingStartedFromDevice) stringResource(R.string.label_sampling_started)
+                            else stringResource(R.string.label_ei_sampling_started)
+                        }
+                        is Message.Sample.ProgressEvent.Processing -> {
+                            if (isSamplingStartedFromDevice) stringResource(R.string.label_sampling_processing)
+                            else stringResource(R.string.label_ei_sampling_processing)
+                        }
+                        is Message.Sample.ProgressEvent.Uploading -> {
+                            if (isSamplingStartedFromDevice) stringResource(R.string.label_uploading_started)
+                            else stringResource(R.string.label_ei_uploading_started)
+
+                        }
+                        is Finished -> stringResource(R.string.label_sampling_finished).plus(
+                            if (samplingState.error != null)
+                                " : ${samplingState.error}"
+                            else "."
+                        )
+                        is Message.Sample.ProgressEvent.Reading -> stringResource(R.string.label_sampling_reading)
+                    },
+                    color = Color.White
+                )
+                when (samplingState) {
+                    is Error, is Finished -> {
+                        IconButton(onClick = { onSamplingMessageDismissed(false) }) {
+                            Icon(imageVector = Icons.Rounded.Close, contentDescription = null)
+                        }
+                    }
+                    else -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+        }
+
     }
 }

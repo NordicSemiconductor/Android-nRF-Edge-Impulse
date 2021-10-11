@@ -78,7 +78,7 @@ dependencies {
     /// https://developer.android.com/jetpack/androidx/releases/preference
     implementation 'androidx.preference:preference-ktx:1.1.1'
     // https://github.com/Kotlin/kotlinx.coroutines/releases
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2-native-mt'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2'
     // https://developer.android.com/jetpack/androidx/releases/navigation
     // wait for alpha-06 release for a crash in 05 https://issuetracker.google.com/issues/194301889
     // version 2.4.0-alpha07 fixes the issue relating to losing the state on rotation.

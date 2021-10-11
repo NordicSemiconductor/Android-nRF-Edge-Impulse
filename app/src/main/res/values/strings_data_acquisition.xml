@@ -23,10 +23,18 @@
     <string name="action_start_sampling">Start sampling</string>
     <string name="action_try_again">Try again</string>
     <string name="connect_device_for_data_acquisition">Please connect to a configured device or add a new device on the Devices tab to record new data.</string>
-    <string name="label_sending_sample_request">Sending sample request to device…</string>
-    <string name="label_sampling_response_received">Response to sample request received…</string>
+    <string name="label_sending_sample_request">Sending sampling request to device…</string>
+    <string name="label_sampling_response_received">Sampling response received…</string>
     <string name="label_sampling_started">Sampling started…</string>
     <string name="label_sampling_processing">Sample processing…</string>
+    <string name="label_sampling_reading">Reading sample from device…</string>
     <string name="label_uploading_started">Uploading sample…</string>
     <string name="label_sampling_finished">Sampling Finished</string>
+    <string name="label_ei_sending_sample_request">EI Studio: Sending sampling request to device…</string>
+    <string name="label_ei_sampling_response_received">EI Studio: Sampling response received…</string>
+    <string name="label_ei_sampling_started">EI Studio: Sampling started…</string>
+    <string name="label_ei_sampling_processing">EI Studio: Sample processing…</string>
+    <string name="label_ei_uploading_started">EI Studio: Uploading sample…</string>
+    <string name="label_ei_sampling_finished">EI Studio: Sampling Finished</string>
+    <string name="label_sampling_started_from_ei_studio">Sampling started via EI Studio.</string>
 </resources>

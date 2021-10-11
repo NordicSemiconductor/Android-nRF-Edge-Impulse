@@ -104,10 +104,15 @@ class DataAcquisitionManager(
         }
     }
 
+    fun startSamplingFromDevice(){
+        isSamplingRequestedFromDevice = true
+    }
+
     /**
      * Resets the current sampling state.
      */
     fun resetSamplingState() {
+        isSamplingRequestedFromDevice = false
         samplingState = Unknown
     }
 
@@ -247,6 +252,7 @@ class DataAcquisitionManager(
                             }
                             is Finished -> {
                                 isSamplingRequestedFromDevice = false
+                                send(json = json)
                             }
                             else -> {
                                 send(json = json)
@@ -296,7 +302,7 @@ class DataAcquisitionManager(
      * @param selectedSensor        Selected sensor
      */
     @Suppress("unused")
-    fun startSampling(
+    fun onSamplingStartedFromDevice(
         label: String,
         sampleLength: Int,
         selectedFrequency: Int,

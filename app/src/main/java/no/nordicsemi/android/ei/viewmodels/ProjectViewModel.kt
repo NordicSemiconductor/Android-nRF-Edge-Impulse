@@ -128,12 +128,18 @@ class ProjectViewModel @Inject constructor(
         private set
 
     /** Sampling state contain the state of sampling*/
-    var samplingState = derivedStateOf {
+    val samplingState by derivedStateOf {
         dataAcquisitionTarget?.let {
             dataAcquisitionManagers[it.deviceId]?.samplingState
         } ?: Sample.Unknown
     }
-        private set
+
+    /** Sampling state contain the state of sampling*/
+    val isSamplingStartedFromDevice by derivedStateOf {
+        dataAcquisitionTarget?.let {
+            dataAcquisitionManagers[it.deviceId]?.isSamplingRequestedFromDevice
+        } ?: false
+    }
 
     /** Contains the combined deployment state from downloading, building and DFU */
     var deploymentState: DeploymentState by mutableStateOf(DeploymentState.Unknown)
@@ -382,6 +388,7 @@ class ProjectViewModel @Inject constructor(
                 sensor?.let { sensor ->
                     frequency?.let { frequency ->
                         resetSamplingState(device = device)
+                        dataAcquisitionManagers[device.deviceId]?.startSamplingFromDevice()
                         projectRepository.startSampling(
                             keys = keys,
                             projectId = project.id,
