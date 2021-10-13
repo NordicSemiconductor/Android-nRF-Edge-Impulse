@@ -6,14 +6,13 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
-import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.Reason
 import kotlin.math.max
 
 /**
  * ScannerState that holds the current scanning state and the list of discovered devices.
  */
 class ScannerState(
-    initialState: ScanningState = ScanningState.Stopped(Reason.LocationPermissionNotGranted)
+    initialState: ScanningState = ScanningState.Stopped
 ) {
     var scanningState: ScanningState by mutableStateOf(initialState)
         private set
@@ -40,22 +39,12 @@ class ScannerState(
     }
 
     fun onBluetoothDisabled() {
-        scanningState = ScanningState.Stopped(Reason.BluetoothDisabled)
-        clearDiscoveredDevices()
-    }
-
-    fun onBluetoothScanPermissionNotGranted() {
-        scanningState = ScanningState.Stopped(Reason.BluetoothScanPermissionNotGranted)
-        clearDiscoveredDevices()
-    }
-
-    fun onLocationPermissionNotGranted() {
-        scanningState = ScanningState.Stopped(Reason.LocationPermissionNotGranted)
+        scanningState = ScanningState.Stopped
         clearDiscoveredDevices()
     }
 
     fun onLocationTurnedOff() {
-        scanningState = ScanningState.Stopped(Reason.LocationTurnedOff)
+        scanningState = ScanningState.Stopped
         clearDiscoveredDevices()
     }
 
