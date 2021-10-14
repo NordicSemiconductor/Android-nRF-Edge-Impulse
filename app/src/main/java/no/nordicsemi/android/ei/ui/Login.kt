@@ -15,7 +15,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -29,6 +31,7 @@ import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ui.theme.NordicBlue
 import no.nordicsemi.android.ei.ui.theme.NordicTheme
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun Login(
     modifier: Modifier = Modifier,
@@ -39,10 +42,11 @@ fun Login(
     login: String? = null,
     error: String? = null,
 ) {
+    val maxWidth = 320.dp
+    val keyboardController = LocalSoftwareKeyboardController.current
     var username by rememberSaveable { mutableStateOf(login ?: "") }
     var password by rememberSaveable { mutableStateOf("") }
     var passwordState by rememberSaveable { mutableStateOf(false) }
-    val maxWidth = 320.dp
 
     Column(
         modifier = modifier
@@ -85,7 +89,7 @@ fun Login(
                 .fillMaxWidth(),
             enabled = enabled,
             label = { Text(stringResource(R.string.field_username)) },
-            leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null ) },
+            leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null) },
             keyboardOptions = KeyboardOptions(
                 autoCorrect = false,
                 imeAction = ImeAction.Next,
@@ -102,7 +106,7 @@ fun Login(
             enabled = enabled,
             label = { Text(stringResource(R.string.field_password)) },
             visualTransformation = if (passwordState) VisualTransformation.None else PasswordVisualTransformation(),
-            leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null ) },
+            leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
             trailingIcon = {
                 IconButton(
                     onClick = { passwordState = !passwordState }
@@ -121,6 +125,7 @@ fun Login(
                 imeAction = ImeAction.Done,
             ),
             keyboardActions = KeyboardActions {
+                keyboardController?.hide()
                 onLogin(username, password)
             },
             singleLine = true
@@ -134,7 +139,10 @@ fun Login(
             textAlign = TextAlign.End,
         )
         Button(
-            onClick = { onLogin(username, password) },
+            onClick = {
+                keyboardController?.hide()
+                onLogin(username, password)
+            },
             modifier = Modifier
                 .height(46.dp)
                 .widthIn(max = maxWidth)
@@ -160,7 +168,7 @@ fun Login(
                 text = stringResource(R.string.action_signup),
                 color = NordicBlue,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable(enabled = enabled,onClick = onSignUp)
+                modifier = Modifier.clickable(enabled = enabled, onClick = onSignUp)
             )
         }
     }
