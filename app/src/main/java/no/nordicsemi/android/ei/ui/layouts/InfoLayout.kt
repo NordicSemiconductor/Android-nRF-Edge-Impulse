@@ -256,6 +256,11 @@ fun LocationTurnedOffInfo(
             style = MaterialTheme.typography.h6
         )
         Spacer(modifier = Modifier.height(32.dp))
+        Text(
+            text = stringResource(id = R.string.location_turned_off_info),
+            style = MaterialTheme.typography.body1
+        )
+        Spacer(modifier = Modifier.height(32.dp))
         Button(
             onClick = {
                 launcher.launch(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
@@ -267,11 +272,6 @@ fun LocationTurnedOffInfo(
                 style = MaterialTheme.typography.button
             )
         }
-        Spacer(modifier = Modifier.height(32.dp))
-        Text(
-            text = stringResource(id = R.string.location_turned_off_info),
-            style = MaterialTheme.typography.body1
-        )
     }
 }
 

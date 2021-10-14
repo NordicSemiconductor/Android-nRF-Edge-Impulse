@@ -25,10 +25,9 @@ object Utils {
     fun isBluetoothEnabled(context: Context): Boolean =
         (context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter.isEnabled
 
-    fun isLocationEnabled(context: Context) =
-        !isSorAbove() || LocationManagerCompat.isLocationEnabled(
-            context.getSystemService(LocationManager::class.java)
-        )
+    fun isLocationEnabled(context: Context) = LocationManagerCompat.isLocationEnabled(
+        context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    )
 }
 
 val <T> T.exhaustive: T

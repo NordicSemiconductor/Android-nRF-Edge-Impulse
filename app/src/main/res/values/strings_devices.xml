@@ -35,7 +35,7 @@
 
     <string name="location_turned_off_title">Location turned off</string>
     <string name="location_turned_off_info">Some Android phones require Location to be enabled in order to scan for Bluetooth LE devices.
-		If you are sure your Thingy:53 is advertising and it doesn\'t show up here, click the button below to enable Location.</string>
+		If you are sure your Thingy:53 is advertising and it doesn\'t show up here, click on settings to enable location services or enable it from the Quick Settings menu.</string>
     <string name="thingy_guide_location_action">Enable</string>
     <string name="action_enable">Enable</string>
 

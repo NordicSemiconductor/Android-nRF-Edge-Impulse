@@ -424,9 +424,7 @@ private fun LocationRequired(
     SystemBroadcastReceiver(
         systemAction = LocationManager.MODE_CHANGED_ACTION
     ) {
-        it?.let { _ ->
-            isLocationEnabled = Utils.isLocationEnabled(context = localContext)
-        }
+        isLocationEnabled = Utils.isLocationEnabled(context = localContext)
     }
     if (!isLocationEnabled) {
         scannerState.onLocationTurnedOff()
