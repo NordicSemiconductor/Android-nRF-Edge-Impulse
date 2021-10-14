@@ -17,6 +17,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -44,6 +46,7 @@ fun Login(
 ) {
     val maxWidth = 320.dp
     val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     var username by rememberSaveable { mutableStateOf(login ?: "") }
     var password by rememberSaveable { mutableStateOf("") }
     var passwordState by rememberSaveable { mutableStateOf(false) }
@@ -80,7 +83,6 @@ fun Login(
                 fontWeight = FontWeight.SemiBold,
             )
         }
-
         OutlinedTextField(
             value = username,
             onValueChange = { username = it.trim() },
@@ -94,6 +96,9 @@ fun Login(
                 autoCorrect = false,
                 imeAction = ImeAction.Next,
             ),
+            keyboardActions = KeyboardActions(onNext = {
+                focusManager.moveFocus(FocusDirection.Down)
+            }),
             singleLine = true
         )
         OutlinedTextField(
