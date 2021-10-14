@@ -1,7 +1,15 @@
 package no.nordicsemi.android.ei.ui
 
+import android.bluetooth.BluetoothAdapter
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.location.LocationManager
+import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,15 +21,17 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.DeveloperBoard
 import androidx.compose.material.icons.rounded.ExpandMore
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.permissions.*
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
@@ -33,12 +43,10 @@ import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.ble.rssiAsPercent
 import no.nordicsemi.android.ei.ble.state.ScannerState
 import no.nordicsemi.android.ei.ble.state.ScanningState
-import no.nordicsemi.android.ei.ble.state.ScanningState.Stopped.Reason
 import no.nordicsemi.android.ei.comms.DataAcquisitionManager
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.ui.layouts.*
 import no.nordicsemi.android.ei.util.Utils
-import no.nordicsemi.android.ei.util.exhaustive
 import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import no.nordicsemi.android.ei.viewmodels.state.indicatorColor
@@ -54,8 +62,8 @@ fun Devices(
     refreshingState: Boolean,
     onRefresh: () -> Unit,
     scannerState: ScannerState,
-    onScannerStarted: () -> Unit,
     screen: BottomNavigationScreen,
+    onBluetoothStateChanged: (Boolean) -> Unit,
     connect: (DiscoveredBluetoothDevice) -> Unit,
     disconnect: (DiscoveredBluetoothDevice) -> Unit,
     onRenameClick: (Device, String) -> Unit,
@@ -63,6 +71,7 @@ fun Devices(
 ) {
     val scanningState = scannerState.scanningState
     val backdropScaffoldState = rememberBackdropScaffoldState(initialValue = BackdropValue.Revealed)
+
     BackHandler(
         enabled = backdropScaffoldState.isConcealed,
         onBack = {
@@ -190,55 +199,59 @@ fun Devices(
                             }
                         }
                     }
-
-                    when (scanningState) {
-                        is ScanningState.Initializing -> {
+                    item {
+                        when {
+                            Utils.isSorAbove() -> BluetoothPermissionsRequired(
+                                modifier = modifier,
+                                scannerState = scannerState,
+                                onBluetoothStateChanged = onBluetoothStateChanged
+                            )
+                            Utils.isBetweenMarshmallowAndS() -> LocationPermissionRequired(
+                                modifier = modifier,
+                                scannerState = scannerState,
+                                onBluetoothStateChanged = onBluetoothStateChanged
+                            )
+                            else -> BluetoothRequired(
+                                modifier = modifier,
+                                scannerState = scannerState,
+                                onBluetoothStateChanged = onBluetoothStateChanged
+                            )
                         }
-                        is ScanningState.Started -> {
-                            scannerState.discoveredDevices
-                                // Filter only devices that have not been configured.
-                                .filter { discoveredDevice ->
-                                    configuredDevices.find { configuredDevice ->
-                                        configuredDevice.deviceId == discoveredDevice.bluetoothDevice.address
-                                    } == null
-                                }
-                                // Display only if at least one was found.
-                                .takeIf { it.isNotEmpty() }?.let { discoveredDevices ->
-                                    items(
-                                        items = discoveredDevices,
-                                        key = { it.bluetoothDevice.address }
-                                    ) { discoveredDevice ->
-                                        DiscoveredDeviceRow(
-                                            device = discoveredDevice,
-                                            state = activeDevices[discoveredDevice.deviceId]?.state
-                                                ?: DeviceState.IN_RANGE,
-                                            onDeviceClicked = { connect(it) },
-                                            onDeviceAuthenticated = { onRefresh() }
-                                        )
-                                        Divider()
-                                    }
-                                }
-                            // Else, show a placeholder.
-                                ?: item {
-                                    NoDevicesInRangeInfo(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 16.dp)
+                    }
+                    if (scannerState.scanningState is ScanningState.Started) {
+                        scannerState.discoveredDevices
+                            // Filter only devices that have not been configured.
+                            .filter { discoveredDevice ->
+                                configuredDevices.find { configuredDevice ->
+                                    configuredDevice.deviceId == discoveredDevice.bluetoothDevice.address
+                                } == null
+                            }
+                            // Display only if at least one was found.
+                            .takeIf { it.isNotEmpty() }?.let { discoveredDevices ->
+                                this@LazyColumn.items(
+                                    items = discoveredDevices,
+                                    key = { it.bluetoothDevice.address }
+                                ) { discoveredDevice ->
+                                    DiscoveredDeviceRow(
+                                        device = discoveredDevice,
+                                        state = activeDevices[discoveredDevice.deviceId]?.state
+                                            ?: DeviceState.IN_RANGE,
+                                        onDeviceClicked = { connect(it) },
+                                        onDeviceAuthenticated = { onRefresh() }
                                     )
+                                    Divider()
                                 }
-                        }
-                        is ScanningState.Stopped -> {
-                            item {
-                                ScanningStoppedInfo(
+                            }
+                        // Else, show a placeholder.
+                            ?: this@LazyColumn.item {
+                                NoDevicesInRangeInfo(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 16.dp),
-                                    reason = scanningState.reason,
-                                    onScanningStarted = onScannerStarted,
+                                        .padding(horizontal = 16.dp)
                                 )
                             }
-                        }
-                    }.exhaustive
+                    }
+
                 }
             }
         },
@@ -274,6 +287,179 @@ fun Devices(
         headerHeight = 0.dp,
         backLayerBackgroundColor = MaterialTheme.colors.surface
     )
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@RequiresApi(Build.VERSION_CODES.S)
+@Composable
+private fun BluetoothPermissionsRequired(
+    modifier: Modifier,
+    scannerState: ScannerState,
+    onBluetoothStateChanged: (Boolean) -> Unit
+) {
+    val bluetoothPermissionsState = rememberMultiplePermissionsState(
+        permissions = listOf(
+            android.Manifest.permission.BLUETOOTH_SCAN,
+            android.Manifest.permission.BLUETOOTH_CONNECT
+        )
+    )
+    PermissionsRequired(
+        multiplePermissionsState = bluetoothPermissionsState,
+        permissionsNotGrantedContent = {
+            PermissionNotGrantedContent(
+                modifier = modifier,
+                title = stringResource(id = R.string.bluetooth_scan_connect_permission_required_title),
+                text = stringResource(id = R.string.bluetooth_scan_connect_permission_info),
+                onRequestPermission = { bluetoothPermissionsState.launchMultiplePermissionRequest() }
+            )
+        },
+        permissionsNotAvailableContent = {
+            PermissionDeniedContent(
+                modifier = modifier,
+                title = stringResource(id = R.string.bluetooth_scan_connect_permission_denied_title),
+                text = stringResource(id = R.string.bluetooth_scan_connect_permission_denied_info)
+            )
+        },
+        content = {
+            BluetoothRequired(
+                modifier = modifier,
+                scannerState = scannerState
+            ) {
+                onBluetoothStateChanged(it)
+            }
+        }
+    )
+}
+
+@Composable
+private fun BluetoothRequired(
+    modifier: Modifier,
+    scannerState: ScannerState,
+    onBluetoothStateChanged: (Boolean) -> Unit
+) {
+    val localContext = LocalContext.current
+    var isBluetoothEnabled by remember { mutableStateOf(Utils.isBluetoothEnabled(context = localContext)) }
+    SystemBroadcastReceiver(
+        systemAction = BluetoothAdapter.ACTION_STATE_CHANGED
+    ) { intent ->
+        val currentState = intent?.getIntExtra(
+            BluetoothAdapter.EXTRA_STATE,
+            BluetoothAdapter.STATE_OFF
+        )
+        val previousState = intent?.getIntExtra(
+            BluetoothAdapter.EXTRA_PREVIOUS_STATE,
+            BluetoothAdapter.STATE_OFF
+        )
+        when (currentState) {
+            BluetoothAdapter.STATE_ON -> {
+                isBluetoothEnabled = true
+                onBluetoothStateChanged(isBluetoothEnabled)
+            }
+            BluetoothAdapter.STATE_TURNING_OFF, BluetoothAdapter.STATE_OFF -> {
+                if (previousState != BluetoothAdapter.STATE_TURNING_OFF &&
+                    previousState != BluetoothAdapter.STATE_OFF
+                ) {
+                    isBluetoothEnabled = false
+                    onBluetoothStateChanged(isBluetoothEnabled)
+                }
+            }
+        }
+    }
+
+    if (isBluetoothEnabled) {
+        onBluetoothStateChanged(isBluetoothEnabled)
+    } else {
+        BluetoothDisabledInfo(modifier = modifier, onBluetoothEnabled = {
+            isBluetoothEnabled = true
+        })
+        scannerState.onBluetoothDisabled()
+    }
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+private fun LocationPermissionRequired(
+    modifier: Modifier,
+    scannerState: ScannerState,
+    onBluetoothStateChanged: (Boolean) -> Unit
+) {
+    val locationPermission = rememberPermissionState(
+        permission = android.Manifest.permission.ACCESS_FINE_LOCATION
+    )
+    PermissionRequired(
+        permissionState = locationPermission,
+        permissionNotGrantedContent = {
+            PermissionNotGrantedContent(
+                modifier = modifier,
+                title = stringResource(id = R.string.location_permission_title),
+                text = stringResource(id = R.string.location_permission_info),
+                onRequestPermission = { locationPermission.launchPermissionRequest() }
+            )
+        },
+        permissionNotAvailableContent = {
+            PermissionDeniedContent(
+                modifier = modifier,
+                title = stringResource(id = R.string.location_permission_denied_title),
+                text = stringResource(id = R.string.location_permission_denied_info)
+            )
+        },
+        content = {
+            LocationRequired(
+                modifier = modifier,
+                scannerState = scannerState,
+                onBluetoothStateChanged = onBluetoothStateChanged
+            )
+        }
+    )
+}
+
+@Composable
+private fun LocationRequired(
+    modifier: Modifier,
+    scannerState: ScannerState,
+    onBluetoothStateChanged: (Boolean) -> Unit
+) {
+    val localContext = LocalContext.current
+    var isLocationEnabled by remember { mutableStateOf(Utils.isLocationEnabled(context = localContext)) }
+    SystemBroadcastReceiver(
+        systemAction = LocationManager.MODE_CHANGED_ACTION
+    ) {
+        isLocationEnabled = Utils.isLocationEnabled(context = localContext)
+    }
+    if (!isLocationEnabled) {
+        scannerState.onLocationTurnedOff()
+        LocationTurnedOffInfo(modifier = modifier)
+    } else {
+        BluetoothRequired(
+            modifier = modifier,
+            scannerState = scannerState,
+            onBluetoothStateChanged = onBluetoothStateChanged
+        )
+    }
+}
+
+@Composable
+private fun SystemBroadcastReceiver(
+    systemAction: String,
+    onSystemEvent: (Intent?) -> Unit
+) {
+    val context = LocalContext.current
+    val currentOnSystemEvent by rememberUpdatedState(systemAction)
+
+    // If either context or systemAction changes, unregister and register again
+    DisposableEffect(context, currentOnSystemEvent) {
+        val intentFilter = IntentFilter(systemAction)
+        val broadcast = object : BroadcastReceiver() {
+            override fun onReceive(context1: Context?, intent: Intent?) {
+                onSystemEvent(intent)
+            }
+        }
+        context.registerReceiver(broadcast, intentFilter)
+        // When the effect leaves the Composition, remove the callback
+        onDispose {
+            context.unregisterReceiver(broadcast)
+        }
+    }
 }
 
 @Composable
@@ -402,48 +588,6 @@ private fun getRssiRes(rssi: Int): Int = when (rssi) {
     in 41..60 -> R.drawable.ic_signal_2_bar
     in 61..80 -> R.drawable.ic_signal_3_bar
     else -> R.drawable.ic_signal_4_bar
-}
-
-@Composable
-fun ScanningStoppedInfo(
-    modifier: Modifier,
-    reason: Reason,
-    onScanningStarted: () -> Unit
-) = when (reason) {
-    is Reason.BluetoothDisabled -> {
-        // TODO https://developer.android.com/about/versions/12/features/bluetooth-permissions
-        // States that android:maxSdkVersion="30" is required for the legacy android:name="android.permission.BLUETOOTH"
-        // However adding this makes the app crash on Android 12. Seems like a platform bug so let's wait on that.
-        // P.S. do not remove the following snippet for now.
-        /* if(Utils.isAndroidS()){
-            if(DevicesViewModel.isBluetoothScanPermissionGranted(LocalContext.current)){
-                BluetoothDisabledInfo()
-            } else {
-                BluetoothPermissionInfo(
-                    modifier = modifier,
-                    onScanningStarted = onScanningStarted
-                )
-            }
-        } else {
-        } */
-        BluetoothDisabledInfo(modifier)
-    }
-    is Reason.BluetoothScanPermissionNotGranted -> {
-        if (Utils.isAndroidS()) {
-            BluetoothPermissionInfo(
-                modifier = modifier,
-                onScanningStarted = onScanningStarted
-            )
-        } else {
-        }
-    }
-    is Reason.LocationTurnedOff -> LocationTurnedOffInfo(modifier)
-    is Reason.LocationPermissionNotGranted -> {
-        LocationPermissionInfo(
-            modifier = modifier,
-            onScanningStarted = onScanningStarted
-        )
-    }
 }
 
 @OptIn(ExperimentalMaterialApi::class)

@@ -453,8 +453,11 @@ private fun ProjectContent(
                         refreshingState = viewModel.isRefreshing,
                         onRefresh = { viewModel.listDevices() },
                         scannerState = devicesViewModel.scannerState,
-                        onScannerStarted = { devicesViewModel.startScan() },
                         screen = selectedScreen,
+                        onBluetoothStateChanged = { isEnabled ->
+                            if (isEnabled) devicesViewModel.startScan()
+                            else devicesViewModel.stopScan()
+                        },
                         connect = { viewModel.connect(device = it) },
                         disconnect = { viewModel.disconnect(device = it) },
                         onRenameClick = { device, name ->
@@ -462,9 +465,8 @@ private fun ProjectContent(
                                 device = device,
                                 name = name
                             )
-                        },
-                        onDeleteClick = { viewModel.delete(it) }
-                    )
+                        }
+                    ) { viewModel.delete(it) }
                 }
                 composable(route = BottomNavigationScreen.DATA_ACQUISITION.route) {
                     val dataAcquisitionViewModel = hiltViewModel<DataAcquisitionViewModel>()
