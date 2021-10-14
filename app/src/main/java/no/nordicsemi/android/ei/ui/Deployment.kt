@@ -73,7 +73,7 @@ private fun DesignImpulse(
             text = stringResource(R.string.title_design_impulse),
             style = MaterialTheme.typography.h6
         )
-        Surface(elevation = 2.dp) {
+        Surface(modifier = Modifier.fillMaxWidth(),elevation = 2.dp) {
             Column(
                 modifier = Modifier
                     .padding(all = 16.dp)
