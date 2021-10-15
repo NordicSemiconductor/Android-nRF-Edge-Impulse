@@ -251,7 +251,7 @@ class DataAcquisitionManager(
                                 send(json = json)
                             }
                             is Finished -> {
-                                isSamplingRequestedFromDevice = false
+                                //isSamplingRequestedFromDevice = false
                                 send(json = json)
                             }
                             else -> {
@@ -353,6 +353,7 @@ class DataAcquisitionManager(
             .enqueue(responseCallback = object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
                     samplingState = Finished(false, e.message)
+                    isSamplingRequestedFromDevice = false
                 }
 
                 override fun onResponse(call: Call, response: okhttp3.Response) {
@@ -368,6 +369,7 @@ class DataAcquisitionManager(
                             }"
                         } ?: run { "Data sample uploaded." }
                     )
+                    isSamplingRequestedFromDevice = false
                 }
             })
     }

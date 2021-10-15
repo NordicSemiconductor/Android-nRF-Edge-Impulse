@@ -88,7 +88,6 @@ fun Project(
             connectedDevices = connectedDevices,
             selectedScreen = selectedScreen,
             onScreenChanged = { selectedScreen = it },
-            isSamplingMessageVisible = viewModel.samplingState !is Unknown,
             onSamplingMessageDismissed = { viewModel.resetSamplingState() },
             onBackPressed = onBackPressed
         )
@@ -98,7 +97,6 @@ fun Project(
             connectedDevices = connectedDevices,
             selectedScreen = selectedScreen,
             onScreenChanged = { selectedScreen = it },
-            isSamplingMessageVisible = viewModel.samplingState !is Unknown,
             onSamplingMessageDismissed = { viewModel.resetSamplingState() },
             onBackPressed = onBackPressed
         )
@@ -111,7 +109,6 @@ private fun LargeScreen(
     connectedDevices: List<Device>,
     selectedScreen: BottomNavigationScreen,
     onScreenChanged: (BottomNavigationScreen) -> Unit,
-    isSamplingMessageVisible: Boolean,
     onSamplingMessageDismissed: (Boolean) -> Unit,
     onBackPressed: () -> Unit
 ) {
@@ -124,7 +121,7 @@ private fun LargeScreen(
         isBackHandlerEnabled = false,
         selectedScreen = selectedScreen,
         onScreenChanged = onScreenChanged,
-        isSamplingMessageVisible = isSamplingMessageVisible,
+        isSamplingMessageVisible = viewModel.samplingState !is Unknown && !isDialogVisible  && !viewModel.isSamplingStartedFromDevice,
         onSamplingMessageDismissed = onSamplingMessageDismissed,
         isFabVisible = selectedScreen.shouldFabBeVisible && !isDialogVisible,
         onFabClicked = { isDialogVisible = true },
@@ -145,7 +142,7 @@ private fun LargeScreen(
                         content = {
                             Column {
                                 SamplingMessage(
-                                    isSamplingMessageVisible = isSamplingMessageVisible,
+                                    isSamplingMessageVisible = viewModel.samplingState !is Unknown,
                                     onSamplingMessageDismissed = onSamplingMessageDismissed,
                                     samplingState = viewModel.samplingState,
                                     isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice
@@ -228,7 +225,6 @@ private fun SmallScreen(
     connectedDevices: List<Device>,
     selectedScreen: BottomNavigationScreen,
     onScreenChanged: (BottomNavigationScreen) -> Unit,
-    isSamplingMessageVisible: Boolean,
     onSamplingMessageDismissed: (Boolean) -> Unit,
     onBackPressed: () -> Unit
 ) {
@@ -252,7 +248,7 @@ private fun SmallScreen(
             RecordSampleSmallScreen(
                 content = {
                     SamplingMessage(
-                        isSamplingMessageVisible = isSamplingMessageVisible,
+                        isSamplingMessageVisible = viewModel.samplingState !is Unknown,
                         onSamplingMessageDismissed = onSamplingMessageDismissed,
                         samplingState = viewModel.samplingState,
                         isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice
@@ -323,7 +319,7 @@ private fun SmallScreen(
             isBackHandlerEnabled = isBackHandlerEnabled,
             selectedScreen = selectedScreen,
             onScreenChanged = onScreenChanged,
-            isSamplingMessageVisible = isSamplingMessageVisible,
+            isSamplingMessageVisible = viewModel.samplingState !is Unknown && !viewModel.isSamplingStartedFromDevice,
             onSamplingMessageDismissed = onSamplingMessageDismissed,
             isFabVisible = selectedScreen.shouldFabBeVisible,
             onFabClicked = {
@@ -431,7 +427,7 @@ private fun ProjectContent(
     ) { innerPadding ->
         Column {
             SamplingMessage(
-                isSamplingMessageVisible = isSamplingMessageVisible && !viewModel.isSamplingStartedFromDevice,
+                isSamplingMessageVisible = isSamplingMessageVisible,
                 onSamplingMessageDismissed = onSamplingMessageDismissed,
                 samplingState = samplingState,
                 isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice
