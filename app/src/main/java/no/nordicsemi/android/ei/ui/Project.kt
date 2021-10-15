@@ -760,11 +760,11 @@ private fun SamplingMessage(
                     .fillMaxWidth()
                     .wrapContentHeight()
                     .background(color = NordicMiddleGrey)
-                    .padding(vertical = 16.dp, horizontal = 16.dp),
+                    .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).padding(vertical = 16.dp),
                     text = when (samplingState) {
                         is Unknown -> stringResource(R.string.unknown)
                         is Message.Sample.Request -> {
