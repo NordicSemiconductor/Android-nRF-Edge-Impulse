@@ -766,9 +766,7 @@ private fun SamplingMessage(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(vertical = 16.dp),
+                    modifier = Modifier.weight(1f).padding(vertical = 16.dp),
                     text = when (samplingState) {
                         is Unknown -> stringResource(R.string.unknown)
                         is Message.Sample.Request -> {
