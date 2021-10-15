@@ -132,7 +132,7 @@ private fun LargeScreen(
     )
     if (isDialogVisible) when (selectedScreen) {
         BottomNavigationScreen.DATA_ACQUISITION -> {
-            ShowDialog(
+            ShowDataAcquisitionDialog(
                 imageVector = Icons.Rounded.Sensors,
                 title = stringResource(R.string.title_record_new_data),
                 onDismissRequest = { isDialogVisible = false },
@@ -143,14 +143,20 @@ private fun LargeScreen(
                 content = {
                     RecordSampleLargeScreen(
                         content = {
+                            SamplingMessage(
+                                isSamplingMessageVisible = isSamplingMessageVisible,
+                                onSamplingMessageDismissed = onSamplingMessageDismissed,
+                                samplingState = viewModel.samplingState,
+                                isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice
+                            )
                             Column(
                                 modifier = Modifier
-                                    .wrapContentSize()
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp)
                                     .verticalScroll(state = rememberScrollState())
                             ) {
                                 RecordSampleContent(
                                     samplingState = viewModel.samplingState,
-                                    isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice,
                                     connectedDevices = connectedDevices,
                                     category = category,
                                     onCategorySelected = { category = it },
@@ -166,47 +172,43 @@ private fun LargeScreen(
                                     onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
                                     sampleLength = viewModel.sampleLength,
                                     onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
-                                    selectedFrequency = viewModel.frequency,
-                                    onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) },
-                                    isSamplingMessageVisible = isSamplingMessageVisible,
-                                    onSamplingMessageDismissed = onSamplingMessageDismissed,
-                                    buttonContent = {
-                                        Spacer(modifier = Modifier.height(16.dp))
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.End
-                                        ) {
-                                            TextButton(
-                                                enabled = viewModel.samplingState is Finished || viewModel.samplingState is Unknown,
-                                                onClick = {
-                                                    isDialogVisible =
-                                                        !(viewModel.samplingState is Finished || viewModel.samplingState is Unknown)
-                                                    viewModel.resetSamplingState()
-                                                }
-                                            ) {
-                                                Text(
-                                                    text = stringResource(R.string.action_cancel).uppercase(
-                                                        Locale.US
-                                                    ),
-                                                    style = MaterialTheme.typography.button
-                                                )
-                                            }
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            TextButton(
-                                                enabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
-                                                        (viewModel.samplingState is Finished || viewModel.samplingState is Unknown),
-                                                onClick = { viewModel.startSampling(category = category) }
-                                            ) {
-                                                Text(
-                                                    text = stringResource(R.string.action_start_sampling).uppercase(
-                                                        Locale.US
-                                                    ),
-                                                    style = MaterialTheme.typography.button
-                                                )
-                                            }
-                                        }
+                                    selectedFrequency = viewModel.frequency
+                                ) { viewModel.onFrequencySelected(frequency = it) }
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp, horizontal = 24.dp),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                TextButton(
+                                    enabled = viewModel.samplingState is Finished || viewModel.samplingState is Unknown,
+                                    onClick = {
+                                        isDialogVisible =
+                                            !(viewModel.samplingState is Finished || viewModel.samplingState is Unknown)
+                                        viewModel.resetSamplingState()
                                     }
-                                )
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.action_cancel).uppercase(
+                                            Locale.US
+                                        ),
+                                        style = MaterialTheme.typography.button
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                TextButton(
+                                    enabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
+                                            (viewModel.samplingState is Finished || viewModel.samplingState is Unknown),
+                                    onClick = { viewModel.startSampling(category = category) }
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.action_start_sampling).uppercase(
+                                            Locale.US
+                                        ),
+                                        style = MaterialTheme.typography.button
+                                    )
+                                }
                             }
                         }
                     )
@@ -247,13 +249,22 @@ private fun SmallScreen(
         sheetContent = {
             RecordSampleSmallScreen(
                 content = {
+                    SamplingMessage(
+                        isSamplingMessageVisible = isSamplingMessageVisible,
+                        onSamplingMessageDismissed = onSamplingMessageDismissed,
+                        samplingState = viewModel.samplingState,
+                        isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice
+                    )
                     Column(
                         modifier = Modifier
-                            .fillMaxSize()
+                            .fillMaxHeight()
+                            .padding(horizontal = 16.dp)
+                            .verticalScroll(
+                                state = rememberScrollState()
+                            )
                     ) {
                         RecordSampleContent(
                             samplingState = viewModel.samplingState,
-                            isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice,
                             connectedDevices = connectedDevices,
                             category = category,
                             onCategorySelected = { category = it },
@@ -267,31 +278,27 @@ private fun SmallScreen(
                             onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
                             sampleLength = viewModel.sampleLength,
                             onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
-                            selectedFrequency = viewModel.frequency,
-                            onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) },
-                            isSamplingMessageVisible = isSamplingMessageVisible,
-                            onSamplingMessageDismissed = onSamplingMessageDismissed,
-                            buttonContent = {
-                                Spacer(modifier = Modifier.height(32.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.Center
-                                ) {
-                                    Button(
-                                        enabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
-                                                (viewModel.samplingState is Finished || viewModel.samplingState is Unknown),
-                                        onClick = { viewModel.startSampling(category = category) }
-                                    ) {
-                                        Text(
-                                            text = stringResource(R.string.action_start_sampling).uppercase(
-                                                Locale.US
-                                            ),
-                                            style = MaterialTheme.typography.button
-                                        )
-                                    }
-                                }
+                            selectedFrequency = viewModel.frequency
+                        ) { viewModel.onFrequencySelected(frequency = it) }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 32.dp),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Button(
+                                enabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
+                                        (viewModel.samplingState is Finished || viewModel.samplingState is Unknown),
+                                onClick = { viewModel.startSampling(category = category) }
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.action_start_sampling).uppercase(
+                                        Locale.US
+                                    ),
+                                    style = MaterialTheme.typography.button
+                                )
                             }
-                        )
+                        }
                     }
                 },
                 onCloseClicked = {
@@ -421,7 +428,7 @@ private fun ProjectContent(
         }
     ) { innerPadding ->
         Column {
-            DisplaySamplingMessage(
+            SamplingMessage(
                 isSamplingMessageVisible = isSamplingMessageVisible && !viewModel.isSamplingStartedFromDevice,
                 onSamplingMessageDismissed = onSamplingMessageDismissed,
                 samplingState = samplingState,
@@ -737,7 +744,7 @@ fun hideBottomSheet(
 }
 
 @Composable
-fun DisplaySamplingMessage(
+private fun SamplingMessage(
     isSamplingMessageVisible: Boolean,
     onSamplingMessageDismissed: (Boolean) -> Unit,
     samplingState: Message.Sample,
@@ -777,13 +784,11 @@ fun DisplaySamplingMessage(
                             else stringResource(R.string.label_ei_sampling_processing)
                         }
                         is Message.Sample.ProgressEvent.Uploading -> {
-                            if (isSamplingStartedFromDevice) stringResource(R.string.label_uploading_started)
-                            else stringResource(R.string.label_ei_uploading_started)
-
+                            stringResource(R.string.label_uploading_started)
                         }
                         is Finished -> stringResource(R.string.label_sampling_finished).plus(
                             if (samplingState.error != null)
-                                " : ${samplingState.error}"
+                                ": ${samplingState.error}"
                             else "."
                         )
                         is Message.Sample.ProgressEvent.Reading -> stringResource(R.string.label_sampling_reading)
@@ -793,7 +798,11 @@ fun DisplaySamplingMessage(
                 when (samplingState) {
                     is Error, is Finished -> {
                         IconButton(onClick = { onSamplingMessageDismissed(false) }) {
-                            Icon(imageVector = Icons.Rounded.Close, contentDescription = null)
+                            Icon(
+                                imageVector = Icons.Rounded.Close,
+                                contentDescription = null,
+                                tint = Color.White
+                            )
                         }
                     }
                     else -> {

@@ -366,7 +366,7 @@ class DataAcquisitionManager(
                                     String(body.bytes())
                                 }
                             }"
-                        } ?: run { "Data sample successfully uploaded." }
+                        } ?: run { "Data sample uploaded." }
                     )
                 }
             })

@@ -120,7 +120,7 @@ class ProjectViewModel @Inject constructor(
         private set
 
     /** Sample length used for data acquisition */
-    var sampleLength by mutableStateOf(20000)
+    var sampleLength by mutableStateOf(5000)
         private set
 
     /** Frequency used for data acquisition */

@@ -142,3 +142,49 @@ fun ShowDialog(
         }
     )
 }
+
+@Composable
+fun ShowDataAcquisitionDialog(
+    imageVector: ImageVector,
+    title: String,
+    onDismissRequest: () -> Unit,
+    properties: DialogProperties,
+    content: @Composable () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = properties,
+        content = {
+            Surface(
+                modifier = Modifier
+                    .wrapContentSize()
+                    .clip(shape = RoundedCornerShape(4.dp))
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(64.dp)
+                            .padding(start = 24.dp, end = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(24.dp),
+                            imageVector = imageVector,
+                            contentDescription = null,
+                            tint = MaterialTheme.colors.onSurface
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = title,
+                            color = MaterialTheme.colors.onSurface,
+                            style = MaterialTheme.typography.h6,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    content()
+                }
+            }
+        }
+    )
+}
