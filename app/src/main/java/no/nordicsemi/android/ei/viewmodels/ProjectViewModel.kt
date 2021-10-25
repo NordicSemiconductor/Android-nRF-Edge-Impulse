@@ -666,9 +666,9 @@ class ProjectViewModel @Inject constructor(
 
     override fun onUpgradeCompleted() {
         deploymentState = DeploymentState.Completed
-        // TODO clarify reconnection upon successful connection.
+        // TODO clarify reconnection upon successful connection and needs testing
         // If the upgrade successfully completes let's reconnect to the device.
-        /*deploymentTarget?.let { device ->
+        deploymentTarget?.let { device ->
             val bluetoothDevice = bluetoothAdapter.getRemoteDevice(device.deviceId)
             connect(
                 DiscoveredBluetoothDevice(
@@ -677,7 +677,7 @@ class ProjectViewModel @Inject constructor(
                     bluetoothDevice = bluetoothDevice
                 )
             )
-        }*/
+        }
     }
 
     override fun onUpgradeCanceled(state: FirmwareUpgradeManager.State?) {
