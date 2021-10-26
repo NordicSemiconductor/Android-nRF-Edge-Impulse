@@ -24,13 +24,7 @@
 <resources>
 
     <!-- Base theme colors -->
-    <color name="colorPrimary">@color/nordicBlue</color>
-    <color name="colorOnPrimary">@color/white</color>
-    <color name="colorAccentOnPrimary">@color/nordicBlue</color>
-    <color name="colorSecondary">@color/nordicBlue</color>
-    <color name="colorStatusBar">@color/black</color>
 
-    <color name="colorBackground">@color/black</color>
     <color name="colorOnBackground">@color/white</color>
 
     <!--
