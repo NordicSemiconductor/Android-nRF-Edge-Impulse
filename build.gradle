@@ -2,9 +2,9 @@
 buildscript {
     ext {
         // https://developer.android.com/jetpack/androidx/releases/compose
-        compose_version = '1.0.3'
+        compose_version = '1.0.4'
         // https://developer.android.com/jetpack/compose/setup#configure_kotlin
-        kotlin_version = '1.5.30'
+        kotlin_version = '1.5.31'
         // https://github.com/google/dagger/releases
         hilt_dagger_version = '2.39.1'
         // https://developer.android.com/training/dependency-injection/hilt-android
