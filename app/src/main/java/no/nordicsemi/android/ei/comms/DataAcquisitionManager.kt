@@ -116,6 +116,10 @@ class DataAcquisitionManager(
         samplingState = Unknown
     }
 
+    fun resetInferencingState(){
+        inferencingState = InferencingState.Stopped
+    }
+
     private suspend fun registerToWebSocketStateChanges() {
         dataAcquisitionWebSocket.stateAsFlow().collect { webSocketState ->
             when (webSocketState) {
@@ -214,33 +218,12 @@ class DataAcquisitionManager(
         bleDevice.messagesAsFlow()
             .collect { json ->
                 Log.d("AAAA", "Device notification $json")
-                val deviceMessage = gson.fromJson(json, DeviceMessage::class.java)
-                when (deviceMessage) {
+                when (val deviceMessage = gson.fromJson(json, DeviceMessage::class.java)) {
                     is WebSocketMessage -> {
                         when (deviceMessage.message) {
                             is Hello -> {
-                                // Let's confirm if
-                                deviceMessage.message.apiKey.takeIf { apiKey ->
-                                    apiKey.isNotEmpty() && apiKey != developmentKeys.apiKey
-                                }?.let {
-                                    bleDevice.send(
-                                        generateDeviceMessage(
-                                            message = ConfigureMessage(
-                                                message = Configure(
-                                                    apiKey = developmentKeys.apiKey
-                                                )
-                                            )
-                                        )
-                                    )
-                                } ?: run {
-                                    //deviceMessage.message.deviceId = bleDevice.device.address
-                                    dataAcquisitionWebSocket.send(
-                                        gson.toJsonTree(
-                                            deviceMessage.message,
-                                            Message::class.java
-                                        )
-                                    )
-                                }
+                                // Let's confirm if api keys match for the selected project
+                                verifyApiKey(deviceMessage.message)
                             }
                             is Response -> {
                                 samplingState = deviceMessage.message
@@ -251,22 +234,19 @@ class DataAcquisitionManager(
                                 send(json = json)
                             }
                             is Finished -> {
-                                //isSamplingRequestedFromDevice = false
                                 send(json = json)
                             }
                             else -> {
                                 send(json = json)
                             }
-                        }.exhaustive
+                        }
                     }
-                    is DataSample -> {
-                        postDataSample(
-                            headersJson = JsonParser.parseString(json).asJsonObject.getAsJsonObject(
-                                "headers"
-                            ),
-                            dataSample = deviceMessage
-                        )
-                    }
+                    is DataSample -> postDataSample(
+                        headersJson = JsonParser.parseString(json).asJsonObject.getAsJsonObject(
+                            "headers"
+                        ),
+                        dataSample = deviceMessage
+                    )
                     is InferencingResponse.Start -> {
                         inferenceResults.clear()
                         inferencingState = InferencingState.Started
@@ -278,11 +258,32 @@ class DataAcquisitionManager(
                         inferencingState = InferencingState.Started
                         inferenceResults.add(deviceMessage)
                     }
-                    else -> {
-                        //TODO check other messages
-                    }
-                }.exhaustive
+                    else -> {}
+                }
             }
+    }
+
+    private fun verifyApiKey(message:Hello){
+        message.apiKey.takeIf { apiKey ->
+            apiKey.isNotEmpty() && apiKey != developmentKeys.apiKey
+        }?.let {
+            bleDevice.send(
+                generateDeviceMessage(
+                    message = ConfigureMessage(
+                        message = Configure(
+                            apiKey = developmentKeys.apiKey
+                        )
+                    )
+                )
+            )
+        } ?: run {
+            dataAcquisitionWebSocket.send(
+                gson.toJsonTree(
+                    message,
+                    Message::class.java
+                )
+            )
+        }
     }
 
     fun send(json: String) {
