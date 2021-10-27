@@ -63,15 +63,14 @@ fun Devices(
     onRefresh: () -> Unit,
     scannerState: ScannerState,
     screen: BottomNavigationScreen,
+    backdropScaffoldState: BackdropScaffoldState,
     onBluetoothStateChanged: (Boolean) -> Unit,
     connect: (DiscoveredBluetoothDevice) -> Unit,
     disconnect: (DiscoveredBluetoothDevice) -> Unit,
     onRenameClick: (Device, String) -> Unit,
-    onDeleteClick: (Device) -> Unit,
+    onDeleteClick: (Device) -> Unit
 ) {
     val scanningState = scannerState.scanningState
-    val backdropScaffoldState = rememberBackdropScaffoldState(initialValue = BackdropValue.Revealed)
-
     BackHandler(
         enabled = backdropScaffoldState.isConcealed,
         onBack = {
@@ -591,7 +590,7 @@ private fun getRssiRes(rssi: Int): Int = when (rssi) {
 }
 
 @OptIn(ExperimentalMaterialApi::class)
-private fun animateBottomSheet(
+fun animateBottomSheet(
     scope: CoroutineScope,
     scaffoldState: BackdropScaffoldState,
     targetValue: BackdropValue
