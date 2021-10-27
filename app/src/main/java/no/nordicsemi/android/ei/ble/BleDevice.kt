@@ -3,6 +3,7 @@ package no.nordicsemi.android.ei.ble
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
 import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -104,7 +105,7 @@ class BleDevice(
      * Sends the given data to the device.
      */
     fun send(string: String) {
-        writeCharacteristic(rx, string.encodeToByteArray())
+        writeCharacteristic(rx, string.encodeToByteArray(), WRITE_TYPE_NO_RESPONSE)
             .split()
             .enqueue()
     }
