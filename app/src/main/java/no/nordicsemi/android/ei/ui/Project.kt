@@ -2,7 +2,6 @@ package no.nordicsemi.android.ei.ui
 
 import android.content.res.Configuration.*
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -121,7 +120,7 @@ private fun LargeScreen(
         isBackHandlerEnabled = false,
         selectedScreen = selectedScreen,
         onScreenChanged = onScreenChanged,
-        isSamplingMessageVisible = viewModel.samplingState !is Unknown && !isDialogVisible  && !viewModel.isSamplingStartedFromDevice,
+        isSamplingMessageVisible = viewModel.samplingState !is Unknown && !isDialogVisible && !viewModel.isSamplingStartedFromDevice,
         onSamplingMessageDismissed = onSamplingMessageDismissed,
         isFabVisible = selectedScreen.shouldFabBeVisible && !isDialogVisible,
         onFabClicked = { isDialogVisible = true },
@@ -338,7 +337,7 @@ private fun SmallScreen(
     }
 }
 
-@OptIn(ExperimentalPagerApi::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalPagerApi::class)
 @Composable
 private fun ProjectContent(
     viewModel: ProjectViewModel,
@@ -365,9 +364,12 @@ private fun ProjectContent(
     val trainingListState = rememberLazyListState()
     val testingListState = rememberLazyListState()
     val listStates = listOf(trainingListState, testingListState)
-    var isWarningDialogVisible by rememberSaveable { mutableStateOf(false) }
     val inferencingState by remember { viewModel.inferencingState }
     val inferencingResults by remember { viewModel.inferencingResults }
+    // Backdrop scaffold state used in the devices screen
+    val backdropScaffoldState =
+        rememberBackdropScaffoldState(initialValue = BackdropValue.Revealed)
+    var isWarningDialogVisible by rememberSaveable { mutableStateOf(false) }
 
     LocalLifecycleOwner.current.lifecycleScope.launchWhenStarted {
         viewModel.eventFlow.runCatching {
@@ -399,9 +401,14 @@ private fun ProjectContent(
                 selectedScreen = selectedScreen,
                 pagerState = pagerState,
                 onBackPressed = {
-                    when (connectedDevices.isNotEmpty()) {
-                        true -> isWarningDialogVisible = true
-                        false -> onBackPressed()
+                    //We should only exit this screen if the backdrop is revealed and no devices are connected.
+                    if(backdropScaffoldState.isRevealed) {
+                        when (connectedDevices.isNotEmpty()) {
+                            true -> isWarningDialogVisible = true
+                            false -> onBackPressed()
+                        }
+                    } else {
+                        animateBottomSheet(scope = scope, scaffoldState = backdropScaffoldState, targetValue = BackdropValue.Revealed)
                     }
                 },
             )
@@ -459,6 +466,7 @@ private fun ProjectContent(
                         onRefresh = { viewModel.listDevices() },
                         scannerState = devicesViewModel.scannerState,
                         screen = selectedScreen,
+                        backdropScaffoldState = backdropScaffoldState,
                         onBluetoothStateChanged = { isEnabled ->
                             if (isEnabled) devicesViewModel.startScan()
                             else devicesViewModel.stopScan()
@@ -762,7 +770,9 @@ private fun SamplingMessage(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    modifier = Modifier.weight(1f).padding(vertical = 16.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(vertical = 16.dp),
                     text = when (samplingState) {
                         is Unknown -> stringResource(R.string.unknown)
                         is Message.Sample.Request -> {
