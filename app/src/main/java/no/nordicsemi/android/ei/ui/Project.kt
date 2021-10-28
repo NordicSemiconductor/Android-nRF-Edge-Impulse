@@ -77,7 +77,7 @@ fun Project(
 
     val connectedDevices by derivedStateOf {
         viewModel.configuredDevices.filterList {
-            viewModel.dataAcquisitionManagers[deviceId]?.state == DeviceState.AUTHENTICATED
+            viewModel.commsManagers[deviceId]?.connectivityState == DeviceState.AUTHENTICATED
         }
     }
 
@@ -461,7 +461,7 @@ private fun ProjectContent(
                             .fillMaxSize()
                             .padding(paddingValues = innerPadding),
                         configuredDevices = viewModel.configuredDevices,
-                        activeDevices = viewModel.dataAcquisitionManagers,
+                        activeDevices = viewModel.commsManagers,
                         refreshingState = viewModel.isRefreshing,
                         onRefresh = { viewModel.listDevices() },
                         scannerState = devicesViewModel.scannerState,

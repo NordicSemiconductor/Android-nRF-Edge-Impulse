@@ -43,7 +43,7 @@ import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.ble.rssiAsPercent
 import no.nordicsemi.android.ei.ble.state.ScannerState
 import no.nordicsemi.android.ei.ble.state.ScanningState
-import no.nordicsemi.android.ei.comms.DataAcquisitionManager
+import no.nordicsemi.android.ei.comms.CommsManager
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.ui.layouts.*
 import no.nordicsemi.android.ei.util.Utils
@@ -58,7 +58,7 @@ fun Devices(
     viewModel: DevicesViewModel,
     modifier: Modifier = Modifier,
     configuredDevices: List<Device>,
-    activeDevices: Map<String, DataAcquisitionManager>,
+    activeDevices: Map<String, CommsManager>,
     refreshingState: Boolean,
     onRefresh: () -> Unit,
     scannerState: ScannerState,
@@ -233,7 +233,7 @@ fun Devices(
                                 ) { discoveredDevice ->
                                     DiscoveredDeviceRow(
                                         device = discoveredDevice,
-                                        state = activeDevices[discoveredDevice.deviceId]?.state
+                                        state = activeDevices[discoveredDevice.deviceId]?.connectivityState
                                             ?: DeviceState.IN_RANGE,
                                         onDeviceClicked = { connect(it) },
                                         onDeviceAuthenticated = { onRefresh() }

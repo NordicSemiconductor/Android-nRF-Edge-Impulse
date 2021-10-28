@@ -40,7 +40,7 @@ import okio.IOException
 
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class DataAcquisitionManager(
+class CommsManager(
     val device: DiscoveredBluetoothDevice,
     private val scope: CoroutineScope,
     private val gson: Gson,
@@ -73,7 +73,7 @@ class DataAcquisitionManager(
     private val deviceId: String = device.deviceId
 
     /** The device state. */
-    var state by mutableStateOf(DeviceState.IN_RANGE)
+    var connectivityState by mutableStateOf(DeviceState.IN_RANGE)
         private set
 
     init {
@@ -104,7 +104,7 @@ class DataAcquisitionManager(
         }
     }
 
-    fun startSamplingFromDevice(){
+    fun startSamplingFromDevice() {
         isSamplingRequestedFromDevice = true
     }
 
@@ -116,7 +116,7 @@ class DataAcquisitionManager(
         samplingState = Unknown
     }
 
-    fun resetInferencingState(){
+    fun resetInferencingState() {
         inferencingState = InferencingState.Stopped
     }
 
@@ -155,7 +155,7 @@ class DataAcquisitionManager(
                                 )
                             )
                         )
-                        state = DeviceState.AUTHENTICATED
+                        connectivityState = DeviceState.AUTHENTICATED
                     } ?: run {
                         bleDevice.send(
                             generateDeviceMessage(
@@ -190,7 +190,7 @@ class DataAcquisitionManager(
         bleDevice.stateAsFlow().collect { bleState ->
             when (bleState) {
                 // Device started to connect.
-                ConnectionState.Connecting -> state = DeviceState.CONNECTING
+                ConnectionState.Connecting -> connectivityState = DeviceState.CONNECTING
                 // Device is connected, service discovery and initialization started.
                 ConnectionState.Initializing -> { /* do nothing */
                 }
@@ -198,7 +198,7 @@ class DataAcquisitionManager(
                 ConnectionState.Ready -> {
                     // When the device is connected, open the Web Socket.
                     Log.d("AAAA", "Device is ready, opening socket")
-                    state = DeviceState.AUTHENTICATING
+                    connectivityState = DeviceState.AUTHENTICATING
                     dataAcquisitionWebSocket.connect()
                 }
                 // Device gets disconnected.
@@ -208,7 +208,9 @@ class DataAcquisitionManager(
                 is ConnectionState.Disconnected -> {
                     Log.d("AAAA", "Device is disconnected")
                     // Use IN_RANGE, so that the device row is clickable.
-                    state = DeviceState.IN_RANGE
+                    connectivityState = DeviceState.IN_RANGE
+                    resetSamplingState()
+                    resetInferencingState()
                 }
             }.exhaustive
         }
@@ -258,12 +260,13 @@ class DataAcquisitionManager(
                         inferencingState = InferencingState.Started
                         inferenceResults.add(deviceMessage)
                     }
-                    else -> {}
+                    else -> {
+                    }
                 }
             }
     }
 
-    private fun verifyApiKey(message:Hello){
+    private fun verifyApiKey(message: Hello) {
         message.apiKey.takeIf { apiKey ->
             apiKey.isNotEmpty() && apiKey != developmentKeys.apiKey
         }?.let {

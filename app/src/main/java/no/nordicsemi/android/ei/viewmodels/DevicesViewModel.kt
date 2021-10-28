@@ -19,7 +19,7 @@ import no.nordicsemi.android.ei.ble.BleDevice
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.ble.state.ScannerState
 import no.nordicsemi.android.ei.ble.state.ScanningState
-import no.nordicsemi.android.ei.comms.DataAcquisitionManager
+import no.nordicsemi.android.ei.comms.CommsManager
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
@@ -84,11 +84,11 @@ class DevicesViewModel @Inject constructor(
 
     fun deviceState(
         configuredDevice: Device,
-        activeDevices: Map<String, DataAcquisitionManager>
+        activeDevices: Map<String, CommsManager>
     ): DeviceState =
         discoveredBluetoothDevice(configuredDevice = configuredDevice)
             ?.let {
-                activeDevices[configuredDevice.deviceId]?.state
+                activeDevices[configuredDevice.deviceId]?.connectivityState
                     ?: DeviceState.IN_RANGE
             } ?: DeviceState.NOT_IN_RANGE
 

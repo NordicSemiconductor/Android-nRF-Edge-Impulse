@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
 import no.nordicsemi.android.ble.ConnectionPriorityRequest
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.comms.BuildManager
-import no.nordicsemi.android.ei.comms.DataAcquisitionManager
+import no.nordicsemi.android.ei.comms.CommsManager
 import no.nordicsemi.android.ei.comms.DeploymentState
 import no.nordicsemi.android.ei.di.ProjectComponentEntryPoint
 import no.nordicsemi.android.ei.di.ProjectManager
@@ -92,7 +92,7 @@ class ProjectViewModel @Inject constructor(
         get() = projectDataRepository.developmentKeys
 
     /** A map of device managers. */
-    var dataAcquisitionManagers = mutableStateMapOf<String, DataAcquisitionManager>()
+    var commsManagers = mutableStateMapOf<String, CommsManager>()
         private set
 
     /** A list of configured devices obtained from the service. */
@@ -130,14 +130,14 @@ class ProjectViewModel @Inject constructor(
     /** Sampling state contain the state of sampling*/
     val samplingState by derivedStateOf {
         dataAcquisitionTarget?.let {
-            dataAcquisitionManagers[it.deviceId]?.samplingState
+            commsManagers[it.deviceId]?.samplingState
         } ?: Sample.Unknown
     }
 
     /** Sampling state contain the state of sampling*/
     val isSamplingStartedFromDevice by derivedStateOf {
         dataAcquisitionTarget?.let {
-            dataAcquisitionManagers[it.deviceId]?.isSamplingRequestedFromDevice
+            commsManagers[it.deviceId]?.isSamplingRequestedFromDevice
         } ?: false
     }
 
@@ -152,7 +152,7 @@ class ProjectViewModel @Inject constructor(
     /** Contains the inferencing state */
     var inferencingState = derivedStateOf {
         inferencingTarget?.let {
-            dataAcquisitionManagers[it.deviceId]?.inferencingState
+            commsManagers[it.deviceId]?.inferencingState
         } ?: InferencingState.Stopped
     }
         private set
@@ -160,7 +160,7 @@ class ProjectViewModel @Inject constructor(
     /** Inferencing result obtained from the device */
     var inferencingResults = derivedStateOf {
         inferencingTarget?.let {
-            dataAcquisitionManagers[it.deviceId]?.inferenceResults
+            commsManagers[it.deviceId]?.inferenceResults
         } ?: mutableStateListOf()
     }
         private set
@@ -248,7 +248,7 @@ class ProjectViewModel @Inject constructor(
                         it.deviceId
                     }
                 }.onEach {
-                    dataAcquisitionManagers.disconnect(it.deviceId)
+                    commsManagers.disconnect(it.deviceId)
                 }
                 configuredDevices.apply {
                     clear()
@@ -330,8 +330,8 @@ class ProjectViewModel @Inject constructor(
      * @param device Discovered bluetooth device.
      */
     fun connect(device: DiscoveredBluetoothDevice): Unit =
-        dataAcquisitionManagers.getOrPut(key = device.deviceId, defaultValue = {
-            DataAcquisitionManager(
+        commsManagers.getOrPut(key = device.deviceId, defaultValue = {
+            CommsManager(
                 scope = viewModelScope,
                 gson = gson,
                 developmentKeys = keys,
@@ -353,8 +353,8 @@ class ProjectViewModel @Inject constructor(
      * Disconnects a device
      */
     fun disconnect(device: DiscoveredBluetoothDevice) {
-        dataAcquisitionManagers.disconnect(device.deviceId)
-        dataAcquisitionManagers.remove(device.deviceId)
+        commsManagers.disconnect(device.deviceId)
+        commsManagers.remove(device.deviceId)
         deploymentState = DeploymentState.Unknown
     }
 
@@ -362,10 +362,10 @@ class ProjectViewModel @Inject constructor(
      * Disconnects all devices
      */
     fun disconnectAllDevices() {
-        dataAcquisitionManagers.onEach {
+        commsManagers.onEach {
             it.value.disconnect()
         }
-        dataAcquisitionManagers.clear()
+        commsManagers.clear()
         if (deploymentState !is DeploymentState.Unknown ||
             deploymentState !is DeploymentState.Cancelled ||
             deploymentState !is DeploymentState.Failed
@@ -388,7 +388,7 @@ class ProjectViewModel @Inject constructor(
                 sensor?.let { sensor ->
                     frequency?.let { frequency ->
                         resetSamplingState(device = device)
-                        dataAcquisitionManagers[device.deviceId]?.startSamplingFromDevice()
+                        commsManagers[device.deviceId]?.startSamplingFromDevice()
                         projectRepository.startSampling(
                             keys = keys,
                             projectId = project.id,
@@ -402,7 +402,7 @@ class ProjectViewModel @Inject constructor(
                             guard(response.success) {
                                 throw Throwable(response.error)
                             }
-                            dataAcquisitionManagers[device.deviceId]?.isSamplingRequestedFromDevice =
+                            commsManagers[device.deviceId]?.isSamplingRequestedFromDevice =
                                 true
                         }
                     }
@@ -510,7 +510,7 @@ class ProjectViewModel @Inject constructor(
      * @param deploymentTarget  Deployment target
      */
     private fun startFirmwareUpgrade(data: ByteArray, deploymentTarget: Device) {
-        dataAcquisitionManagers[deploymentTarget.deviceId]?.device?.bluetoothDevice?.let { bluetoothDevice ->
+        commsManagers[deploymentTarget.deviceId]?.device?.bluetoothDevice?.let { bluetoothDevice ->
             val context = getApplication() as Context
             val transport: McuMgrTransport = McuMgrBleTransport(context, bluetoothDevice)
             val dfuManager = FirmwareUpgradeManager(transport, this)
@@ -550,7 +550,7 @@ class ProjectViewModel @Inject constructor(
      * @param device Reset sampling state for device
      */
     private fun resetSamplingState(device: Device) {
-        dataAcquisitionManagers[device.deviceId]?.resetSamplingState()
+        commsManagers[device.deviceId]?.resetSamplingState()
     }
 
     /**
@@ -600,7 +600,7 @@ class ProjectViewModel @Inject constructor(
                 guard(response.success) {
                     throw Throwable(response.error)
                 }
-                dataAcquisitionManagers.disconnect(deviceId = device.deviceId)
+                commsManagers.disconnect(deviceId = device.deviceId)
                 configuredDevices.remove(device)
             }
         }
@@ -620,7 +620,7 @@ class ProjectViewModel @Inject constructor(
      */
     fun sendInferencingRequest(inferencingRequest: InferencingRequest) {
         inferencingTarget?.let { device ->
-            dataAcquisitionManagers[device.deviceId]?.sendInferencingRequest(inferencingRequest)
+            commsManagers[device.deviceId]?.sendInferencingRequest(inferencingRequest)
         }
     }
 
@@ -697,9 +697,9 @@ class ProjectViewModel @Inject constructor(
 /**
  * Disconnect device
  */
-private fun SnapshotStateMap<String, DataAcquisitionManager>.disconnect(deviceId: String) {
+private fun SnapshotStateMap<String, CommsManager>.disconnect(deviceId: String) {
     remove(deviceId)?.apply {
-        state.takeIf {
+        connectivityState.takeIf {
             it == DeviceState.CONNECTING ||
                     it == DeviceState.AUTHENTICATING ||
                     it == DeviceState.AUTHENTICATED
