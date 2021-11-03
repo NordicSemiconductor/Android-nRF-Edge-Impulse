@@ -6,7 +6,7 @@ buildscript {
         // https://developer.android.com/jetpack/compose/setup#configure_kotlin
         kotlin_version = '1.5.31'
         // https://github.com/google/dagger/releases
-        hilt_dagger_version = '2.39.1'
+        hilt_dagger_version = '2.40'
         // https://developer.android.com/training/dependency-injection/hilt-android
         hilt_android_version = '1.0.0'
         // https://github.com/google/accompanist/releases
@@ -14,7 +14,7 @@ buildscript {
         // https://github.com/google/accompanist/releases
         accompanist_version = '0.20.0'
         // https://developer.android.com/jetpack/androidx/releases/lifecycle#kotlin
-        lifecycle_version = '2.4.0-rc01'
+        lifecycle_version = '2.4.0'
     }
     repositories {
         google()
