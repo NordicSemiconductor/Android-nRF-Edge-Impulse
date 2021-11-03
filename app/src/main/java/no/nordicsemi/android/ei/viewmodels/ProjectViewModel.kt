@@ -665,6 +665,7 @@ class ProjectViewModel @Inject constructor(
     }
 
     override fun onUpgradeCompleted() {
+        resetDfuProgress()
         deploymentState = DeploymentState.Completed
         // TODO clarify reconnection upon successful connection and needs testing
         // If the upgrade successfully completes let's reconnect to the device.
@@ -681,7 +682,7 @@ class ProjectViewModel @Inject constructor(
     }
 
     override fun onUpgradeCanceled(state: FirmwareUpgradeManager.State?) {
-        progress = 0
+        resetDfuProgress()
         deploymentState = DeploymentState.Cancelled
     }
 
@@ -689,8 +690,14 @@ class ProjectViewModel @Inject constructor(
         state: FirmwareUpgradeManager.State?,
         error: McuMgrException?
     ) {
-        progress = 0
+        resetDfuProgress()
         deploymentState = DeploymentState.Failed
+    }
+
+    private fun resetDfuProgress(){
+        uploadStartTimestamp = 0
+        initialBytes = 0
+        progress = 0
     }
 }
 
