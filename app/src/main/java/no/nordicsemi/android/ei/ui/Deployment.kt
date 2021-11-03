@@ -394,7 +394,8 @@ private fun DeployImpulse(
                     ).uppercase(
                         Locale.US
                     ),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    color = Color.White
                 )
             }
         }
