@@ -7,6 +7,7 @@
 
     <string name="label_category">Category</string>
     <string name="label_device">Device</string>
+    <string name="label_no_device">No devices connected</string>
     <string name="label_label">Label</string>
     <string name="label_sensor">Sensor</string>
     <string name="label_sample_length">Sample Length (ms)</string>

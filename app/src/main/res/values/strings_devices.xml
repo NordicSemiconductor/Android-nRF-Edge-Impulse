@@ -2,7 +2,7 @@
 <resources>
     <string name="label_scanner">Add Device</string>
     <string name="unknown">Unknown</string>
-    <string name="label_no_devices_connected">No devices connected</string>
+    <string name="label_no_devices_connected">No device connected</string>
 
     <string name="bluetooth_scan_connect_permission_required_title">Bluetooth Permissions Required</string>
     <string name="bluetooth_scan_connect_permission_info">From Android 12 onwards, Bluetooth Scan and Bluetooth Connect permissions are required

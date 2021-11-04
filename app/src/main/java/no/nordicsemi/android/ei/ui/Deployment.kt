@@ -30,7 +30,7 @@ import no.nordicsemi.android.ei.comms.DeploymentState
 import no.nordicsemi.android.ei.comms.DeploymentState.*
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Project
-import no.nordicsemi.android.ei.ui.layouts.InfoDeviceDisconnectedLayout
+import no.nordicsemi.android.ei.ui.layouts.DeviceDisconnected
 import java.util.*
 
 @Composable
@@ -128,7 +128,6 @@ private fun DeployImpulse(
     transferSpeed: Float,
     onCancelDeployClick: () -> Unit
 ) {
-    val context = LocalContext.current
     var isDevicesMenuExpanded by remember { mutableStateOf(false) }
     var width by rememberSaveable { mutableStateOf(0) }
 
@@ -150,7 +149,7 @@ private fun DeployImpulse(
                     onValueChange = { },
                     readOnly = true,
                     label = {
-                        Text(text = stringResource(R.string.label_device))
+                        DeviceDisconnected(connectedDevices = connectedDevices)
                     },
                     leadingIcon = {
                         Icon(
@@ -189,13 +188,7 @@ private fun DeployImpulse(
                     },
                     singleLine = true
                 )
-                connectedDevices.takeIf { it.isEmpty() }?.apply {
-                    if (deploymentState is Unknown || deploymentState is Cancelled || deploymentState is Completed || deploymentState is Failed)
-                        CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
-                            InfoDeviceDisconnectedLayout(text = context.getString(R.string.connect_device_for_data_acquisition))
-                            Spacer(modifier = Modifier.height(height = 16.dp))
-                        }
-                } ?: run {
+                connectedDevices.takeIf { it.isNotEmpty() }?.apply {
                     if (deploymentTarget == null) {
                         onDeploymentTargetSelected(connectedDevices[0])
                     }

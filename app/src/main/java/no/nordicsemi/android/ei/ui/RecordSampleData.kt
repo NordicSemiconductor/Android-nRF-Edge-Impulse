@@ -37,7 +37,7 @@ import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.Message.Sample.Finished
 import no.nordicsemi.android.ei.model.Message.Sample.Unknown
 import no.nordicsemi.android.ei.model.Sensor
-import no.nordicsemi.android.ei.ui.layouts.InfoDeviceDisconnectedLayout
+import no.nordicsemi.android.ei.ui.layouts.DeviceDisconnected
 import java.util.*
 
 
@@ -96,7 +96,6 @@ fun RecordSampleContent(
     selectedFrequency: Number?,
     onFrequencySelected: (Number) -> Unit
 ) {
-    val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     var isCategoryExpanded by rememberSaveable { mutableStateOf(false) }
@@ -106,12 +105,8 @@ fun RecordSampleContent(
     val categories = listOf(Category.TRAINING, Category.TESTING)
     var width by rememberSaveable { mutableStateOf(0) }
 
-    connectedDevices.takeIf { it.isEmpty() }?.apply {
+    connectedDevices.takeIf { it.isNotEmpty() }?.apply {
         Spacer(modifier = Modifier.height(height = 16.dp))
-        CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
-            InfoDeviceDisconnectedLayout(text = context.getString(R.string.connect_device_for_data_acquisition))
-        }
-    } ?: run {
         if (dataAcquisitionTarget == null) {
             onDataAcquisitionTargetSelected(connectedDevices[0])
         }
@@ -190,7 +185,7 @@ fun RecordSampleContent(
             .padding(top = 16.dp),
         readOnly = true,
         label = {
-            Text(text = stringResource(R.string.label_device))
+            DeviceDisconnected(connectedDevices = connectedDevices)
         },
         leadingIcon = {
             Icon(

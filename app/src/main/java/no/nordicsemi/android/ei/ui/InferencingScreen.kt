@@ -32,7 +32,7 @@ import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.InferencingMessage.InferenceResults
 import no.nordicsemi.android.ei.model.InferencingMessage.InferencingRequest
-import no.nordicsemi.android.ei.ui.layouts.InfoDeviceDisconnectedLayout
+import no.nordicsemi.android.ei.ui.layouts.DeviceDisconnected
 import no.nordicsemi.android.ei.util.round
 import no.nordicsemi.android.ei.viewmodels.state.InferencingState
 import java.util.*
@@ -41,7 +41,7 @@ import java.util.*
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun InferencingScreen(
-    modifier:Modifier,
+    modifier: Modifier,
     connectedDevices: List<Device>,
     inferenceResults: List<InferenceResults>,
     inferencingTarget: Device?,
@@ -67,12 +67,7 @@ fun InferencingScreen(
             inferencingState = inferencingState,
             sendInferencingRequest = sendInferencingRequest
         )
-        connectedDevices.takeIf { it.isEmpty() }?.let {
-            InfoDeviceDisconnectedLayout(
-                text = stringResource(R.string.connect_device_for_inferencing),
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-        } ?: run {
+        connectedDevices.takeIf { it.isNotEmpty() }?.apply {
             if (inferencingTarget == null) {
                 onInferencingTargetSelected(connectedDevices.first())
             }
@@ -120,9 +115,7 @@ private fun StartInferencing(
                 enabled = connectedDevices.isNotEmpty(),
                 onValueChange = { },
                 readOnly = true,
-                label = {
-                    Text(text = stringResource(R.string.label_device))
-                },
+                label = { DeviceDisconnected(connectedDevices = connectedDevices) },
                 leadingIcon = {
                     Icon(
                         modifier = Modifier
@@ -201,9 +194,7 @@ private fun StartInferencing(
             enabled = connectedDevices.isNotEmpty(),
             onValueChange = { },
             readOnly = true,
-            label = {
-                Text(text = stringResource(R.string.label_device))
-            },
+            label = { DeviceDisconnected(connectedDevices = connectedDevices) },
             leadingIcon = {
                 Icon(
                     modifier = Modifier
@@ -260,8 +251,10 @@ private fun StartInferencing(
                         }
                     )
                 },
-                colors = ButtonDefaults.buttonColors(if( inferencingState is InferencingState.Started) Color.Red
-                else MaterialTheme.colors.primary)
+                colors = ButtonDefaults.buttonColors(
+                    if (inferencingState is InferencingState.Started) Color.Red
+                    else MaterialTheme.colors.primary
+                )
             ) {
                 Text(
                     text = stringResource(
