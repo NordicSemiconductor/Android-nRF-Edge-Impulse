@@ -248,7 +248,9 @@ class ProjectViewModel @Inject constructor(
                         it.deviceId
                     }
                 }.onEach {
-                    commsManagers.disconnect(it.deviceId)
+                    commsManagers[it.deviceId]?.let { commsManager ->
+                        disconnect(commsManager.device)
+                    }
                 }
                 configuredDevices.apply {
                     clear()
@@ -352,17 +354,17 @@ class ProjectViewModel @Inject constructor(
     /**
      * Disconnects a device
      */
-    fun disconnect(address: DiscoveredBluetoothDevice) {
-        commsManagers.disconnect(address.deviceId)
+    fun disconnect(device: DiscoveredBluetoothDevice) {
+        commsManagers.disconnect(device.deviceId)
         //commsManagers.remove(device.deviceId)
         dataAcquisitionTarget = dataAcquisitionTarget?.takeUnless {
-            it.deviceId == address.deviceId
+            it.deviceId == device.deviceId
         }
         deploymentTarget = deploymentTarget?.takeUnless {
-            it.deviceId == address.deviceId
+            it.deviceId == device.deviceId
         }
         inferencingTarget = inferencingTarget?.takeUnless {
-            it.deviceId == address.deviceId
+            it.deviceId == device.deviceId
         }
         deploymentState = DeploymentState.Unknown
     }
@@ -609,7 +611,9 @@ class ProjectViewModel @Inject constructor(
                 guard(response.success) {
                     throw Throwable(response.error)
                 }
-                commsManagers.disconnect(deviceId = device.deviceId)
+                commsManagers[device.deviceId]?.let { commsManager ->
+                    disconnect(commsManager.device)
+                }
                 configuredDevices.remove(device)
             }
         }
