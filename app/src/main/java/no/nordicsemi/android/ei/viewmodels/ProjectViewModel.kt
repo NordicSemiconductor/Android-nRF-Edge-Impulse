@@ -352,9 +352,18 @@ class ProjectViewModel @Inject constructor(
     /**
      * Disconnects a device
      */
-    fun disconnect(device: DiscoveredBluetoothDevice) {
-        commsManagers.disconnect(device.deviceId)
-        commsManagers.remove(device.deviceId)
+    fun disconnect(address: DiscoveredBluetoothDevice) {
+        commsManagers.disconnect(address.deviceId)
+        //commsManagers.remove(device.deviceId)
+        dataAcquisitionTarget = dataAcquisitionTarget?.takeUnless {
+            it.deviceId == address.deviceId
+        }
+        deploymentTarget = deploymentTarget?.takeUnless {
+            it.deviceId == address.deviceId
+        }
+        inferencingTarget = inferencingTarget?.takeUnless {
+            it.deviceId == address.deviceId
+        }
         deploymentState = DeploymentState.Unknown
     }
 
