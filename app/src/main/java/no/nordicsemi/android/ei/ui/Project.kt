@@ -402,13 +402,17 @@ private fun ProjectContent(
                 pagerState = pagerState,
                 onBackPressed = {
                     //We should only exit this screen if the backdrop is revealed and no devices are connected.
-                    if(backdropScaffoldState.isRevealed) {
+                    if (backdropScaffoldState.isRevealed) {
                         when (connectedDevices.isNotEmpty()) {
                             true -> isWarningDialogVisible = true
                             false -> onBackPressed()
                         }
                     } else {
-                        animateBottomSheet(scope = scope, scaffoldState = backdropScaffoldState, targetValue = BackdropValue.Revealed)
+                        animateBottomSheet(
+                            scope = scope,
+                            scaffoldState = backdropScaffoldState,
+                            targetValue = BackdropValue.Revealed
+                        )
                     }
                 },
             )
@@ -709,7 +713,7 @@ private fun ProjectBottomNavigation(
                     }
                 },
                 selectedContentColor = MaterialTheme.colors.primaryVariant,
-                unselectedContentColor = LocalContentColor.current
+                unselectedContentColor = LocalContentColor.current.copy(alpha = 0.6f)
             )
         }
     }
