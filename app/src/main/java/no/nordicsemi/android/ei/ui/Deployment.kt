@@ -19,7 +19,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
@@ -242,13 +241,9 @@ private fun DeployImpulse(
                     )
                 }
                 RowDeploymentState(
-                    imageVector = when (deploymentState) {
-                        is Cancelled, Failed -> Icons.Rounded.Close
-                        else -> Icons.Rounded.Check
-                    },
+                    imageVector = Icons.Rounded.Check,
                     color = when (deploymentState) {
                         is Verifying, is Uploading, is Confirming, is ApplyingUpdate, is Completed -> MaterialTheme.colors.primary
-                        is Cancelled, Failed -> Color.Red
                         else -> Color.Gray
                     },
                     contentAlpha = when (deploymentState) {
