@@ -188,6 +188,7 @@ class ProjectViewModel @Inject constructor(
 
     /** Firmware upgrade controller used to cancel a firmware upgrade */
     private var firmwareUpgradeController: FirmwareUpgradeController? = null
+    private var dfuManager:FirmwareUpgradeManager? = null
 
     /** DFU transfer speed */
     var transferSpeed by mutableStateOf(0f)
@@ -202,6 +203,7 @@ class ProjectViewModel @Inject constructor(
 
     /** Upload timestamp used to calculate the DFU transfer speed */
     private var uploadStartTimestamp: Long = 0
+
 
     // ---- Implementation ------------------------------------
     init {
@@ -357,16 +359,18 @@ class ProjectViewModel @Inject constructor(
     fun disconnect(device: DiscoveredBluetoothDevice) {
         commsManagers.disconnect(device.deviceId)
         //commsManagers.remove(device.deviceId)
-        dataAcquisitionTarget = dataAcquisitionTarget?.takeUnless {
+        deploymentTarget = deploymentTarget?.takeIf {
             it.deviceId == device.deviceId
+        }?.let {
+            firmwareUpgradeController?.cancel()
+            null
         }
-        deploymentTarget = deploymentTarget?.takeUnless {
+        dataAcquisitionTarget = dataAcquisitionTarget?.takeUnless {
             it.deviceId == device.deviceId
         }
         inferencingTarget = inferencingTarget?.takeUnless {
             it.deviceId == device.deviceId
         }
-        deploymentState = DeploymentState.Unknown
     }
 
     /**
@@ -524,25 +528,25 @@ class ProjectViewModel @Inject constructor(
         commsManagers[deploymentTarget.deviceId]?.device?.bluetoothDevice?.let { bluetoothDevice ->
             val context = getApplication() as Context
             val transport: McuMgrTransport = McuMgrBleTransport(context, bluetoothDevice)
-            val dfuManager = FirmwareUpgradeManager(transport, this)
-            var images = arrayListOf<Pair<Int, ByteArray>>()
-            try {
-                McuMgrImage.getHash(data)
-                images.add(Pair(0, data))
-            } catch (e: Exception) {
+            dfuManager = FirmwareUpgradeManager(transport, this).apply {
+                var images = arrayListOf<Pair<Int, ByteArray>>()
                 try {
-                    images = ZipPackage(data).binaries
-                } catch (e1: Exception) {
-                    Log.d("AAAA", "Exception? $e1")
+                    McuMgrImage.getHash(data)
+                    images.add(Pair(0, data))
+                } catch (e: Exception) {
+                    try {
+                        images = ZipPackage(data).binaries
+                    } catch (e1: Exception) {
+                        Log.d("AAAA", "Exception? $e1")
+                    }
                 }
+                (transport as McuMgrBleTransport).apply {
+                    setLoggingEnabled(true)
+                    requestConnPriority(ConnectionPriorityRequest.CONNECTION_PRIORITY_HIGH)
+                }
+                setMode(FirmwareUpgradeManager.Mode.CONFIRM_ONLY)
+                start(images, false)
             }
-
-            (transport as McuMgrBleTransport).apply {
-                setLoggingEnabled(true)
-                requestConnPriority(ConnectionPriorityRequest.CONNECTION_PRIORITY_HIGH)
-            }
-            dfuManager.setMode(FirmwareUpgradeManager.Mode.CONFIRM_ONLY)
-            dfuManager.start(images, false)
         }
     }
 
@@ -678,7 +682,7 @@ class ProjectViewModel @Inject constructor(
     }
 
     override fun onUpgradeCompleted() {
-        resetDfuProgress()
+        resetDfu()
         deploymentState = DeploymentState.Completed
         // TODO clarify reconnection upon successful connection and needs testing
         // If the upgrade successfully completes let's reconnect to the device.
@@ -695,7 +699,7 @@ class ProjectViewModel @Inject constructor(
     }
 
     override fun onUpgradeCanceled(state: FirmwareUpgradeManager.State?) {
-        resetDfuProgress()
+        resetDfu()
         deploymentState = DeploymentState.Cancelled
     }
 
@@ -703,11 +707,15 @@ class ProjectViewModel @Inject constructor(
         state: FirmwareUpgradeManager.State?,
         error: McuMgrException?
     ) {
-        resetDfuProgress()
+        resetDfu()
         deploymentState = DeploymentState.Failed
     }
 
-    private fun resetDfuProgress(){
+    /**
+     * Releases the mcu manager ble transport client and other dfu status resources
+     */
+    private fun resetDfu(){
+        dfuManager?.transporter?.release()
         uploadStartTimestamp = 0
         initialBytes = 0
         progress = 0
