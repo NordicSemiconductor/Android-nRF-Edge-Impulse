@@ -333,7 +333,7 @@ class ProjectViewModel @Inject constructor(
      * Connect to a device
      * @param device Discovered bluetooth device.
      */
-    fun connect(device: DiscoveredBluetoothDevice): Unit =
+    fun connect(device: DiscoveredBluetoothDevice) {
         commsManagers.getOrPut(key = device.deviceId, defaultValue = {
             CommsManager(
                 scope = viewModelScope,
@@ -349,16 +349,29 @@ class ProjectViewModel @Inject constructor(
                 },
                 context = getApplication()
             )
-        }).run {
+        }).apply {
             connect()
+            // Register a collector what would listen to connectivity changes
+            viewModelScope.launch {
+                this@apply.connectionState().collect {
+                    if(it == DeviceState.IN_RANGE) {
+                        commsManagers.remove(device.deviceId)
+                        resetSelectedTargets(device = device)
+                    }
+                }
+            }
         }
+    }
 
     /**
      * Disconnects a device
      */
     fun disconnect(device: DiscoveredBluetoothDevice) {
         commsManagers.disconnect(device.deviceId)
-        //commsManagers.remove(device.deviceId)
+        resetSelectedTargets(device = device)
+    }
+
+    private fun resetSelectedTargets(device: DiscoveredBluetoothDevice){
         deploymentTarget = deploymentTarget?.takeIf {
             it.deviceId == device.deviceId
         }?.let {
