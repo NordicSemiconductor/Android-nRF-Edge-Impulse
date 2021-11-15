@@ -69,7 +69,6 @@ class BleDevice(
                     }
                 }
         }
-
     }
 
     // TODO should the API be suspendable, or just calling .enqueue()?

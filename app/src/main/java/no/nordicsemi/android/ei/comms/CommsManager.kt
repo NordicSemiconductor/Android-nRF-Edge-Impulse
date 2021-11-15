@@ -13,6 +13,9 @@ import com.google.gson.JsonParser
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
@@ -69,6 +72,9 @@ class CommsManager(
     var inferenceResults = mutableStateListOf<InferencingMessage.InferenceResults>()
         private set
 
+    /** The emitter is used to publish data to a flow, when a collector is registered. */
+    private var emitter: ((DeviceState) -> Unit)? = null
+
     /** The device ID. Initially set to device MAC address. */
     private val deviceId: String = device.deviceId
 
@@ -102,6 +108,14 @@ class CommsManager(
                 dataAcquisitionWebSocket.disconnect()
             }
         }
+    }
+
+    /**
+     * Returns a callbackFlow that will emit current connection state when a collector registers
+     */
+    fun connectionState(): Flow<DeviceState> = callbackFlow {
+        emitter = { json -> trySend(json) }
+        awaitClose { emitter = null }
     }
 
     fun startSamplingFromDevice() {
@@ -190,15 +204,16 @@ class CommsManager(
         bleDevice.stateAsFlow().collect { bleState ->
             when (bleState) {
                 // Device started to connect.
-                ConnectionState.Connecting -> connectivityState = DeviceState.CONNECTING
+                ConnectionState.Connecting -> {
+                    emitConnectionState(DeviceState.CONNECTING)
+                }
                 // Device is connected, service discovery and initialization started.
                 ConnectionState.Initializing -> { /* do nothing */
                 }
                 // Device is ready and initiated. It has required services.
                 ConnectionState.Ready -> {
                     // When the device is connected, open the Web Socket.
-                    Log.d("AAAA", "Device is ready, opening socket")
-                    connectivityState = DeviceState.AUTHENTICATING
+                    emitConnectionState(DeviceState.AUTHENTICATING)
                     dataAcquisitionWebSocket.connect()
                 }
                 // Device gets disconnected.
@@ -206,9 +221,8 @@ class CommsManager(
                 }
                 // Device is now disconnected.
                 is ConnectionState.Disconnected -> {
-                    Log.d("AAAA", "Device is disconnected")
                     // Use IN_RANGE, so that the device row is clickable.
-                    connectivityState = DeviceState.IN_RANGE
+                    emitConnectionState(DeviceState.IN_RANGE)
                     resetSamplingState()
                     resetInferencingState()
                 }
@@ -216,10 +230,16 @@ class CommsManager(
         }
     }
 
+    private fun emitConnectionState(connectionState: DeviceState) {
+        connectivityState = connectionState
+        emitter?.let { emit ->
+            connectivityState.also(emit)
+        }
+    }
+
     private suspend fun registerToDeviceNotifications() {
         bleDevice.messagesAsFlow()
             .collect { json ->
-                Log.d("AAAA", "Device notification $json")
                 when (val deviceMessage = gson.fromJson(json, DeviceMessage::class.java)) {
                     is WebSocketMessage -> {
                         when (deviceMessage.message) {
