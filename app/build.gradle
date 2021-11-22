@@ -13,8 +13,8 @@ android {
         applicationId "no.nordicsemi.android.nrfei"
         minSdkVersion 21
         targetSdkVersion 31
-        versionCode 21
-        versionName "0.8.0"
+        versionCode 22
+        versionName "0.8.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
