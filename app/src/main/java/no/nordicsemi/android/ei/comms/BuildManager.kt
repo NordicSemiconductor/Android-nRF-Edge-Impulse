@@ -60,7 +60,7 @@ class BuildManager(
      * Disconnect from the deployment websocket
      */
     fun stop() {
-        _buildState.tryEmit(Building)
+        _buildState.tryEmit(Canceled(state = Building))
         disconnect()
     }
 
