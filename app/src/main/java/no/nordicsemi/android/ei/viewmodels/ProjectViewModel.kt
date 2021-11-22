@@ -21,17 +21,16 @@ import io.runtime.mcumgr.dfu.FirmwareUpgradeManager
 import io.runtime.mcumgr.dfu.FirmwareUpgradeManager.State.*
 import io.runtime.mcumgr.exception.McuMgrException
 import io.runtime.mcumgr.image.McuMgrImage
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.launch
 import no.nordicsemi.android.ble.ConnectionPriorityRequest
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.comms.BuildManager
 import no.nordicsemi.android.ei.comms.CommsManager
 import no.nordicsemi.android.ei.comms.DeploymentState
+import no.nordicsemi.android.ei.comms.DeploymentState.*
 import no.nordicsemi.android.ei.di.ProjectComponentEntryPoint
 import no.nordicsemi.android.ei.di.ProjectManager
 import no.nordicsemi.android.ei.di.UserComponentEntryPoint
@@ -142,7 +141,7 @@ class ProjectViewModel @Inject constructor(
     }
 
     /** Contains the combined deployment state from downloading, building and DFU */
-    var deploymentState: DeploymentState by mutableStateOf(DeploymentState.Unknown)
+    var deploymentState: DeploymentState by mutableStateOf(NotStarted)
         private set
 
     /** Inferencing target is the device with which inferencing can be done*/
@@ -188,15 +187,7 @@ class ProjectViewModel @Inject constructor(
 
     /** Firmware upgrade controller used to cancel a firmware upgrade */
     private var firmwareUpgradeController: FirmwareUpgradeController? = null
-    private var dfuManager:FirmwareUpgradeManager? = null
-
-    /** DFU transfer speed */
-    var transferSpeed by mutableStateOf(0f)
-        private set
-
-    /** DFU Progress */
-    var progress by mutableStateOf(0)
-        private set
+    private var dfuManager: FirmwareUpgradeManager? = null
 
     /** Initial bytes used to calculate the DFU transfer speed */
     private var initialBytes = 0
@@ -277,7 +268,7 @@ class ProjectViewModel @Inject constructor(
         }) {
             buildManager.buildStateAsFlow().collect {
                 deploymentState = it
-                if (it is DeploymentState.Building.Finished) {
+                if(deploymentState > Building && deploymentState < Verifying){
                     downloadBuild()
                 }
             }
@@ -354,7 +345,7 @@ class ProjectViewModel @Inject constructor(
             // Register a collector what would listen to connectivity changes
             viewModelScope.launch {
                 this@apply.connectionState().collect {
-                    if(it == DeviceState.IN_RANGE) {
+                    if (it == DeviceState.IN_RANGE) {
                         commsManagers.remove(device.deviceId)
                         resetSelectedTargets(device = device)
                     }
@@ -371,12 +362,14 @@ class ProjectViewModel @Inject constructor(
         resetSelectedTargets(device = device)
     }
 
-    private fun resetSelectedTargets(device: DiscoveredBluetoothDevice){
-        deploymentTarget = deploymentTarget?.takeIf {
-            it.deviceId == device.deviceId
-        }?.let {
-            firmwareUpgradeController?.cancel()
-            null
+    private fun resetSelectedTargets(device: DiscoveredBluetoothDevice) {
+        if(deploymentState is NotStarted || deploymentState is Canceled || deploymentState is Failed || deploymentState is Complete){
+            deploymentTarget = deploymentTarget?.takeIf {
+                it.deviceId == device.deviceId
+            }?.let {
+                firmwareUpgradeController?.cancel()
+                null
+            }
         }
         dataAcquisitionTarget = dataAcquisitionTarget?.takeUnless {
             it.deviceId == device.deviceId
@@ -394,9 +387,9 @@ class ProjectViewModel @Inject constructor(
             it.value.disconnect()
         }
         commsManagers.clear()
-        if (deploymentState !is DeploymentState.Unknown ||
-            deploymentState !is DeploymentState.Cancelled ||
-            deploymentState !is DeploymentState.Failed
+        if (deploymentState !is NotStarted ||
+            deploymentState !is Canceled ||
+            deploymentState !is Failed
         )
             cancelDeploy()
     }
@@ -463,7 +456,6 @@ class ProjectViewModel @Inject constructor(
                     throw Throwable(response.error)
                 }
                 if (response.hasDeployment) {
-                    deploymentState = DeploymentState.Building.Finished
                     downloadBuild()
                 } else {
                     build()
@@ -476,7 +468,7 @@ class ProjectViewModel @Inject constructor(
      * Cancel deployment
      */
     fun cancelDeploy() {
-        if (deploymentState is DeploymentState.Building.Started) {
+        if (deploymentState is Building) {
             buildManager.stop()
         }
         firmwareUpgradeController?.cancel()
@@ -484,7 +476,7 @@ class ProjectViewModel @Inject constructor(
     }
 
     /**
-     * Starts bulding a new firmware on the backend
+     * Starts building a new firmware on the backend
      */
     private suspend fun build() {
         projectRepository.buildOnDeviceModels(
@@ -504,13 +496,13 @@ class ProjectViewModel @Inject constructor(
      */
     @Suppress("BlockingMethodInNonBlockingContext")
     private suspend fun downloadBuild() {
-        deploymentState = DeploymentState.Downloading.Started
+        deploymentState = Downloading
         projectRepository.downloadBuild(
             projectId = project.id,
             keys = keys
         ).let { response ->
             guard(response.isSuccessful) {
-                deploymentState = DeploymentState.Unknown
+                deploymentState = Failed(Downloading)
                 throw Throwable(
                     response.errorBody()?.string() ?: "Error while downloading firmware"
                 )
@@ -518,13 +510,9 @@ class ProjectViewModel @Inject constructor(
             response.body()?.byteStream()?.let { inputStream ->
                 val data = inputStream.readBytes()
                 inputStream.close()
-                deploymentState = DeploymentState.Downloading.Finished(data = data)
-            }
-        }.also {
-            if (deploymentState is DeploymentState.Downloading.Finished) {
                 deploymentTarget?.let {
                     startFirmwareUpgrade(
-                        data = (deploymentState as DeploymentState.Downloading.Finished).data,
+                        data = data,
                         deploymentTarget = it
                     )
                 }
@@ -656,26 +644,37 @@ class ProjectViewModel @Inject constructor(
 
     override fun onUpgradeStarted(controller: FirmwareUpgradeController?) {
         firmwareUpgradeController = controller
-        deploymentState = DeploymentState.Verifying
+        deploymentState = Verifying
     }
 
     override fun onStateChanged(
         prevState: FirmwareUpgradeManager.State?,
         newState: FirmwareUpgradeManager.State?
     ) {
-        when (newState) {
-            NONE -> deploymentState = DeploymentState.Unknown
-            VALIDATE -> DeploymentState.Verifying
-            UPLOAD -> {
-                initialBytes = 0
-                deploymentState = DeploymentState.Uploading
+        deploymentState = newState?.toDeploymentState() ?: NotStarted
+
+        if(deploymentState is Uploading){
+            initialBytes = 0
+        }
+        if(deploymentState is ApplyingUpdate){
+            viewModelScope.launch {
+                delay(2000)
+                deploymentTarget?.let { device ->
+                    val bluetoothDevice = bluetoothAdapter.getRemoteDevice(device.deviceId)
+                    connect(
+                        DiscoveredBluetoothDevice(
+                            name = bluetoothDevice.name,
+                            rssi = 0,
+                            bluetoothDevice = bluetoothDevice
+                        )
+                    )
+                }
             }
-            TEST, RESET -> deploymentState = DeploymentState.ApplyingUpdate
-            CONFIRM -> DeploymentState.Confirming
         }
     }
 
     override fun onUploadProgressChanged(bytesSent: Int, imageSize: Int, timestamp: Long) {
+        var transferSpeed = 0f
         if (initialBytes == 0) {
             uploadStartTimestamp = timestamp
             initialBytes = bytesSent
@@ -683,37 +682,38 @@ class ProjectViewModel @Inject constructor(
             val bytesSentSinceUploadStarted: Int = bytesSent - initialBytes
             val timeSinceUploadStarted: Long = timestamp - uploadStartTimestamp
             // bytes / ms = KB/s
-            transferSpeed =
-                (bytesSentSinceUploadStarted / timeSinceUploadStarted).toFloat()
+            transferSpeed = (bytesSentSinceUploadStarted / timeSinceUploadStarted).toFloat()
         }
         // When done, reset the counter.
         if (bytesSent == imageSize) {
             initialBytes = 0
         }
-        // Convert to percent
-        progress = (bytesSent * 100f / imageSize).toInt()
+
+        deploymentState = Uploading(transferSpeed = transferSpeed, percent = (bytesSent * 100f / imageSize).toInt())
     }
 
     override fun onUpgradeCompleted() {
-        resetDfu()
-        deploymentState = DeploymentState.Completed
-        // TODO clarify reconnection upon successful connection and needs testing
-        // If the upgrade successfully completes let's reconnect to the device.
-        deploymentTarget?.let { device ->
-            val bluetoothDevice = bluetoothAdapter.getRemoteDevice(device.deviceId)
-            connect(
-                DiscoveredBluetoothDevice(
-                    name = bluetoothDevice.name,
-                    rssi = 0,
-                    bluetoothDevice = bluetoothDevice
+        viewModelScope.launch {
+            delay(10000) //Adds a delay waiting for thingy to restart after an update.
+            resetDfu()
+            deploymentState = Complete
+            // If the upgrade successfully completes let's reconnect to the device.
+            deploymentTarget?.let { device ->
+                val bluetoothDevice = bluetoothAdapter.getRemoteDevice(device.deviceId)
+                connect(
+                    DiscoveredBluetoothDevice(
+                        name = bluetoothDevice.name,
+                        rssi = 0,
+                        bluetoothDevice = bluetoothDevice
+                    )
                 )
-            )
+            }
         }
     }
 
     override fun onUpgradeCanceled(state: FirmwareUpgradeManager.State?) {
         resetDfu()
-        deploymentState = DeploymentState.Cancelled
+        deploymentState = Canceled(state = state?.toDeploymentState() ?: NotStarted)
     }
 
     override fun onUpgradeFailed(
@@ -721,18 +721,33 @@ class ProjectViewModel @Inject constructor(
         error: McuMgrException?
     ) {
         resetDfu()
-        deploymentState = DeploymentState.Failed
+        deploymentState = Failed(state = state?.toDeploymentState() ?: NotStarted)
     }
 
     /**
      * Releases the mcu manager ble transport client and other dfu status resources
      */
-    private fun resetDfu(){
+    private fun resetDfu() {
         dfuManager?.transporter?.release()
         uploadStartTimestamp = 0
         initialBytes = 0
-        progress = 0
     }
+}
+
+/**
+ * Converts the firmware upgrade manager state to Deployment state
+ */
+private fun FirmwareUpgradeManager.State.toDeploymentState() = when (this) {
+    NONE -> {
+        Log.d("AAAA", "NONE")
+        NotStarted
+    }
+    VALIDATE -> Verifying
+    UPLOAD -> {
+        Uploading()
+    }
+    TEST, RESET -> ApplyingUpdate
+    CONFIRM -> Confirming
 }
 
 /**

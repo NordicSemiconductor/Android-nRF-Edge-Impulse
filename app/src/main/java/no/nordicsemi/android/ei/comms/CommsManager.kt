@@ -208,8 +208,7 @@ class CommsManager(
                     emitConnectionState(DeviceState.CONNECTING)
                 }
                 // Device is connected, service discovery and initialization started.
-                ConnectionState.Initializing -> { /* do nothing */
-                }
+                ConnectionState.Initializing -> { /* do nothing */ }
                 // Device is ready and initiated. It has required services.
                 ConnectionState.Ready -> {
                     // When the device is connected, open the Web Socket.
@@ -226,7 +225,7 @@ class CommsManager(
                     resetSamplingState()
                     resetInferencingState()
                 }
-            }.exhaustive
+            }
         }
     }
 

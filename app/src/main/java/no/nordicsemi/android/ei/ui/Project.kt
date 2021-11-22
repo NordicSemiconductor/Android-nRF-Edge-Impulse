@@ -515,8 +515,6 @@ private fun ProjectContent(
                         onDeploymentTargetSelected = { viewModel.onDeploymentTargetSelected(it) },
                         deploymentState = viewModel.deploymentState,
                         onDeployClick = { viewModel.deploy() },
-                        progress = viewModel.progress,
-                        transferSpeed = viewModel.transferSpeed,
                         onCancelDeployClick = { viewModel.cancelDeploy() }
                     )
                 }
@@ -808,7 +806,7 @@ private fun SamplingMessage(
                     color = Color.White
                 )
                 when (samplingState) {
-                    is Error, is Finished -> {
+                    /*is Error,*/ is Finished -> {
                         IconButton(onClick = { onSamplingMessageDismissed(false) }) {
                             Icon(
                                 imageVector = Icons.Rounded.Close,

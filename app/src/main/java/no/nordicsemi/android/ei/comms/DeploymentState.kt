@@ -2,45 +2,44 @@ package no.nordicsemi.android.ei.comms
 
 /**
  * DeploymentState would be used to notify the UI about hte deployment state.
+ * @param order Defines the order of each state
  */
-sealed class DeploymentState {
-    /** Unknown state **/
-    object Unknown : DeploymentState()
+sealed class DeploymentState(private val order: Int) : Comparable<DeploymentState> {
+
+    /** Not started **/
+    object NotStarted : DeploymentState(0)
 
     /** When the firmware is being built on the EI backend **/
-    sealed class Building : DeploymentState() {
-        object Unknown : Building()
-        object Started : Building()
-        object Finished : Building()
-        data class Error(val reason: String?) : Building()
-    }
+    object Building : DeploymentState(1)
 
     /** When downloading the firmware from the EI backend **/
-    sealed class Downloading : DeploymentState() {
-        object Started : Downloading()
-        @Suppress("ArrayInDataClass")
-        data class Finished(val data: ByteArray) : Downloading()
-        data class Error(val error: String) : Downloading()
-    }
+    object Downloading : DeploymentState(2)
 
     /** When the firmware is being validated by the MCU manager **/
-    object Verifying : DeploymentState()
+    object Verifying : DeploymentState(3)
 
     /** When the firmware is being uploaded by the MCU manager to the client **/
-    object Uploading : DeploymentState()
+    data class Uploading(val transferSpeed: Float = 0f, val percent: Int = 0) : DeploymentState(4)
 
     /** When the firmware is being confirmed by the MCU manager **/
-    object Confirming : DeploymentState()
+    object Confirming : DeploymentState(5)
 
     /** When the device is being RESET by the MCU manager **/
-    object ApplyingUpdate : DeploymentState()
-
-    /** When the upgrade is being Cancelled by the MCU manager **/
-    object Cancelled : DeploymentState()
+    object ApplyingUpdate : DeploymentState(6)
 
     /** When the upgrade is being Completed by the MCU manager **/
-    object Completed : DeploymentState()
+    object Complete : DeploymentState(7)
 
     /** if the upgrade is failed **/
-    object Failed : DeploymentState()
+    data class Failed(val state: DeploymentState) : DeploymentState(state.order)
+
+    /** When the upgrade is being Cancelled by the MCU manager **/
+    data class Canceled(val state: DeploymentState) : DeploymentState(state.order)
+
+    /**
+     * Compares this object with the specified object for order. Returns zero if this object is equal
+     * to the specified [other] object, a negative number if it's less than [other], or a positive number
+     * if it's greater than [other].
+     */
+    override fun compareTo(other: DeploymentState): Int = order - other.order
 }

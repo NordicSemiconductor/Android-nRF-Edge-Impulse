@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import no.nordicsemi.android.ei.comms.DeploymentState.Building
+import no.nordicsemi.android.ei.comms.DeploymentState.*
 import no.nordicsemi.android.ei.model.BuildLog
 import no.nordicsemi.android.ei.model.SocketToken
 import no.nordicsemi.android.ei.websocket.EiWebSocket
@@ -35,7 +35,7 @@ class BuildManager(
     )
     var jobId = 0
         private set
-    private var _buildState = MutableStateFlow<Building>(Building.Unknown)
+    private var _buildState = MutableStateFlow<DeploymentState>(NotStarted)
 
     init {
         scope.launch(exceptionHandler) { registerToWebSocketStateChanges() }
@@ -45,14 +45,14 @@ class BuildManager(
     /**
      * Returns the build state as a flow
      */
-    fun buildStateAsFlow(): StateFlow<Building> = _buildState
+    fun buildStateAsFlow(): StateFlow<DeploymentState> = _buildState
 
     /**
      * Initiates a websocket connection to obtain deployment messages.
      */
     fun start(jobId: Int) {
         this.jobId = jobId
-        _buildState.tryEmit(Building.Started)
+        _buildState.tryEmit(Building)
         deploymentWebSocket.connect()
     }
 
@@ -60,7 +60,7 @@ class BuildManager(
      * Disconnect from the deployment websocket
      */
     fun stop() {
-        _buildState.tryEmit(Building.Error("User Cancellation"))
+        _buildState.tryEmit(Building)
         disconnect()
     }
 
@@ -85,7 +85,7 @@ class BuildManager(
                 is WebSocketState.Failed -> {
                     // We need to stop pinging when the WebSocket throws an error.
                     deploymentWebSocket.stopPinging()
-                    _buildState.tryEmit(Building.Error(webSocketState.throwable.message))
+                    _buildState.tryEmit(Failed(state = Building))
                 }
             }
         }
@@ -108,8 +108,8 @@ class BuildManager(
                                     //Set the build state before disconnecting
                                     _buildState.tryEmit(
                                         when (finished.success) {
-                                            true -> Building.Finished
-                                            false -> Building.Error(reason = "Error while building")
+                                            true -> Downloading
+                                            false -> Failed(state = Building)
                                         }
                                     )
                                     disconnect()

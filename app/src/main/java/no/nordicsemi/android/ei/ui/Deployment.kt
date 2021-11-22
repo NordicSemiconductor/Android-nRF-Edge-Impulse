@@ -7,8 +7,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.rounded.DeveloperBoard
 import androidx.compose.material.icons.rounded.Launch
 import androidx.compose.runtime.*
@@ -30,6 +29,7 @@ import no.nordicsemi.android.ei.comms.DeploymentState.*
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.ui.layouts.DeviceDisconnected
+import no.nordicsemi.android.ei.ui.theme.NordicBlue
 import java.util.*
 
 @Composable
@@ -41,8 +41,6 @@ fun Deployment(
     onDeploymentTargetSelected: (Device) -> Unit,
     deploymentState: DeploymentState,
     onDeployClick: (Device?) -> Unit,
-    progress: Int,
-    transferSpeed: Float,
     onCancelDeployClick: () -> Unit
 ) {
     Column(modifier = modifier.verticalScroll(state = rememberScrollState())) {
@@ -53,8 +51,6 @@ fun Deployment(
             onDeploymentTargetSelected = onDeploymentTargetSelected,
             deploymentState = deploymentState,
             onDeployClick = onDeployClick,
-            progress = progress,
-            transferSpeed = transferSpeed,
             onCancelDeployClick = onCancelDeployClick
         )
     }
@@ -72,7 +68,7 @@ private fun DesignImpulse(
             text = stringResource(R.string.title_design_impulse),
             style = MaterialTheme.typography.h6
         )
-        Surface(modifier = Modifier.fillMaxWidth(),elevation = 2.dp) {
+        Surface(modifier = Modifier.fillMaxWidth(), elevation = 2.dp) {
             Column(
                 modifier = Modifier
                     .padding(all = 16.dp)
@@ -123,8 +119,6 @@ private fun DeployImpulse(
     onDeploymentTargetSelected: (Device) -> Unit,
     deploymentState: DeploymentState,
     onDeployClick: (Device?) -> Unit,
-    progress: Int,
-    transferSpeed: Float,
     onCancelDeployClick: () -> Unit
 ) {
     var isDevicesMenuExpanded by remember { mutableStateOf(false) }
@@ -192,165 +186,16 @@ private fun DeployImpulse(
                         onDeploymentTargetSelected(connectedDevices[0])
                     }
                 }
-                RowDeploymentState(
-                    imageVector = when (deploymentState) {
-                        is Building.Error -> Icons.Rounded.Close
-                        else -> Icons.Rounded.Check
-                    },
-                    color = when (deploymentState) {
-                        is Building.Started, is Building.Finished, is Downloading.Started, is Downloading.Finished,
-                        is Verifying, is Uploading, is Confirming, is ApplyingUpdate, is Completed -> MaterialTheme.colors.primary
-                        is Building.Error -> Color.Red
-                        else -> Color.Gray
-                    },
-                    contentAlpha = when (deploymentState) {
-                        is Building.Started, is Building.Finished, is Downloading, is Verifying,
-                        is Uploading, is Confirming, is ApplyingUpdate, is Completed -> ContentAlpha.high
-                        else -> ContentAlpha.disabled
-                    },
-                    text = stringResource(id = R.string.label_building)
-                ) {
-                    if (deploymentState is Building.Started) LinearProgressIndicator(
-                        modifier = Modifier
-                            .padding(top = 4.dp)
-                            .height(height = 2.dp)
-                            .fillMaxWidth()
-                    )
-                }
-                RowDeploymentState(
-                    imageVector = when (deploymentState) {
-                        is Downloading.Error -> Icons.Rounded.Close
-                        else -> Icons.Rounded.Check
-                    },
-                    color = when (deploymentState) {
-                        is Downloading.Started, is Downloading.Finished, is Verifying, is Uploading, is Confirming, is ApplyingUpdate, is Completed -> MaterialTheme.colors.primary
-                        is Downloading.Error -> Color.Red
-                        else -> Color.Gray
-                    },
-                    contentAlpha = when (deploymentState) {
-                        is Downloading, is Verifying, is Uploading, is Confirming, is ApplyingUpdate, is Completed -> ContentAlpha.high
-                        else -> ContentAlpha.disabled
-                    },
-                    text = stringResource(id = R.string.label_downloading)
-                ) {
-                    if (deploymentState is Downloading.Started) LinearProgressIndicator(
-                        modifier = Modifier
-                            .padding(top = 4.dp)
-                            .height(height = 2.dp)
-                            .fillMaxWidth()
-                    )
-                }
-                RowDeploymentState(
-                    imageVector = Icons.Rounded.Check,
-                    color = when (deploymentState) {
-                        is Verifying, is Uploading, is Confirming, is ApplyingUpdate, is Completed -> MaterialTheme.colors.primary
-                        else -> Color.Gray
-                    },
-                    contentAlpha = when (deploymentState) {
-                        is Verifying, is Uploading, is Confirming, is ApplyingUpdate, is Completed -> ContentAlpha.high
-                        else -> ContentAlpha.disabled
-                    },
-                    text = stringResource(id = R.string.label_verifying)
-                ) {
-                    if (deploymentState is Verifying) LinearProgressIndicator(
-                        modifier = Modifier
-                            .padding(top = 4.dp)
-                            .height(height = 2.dp)
-                            .fillMaxWidth()
-                    )
-                }
-                RowDeploymentState(
-                    imageVector = when (deploymentState) {
-                        is Cancelled, Failed -> Icons.Rounded.Close
-                        else -> Icons.Rounded.Check
-                    },
-                    color = when (deploymentState) {
-                        is Uploading, is Confirming, is ApplyingUpdate, is Completed -> MaterialTheme.colors.primary
-                        is Cancelled, Failed -> Color.Red
-                        else -> Color.Gray
-                    },
-                    contentAlpha = when (deploymentState) {
-                        is Uploading, is Confirming, is ApplyingUpdate, is Completed -> ContentAlpha.high
-                        else -> ContentAlpha.disabled
-                    },
-                    text = stringResource(id = R.string.label_uploading),
-                    progressText = stringResource(
-                        id = R.string.label_transfer_speed,
-                        "%.2f".format(transferSpeed)
-                    )
-                ) {
-                    if (deploymentState is Uploading) LinearProgressIndicator(
-                        modifier = Modifier
-                            .padding(top = 4.dp)
-                            .height(height = 2.dp)
-                            .fillMaxWidth(),
-                        progress = progress / 100f
-                    )
-                }
-                RowDeploymentState(
-                    imageVector = when (deploymentState) {
-                        is Cancelled, Failed -> Icons.Rounded.Close
-                        else -> Icons.Rounded.Check
-                    },
-                    color = when (deploymentState) {
-                        is Confirming, is ApplyingUpdate, is Completed -> MaterialTheme.colors.primary
-                        is Cancelled, Failed -> Color.Red
-                        else -> Color.Gray
-                    },
-                    contentAlpha = when (deploymentState) {
-                        is Confirming, is ApplyingUpdate, is Completed -> ContentAlpha.high
-                        else -> ContentAlpha.disabled
-                    },
-                    text = stringResource(id = R.string.label_confirming)
-                ) {
-                    if (deploymentState is Confirming) LinearProgressIndicator(
-                        modifier = Modifier
-                            .padding(top = 4.dp)
-                            .height(height = 2.dp)
-                            .fillMaxWidth()
-                    )
-                }
-                RowDeploymentState(
-                    imageVector = when (deploymentState) {
-                        is Cancelled, Failed -> Icons.Rounded.Close
-                        else -> Icons.Rounded.Check
-                    },
-                    color = when (deploymentState) {
-                        is ApplyingUpdate, is Completed -> MaterialTheme.colors.primary
-                        is Cancelled, Failed -> Color.Red
-                        else -> Color.Gray
-                    },
-                    contentAlpha = when (deploymentState) {
-                        is ApplyingUpdate, is Completed -> ContentAlpha.high
-                        else -> ContentAlpha.disabled
-                    },
-                    text = stringResource(id = R.string.label_applying_update)
-                ) {
-                    if (deploymentState is ApplyingUpdate) LinearProgressIndicator(
-                        modifier = Modifier
-                            .padding(top = 4.dp)
-                            .height(height = 2.dp)
-                            .fillMaxWidth()
-                    )
-                }
-                RowDeploymentState(
-                    imageVector = when (deploymentState) {
-                        is Cancelled, Failed -> Icons.Rounded.Close
-                        else -> Icons.Rounded.Check
-                    },
-                    color = when (deploymentState) {
-                        is Completed -> MaterialTheme.colors.primary
-                        is Cancelled, is Failed -> Color.Red
-                        else -> Color.Gray
-                    },
-                    contentAlpha = when (deploymentState) {
-                        is Completed -> ContentAlpha.high
-                        else -> ContentAlpha.disabled
-                    },
-                    text = stringResource(id = R.string.label_completed)
-                )
+                BuildRow(state = deploymentState)
+                DownloadRow(state = deploymentState)
+                VerifyRow(state = deploymentState)
+                UploadRow(state = deploymentState)
+                ConfirmRow(state = deploymentState)
+                ApplyingUpdateRow(state = deploymentState)
+                CompletedRow(state = deploymentState)
             }
         }
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -360,25 +205,27 @@ private fun DeployImpulse(
             Button(
                 enabled = connectedDevices.isNotEmpty(),
                 onClick = {
-                    if (deploymentState is Unknown || deploymentState is Building.Unknown ||
-                        deploymentState is Building.Error || deploymentState is Downloading.Error || deploymentState is Downloading.Finished ||
-                        deploymentState is Completed || deploymentState is Cancelled || deploymentState is Failed) onDeployClick(deploymentTarget)
-                    else onCancelDeployClick()
+                    when (deploymentState) {
+                        NotStarted, is Canceled, is Failed, is Complete -> onDeployClick(
+                            deploymentTarget
+                        )
+                        else -> onCancelDeployClick()
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(
-                    if (deploymentState is Unknown || deploymentState is Building.Unknown ||
-                        deploymentState is Building.Error || deploymentState is Downloading.Error || deploymentState is Downloading.Finished ||
-                        deploymentState is Completed || deploymentState is Cancelled || deploymentState is Failed) MaterialTheme.colors.primary
-                    else Color.Red
+                    when (deploymentState) {
+                        NotStarted, is Canceled, is Failed, is Complete -> MaterialTheme.colors.primary
+                        else -> Color.Red
+                    }
                 )
             ) {
                 Text(
                     modifier = Modifier.defaultMinSize(minWidth = 80.dp),
                     text = stringResource(
-                        id = if (deploymentState is Unknown || deploymentState is Building.Unknown ||
-                            deploymentState is Building.Error || deploymentState is Downloading.Error || deploymentState is Downloading.Finished ||
-                            deploymentState is Completed || deploymentState is Cancelled || deploymentState is Failed) R.string.action_deploy
-                        else R.string.action_cancel
+                        when (deploymentState) {
+                            NotStarted, is Canceled, is Failed, is Complete -> R.string.action_deploy
+                            else -> R.string.action_cancel
+                        }
                     ).uppercase(
                         Locale.US
                     ),
@@ -391,12 +238,12 @@ private fun DeployImpulse(
 }
 
 @Composable
-private fun RowDeploymentState(
-    imageVector: ImageVector = Icons.Filled.Check,
-    color: Color = Color.Gray,
-    contentAlpha: Float = ContentAlpha.disabled,
+private fun StateRow(
+    icon: ImageVector = Icons.Filled.Check,
+    tint: Color = Color.Gray,
     text: String,
-    progressText: String = "",
+    transferSpeed: String = "",
+    contentAlpha: Float = ContentAlpha.disabled,
     content: @Composable () -> Unit = {}
 ) {
     Row(
@@ -407,9 +254,9 @@ private fun RowDeploymentState(
 
     ) {
         Icon(
-            imageVector = imageVector,
+            imageVector = icon,
             contentDescription = null,
-            tint = color
+            tint = tint
         )
         Column(
             modifier = Modifier
@@ -420,13 +267,294 @@ private fun RowDeploymentState(
                 CompositionLocalProvider(LocalContentAlpha provides contentAlpha) {
                     Text(modifier = Modifier.weight(1.0f), text = text, textAlign = TextAlign.Start)
                     Text(
-                        modifier = Modifier.weight(1.0f),
-                        text = progressText,
+                        text = transferSpeed,
                         textAlign = TextAlign.End
                     )
                 }
             }
             content()
         }
+    }
+}
+
+@Composable
+fun BuildRow(
+    state: DeploymentState
+) {
+    when {
+        state is Building -> StateRow(
+            icon = Icons.Outlined.Construction,
+            tint = NordicBlue,
+            text = "Building...",
+            contentAlpha = ContentAlpha.high
+        ) {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .height(height = 2.dp)
+                    .fillMaxWidth()
+            )
+        }
+        state is Failed && state.state is Building -> StateRow(
+            icon = Icons.Outlined.Construction,
+            tint = Color.Red,
+            text = "Build failed",
+            contentAlpha = ContentAlpha.high
+        )
+        state is Canceled && state.state is Building -> StateRow(
+            icon = Icons.Outlined.Construction,
+            tint = Color.Red,
+            text = "Build canceled",
+            contentAlpha = ContentAlpha.high
+        )
+        state > Building -> StateRow(
+            icon = Icons.Outlined.Construction,
+            tint = NordicBlue,
+            text = "Built",
+            contentAlpha = ContentAlpha.high
+        )
+        else -> StateRow(icon = Icons.Outlined.Construction, text = "Build")
+    }
+}
+
+@Composable
+fun DownloadRow(
+    state: DeploymentState
+) {
+    when {
+        state is Downloading -> StateRow(
+            icon = Icons.Outlined.CloudDownload,
+            tint = NordicBlue,
+            text = "Downloading...",
+            contentAlpha = ContentAlpha.high
+        ) {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .height(height = 2.dp)
+                    .fillMaxWidth()
+            )
+        }
+        state is Failed && state.state is Downloading -> StateRow(
+            icon = Icons.Outlined.CloudDownload,
+            tint = Color.Red,
+            text = "Download failed",
+            contentAlpha = ContentAlpha.high
+        )
+        state is Canceled && state.state is Downloading -> StateRow(
+            icon = Icons.Outlined.CloudDownload,
+            tint = Color.Red,
+            text = "Download canceled",
+            contentAlpha = ContentAlpha.high
+        )
+        state > Downloading -> StateRow(
+            icon = Icons.Outlined.CloudDownload,
+            tint = NordicBlue,
+            text = "Downloaded",
+            contentAlpha = ContentAlpha.high
+        )
+        else -> StateRow(icon = Icons.Outlined.CloudDownload, text = "Download")
+    }
+}
+
+@Composable
+fun VerifyRow(
+    state: DeploymentState
+) {
+    when {
+        state is Verifying -> StateRow(
+            icon = Icons.Outlined.Verified,
+            tint = NordicBlue,
+            text = "Verifying...",
+            contentAlpha = ContentAlpha.high
+        ) {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .height(height = 2.dp)
+                    .fillMaxWidth()
+            )
+        }
+        state is Failed && state.state is Verifying -> StateRow(
+            icon = Icons.Outlined.Verified,
+            tint = Color.Red,
+            text = "Verification failed",
+            contentAlpha = ContentAlpha.high
+        )
+        state is Canceled && state.state is Verifying -> StateRow(
+            icon = Icons.Outlined.Verified,
+            tint = Color.Red,
+            text = "Verification canceled",
+            contentAlpha = ContentAlpha.high
+        )
+        state > Verifying -> StateRow(
+            icon = Icons.Outlined.Verified,
+            tint = NordicBlue,
+            text = "Verified",
+            contentAlpha = ContentAlpha.high
+        )
+        else -> StateRow(icon = Icons.Outlined.Verified, text = "Verify")
+    }
+}
+
+@Composable
+fun UploadRow(
+    state: DeploymentState
+) {
+    var transferSpeed by rememberSaveable {
+        mutableStateOf(0f)
+    }
+    when {
+        state is Uploading -> {
+            transferSpeed = state.transferSpeed
+            StateRow(
+                icon = Icons.Outlined.Upload,
+                tint = NordicBlue,
+                text = "Uploading...",
+                contentAlpha = ContentAlpha.high,
+                transferSpeed = stringResource(R.string.label_transfer_speed, transferSpeed)
+            ) {
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .height(height = 2.dp)
+                        .fillMaxWidth(),
+                    progress = state.percent / 100f
+                )
+            }
+        }
+        state is Failed && state.state is Uploading -> StateRow(
+            icon = Icons.Outlined.Upload,
+            tint = Color.Red,
+            text = "Upload failed",
+            contentAlpha = ContentAlpha.high
+        )
+        state is Canceled && state.state is Uploading -> StateRow(
+            icon = Icons.Outlined.Upload,
+            tint = Color.Red,
+            text = "Upload canceled",
+            contentAlpha = ContentAlpha.high
+        )
+        state > Uploading(transferSpeed = transferSpeed) -> StateRow(
+            icon = Icons.Outlined.Upload,
+            tint = NordicBlue,
+            text = "Uploaded",
+            contentAlpha = ContentAlpha.high,
+            transferSpeed = stringResource(R.string.label_transfer_speed, transferSpeed)
+        )
+        else -> StateRow(icon = Icons.Outlined.Upload, text = "Upload")
+    }
+}
+
+@Composable
+fun ConfirmRow(
+    state: DeploymentState
+) {
+    when {
+        state is Confirming -> StateRow(
+            icon = Icons.Outlined.Grading,
+            tint = NordicBlue,
+            text = "Confirming...",
+            contentAlpha = ContentAlpha.high
+        ) {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .height(height = 2.dp)
+                    .fillMaxWidth()
+            )
+        }
+        state is Failed && state.state is Confirming -> StateRow(
+            icon = Icons.Outlined.Grading,
+            tint = Color.Red,
+            text = "Confirmation failed",
+            contentAlpha = ContentAlpha.high
+        )
+        state is Canceled && state.state is Confirming -> StateRow(
+            icon = Icons.Outlined.Grading,
+            tint = Color.Red,
+            text = "Confirmation canceled",
+            contentAlpha = ContentAlpha.high
+        )
+        state > Confirming -> StateRow(
+            icon = Icons.Outlined.Grading,
+            tint = NordicBlue,
+            text = "Confirmed",
+            contentAlpha = ContentAlpha.high
+        )
+        else -> StateRow(icon = Icons.Outlined.Grading, text = "Confirm")
+    }
+}
+
+@Composable
+fun ApplyingUpdateRow(
+    state: DeploymentState
+) {
+    when {
+        state is ApplyingUpdate -> StateRow(
+            icon = Icons.Outlined.SystemUpdateAlt,
+            tint = NordicBlue,
+            text = "Applying update...",
+            contentAlpha = ContentAlpha.high
+        ) {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .height(height = 2.dp)
+                    .fillMaxWidth()
+            )
+        }
+        state is Failed && state.state is ApplyingUpdate -> StateRow(
+            icon = Icons.Outlined.SystemUpdateAlt,
+            tint = Color.Red,
+            text = "Applying update failed",
+            contentAlpha = ContentAlpha.high
+        )
+        state is Canceled && state.state is ApplyingUpdate -> StateRow(
+            icon = Icons.Outlined.SystemUpdateAlt,
+            tint = Color.Red,
+            text = "Applying update canceled",
+            contentAlpha = ContentAlpha.high
+        )
+        state > ApplyingUpdate -> StateRow(
+            icon = Icons.Outlined.SystemUpdateAlt,
+            tint = NordicBlue,
+            text = "Update Applied",
+            contentAlpha = ContentAlpha.high
+        )
+        else -> StateRow(icon = Icons.Outlined.SystemUpdateAlt, text = "Apply update")
+    }
+}
+
+@Composable
+fun CompletedRow(
+    state: DeploymentState
+) {
+    when {
+        state is Complete -> StateRow(
+            icon = Icons.Outlined.DoneAll,
+            tint = NordicBlue,
+            text = "Completed",
+            contentAlpha = ContentAlpha.high
+        )
+        state is Failed && state.state is Complete -> StateRow(
+            icon = Icons.Outlined.DoneAll,
+            tint = Color.Red,
+            text = "Failed",
+            contentAlpha = ContentAlpha.high
+        )
+        state is Canceled && state.state is Complete -> StateRow(
+            icon = Icons.Outlined.DoneAll,
+            tint = Color.Red,
+            text = "Canceled",
+            contentAlpha = ContentAlpha.high
+        )
+        state > Complete -> StateRow(
+            icon = Icons.Outlined.DoneAll,
+            tint = NordicBlue,
+            text = "Completed",
+            contentAlpha = ContentAlpha.high
+        )
+        else -> StateRow(icon = Icons.Outlined.DoneAll, text = "Completing")
     }
 }
