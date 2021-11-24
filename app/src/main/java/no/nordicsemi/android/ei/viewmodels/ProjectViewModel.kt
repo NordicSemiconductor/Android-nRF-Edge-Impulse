@@ -268,7 +268,7 @@ class ProjectViewModel @Inject constructor(
         }) {
             buildManager.buildStateAsFlow().collect {
                 deploymentState = it
-                if(deploymentState > Building && deploymentState < Verifying){
+                if (deploymentState > Building && deploymentState < Verifying) {
                     downloadBuild()
                 }
             }
@@ -363,7 +363,7 @@ class ProjectViewModel @Inject constructor(
     }
 
     private fun resetSelectedTargets(device: DiscoveredBluetoothDevice) {
-        if(deploymentState is NotStarted || deploymentState is Canceled || deploymentState is Failed || deploymentState is Complete){
+        if (deploymentState is NotStarted || deploymentState is Canceled || deploymentState is Failed || deploymentState is Complete) {
             deploymentTarget = deploymentTarget?.takeIf {
                 it.deviceId == device.deviceId
             }?.let {
@@ -492,31 +492,53 @@ class ProjectViewModel @Inject constructor(
     }
 
     /**
+     * Checks if a deployment is available for download
+     */
+    private suspend fun hasDeployment(): Boolean {
+        projectRepository.deploymentInfo(
+            projectId = project.id,
+            keys = keys
+        ).let { deploymentInfoResponse ->
+            guard(deploymentInfoResponse.success) {
+                Failed(state = Downloading)
+                throw Throwable(deploymentInfoResponse.error)
+            }
+            return true
+        }
+    }
+
+    /**
      * Download build.
      */
     @Suppress("BlockingMethodInNonBlockingContext")
     private suspend fun downloadBuild() {
         deploymentState = Downloading
-        projectRepository.downloadBuild(
-            projectId = project.id,
-            keys = keys
-        ).let { response ->
-            guard(response.isSuccessful) {
-                deploymentState = Failed(Downloading)
-                throw Throwable(
-                    response.errorBody()?.string() ?: "Error while downloading firmware"
-                )
-            }
-            response.body()?.byteStream()?.let { inputStream ->
-                val data = inputStream.readBytes()
-                inputStream.close()
-                deploymentTarget?.let {
-                    startFirmwareUpgrade(
-                        data = data,
-                        deploymentTarget = it
+        if (hasDeployment()) {
+            projectRepository.downloadBuild(
+                projectId = project.id,
+                keys = keys
+            ).let { downloadResponse ->
+                guard(downloadResponse.isSuccessful) {
+                    deploymentState = Failed(Downloading)
+                    throw Throwable(
+                        downloadResponse.errorBody()?.string()
+                            ?: "Error while downloading firmware"
                     )
                 }
+                downloadResponse.body()?.byteStream()?.let { inputStream ->
+                    val data = inputStream.readBytes()
+                    inputStream.close()
+                    deploymentTarget?.let {
+                        startFirmwareUpgrade(
+                            data = data,
+                            deploymentTarget = it
+                        )
+                    }
+                }
             }
+        } else {
+            Failed(state = Downloading)
+            throw Throwable("Firmware not available, for download")
         }
     }
 
@@ -653,10 +675,10 @@ class ProjectViewModel @Inject constructor(
     ) {
         deploymentState = newState?.toDeploymentState() ?: NotStarted
 
-        if(deploymentState is Uploading){
+        if (deploymentState is Uploading) {
             initialBytes = 0
         }
-        if(deploymentState is ApplyingUpdate){
+        if (deploymentState is ApplyingUpdate) {
             viewModelScope.launch {
                 delay(2000)
                 deploymentTarget?.let { device ->
@@ -689,7 +711,10 @@ class ProjectViewModel @Inject constructor(
             initialBytes = 0
         }
 
-        deploymentState = Uploading(transferSpeed = transferSpeed, percent = (bytesSent * 100f / imageSize).toInt())
+        deploymentState = Uploading(
+            transferSpeed = transferSpeed,
+            percent = (bytesSent * 100f / imageSize).toInt()
+        )
     }
 
     override fun onUpgradeCompleted() {
