@@ -22,7 +22,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -111,7 +110,7 @@ fun RecordSampleContent(
             onDataAcquisitionTargetSelected(connectedDevices[0])
         }
     }
-    Spacer(modifier = Modifier.size(size = 16.dp))
+    //Spacer(modifier = Modifier.size(size = 16.dp))
     OutlinedTextField(
         value = category.type.replaceFirstChar {
             if (it.isLowerCase()) it.titlecase(
