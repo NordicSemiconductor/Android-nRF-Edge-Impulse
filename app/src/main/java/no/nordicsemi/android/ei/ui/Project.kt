@@ -151,6 +151,7 @@ private fun LargeScreen(
                                         .fillMaxWidth()
                                         .padding(horizontal = 24.dp)
                                         .verticalScroll(state = rememberScrollState())
+                                        .weight(weight =1f, fill = false)
                                 ) {
                                     RecordSampleContent(
                                         samplingState = viewModel.samplingState,
