@@ -155,7 +155,9 @@ private fun DeployImpulse(
                     },
                     trailingIcon = {
                         IconButton(
-                            enabled = connectedDevices.isNotEmpty(),
+                            enabled = connectedDevices.isNotEmpty() &&
+                                    (deploymentState is NotStarted || deploymentState is Canceled ||
+                                            deploymentState is Failed || deploymentState is Complete),
                             onClick = {
                                 isDevicesMenuExpanded = true
                             }
