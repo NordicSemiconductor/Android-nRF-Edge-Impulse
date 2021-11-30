@@ -1,5 +1,6 @@
 package no.nordicsemi.android.ei.ui
 
+import android.app.Activity
 import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -8,25 +9,32 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import no.nordicsemi.android.ei.R
+import no.nordicsemi.android.ei.account.AccountHelper
 import no.nordicsemi.android.ei.ui.theme.NordicTheme
+import no.nordicsemi.android.ei.viewmodels.SplashscreenViewModel
+import retrofit2.HttpException
+import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 @Composable
-fun Splashscreen(
-    progressMessage: String? = null
+fun SplashScreen(
+    viewModel: SplashscreenViewModel = viewModel(),
+    onLoggedIn: () -> Unit = {},
+    onError: () -> Unit = {}
 ) {
     val isLargeScreen =
         LocalConfiguration.current.screenLayout and Configuration.SCREENLAYOUT_SIZE_MASK >= Configuration.SCREENLAYOUT_SIZE_LARGE
@@ -42,7 +50,15 @@ fun Splashscreen(
             }
         )
     }
-
+    var progressMessage by rememberSaveable { mutableStateOf("") }
+    Login(
+        viewModel = viewModel,
+        onProgressChanged = {
+            progressMessage = it
+        },
+        onLoggedIn = onLoggedIn,
+        onError = onError
+    )
     Box(
         contentAlignment = Alignment.BottomCenter,
         modifier = Modifier
@@ -55,12 +71,58 @@ fun Splashscreen(
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
         )
-        progressMessage?.let { text ->
-            Text(
-                text = text,
-                modifier = Modifier.offset(y = (offset).dp),
-                color = MaterialTheme.colors.onSurface
-            )
+        Text(
+            text = progressMessage,
+            modifier = Modifier.offset(y = (offset).dp),
+            color = MaterialTheme.colors.onSurface
+        )
+    }
+}
+
+@Composable
+fun Login(
+    viewModel: SplashscreenViewModel = viewModel(),
+    onProgressChanged: (message: String) -> Unit = {},
+    onLoggedIn: () -> Unit = {},
+    onError: () -> Unit = {},
+) {
+    val activity = LocalContext.current as Activity
+
+    LaunchedEffect(key1 = "logging in") {
+        onProgressChanged("")
+        val account = AccountHelper.getOrCreateAccount(activity).getOrElse {
+            onError()
+            return@LaunchedEffect
+        }
+        while (true) {
+            onProgressChanged(activity.getString(R.string.label_logging_in))
+            val token = AccountHelper.getAuthToken(account, activity).getOrElse {
+                it.localizedMessage?.let { message ->
+                    onProgressChanged(message)
+                } ?: run {
+                    onError()
+                }
+                return@LaunchedEffect
+            }
+            onProgressChanged(activity.getString(R.string.label_obtaining_user_data))
+            try {
+                viewModel.getUserData(token)
+                onLoggedIn()
+            } catch (e: UnknownHostException) {
+                onProgressChanged(activity.getString(R.string.error_no_internet))
+            } catch (e: SocketTimeoutException) {
+                onProgressChanged(activity.getString(R.string.error_timeout))
+            } catch (e: HttpException) {
+                if (e.code() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                    AccountHelper.invalidateAuthToken(token, activity)
+                    continue
+                } else {
+                    onProgressChanged(
+                        e.message() ?: activity.getString(R.string.error_obtaining_user_data_failed)
+                    )
+                }
+            }
+            break
         }
     }
 }
@@ -69,6 +131,6 @@ fun Splashscreen(
 @Composable
 fun SplashscreenPreviewLight() {
     NordicTheme(darkTheme = false) {
-        Splashscreen(stringResource(id = R.string.label_logging_in))
+        SplashScreen()
     }
 }

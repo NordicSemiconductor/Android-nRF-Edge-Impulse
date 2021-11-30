@@ -10,11 +10,11 @@ import javax.inject.Inject
 class SplashscreenViewModel @Inject constructor(
     private val userManager: UserManager,
     private val loginRepository: LoginRepository
-): ViewModel() {
+) : ViewModel() {
 
     suspend fun getUserData(token: String) =
         loginRepository
             .getCurrentUser(token)
-            .apply { userManager.userLoggedIn(this, token) }
+            .let { user -> userManager.userLoggedIn(user, token) }
 
 }
