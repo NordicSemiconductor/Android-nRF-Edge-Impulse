@@ -58,7 +58,6 @@ import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
 import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Event
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
-import okhttp3.internal.filterList
 import java.net.UnknownHostException
 import java.util.*
 
@@ -76,8 +75,8 @@ fun Project(
     }
 
     val connectedDevices by derivedStateOf {
-        viewModel.configuredDevices.filterList {
-            viewModel.commsManagers[deviceId]?.connectivityState == DeviceState.AUTHENTICATED
+        viewModel.configuredDevices.filter { device ->
+            viewModel.commsManagers[device.deviceId]?.connectivityState == DeviceState.AUTHENTICATED
         }
     }
 
