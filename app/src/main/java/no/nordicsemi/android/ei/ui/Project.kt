@@ -5,8 +5,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.ModalBottomSheetValue.*
 import androidx.compose.material.icons.Icons
@@ -44,7 +42,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.*
 import no.nordicsemi.android.ei.R
-import no.nordicsemi.android.ei.model.Category
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.Message.Sample.Finished
@@ -111,7 +108,6 @@ private fun LargeScreen(
     onBackPressed: () -> Unit
 ) {
     var isDialogVisible by rememberSaveable { mutableStateOf(false) }
-    var category by rememberSaveable { mutableStateOf(Category.TRAINING) }
     ProjectContent(
         viewModel = viewModel,
         connectedDevices = connectedDevices,
@@ -137,75 +133,59 @@ private fun LargeScreen(
                 ),
                 content = {
                     RecordSampleLargeScreen(
-                        content = {
-                            Column {
-                                SamplingMessage(
-                                    isSamplingMessageVisible = viewModel.samplingState !is Unknown,
-                                    onSamplingMessageDismissed = onSamplingMessageDismissed,
-                                    samplingState = viewModel.samplingState,
-                                    isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice
-                                )
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 24.dp)
-                                        .verticalScroll(state = rememberScrollState())
-                                        .weight(weight =1f, fill = false)
+                        samplingState = viewModel.samplingState,
+                        connectedDevices = connectedDevices,
+                        category = viewModel.category,
+                        onCategorySelected = { viewModel.onCategoryChanged(it)},
+                        dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
+                        onDataAcquisitionTargetSelected = {
+                            viewModel.onDataAcquisitionTargetSelected(
+                                device = it
+                            )
+                        },
+                        label = viewModel.label,
+                        onLabelChanged = { viewModel.onLabelChanged(label = it) },
+                        selectedSensor = viewModel.sensor,
+                        onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
+                        sampleLength = viewModel.sampleLength,
+                        onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
+                        selectedFrequency = viewModel.frequency,
+                        onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) },
+                        isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice,
+                        onSamplingMessageDismissed = onSamplingMessageDismissed,
+                        buttonContent = {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp, horizontal = 24.dp),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                TextButton(
+                                    enabled = viewModel.samplingState is Finished || viewModel.samplingState is Unknown,
+                                    onClick = {
+                                        isDialogVisible = !(viewModel.samplingState is Finished || viewModel.samplingState is Unknown)
+                                        viewModel.resetSamplingState()
+                                    }
                                 ) {
-                                    RecordSampleContent(
-                                        samplingState = viewModel.samplingState,
-                                        connectedDevices = connectedDevices,
-                                        category = category,
-                                        onCategorySelected = { category = it },
-                                        dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
-                                        onDataAcquisitionTargetSelected = {
-                                            viewModel.onDataAcquisitionTargetSelected(
-                                                device = it
-                                            )
-                                        },
-                                        label = viewModel.label,
-                                        onLabelChanged = { viewModel.onLabelChanged(label = it) },
-                                        selectedSensor = viewModel.sensor,
-                                        onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
-                                        sampleLength = viewModel.sampleLength,
-                                        onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
-                                        selectedFrequency = viewModel.frequency
-                                    ) { viewModel.onFrequencySelected(frequency = it) }
+                                    Text(
+                                        text = stringResource(R.string.action_cancel).uppercase(
+                                            Locale.US
+                                        ),
+                                        style = MaterialTheme.typography.button
+                                    )
                                 }
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 8.dp, horizontal = 24.dp),
-                                    horizontalArrangement = Arrangement.End
+                                Spacer(modifier = Modifier.width(8.dp))
+                                TextButton(
+                                    enabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
+                                            (viewModel.samplingState is Finished || viewModel.samplingState is Unknown),
+                                    onClick = { viewModel.startSampling() }
                                 ) {
-                                    TextButton(
-                                        enabled = viewModel.samplingState is Finished || viewModel.samplingState is Unknown,
-                                        onClick = {
-                                            isDialogVisible =
-                                                !(viewModel.samplingState is Finished || viewModel.samplingState is Unknown)
-                                            viewModel.resetSamplingState()
-                                        }
-                                    ) {
-                                        Text(
-                                            text = stringResource(R.string.action_cancel).uppercase(
-                                                Locale.US
-                                            ),
-                                            style = MaterialTheme.typography.button
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    TextButton(
-                                        enabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
-                                                (viewModel.samplingState is Finished || viewModel.samplingState is Unknown),
-                                        onClick = { viewModel.startSampling(category = category) }
-                                    ) {
-                                        Text(
-                                            text = stringResource(R.string.action_start_sampling).uppercase(
-                                                Locale.US
-                                            ),
-                                            style = MaterialTheme.typography.button
-                                        )
-                                    }
+                                    Text(
+                                        text = stringResource(R.string.action_start_sampling).uppercase(
+                                            Locale.US
+                                        ),
+                                        style = MaterialTheme.typography.button
+                                    )
                                 }
                             }
                         }
@@ -236,7 +216,6 @@ private fun SmallScreen(
                 else (viewModel.samplingState is Finished || viewModel.samplingState is Unknown)
             }
         )
-    var category by rememberSaveable { mutableStateOf(Category.TRAINING) }
     val isBackHandlerEnabled by derivedStateOf {
         modalBottomSheetState.isVisible
     }
@@ -245,56 +224,44 @@ private fun SmallScreen(
         sheetState = modalBottomSheetState,
         sheetContent = {
             RecordSampleSmallScreen(
-                content = {
-                    SamplingMessage(
-                        isSamplingMessageVisible = viewModel.samplingState !is Unknown,
-                        onSamplingMessageDismissed = onSamplingMessageDismissed,
-                        samplingState = viewModel.samplingState,
-                        isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice
+                samplingState = viewModel.samplingState,
+                connectedDevices = connectedDevices,
+                category = viewModel.category,
+                onCategorySelected = { viewModel.onCategoryChanged(it)},
+                dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
+                onDataAcquisitionTargetSelected = {
+                    viewModel.onDataAcquisitionTargetSelected(
+                        device = it
                     )
-                    Column(
+                },
+                label = viewModel.label,
+                onLabelChanged = { viewModel.onLabelChanged(label = it) },
+                selectedSensor = viewModel.sensor,
+                onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
+                sampleLength = viewModel.sampleLength,
+                onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
+                selectedFrequency = viewModel.frequency,
+                onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) },
+                isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice,
+                onSamplingMessageDismissed = onSamplingMessageDismissed,
+                buttonContent = {
+                    Row(
                         modifier = Modifier
-                            .fillMaxHeight()
-                            .padding(horizontal = 16.dp)
-                            .verticalScroll(
-                                state = rememberScrollState()
-                            )
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp),
+                        horizontalArrangement = Arrangement.Center
                     ) {
-                        RecordSampleContent(
-                            samplingState = viewModel.samplingState,
-                            connectedDevices = connectedDevices,
-                            category = category,
-                            onCategorySelected = { category = it },
-                            dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
-                            onDataAcquisitionTargetSelected = {
-                                viewModel.onDataAcquisitionTargetSelected(device = it)
-                            },
-                            label = viewModel.label,
-                            onLabelChanged = { viewModel.onLabelChanged(label = it) },
-                            selectedSensor = viewModel.sensor,
-                            onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
-                            sampleLength = viewModel.sampleLength,
-                            onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
-                            selectedFrequency = viewModel.frequency
-                        ) { viewModel.onFrequencySelected(frequency = it) }
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 32.dp),
-                            horizontalArrangement = Arrangement.Center
+                        Button(
+                            enabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
+                                    (viewModel.samplingState is Finished || viewModel.samplingState is Unknown),
+                            onClick = { viewModel.startSampling() }
                         ) {
-                            Button(
-                                enabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
-                                        (viewModel.samplingState is Finished || viewModel.samplingState is Unknown),
-                                onClick = { viewModel.startSampling(category = category) }
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.action_start_sampling).uppercase(
-                                        Locale.US
-                                    ),
-                                    style = MaterialTheme.typography.button
-                                )
-                            }
+                            Text(
+                                text = stringResource(R.string.action_start_sampling).uppercase(
+                                    Locale.US
+                                ),
+                                style = MaterialTheme.typography.button
+                            )
                         }
                     }
                 },
@@ -752,7 +719,7 @@ fun hideBottomSheet(
 }
 
 @Composable
-private fun SamplingMessage(
+fun SamplingMessage(
     isSamplingMessageVisible: Boolean,
     onSamplingMessageDismissed: (Boolean) -> Unit,
     samplingState: Message.Sample,
@@ -807,14 +774,14 @@ private fun SamplingMessage(
                 )
                 when (samplingState) {
                     /*is Error,*/ is Finished -> {
-                        IconButton(onClick = { onSamplingMessageDismissed(false) }) {
-                            Icon(
-                                imageVector = Icons.Rounded.Close,
-                                contentDescription = null,
-                                tint = Color.White
-                            )
-                        }
+                    IconButton(onClick = { onSamplingMessageDismissed(false) }) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = null,
+                            tint = Color.White
+                        )
                     }
+                }
                     else -> {
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),

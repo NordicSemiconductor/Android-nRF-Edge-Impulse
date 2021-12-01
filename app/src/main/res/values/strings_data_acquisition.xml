@@ -34,4 +34,5 @@
     <string name="label_ei_sampling_response_received">EI Studio: Sampling response received…</string>
     <string name="label_ei_sampling_started">EI Studio: Sampling started…</string>
     <string name="label_ei_sampling_processing">EI Studio: Sample processing…</string>
+    <string name="label_empty_label_error">Label cannot be empty!</string>
 </resources>
