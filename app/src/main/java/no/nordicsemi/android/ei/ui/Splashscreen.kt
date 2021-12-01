@@ -51,7 +51,7 @@ fun SplashScreen(
         )
     }
     var progressMessage by rememberSaveable { mutableStateOf("") }
-    Login(
+    LoadUserData(
         viewModel = viewModel,
         onProgressChanged = {
             progressMessage = it
@@ -80,7 +80,7 @@ fun SplashScreen(
 }
 
 @Composable
-fun Login(
+private fun LoadUserData(
     viewModel: SplashscreenViewModel = viewModel(),
     onProgressChanged: (message: String) -> Unit = {},
     onLoggedIn: () -> Unit = {},
