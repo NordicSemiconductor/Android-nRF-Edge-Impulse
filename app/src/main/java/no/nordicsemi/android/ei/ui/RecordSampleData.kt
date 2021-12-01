@@ -305,12 +305,7 @@ fun RecordSampleContent(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp),
-        colors = TextFieldDefaults.outlinedTextFieldColors(
-            disabledTextColor = LocalContentColor.current.copy(LocalContentAlpha.current),
-            disabledBorderColor = MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.disabled),
-            disabledLabelColor = MaterialTheme.colors.onSurface.copy(ContentAlpha.medium)
-        ),
-        enabled = false,
+        enabled = shouldEnable(connectedDevices = connectedDevices, samplingState = samplingState),
         readOnly = true,
         label = {
             Text(text = stringResource(R.string.label_sample_length))
