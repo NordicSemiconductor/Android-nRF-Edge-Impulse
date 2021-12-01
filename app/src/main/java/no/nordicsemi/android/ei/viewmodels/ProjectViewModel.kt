@@ -110,8 +110,12 @@ class ProjectViewModel @Inject constructor(
     var dataAcquisitionTarget: Device? by mutableStateOf(null)
         private set
 
-    /** Lable of the acquired data sample */
-    var label: String by mutableStateOf("Sample")
+    /** Category of the acquired data sample to be posted as */
+    var category by mutableStateOf(Category.TRAINING)
+        private set
+
+    /** Label of the acquired data sample */
+    var label: String by mutableStateOf("")
         private set
 
     /** Sensor used for data acquisition */
@@ -286,6 +290,13 @@ class ProjectViewModel @Inject constructor(
     }
 
     /**
+     * Updates the Category of the data sample
+     */
+    fun onCategoryChanged(category: Category){
+        this.category = category
+    }
+
+    /**
      * Updates the label
      * @param label updated label
      */
@@ -398,7 +409,7 @@ class ProjectViewModel @Inject constructor(
      * Starts sampling via the EI backend
      * @param category sampling category.
      */
-    fun startSampling(category: Category) {
+    fun startSampling() {
         viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
             viewModelScope
                 .launch {
