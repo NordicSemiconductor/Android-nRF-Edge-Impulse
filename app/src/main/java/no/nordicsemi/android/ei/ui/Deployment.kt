@@ -124,6 +124,11 @@ private fun DeployImpulse(
     var isDevicesMenuExpanded by remember { mutableStateOf(false) }
     var width by rememberSaveable { mutableStateOf(0) }
 
+    connectedDevices.takeIf { it.isNotEmpty() }?.apply {
+        if (deploymentTarget == null) {
+            onDeploymentTargetSelected(connectedDevices[0])
+        }
+    }
     Column(modifier = Modifier.padding(bottom = 72.dp)) {
         Surface(elevation = 2.dp) {
             Column(
@@ -139,6 +144,10 @@ private fun DeployImpulse(
                         .padding(vertical = 16.dp)
                         .onSizeChanged { width = it.width },
                     value = deploymentTarget?.name ?: stringResource(id = R.string.empty),
+                    enabled = shouldEnable(
+                        connectedDevices = connectedDevices,
+                        deploymentState = deploymentState
+                    ),
                     onValueChange = { },
                     readOnly = true,
                     label = {
@@ -155,9 +164,10 @@ private fun DeployImpulse(
                     },
                     trailingIcon = {
                         IconButton(
-                            enabled = connectedDevices.isNotEmpty() &&
-                                    (deploymentState is NotStarted || deploymentState is Canceled ||
-                                            deploymentState is Failed || deploymentState is Complete),
+                            enabled = shouldEnable(
+                                connectedDevices = connectedDevices,
+                                deploymentState = deploymentState
+                            ),
                             onClick = {
                                 isDevicesMenuExpanded = true
                             }
@@ -183,11 +193,6 @@ private fun DeployImpulse(
                     },
                     singleLine = true
                 )
-                connectedDevices.takeIf { it.isNotEmpty() }?.apply {
-                    if (deploymentTarget == null) {
-                        onDeploymentTargetSelected(connectedDevices[0])
-                    }
-                }
                 BuildRow(state = deploymentState)
                 DownloadRow(state = deploymentState)
                 VerifyRow(state = deploymentState)
@@ -557,6 +562,15 @@ fun CompletedRow(
             text = "Completed",
             contentAlpha = ContentAlpha.high
         )
-        else -> StateRow(icon = Icons.Outlined.DoneAll, text = "Completing")
+        else -> StateRow(icon = Icons.Outlined.DoneAll, text = "Complete")
     }
 }
+
+@Composable
+private fun shouldEnable(
+    connectedDevices: List<Device>,
+    deploymentState: DeploymentState
+): Boolean =
+    connectedDevices.isNotEmpty() &&
+            (deploymentState is NotStarted || deploymentState is Canceled ||
+                    deploymentState is Failed || deploymentState is Complete)
