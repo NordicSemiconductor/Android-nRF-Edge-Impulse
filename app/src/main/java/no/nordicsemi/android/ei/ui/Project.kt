@@ -133,24 +133,8 @@ private fun LargeScreen(
                 ),
                 content = {
                     RecordSampleLargeScreen(
-                        samplingState = viewModel.samplingState,
+                        viewModel = viewModel,
                         connectedDevices = connectedDevices,
-                        category = viewModel.category,
-                        onCategorySelected = { viewModel.onCategoryChanged(it)},
-                        dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
-                        onDataAcquisitionTargetSelected = {
-                            viewModel.onDataAcquisitionTargetSelected(
-                                device = it
-                            )
-                        },
-                        label = viewModel.label,
-                        onLabelChanged = { viewModel.onLabelChanged(label = it) },
-                        selectedSensor = viewModel.sensor,
-                        onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
-                        sampleLength = viewModel.sampleLength,
-                        onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
-                        selectedFrequency = viewModel.frequency,
-                        onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) },
                         isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice,
                         onSamplingMessageDismissed = onSamplingMessageDismissed,
                         buttonContent = {
@@ -224,24 +208,8 @@ private fun SmallScreen(
         sheetState = modalBottomSheetState,
         sheetContent = {
             RecordSampleSmallScreen(
-                samplingState = viewModel.samplingState,
+                viewModel = viewModel,
                 connectedDevices = connectedDevices,
-                category = viewModel.category,
-                onCategorySelected = { viewModel.onCategoryChanged(it)},
-                dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
-                onDataAcquisitionTargetSelected = {
-                    viewModel.onDataAcquisitionTargetSelected(
-                        device = it
-                    )
-                },
-                label = viewModel.label,
-                onLabelChanged = { viewModel.onLabelChanged(label = it) },
-                selectedSensor = viewModel.sensor,
-                onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
-                sampleLength = viewModel.sampleLength,
-                onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
-                selectedFrequency = viewModel.frequency,
-                onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) },
                 isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice,
                 onSamplingMessageDismissed = onSamplingMessageDismissed,
                 buttonContent = {

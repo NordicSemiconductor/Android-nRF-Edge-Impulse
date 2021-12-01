@@ -39,33 +39,22 @@ import no.nordicsemi.android.ei.model.Message.Sample.Finished
 import no.nordicsemi.android.ei.model.Message.Sample.Unknown
 import no.nordicsemi.android.ei.model.Sensor
 import no.nordicsemi.android.ei.ui.layouts.DeviceDisconnected
+import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import java.util.*
 
 @Composable
 fun RecordSampleLargeScreen(
-    samplingState: Message.Sample,
+    viewModel:ProjectViewModel,
     connectedDevices: List<Device>,
-    category: Category,
-    onCategorySelected: (Category) -> Unit,
-    dataAcquisitionTarget: Device?,
-    onDataAcquisitionTargetSelected: (Device) -> Unit,
-    label: String,
-    onLabelChanged: (String) -> Unit,
-    selectedSensor: Sensor?,
-    onSensorSelected: (Sensor) -> Unit,
-    sampleLength: Int,
-    onSampleLengthChanged: (Int) -> Unit,
-    selectedFrequency: Number?,
-    onFrequencySelected: (Number) -> Unit,
     isSamplingStartedFromDevice: Boolean,
     onSamplingMessageDismissed: (Boolean) -> Unit,
     buttonContent: @Composable () -> Unit
 ) {
     Column {
         SamplingMessage(
-            isSamplingMessageVisible = samplingState !is Unknown,
+            isSamplingMessageVisible = viewModel.samplingState !is Unknown,
             onSamplingMessageDismissed = onSamplingMessageDismissed,
-            samplingState = samplingState,
+            samplingState = viewModel.samplingState,
             isSamplingStartedFromDevice = isSamplingStartedFromDevice
         )
         Column(
@@ -76,20 +65,24 @@ fun RecordSampleLargeScreen(
                     .weight(weight = 1f, fill = false)
         ) {
             RecordSampleContent(
-                samplingState = samplingState,
                 connectedDevices = connectedDevices,
-                category = category,
-                onCategorySelected = onCategorySelected,
-                dataAcquisitionTarget = dataAcquisitionTarget,
-                onDataAcquisitionTargetSelected = onDataAcquisitionTargetSelected,
-                label = label,
-                onLabelChanged = onLabelChanged,
-                selectedSensor = selectedSensor,
-                onSensorSelected = onSensorSelected,
-                sampleLength = sampleLength,
-                onSampleLengthChanged = onSampleLengthChanged,
-                selectedFrequency = selectedFrequency,
-                onFrequencySelected = onFrequencySelected
+                samplingState = viewModel.samplingState,
+                category = viewModel.category,
+                onCategorySelected = { viewModel.onCategoryChanged(it)},
+                dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
+                onDataAcquisitionTargetSelected = {
+                    viewModel.onDataAcquisitionTargetSelected(
+                        device = it
+                    )
+                },
+                label = viewModel.label,
+                onLabelChanged = { viewModel.onLabelChanged(label = it) },
+                selectedSensor = viewModel.sensor,
+                onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
+                sampleLength = viewModel.sampleLength,
+                onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
+                selectedFrequency = viewModel.frequency,
+                onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) },
             )
         }
         buttonContent()
@@ -99,20 +92,8 @@ fun RecordSampleLargeScreen(
 
 @Composable
 fun RecordSampleSmallScreen(
-    samplingState: Message.Sample,
+    viewModel:ProjectViewModel,
     connectedDevices: List<Device>,
-    category: Category,
-    onCategorySelected: (Category) -> Unit,
-    dataAcquisitionTarget: Device?,
-    onDataAcquisitionTargetSelected: (Device) -> Unit,
-    label: String,
-    onLabelChanged: (String) -> Unit,
-    selectedSensor: Sensor?,
-    onSensorSelected: (Sensor) -> Unit,
-    sampleLength: Int,
-    onSampleLengthChanged: (Int) -> Unit,
-    selectedFrequency: Number?,
-    onFrequencySelected: (Number) -> Unit,
     isSamplingStartedFromDevice: Boolean,
     onSamplingMessageDismissed: (Boolean) -> Unit,
     buttonContent: @Composable () -> Unit,
@@ -139,9 +120,9 @@ fun RecordSampleSmallScreen(
     ) {
         Column {
             SamplingMessage(
-                isSamplingMessageVisible = samplingState !is Unknown,
+                isSamplingMessageVisible = viewModel.samplingState !is Unknown,
                 onSamplingMessageDismissed = onSamplingMessageDismissed,
-                samplingState = samplingState,
+                samplingState = viewModel.samplingState,
                 isSamplingStartedFromDevice = isSamplingStartedFromDevice
             )
             Column(
@@ -151,20 +132,24 @@ fun RecordSampleSmallScreen(
                     .verticalScroll(state = rememberScrollState())
             ) {
                 RecordSampleContent(
-                    samplingState = samplingState,
                     connectedDevices = connectedDevices,
-                    category = category,
-                    onCategorySelected = onCategorySelected,
-                    dataAcquisitionTarget = dataAcquisitionTarget,
-                    onDataAcquisitionTargetSelected = onDataAcquisitionTargetSelected,
-                    label = label,
-                    onLabelChanged = onLabelChanged,
-                    selectedSensor = selectedSensor,
-                    onSensorSelected = onSensorSelected,
-                    sampleLength = sampleLength,
-                    onSampleLengthChanged = onSampleLengthChanged,
-                    selectedFrequency = selectedFrequency,
-                    onFrequencySelected = onFrequencySelected
+                    samplingState = viewModel.samplingState,
+                    category = viewModel.category,
+                    onCategorySelected = { viewModel.onCategoryChanged(it)},
+                    dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
+                    onDataAcquisitionTargetSelected = {
+                        viewModel.onDataAcquisitionTargetSelected(
+                            device = it
+                        )
+                    },
+                    label = viewModel.label,
+                    onLabelChanged = { viewModel.onLabelChanged(label = it) },
+                    selectedSensor = viewModel.sensor,
+                    onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
+                    sampleLength = viewModel.sampleLength,
+                    onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
+                    selectedFrequency = viewModel.frequency,
+                    onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) },
                 )
                 buttonContent()
             }
