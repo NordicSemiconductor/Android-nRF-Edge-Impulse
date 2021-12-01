@@ -105,12 +105,58 @@ fun RecordSampleContent(
     var width by rememberSaveable { mutableStateOf(0) }
 
     connectedDevices.takeIf { it.isNotEmpty() }?.apply {
-        Spacer(modifier = Modifier.height(height = 16.dp))
         if (dataAcquisitionTarget == null) {
             onDataAcquisitionTargetSelected(connectedDevices[0])
         }
     }
-    //Spacer(modifier = Modifier.size(size = 16.dp))
+    Spacer(modifier = Modifier.size(size = 16.dp))
+    OutlinedTextField(
+        value = dataAcquisitionTarget?.name ?: stringResource(id = R.string.empty),
+        onValueChange = { },
+        enabled = shouldEnable(connectedDevices = connectedDevices, samplingState = samplingState),
+        modifier = Modifier
+            .fillMaxWidth()
+            .onSizeChanged { width = it.width },
+        readOnly = true,
+        label = {
+            DeviceDisconnected(connectedDevices = connectedDevices)
+        },
+        leadingIcon = {
+            Icon(
+                modifier = Modifier
+                    .size(24.dp),
+                imageVector = Icons.Rounded.DeveloperBoard,
+                contentDescription = null
+            )
+        },
+        trailingIcon = {
+            IconButton(
+                enabled = shouldEnable(connectedDevices = connectedDevices, samplingState = samplingState),
+                onClick = {
+                    isDevicesMenuExpanded = true
+                }
+            ) {
+                Icon(
+                    modifier = Modifier.rotate(if (isDevicesMenuExpanded) 180f else 0f),
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = null
+                )
+                ShowDevicesDropdown(
+                    modifier = Modifier.width(with(LocalDensity.current) { width.toDp() }),
+                    expanded = isDevicesMenuExpanded,
+                    connectedDevices = connectedDevices,
+                    onDeviceSelected = { device ->
+                        onDataAcquisitionTargetSelected(device)
+                        isDevicesMenuExpanded = false
+                    },
+                    onDismiss = {
+                        isDevicesMenuExpanded = false
+                    }
+                )
+            }
+        },
+        singleLine = true
+    )
     OutlinedTextField(
         value = category.type.replaceFirstChar {
             if (it.isLowerCase()) it.titlecase(
@@ -118,10 +164,10 @@ fun RecordSampleContent(
             ) else it.toString()
         },
         onValueChange = { },
-        enabled = (samplingState is Finished || samplingState is Unknown),
+        enabled = shouldEnable(connectedDevices = connectedDevices, samplingState = samplingState),
         modifier = Modifier
             .fillMaxWidth()
-            .onSizeChanged { width = it.width },
+            .padding(top = 16.dp),
         readOnly = true,
         label = {
             Text(text = stringResource(R.string.label_category))
@@ -176,56 +222,9 @@ fun RecordSampleContent(
         singleLine = true
     )
     OutlinedTextField(
-        value = dataAcquisitionTarget?.name ?: stringResource(id = R.string.empty),
-        onValueChange = { },
-        enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp),
-        readOnly = true,
-        label = {
-            DeviceDisconnected(connectedDevices = connectedDevices)
-        },
-        leadingIcon = {
-            Icon(
-                modifier = Modifier
-                    .size(24.dp),
-                imageVector = Icons.Rounded.DeveloperBoard,
-                contentDescription = null
-            )
-        },
-        trailingIcon = {
-            IconButton(
-                enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
-                onClick = {
-                    isDevicesMenuExpanded = true
-                }
-            ) {
-                Icon(
-                    modifier = Modifier.rotate(if (isDevicesMenuExpanded) 180f else 0f),
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = null
-                )
-                ShowDevicesDropdown(
-                    modifier = Modifier.width(with(LocalDensity.current) { width.toDp() }),
-                    expanded = isDevicesMenuExpanded,
-                    connectedDevices = connectedDevices,
-                    onDeviceSelected = { device ->
-                        onDataAcquisitionTargetSelected(device)
-                        isDevicesMenuExpanded = false
-                    },
-                    onDismiss = {
-                        isDevicesMenuExpanded = false
-                    }
-                )
-            }
-        },
-        singleLine = true
-    )
-    OutlinedTextField(
         value = label,
         onValueChange = { onLabelChanged(it) },
-        enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
+        enabled = shouldEnable(connectedDevices = connectedDevices, samplingState = samplingState),
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp),
@@ -248,7 +247,7 @@ fun RecordSampleContent(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp),
-        enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
+        enabled = shouldEnable(connectedDevices = connectedDevices, samplingState = samplingState),
         readOnly = true,
         label = {
             Text(text = stringResource(R.string.label_sensor))
@@ -262,7 +261,7 @@ fun RecordSampleContent(
         },
         trailingIcon = {
             IconButton(
-                enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
+                enabled = shouldEnable(connectedDevices = connectedDevices, samplingState = samplingState),
                 onClick = {
                     isSensorsMenuExpanded = true
                 }
@@ -339,7 +338,7 @@ fun RecordSampleContent(
                             }
                         }
                     },
-                    enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
+                    enabled = shouldEnable(connectedDevices = connectedDevices, samplingState = samplingState),
                     interactionSource = incrementalInteractionSource
                 ) {
                     if (isPlusPressed) {
@@ -364,7 +363,7 @@ fun RecordSampleContent(
                             onSampleLengthChanged(sampleLength - MIN_SAMPLE_LENGTH_S)
                         }
                     },
-                    enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
+                    enabled = shouldEnable(connectedDevices = connectedDevices, samplingState = samplingState),
                     interactionSource = decrementalInteractionSource
                 ) {
                     if (isMinusPressed) {
@@ -398,7 +397,7 @@ fun RecordSampleContent(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp),
-        enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
+        enabled = shouldEnable(connectedDevices = connectedDevices, samplingState = samplingState),
         readOnly = true,
         label = { Text(text = stringResource(R.string.label_frequency)) },
         leadingIcon = {
@@ -410,7 +409,7 @@ fun RecordSampleContent(
         },
         trailingIcon = {
             IconButton(
-                enabled = connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown),
+                enabled = shouldEnable(connectedDevices = connectedDevices, samplingState = samplingState),
                 onClick = {
                     isFrequencyMenuExpanded = true
                 }
@@ -498,6 +497,10 @@ fun ShowDropdown(
         content()
     }
 }
+
+@Composable
+private fun shouldEnable(connectedDevices: List<Device>, samplingState: Message.Sample): Boolean =
+    connectedDevices.isNotEmpty() && (samplingState is Finished || samplingState is Unknown)
 
 private const val MIN_SAMPLE_LENGTH_S = 1
 private const val SAMPLE_LENGTH_DELTA = 100
