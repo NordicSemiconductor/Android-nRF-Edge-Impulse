@@ -1,52 +1,19 @@
 package no.nordicsemi.android.ei.ui
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.AppBarDefaults
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.ContentAlpha
-import androidx.compose.material.Divider
-import androidx.compose.material.Icon
-import androidx.compose.material.LocalContentAlpha
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Scaffold
-import androidx.compose.material.SnackbarHostState
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
-import androidx.compose.material.TextFieldDefaults
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -103,6 +70,7 @@ import no.nordicsemi.android.ei.viewmodels.event.Event
 import java.net.UnknownHostException
 import java.util.*
 
+@OptIn(ExperimentalCoilApi::class)
 @Composable
 fun Dashboard(
     viewModel: DashboardViewModel,
@@ -402,10 +370,11 @@ private fun CreateProjectDialog(
     onCreateProject: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var projectName by rememberSaveable { mutableStateOf("") }
-    var isCreateClicked by rememberSaveable { mutableStateOf(false) }
     val focusRequester = FocusRequester()
     val keyboardController = LocalSoftwareKeyboardController.current
+    var isError by rememberSaveable { mutableStateOf(false) }
+    var projectName by rememberSaveable { mutableStateOf("") }
+    var isCreateClicked by rememberSaveable { mutableStateOf(false) }
     ShowDialog(
         drawableRes = R.drawable.ic_project_diagram,
         title = stringResource(id = R.string.dialog_title_create_project),
@@ -414,61 +383,79 @@ private fun CreateProjectDialog(
             dismissOnBackPress = !isCreateClicked,
             dismissOnClickOutside = !isCreateClicked
         ), content = {
-            Text(
-                modifier = Modifier.padding(top = 8.dp, bottom = 8.dp),
-                text = stringResource(R.string.label_enter_project_name),
-                color = MaterialTheme.colors.onSurface
-            )
-            OutlinedTextField(
-                value = projectName,
-                onValueChange = { projectName = it },
-                modifier = Modifier
-                    .focusRequester(focusRequester = focusRequester)
-                    .focusOrder(focusRequester = focusRequester)
+            Column {
+                Text(
+                    modifier = Modifier.padding(top = 8.dp, bottom = 8.dp),
+                    text = stringResource(R.string.label_enter_project_name),
+                    color = MaterialTheme.colors.onSurface
+                )
+                Column(modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp, bottom = 8.dp, end = 16.dp),
-                label = { Text(stringResource(R.string.field_project_name)) },
-                keyboardOptions = KeyboardOptions(
-                    autoCorrect = false,
-                    imeAction = ImeAction.Next
-                ),
-                keyboardActions = KeyboardActions(onNext = {
-                    focusRequester.freeFocus()
-                    keyboardController?.hide()
-                }),
-                singleLine = true,
-                colors = TextFieldDefaults.outlinedTextFieldColors(textColor = MaterialTheme.colors.onSurface)
-            )
-            Spacer(modifier = Modifier.height(height = 16.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(end = 8.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
-                TextButton(
-                    onClick = { onDismiss() }) {
-                    Text(
-                        text = stringResource(R.string.action_cancel).uppercase(
-                            Locale.US
-                        )
+                    .verticalScroll(state = rememberScrollState())
+                    .weight(weight = 1.0f, fill = false)){
+                    OutlinedTextField(
+                        value = projectName,
+                        onValueChange = {
+                            projectName = it
+                            isError = projectName.isBlank()
+                        },
+                        modifier = Modifier
+                            .focusRequester(focusRequester = focusRequester)
+                            .focusOrder(focusRequester = focusRequester)
+                            .fillMaxWidth()
+                            .padding(top = 8.dp, bottom = 8.dp, end = 16.dp),
+                        label = { Text(stringResource(R.string.field_project_name)) },
+                        isError = isError,
+                        keyboardOptions = KeyboardOptions(
+                            autoCorrect = false,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(onNext = {
+                            focusRequester.freeFocus()
+                            keyboardController?.hide()
+                        }),
+                        singleLine = true,
+                        colors = TextFieldDefaults.outlinedTextFieldColors(textColor = MaterialTheme.colors.onSurface)
                     )
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                TextButton(
-                    modifier = Modifier
-                        .focusRequester(focusRequester = focusRequester)
-                        .focusOrder(focusRequester = focusRequester),
-                    onClick = {
-                        isCreateClicked = !isCreateClicked
-                        onCreateProject(projectName)
+                    if (isError) {
+                        Text(
+                            modifier = Modifier.padding(start = 16.dp),
+                            text = stringResource(R.string.label_empty_project_name_error),
+                            color = MaterialTheme.colors.error,
+                            style = MaterialTheme.typography.caption
+                        )
                     }
+                    Spacer(modifier = Modifier.height(height = 16.dp))
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = 8.dp),
+                    horizontalArrangement = Arrangement.End
                 ) {
-                    Text(
-                        text = stringResource(R.string.action_create).uppercase(
-                            Locale.US
+                    TextButton(
+                        onClick = { onDismiss() }) {
+                        Text(
+                            text = stringResource(R.string.action_cancel)
+                                .uppercase(Locale.US)
                         )
-                    )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    TextButton(
+                        modifier = Modifier
+                            .focusRequester(focusRequester = focusRequester)
+                            .focusOrder(focusRequester = focusRequester),
+                        enabled = projectName.isNotBlank(),
+                        onClick = {
+                            isCreateClicked = !isCreateClicked
+                            onCreateProject(projectName)
+                        }
+                    ) {
+                        Text(
+                            text = stringResource(R.string.action_create)
+                                .uppercase(Locale.US)
+                        )
+                    }
                 }
             }
         })

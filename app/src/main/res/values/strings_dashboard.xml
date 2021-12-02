@@ -20,4 +20,5 @@
     <string name="action_about">About</string>
     <string name="action_ok">OK</string>
     <string name="label_version">Version</string>
+    <string name="label_empty_project_name_error">Project name cannot be empty!</string>
 </resources>
