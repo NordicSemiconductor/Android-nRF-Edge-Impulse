@@ -240,7 +240,8 @@ private fun SmallScreen(
                     }
                 }
             )
-        }
+        },
+        scrimColor = Color.Black.copy(alpha = 0.5f)
     ) {
         ProjectContent(
             viewModel = viewModel,
