@@ -46,7 +46,6 @@ import java.util.*
 fun RecordSampleLargeScreen(
     viewModel:ProjectViewModel,
     connectedDevices: List<Device>,
-    isSamplingStartedFromDevice: Boolean,
     onSamplingMessageDismissed: (Boolean) -> Unit,
     buttonContent: @Composable () -> Unit
 ) {
@@ -55,7 +54,7 @@ fun RecordSampleLargeScreen(
             isSamplingMessageVisible = viewModel.samplingState !is Unknown,
             onSamplingMessageDismissed = onSamplingMessageDismissed,
             samplingState = viewModel.samplingState,
-            isSamplingStartedFromDevice = isSamplingStartedFromDevice
+            isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice
         )
         Column(
             modifier = Modifier
@@ -94,7 +93,6 @@ fun RecordSampleLargeScreen(
 fun RecordSampleSmallScreen(
     viewModel:ProjectViewModel,
     connectedDevices: List<Device>,
-    isSamplingStartedFromDevice: Boolean,
     onSamplingMessageDismissed: (Boolean) -> Unit,
     buttonContent: @Composable () -> Unit,
     onCloseClicked: () -> Unit
@@ -123,7 +121,7 @@ fun RecordSampleSmallScreen(
                 isSamplingMessageVisible = viewModel.samplingState !is Unknown,
                 onSamplingMessageDismissed = onSamplingMessageDismissed,
                 samplingState = viewModel.samplingState,
-                isSamplingStartedFromDevice = isSamplingStartedFromDevice
+                isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice
             )
             Column(
                 modifier = Modifier
