@@ -135,7 +135,6 @@ private fun LargeScreen(
                     RecordSampleLargeScreen(
                         viewModel = viewModel,
                         connectedDevices = connectedDevices,
-                        isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice,
                         onSamplingMessageDismissed = onSamplingMessageDismissed,
                         buttonContent = {
                             Row(
@@ -210,7 +209,6 @@ private fun SmallScreen(
             RecordSampleSmallScreen(
                 viewModel = viewModel,
                 connectedDevices = connectedDevices,
-                isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice,
                 onSamplingMessageDismissed = onSamplingMessageDismissed,
                 buttonContent = {
                     Row(
