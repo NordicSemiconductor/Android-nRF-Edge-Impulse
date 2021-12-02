@@ -146,14 +146,14 @@ private fun LargeScreen(
                                 TextButton(
                                     enabled = viewModel.samplingState is Finished || viewModel.samplingState is Unknown,
                                     onClick = {
-                                        isDialogVisible = !(viewModel.samplingState is Finished || viewModel.samplingState is Unknown)
+                                        isDialogVisible =
+                                            !(viewModel.samplingState is Finished || viewModel.samplingState is Unknown)
                                         viewModel.resetSamplingState()
                                     }
                                 ) {
                                     Text(
-                                        text = stringResource(R.string.action_cancel).uppercase(
-                                            Locale.US
-                                        ),
+                                        text = stringResource(R.string.action_cancel)
+                                            .uppercase(Locale.US),
                                         style = MaterialTheme.typography.button
                                     )
                                 }
@@ -164,9 +164,8 @@ private fun LargeScreen(
                                     onClick = { viewModel.startSampling() }
                                 ) {
                                     Text(
-                                        text = stringResource(R.string.action_start_sampling).uppercase(
-                                            Locale.US
-                                        ),
+                                        text = stringResource(R.string.action_start_sampling)
+                                            .uppercase(Locale.US),
                                         style = MaterialTheme.typography.button
                                     )
                                 }
@@ -739,15 +738,18 @@ fun SamplingMessage(
                     color = Color.White
                 )
                 when (samplingState) {
-                    /*is Error,*/ is Finished -> {
-                    IconButton(onClick = { onSamplingMessageDismissed(false) }) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = null,
-                            tint = Color.White
+                    is Finished -> {
+                        IconButton(
+                            onClick = { onSamplingMessageDismissed(false) },
+                            content = {
+                                Icon(
+                                    imageVector = Icons.Rounded.Close,
+                                    contentDescription = null,
+                                    tint = Color.White
+                                )
+                            }
                         )
                     }
-                }
                     else -> {
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),
@@ -757,6 +759,5 @@ fun SamplingMessage(
                 }
             }
         }
-
     }
 }
