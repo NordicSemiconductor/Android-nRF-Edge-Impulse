@@ -4,9 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -37,19 +39,62 @@ import no.nordicsemi.android.ei.model.Message.Sample.Finished
 import no.nordicsemi.android.ei.model.Message.Sample.Unknown
 import no.nordicsemi.android.ei.model.Sensor
 import no.nordicsemi.android.ei.ui.layouts.DeviceDisconnected
+import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import java.util.*
-
 
 @Composable
 fun RecordSampleLargeScreen(
-    content: @Composable () -> Unit
+    viewModel:ProjectViewModel,
+    connectedDevices: List<Device>,
+    onSamplingMessageDismissed: (Boolean) -> Unit,
+    buttonContent: @Composable () -> Unit
 ) {
-    content()
+    Column {
+        SamplingMessage(
+            isSamplingMessageVisible = viewModel.samplingState !is Unknown,
+            onSamplingMessageDismissed = onSamplingMessageDismissed,
+            samplingState = viewModel.samplingState,
+            isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice
+        )
+        Column(
+            modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .verticalScroll(state = rememberScrollState())
+                    .weight(weight = 1f, fill = false)
+        ) {
+            RecordSampleContent(
+                connectedDevices = connectedDevices,
+                samplingState = viewModel.samplingState,
+                category = viewModel.category,
+                onCategorySelected = { viewModel.onCategoryChanged(it)},
+                dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
+                onDataAcquisitionTargetSelected = {
+                    viewModel.onDataAcquisitionTargetSelected(
+                        device = it
+                    )
+                },
+                label = viewModel.label,
+                onLabelChanged = { viewModel.onLabelChanged(label = it) },
+                selectedSensor = viewModel.sensor,
+                onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
+                sampleLength = viewModel.sampleLength,
+                onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
+                selectedFrequency = viewModel.frequency,
+                onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) },
+            )
+        }
+        buttonContent()
+    }
 }
+
 
 @Composable
 fun RecordSampleSmallScreen(
-    content: @Composable () -> Unit,
+    viewModel:ProjectViewModel,
+    connectedDevices: List<Device>,
+    onSamplingMessageDismissed: (Boolean) -> Unit,
+    buttonContent: @Composable () -> Unit,
     onCloseClicked: () -> Unit
 ) {
     val scaffoldState = rememberScaffoldState(snackbarHostState = SnackbarHostState())
@@ -72,14 +117,47 @@ fun RecordSampleSmallScreen(
         }
     ) {
         Column {
-            content()
+            SamplingMessage(
+                isSamplingMessageVisible = viewModel.samplingState !is Unknown,
+                onSamplingMessageDismissed = onSamplingMessageDismissed,
+                samplingState = viewModel.samplingState,
+                isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice
+            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .verticalScroll(state = rememberScrollState())
+            ) {
+                RecordSampleContent(
+                    connectedDevices = connectedDevices,
+                    samplingState = viewModel.samplingState,
+                    category = viewModel.category,
+                    onCategorySelected = { viewModel.onCategoryChanged(it)},
+                    dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
+                    onDataAcquisitionTargetSelected = {
+                        viewModel.onDataAcquisitionTargetSelected(
+                            device = it
+                        )
+                    },
+                    label = viewModel.label,
+                    onLabelChanged = { viewModel.onLabelChanged(label = it) },
+                    selectedSensor = viewModel.sensor,
+                    onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
+                    sampleLength = viewModel.sampleLength,
+                    onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
+                    selectedFrequency = viewModel.frequency,
+                    onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) },
+                )
+                buttonContent()
+            }
         }
     }
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun RecordSampleContent(
+private fun RecordSampleContent(
     samplingState: Message.Sample,
     connectedDevices: List<Device>,
     category: Category,
@@ -95,6 +173,9 @@ fun RecordSampleContent(
     selectedFrequency: Number?,
     onFrequencySelected: (Number) -> Unit
 ) {
+    var isLabelError by rememberSaveable {
+        mutableStateOf(false)
+    }
     connectedDevices.takeIf { it.isNotEmpty() }?.apply {
         if (dataAcquisitionTarget == null) {
             onDataAcquisitionTargetSelected(connectedDevices[0])
@@ -113,11 +194,15 @@ fun RecordSampleContent(
         samplingState = samplingState,
         onCategorySelected = onCategorySelected
     )
-    Label(
+    LabelInput(
         connectedDevices = connectedDevices,
         samplingState = samplingState,
         label = label,
-        onLabelChanged = onLabelChanged
+        onLabelChanged = {
+            isLabelError = it.isEmpty()
+            onLabelChanged(it)
+        },
+        isLabelError = isLabelError
     )
     SensorSelection(
         connectedDevices = connectedDevices,
@@ -290,11 +375,12 @@ private fun CategorySelection(
 }
 
 @Composable
-private fun Label(
+private fun LabelInput(
     connectedDevices: List<Device>,
     samplingState: Message.Sample,
     label: String,
-    onLabelChanged: (String) -> Unit
+    onLabelChanged: (String) -> Unit,
+    isLabelError: Boolean = false
 ) {
     OutlinedTextField(
         value = label,
@@ -316,9 +402,17 @@ private fun Label(
                 contentDescription = null
             )
         },
-        isError = label.isEmpty(),
+        isError = isLabelError,
         singleLine = true
     )
+    if (isLabelError) {
+        Text(
+            modifier = Modifier.padding(start = 16.dp),
+            text = stringResource(R.string.label_empty_label_error),
+            color = MaterialTheme.colors.error,
+            style = MaterialTheme.typography.caption
+        )
+    }
 }
 
 @Composable
@@ -405,7 +499,7 @@ private fun SensorSelection(
 private fun SampleLengthInput(
     connectedDevices: List<Device>,
     samplingState: Message.Sample,
-    selectedSensor:Sensor?,
+    selectedSensor: Sensor?,
     sampleLength: Int,
     onSampleLengthChanged: (Int) -> Unit
 ) {
@@ -517,7 +611,7 @@ private fun SampleLengthInput(
 private fun FrequencySelection(
     connectedDevices: List<Device>,
     samplingState: Message.Sample,
-    selectedSensor:Sensor?,
+    selectedSensor: Sensor?,
     selectedFrequency: Number?,
     onFrequencySelected: (Number) -> Unit
 ) {
