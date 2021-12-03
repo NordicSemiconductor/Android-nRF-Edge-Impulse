@@ -8,7 +8,7 @@
     <string name="action_login">Login</string>
     <string name="action_signup">Sign Up</string>
 
-    <string name="label_no_account">Don\'t have an account yet?</string>
+    <string name="label_no_account">Don\'t have an account?</string>
     <string name="label_login_error">Failed to log in: %s</string>
 
     <string name="label_logging_in">Logging in…</string>
