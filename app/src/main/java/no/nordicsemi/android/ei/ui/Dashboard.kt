@@ -12,7 +12,6 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -30,6 +29,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusOrder
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -250,10 +250,20 @@ fun Dashboard(
     ) {
         Image(
             painter = rememberImagePainter(
-                data = user.photo ?: Image(
+                data = user.photo?.let { photo ->
+                    when {
+                        photo.isNotBlank() -> photo
+                        else -> Image(
+                            Icons.Filled.AccountCircle,
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
+                            alpha = 0.6f
+                        )
+                    }
+                } ?: Image(
                     Icons.Filled.AccountCircle,
                     contentDescription = null,
-                    alpha = 0.1f
+                    alpha = 0.6f
                 ),
                 builder = {
                     crossfade(true)
@@ -327,10 +337,12 @@ private fun Collaborator(collaborators: List<Collaborator>) {
                                 collaborator.photo
                             } else {
                                 Image(
-                                    imageVector = Icons.Outlined.AccountCircle,
+                                    imageVector = Icons.Filled.AccountCircle,
                                     modifier = Modifier.requiredSize(imageSize + 8.dp),
                                     contentDescription = null,
-                                    contentScale = ContentScale.FillBounds
+                                    contentScale = ContentScale.FillBounds,
+                                    colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
+                                    alpha = 0.6f
                                 )
                             },
                             builder = {
@@ -389,10 +401,12 @@ private fun CreateProjectDialog(
                     text = stringResource(R.string.label_enter_project_name),
                     color = MaterialTheme.colors.onSurface
                 )
-                Column(modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(state = rememberScrollState())
-                    .weight(weight = 1.0f, fill = false)){
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(state = rememberScrollState())
+                        .weight(weight = 1.0f, fill = false)
+                ) {
                     OutlinedTextField(
                         value = projectName,
                         onValueChange = {
