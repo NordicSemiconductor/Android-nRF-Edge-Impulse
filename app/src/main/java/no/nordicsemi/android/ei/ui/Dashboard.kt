@@ -50,7 +50,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.lifecycleScope
 import coil.annotation.ExperimentalCoilApi
-import coil.compose.rememberImagePainter
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import coil.transform.CircleCropTransformation
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
@@ -249,27 +250,27 @@ fun Dashboard(
         shape = CircleShape,
     ) {
         Image(
-            painter = rememberImagePainter(
-                data = user.photo?.let { photo ->
+            painter = rememberAsyncImagePainter(
+                ImageRequest.Builder(LocalContext.current).data(data = user.photo?.let { photo ->
                     when {
                         photo.isNotBlank() -> photo
                         else -> Image(
-                            Icons.Filled.AccountCircle,
+                            modifier = Modifier.border(border = BorderStroke(10.dp, color = MaterialTheme.colors.surface.copy(0.6f))),
+                            imageVector = Icons.Filled.AccountCircle,
                             contentDescription = null,
-                            colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
-                            alpha = 0.6f
+                            colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface.copy(0.6f))
                         )
                     }
                 } ?: Image(
-                    Icons.Filled.AccountCircle,
+                    modifier = Modifier.border(border = BorderStroke(3.dp, color = MaterialTheme.colors.surface.copy(0.6f))),
+                    imageVector = Icons.Filled.AccountCircle,
                     contentDescription = null,
-                    alpha = 0.6f
-                ),
-                builder = {
+                    colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface.copy(0.6f))
+                )).apply(block = fun ImageRequest.Builder.() {
                     crossfade(true)
-                    placeholder(R.drawable.ic_outline_account_circle_24)
+                    placeholder(R.drawable.ic_baseline_account_circle_24)
                     transformations(CircleCropTransformation())
-                }
+                }).build()
             ),
             contentDescription = stringResource(R.string.content_description_user_image),
             alignment = Alignment.Center,
@@ -332,24 +333,26 @@ private fun Collaborator(collaborators: List<Collaborator>) {
                 // lets limit the images to max collaborators
                 if (index in 0 until maxImages) {
                     Image(
-                        painter = rememberImagePainter(
-                            data = if (collaborator.photo.isNotBlank()) {
-                                collaborator.photo
-                            } else {
-                                Image(
-                                    imageVector = Icons.Filled.AccountCircle,
-                                    modifier = Modifier.requiredSize(imageSize + 8.dp),
-                                    contentDescription = null,
-                                    contentScale = ContentScale.FillBounds,
-                                    colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
-                                    alpha = 0.6f
-                                )
-                            },
-                            builder = {
+                        painter = rememberAsyncImagePainter(ImageRequest.Builder(LocalContext.current)
+                            .data(
+                                data = if (collaborator.photo.isNotBlank()) {
+                                    collaborator.photo
+                                } else {
+                                    Image(
+                                        imageVector = Icons.Filled.AccountCircle,
+                                        modifier = Modifier.requiredSize(imageSize + 8.dp),
+                                        contentDescription = null,
+                                        contentScale = ContentScale.FillBounds,
+                                        colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
+                                        alpha = 0.6f
+                                    )
+                                }
+                            ).apply(block = fun ImageRequest.Builder.() {
                                 crossfade(true)
                                 placeholder(R.drawable.ic_outline_account_circle_24)
                                 transformations(CircleCropTransformation())
-                            }),
+                            }).build()
+                        ),
                         contentDescription = null,
                         modifier = Modifier.requiredSize(imageSize),
                     )
