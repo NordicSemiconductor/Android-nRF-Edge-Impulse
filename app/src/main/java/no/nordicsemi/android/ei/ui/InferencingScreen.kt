@@ -387,20 +387,13 @@ private fun calculateWith(
     isLargeScreen: Boolean,
     isLandscape: Boolean,
 ): Dp = if (isLandscape) {
-    if (cellCount <= 5) {
-        (screenWidth / cellCount).dp
-    } else {
-        MAX_CELL_WIDTH
-    }
+    if (cellCount <= 5) (screenWidth / cellCount).dp
+    else MAX_CELL_WIDTH
 } else {
-    if (cellCount < 5) {
-        (screenWidth / cellCount).dp
-    } else {
-        if (isLargeScreen) {
-            MAX_CELL_WIDTH
-        } else {
-            MIN_CELL_WIDTH
-        }
+    if (cellCount < 5) (screenWidth / cellCount).dp
+    else {
+        if (isLargeScreen) MAX_CELL_WIDTH
+        else MIN_CELL_WIDTH
     }
 }
 
