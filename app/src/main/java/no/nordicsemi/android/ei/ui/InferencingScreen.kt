@@ -355,20 +355,22 @@ private fun InferencingResult(inferenceResults: InferenceResults, cellWidth: Dp)
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = classification.value.color()//inferenceResults.classification.all { it.value < 0.6 }.takeIf { it }?.let { Color.Red } ?: run {classification.value.color()}
+                color = classification.value.color()
             )
         }
-        Text(
-            text = inferenceResults.anomaly.round().toString(),
-            modifier = Modifier
-                .width(cellWidth)
-                .padding(16.dp),
-            fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            color = inferenceResults.anomaly.color()
-        )
+        inferenceResults.anomaly?.let { anomaly ->
+            Text(
+                text = anomaly.round().toString(),
+                modifier = Modifier
+                    .width(cellWidth)
+                    .padding(16.dp),
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = anomaly.color()
+            )
+        }
     }
 }
 
@@ -385,29 +387,20 @@ private fun calculateWith(
     isLargeScreen: Boolean,
     isLandscape: Boolean,
 ): Dp = if (isLandscape) {
-    if (isLargeScreen) {
-        if (cellCount == 5) {
-            (screenWidth / cellCount).dp
-        } else {
-            MAX_CELL_WIDTH
-        }
+    if (cellCount <= 5) {
+        (screenWidth / cellCount).dp
     } else {
-        if (cellCount <= 5) {
-            (screenWidth / cellCount).dp
-        } else {
-            MAX_CELL_WIDTH
-        }
+        MAX_CELL_WIDTH
     }
 } else {
-    // MIN_CELL_WIDTH
-    if (isLargeScreen) {
-        if (cellCount <= 5) {
-            (screenWidth / cellCount).dp
-        } else {
-            MAX_CELL_WIDTH
-        }
+    if (cellCount <= 5) {
+        (screenWidth / cellCount).dp
     } else {
-        MIN_CELL_WIDTH
+        if (isLargeScreen) {
+            MAX_CELL_WIDTH
+        } else {
+            MIN_CELL_WIDTH
+        }
     }
 }
 
