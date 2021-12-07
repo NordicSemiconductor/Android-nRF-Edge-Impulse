@@ -393,7 +393,7 @@ private fun calculateWith(
         MAX_CELL_WIDTH
     }
 } else {
-    if (cellCount <= 5) {
+    if (cellCount < 5) {
         (screenWidth / cellCount).dp
     } else {
         if (isLargeScreen) {
