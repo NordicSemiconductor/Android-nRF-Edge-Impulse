@@ -5,27 +5,26 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import no.nordicsemi.android.ei.ui.Dashboard
-import no.nordicsemi.android.ei.ui.Project
-import no.nordicsemi.android.ei.ui.SplashScreen
+import no.nordicsemi.android.ei.ui.*
 
 @Composable
 fun Navigation(
-    onError: () -> Unit = {},
+    onCancelled: () -> Unit = {},
 ) {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = Route.splashscreen) {
-        composable(Route.splashscreen) {
-            SplashScreen(
+    NavHost(navController = navController, startDestination = Route.login) {
+        composable(Route.login) {
+            Login(
                 viewModel = hiltViewModel(),
                 onLoggedIn = {
                     navController.navigate(Route.dashboard) {
-                        popUpTo(Route.splashscreen) {
+                        popUpTo(Route.login) {
                             inclusive = true
                         }
                     }
                 },
-                onError = onError,
+                onCancelled = onCancelled,
+                onError = { onCancelled() },
             )
         }
 
@@ -36,7 +35,7 @@ fun Navigation(
                     navController.navigate(Route.project)
                 },
                 onLogout = {
-                    navController.navigate(Route.splashscreen) {
+                    navController.navigate(Route.login) {
                         popUpTo(Route.dashboard) {
                             inclusive = true
                         }
@@ -44,6 +43,7 @@ fun Navigation(
                 }
             )
         }
+
         composable(Route.project) {
             Project(
                 viewModel = hiltViewModel(),

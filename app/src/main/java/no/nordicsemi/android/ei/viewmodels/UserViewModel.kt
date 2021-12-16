@@ -7,10 +7,10 @@ import no.nordicsemi.android.ei.repository.LoginRepository
 import javax.inject.Inject
 
 @HiltViewModel
-class SplashscreenViewModel @Inject constructor(
+class UserViewModel @Inject constructor(
     private val userManager: UserManager,
     private val loginRepository: LoginRepository
-) : ViewModel() {
+): ViewModel() {
 
     suspend fun getUserData(token: String) =
         loginRepository
