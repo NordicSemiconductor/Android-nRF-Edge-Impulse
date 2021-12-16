@@ -26,57 +26,6 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
 @Composable
-fun LoadingProgressIndicator(
-    modifier: Modifier = Modifier,
-    message: String = "",
-) {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier.fillMaxSize(),
-    ) {
-        CircularProgressIndicator(
-            modifier = Modifier.size(180.dp),
-            color = if (MaterialTheme.colors.isLight) MaterialTheme.colors.primary else MaterialTheme.colors.primaryVariant,
-            strokeWidth = 12.dp
-        )
-        Text(
-            text = message,
-            modifier = Modifier.offset(y = 120.dp),
-            color = MaterialTheme.colors.onSurface
-        )
-    }
-}
-
-@Composable
-fun LoadingFailed(
-    message: String,
-    modifier: Modifier = Modifier,
-    onTryAgain: () -> Unit = {},
-) {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier.fillMaxSize(),
-    ) {
-        Icon(Icons.Rounded.Warning,
-            modifier = Modifier.size(180.dp),
-            contentDescription = "",
-            tint = NordicSun
-        )
-        Text(
-            text = message,
-            modifier = Modifier.offset(y = 90.dp),
-            color = MaterialTheme.colors.onSurface
-        )
-        Button(
-            onClick = onTryAgain,
-            modifier = Modifier.offset(y = 140.dp)
-        ) {
-            Text(text = stringResource(id = R.string.action_try_again))
-        }
-    }
-}
-
-@Composable
 fun Login(
     viewModel: UserViewModel = viewModel(),
     onLoggedIn: () -> Unit = {},
@@ -93,8 +42,7 @@ fun Login(
                 message = stringResource(id = state.messageResId),
                 onTryAgain = { retry += 1 }
             )
-        is LoadingState.LoggingIn ->
-            LoadingProgressIndicator(message = stringResource(id = state.messageResId))
+        is LoadingState.LoggingIn,
         is LoadingState.ObtainingUserData ->
             LoadingProgressIndicator(message = stringResource(id = state.messageResId))
 
@@ -138,15 +86,69 @@ fun Login(
     }
 }
 
+@Composable
+fun LoadingProgressIndicator(
+    modifier: Modifier = Modifier,
+    message: String = "",
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier.fillMaxSize(),
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(180.dp),
+            color = if (MaterialTheme.colors.isLight) MaterialTheme.colors.primary else MaterialTheme.colors.primaryVariant,
+            strokeWidth = 12.dp
+        )
+        Text(
+            text = message,
+            modifier = Modifier.offset(y = 120.dp),
+            color = MaterialTheme.colors.onSurface
+        )
+    }
+}
+
+@Composable
+private fun LoadingFailed(
+    message: String,
+    modifier: Modifier = Modifier,
+    onTryAgain: () -> Unit = {},
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier.fillMaxSize(),
+    ) {
+        Icon(
+            Icons.Rounded.Warning,
+            modifier = Modifier.size(180.dp),
+            contentDescription = "",
+            tint = NordicSun
+        )
+        Text(
+            text = message,
+            modifier = Modifier.offset(y = 90.dp),
+            color = MaterialTheme.colors.onSurface
+        )
+        Button(
+            onClick = onTryAgain,
+            modifier = Modifier.offset(y = 140.dp)
+        ) {
+            Text(text = stringResource(id = R.string.action_try_again))
+        }
+    }
+}
+
 sealed class LoadingState(@StringRes open val messageResId: Int) {
-    object LoggingIn: LoadingState(R.string.label_logging_in)
-    object ObtainingUserData: LoadingState(R.string.label_obtaining_user_data)
-    data class Error(@StringRes override val messageResId: Int): LoadingState(messageResId) {
-        constructor(throwable: Throwable) : this(when (throwable) {
-            is UnknownHostException -> R.string.error_no_internet
-            is SocketTimeoutException -> R.string.error_timeout
-            else -> R.string.error_obtaining_user_data_failed
-        })
+    object LoggingIn : LoadingState(R.string.label_logging_in)
+    object ObtainingUserData : LoadingState(R.string.label_obtaining_user_data)
+    data class Error(@StringRes override val messageResId: Int) : LoadingState(messageResId) {
+        constructor(throwable: Throwable) : this(
+            when (throwable) {
+                is UnknownHostException -> R.string.error_no_internet
+                is SocketTimeoutException -> R.string.error_timeout
+                else -> R.string.error_obtaining_user_data_failed
+            }
+        )
     }
 
     companion object {
