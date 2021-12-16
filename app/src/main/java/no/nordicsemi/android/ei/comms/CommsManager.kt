@@ -2,7 +2,6 @@ package no.nordicsemi.android.ei.comms
 
 import android.content.Context
 import android.util.Base64
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -141,7 +140,6 @@ class CommsManager(
                 is WebSocketState.Open -> {
                     // Initialize notifications. This will enable notifications and cause a
                     // Hello message to be sent from the device.
-                    Log.d("AAAA", "Web Socket opened, enabling notifications")
                     bleDevice.initialize()
                 }
                 else -> {
@@ -154,7 +152,6 @@ class CommsManager(
         dataAcquisitionWebSocket.messageAsFlow().transform { json ->
             emit(gson.fromJson(json, Message::class.java))
         }.collect { message ->
-            Log.d("AAAA", "Received message from WebSocket: $message")
             when (message) {
                 is HelloResponse -> {
                     // if the Hello message returned with a success wrap the received response and send it to the device
@@ -361,7 +358,6 @@ class CommsManager(
         val headers = headersJson.keySet().toList().onEach {
             headersBuilder.add(name = it, value = headersJson[it].asString)
         }.let { headersBuilder.build() }
-        Log.d("AAAA", "Data Sample $dataSample")
         val request: okhttp3.Request = okhttp3.Request.Builder()
             .headers(headers = headers)
             .url(dataSample.address)

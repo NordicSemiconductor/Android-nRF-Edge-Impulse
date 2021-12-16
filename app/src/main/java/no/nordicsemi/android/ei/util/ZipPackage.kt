@@ -1,6 +1,5 @@
 package no.nordicsemi.android.ei.util
 
-import android.util.Log
 import androidx.annotation.Keep
 import androidx.annotation.NonNull
 import com.google.gson.FieldNamingPolicy
@@ -61,9 +60,7 @@ class ZipPackage(@NonNull data: ByteArray) {
                     val content = zis.readBytes()//getData(zis)
                     entries[name] = content
                 }
-                else -> {
-                    Log.d("AAAA","Unsupported file found: $name")
-                }
+                else -> {}
             }
         }
 

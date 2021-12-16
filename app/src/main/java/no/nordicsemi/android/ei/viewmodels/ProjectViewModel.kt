@@ -3,7 +3,6 @@ package no.nordicsemi.android.ei.viewmodels
 import android.app.Application
 import android.bluetooth.BluetoothManager
 import android.content.Context
-import android.util.Log
 import android.util.Pair
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateMap
@@ -407,7 +406,6 @@ class ProjectViewModel @Inject constructor(
 
     /**
      * Starts sampling via the EI backend
-     * @param category sampling category.
      */
     fun startSampling() {
         viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
@@ -570,9 +568,7 @@ class ProjectViewModel @Inject constructor(
                 } catch (e: Exception) {
                     try {
                         images = ZipPackage(data).binaries
-                    } catch (e1: Exception) {
-                        Log.d("AAAA", "Exception? $e1")
-                    }
+                    } catch (e1: Exception) { }
                 }
                 (transport as McuMgrBleTransport).apply {
                     setLoggingEnabled(true)
@@ -775,7 +771,6 @@ class ProjectViewModel @Inject constructor(
  */
 private fun FirmwareUpgradeManager.State.toDeploymentState() = when (this) {
     NONE -> {
-        Log.d("AAAA", "NONE")
         NotStarted
     }
     VALIDATE -> Verifying

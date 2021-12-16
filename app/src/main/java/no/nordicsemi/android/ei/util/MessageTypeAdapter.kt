@@ -1,6 +1,5 @@
 package no.nordicsemi.android.ei.util
 
-import android.util.Log
 import com.google.gson.*
 import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.Message.*
@@ -43,7 +42,6 @@ class MessageTypeAdapter : JsonSerializer<Message>, JsonDeserializer<Message> {
         typeOfT: Type?,
         context: JsonDeserializationContext?
     ): Message {
-        Log.d("AAAA", "MessageTypeAdapter deserializing: $json")
         json?.asJsonObject?.let { root ->
             // Check if the element exists before checking if it's a primitive
             when {

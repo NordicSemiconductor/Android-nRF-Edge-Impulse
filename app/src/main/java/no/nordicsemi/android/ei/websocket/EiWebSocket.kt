@@ -1,6 +1,5 @@
 package no.nordicsemi.android.ei.websocket
 
-import android.util.Log
 import com.google.gson.JsonElement
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -34,28 +33,23 @@ class EiWebSocket @Inject constructor(
     private val webSocketListener = object : WebSocketListener() {
 
         override fun onOpen(webSocket: WebSocket, response: Response) {
-            //Log.i("AAAA", "onOpen webSocket")
             _webSocketState.tryEmit(Open(response = response))
         }
 
         override fun onMessage(webSocket: WebSocket, text: String) {
-            //Log.i("AAAA", "onMessage webSocket: $text")
             _message.tryEmit(text)
         }
 
         override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
             stopPinging()
-            //Log.i("AAAA", "onClosing webSocket: $reason ($code)")
             _webSocketState.tryEmit(Closing(code = code, reason = reason))
         }
 
         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-            //Log.i("AAAA", "onClosed webSocket: $reason ($code)")
             _webSocketState.tryEmit(Closed(code = code, reason = reason))
         }
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-            //Log.i("AAAA", "onFailure webSocket", t)
             _webSocketState.tryEmit(Failed(throwable = t, response = response))
         }
     }
@@ -74,7 +68,6 @@ class EiWebSocket @Inject constructor(
      * Connects to EI websocket.
      */
     fun connect() {
-        Log.i("AAAA", "Connecting to webSocket")
         webSocket = client.newWebSocket(request = request, listener = webSocketListener)
     }
 
@@ -83,7 +76,6 @@ class EiWebSocket @Inject constructor(
      * @param json Json message
      */
     fun send(json: JsonElement) {
-        Log.i("AAAA", "Sending to webSocket?")
         webSocket?.send(text = json.toString())
     }
 
@@ -92,7 +84,6 @@ class EiWebSocket @Inject constructor(
      */
     //TODO verify reasoning
     fun disconnect() {
-        Log.i("AAAA", "Disconnecting from webSocket")
         webSocket?.close(WebSocketStatus.NORMAL_CLOSURE.code, "Finished")
     }
 
