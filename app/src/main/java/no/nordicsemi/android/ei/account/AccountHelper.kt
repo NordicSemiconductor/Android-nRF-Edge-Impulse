@@ -12,11 +12,11 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 object AccountHelper {
-    private const val authTokenType = "limited"
 
     suspend fun getOrCreateAccount(activity: Activity): Result<Account> {
         val accountManager = AccountManager.get(activity)
         val accountType = activity.getString(R.string.account_type)
+        val accountTokenType = activity.getString(R.string.account_token_type)
 
         try {
             return suspendCancellableCoroutine { continuation ->
@@ -25,7 +25,7 @@ object AccountHelper {
                     continuation.resume(Result.success(accounts.first()))
                 } else {
                     accountManager.addAccount(
-                        accountType, authTokenType,
+                        accountType, accountTokenType,
                         null, null,
                         activity, { future ->
                             try {
@@ -50,10 +50,12 @@ object AccountHelper {
 
     suspend fun getAuthToken(account: Account, activity: Activity): Result<String> {
         val accountManager = AccountManager.get(activity)
+        val accountTokenType = activity.getString(R.string.account_token_type)
+
         try {
             return suspendCancellableCoroutine { continuation ->
                 accountManager.getAuthToken(
-                    account, authTokenType,
+                    account, accountTokenType,
                     null,
                     activity, { future ->
                         try {

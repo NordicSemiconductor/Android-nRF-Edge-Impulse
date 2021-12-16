@@ -34,7 +34,7 @@ class LoginActivity : AccountAuthenticatorActivity() {
 
         val accountType = intent.getStringExtra(KEY_ACCOUNT_TYPE) ?: getString(R.string.account_type)
         val accountName = intent.getStringExtra(KEY_ACCOUNT_NAME)
-        val authTokenType = intent.getStringExtra(KEY_AUTH_TOKEN_TYPE) ?: "limited_access"
+        val authTokenType = intent.getStringExtra(KEY_AUTH_TOKEN_TYPE) ?: getString(R.string.account_token_type)
 
         setContent {
             NordicTheme {

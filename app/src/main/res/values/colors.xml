@@ -24,17 +24,13 @@
 <resources>
 
 	<!-- Base theme colors -->
-
+	<color name="colorBackground">#F5F5F5</color>
     <color name="colorOnBackground">@color/black</color>
 
 	<!--
 		Nordic logo on splash screen.
-		When using light/dark top background, consider changing status bar to light/dark
-		in styles-v23.
 	-->
 	<color name="colorNordicLogo">@color/nordicBlue</color>
 	<color name="colorNordicLogoText">@color/black</color>
-	<color name="colorNordicLogoBottom">@color/white</color>
-	<color name="colorNordicLogoTop">@color/nordicLightGray</color>
 
 </resources>
