@@ -71,6 +71,10 @@ class BleDevice(
         }
     }
 
+    override fun getMinLogPriority(): Int {
+        return Log.WARN
+    }
+
     // TODO should the API be suspendable, or just calling .enqueue()?
     fun connect() {
         connect(device)

@@ -20,10 +20,12 @@ import io.runtime.mcumgr.dfu.FirmwareUpgradeManager
 import io.runtime.mcumgr.dfu.FirmwareUpgradeManager.State.*
 import io.runtime.mcumgr.exception.McuMgrException
 import io.runtime.mcumgr.image.McuMgrImage
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 import no.nordicsemi.android.ble.ConnectionPriorityRequest
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.comms.BuildManager
@@ -561,6 +563,8 @@ class ProjectViewModel @Inject constructor(
             val context = getApplication() as Context
             val transport: McuMgrTransport = McuMgrBleTransport(context, bluetoothDevice)
             dfuManager = FirmwareUpgradeManager(transport, this).apply {
+                setWindowUploadCapacity(3)
+                setMemoryAlignment(4)
                 var images = arrayListOf<Pair<Int, ByteArray>>()
                 try {
                     McuMgrImage.getHash(data)
