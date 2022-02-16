@@ -46,7 +46,7 @@ class MainActivity : ComponentActivity() {
             coldStart = false
 
             val then = System.currentTimeMillis()
-            splashScreen.setKeepVisibleCondition {
+            splashScreen.setKeepOnScreenCondition {
                 val now = System.currentTimeMillis()
                 splashScreenVisible = now < then + 900
                 splashScreenVisible
