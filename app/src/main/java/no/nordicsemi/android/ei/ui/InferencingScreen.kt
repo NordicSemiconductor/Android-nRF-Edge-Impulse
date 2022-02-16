@@ -358,18 +358,31 @@ private fun InferencingResult(inferenceResults: InferenceResults, cellWidth: Dp)
                 color = classification.value.color()
             )
         }
-        inferenceResults.anomaly?.let { anomaly ->
-            Text(
-                text = anomaly.round().toString(),
-                modifier = Modifier
-                    .width(cellWidth)
-                    .padding(16.dp),
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                color = anomaly.color()
-            )
+
+        inferenceResults.anomaly.let { anomaly ->
+            when(anomaly){
+                null -> Text(
+                    text = "N/A",
+                    modifier = Modifier
+                        .width(cellWidth)
+                        .padding(16.dp),
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                else -> Text(
+                    text = anomaly.round().toString(),
+                    modifier = Modifier
+                        .width(cellWidth)
+                        .padding(16.dp),
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = anomaly.color()
+                )
+            }
         }
     }
 }
