@@ -2,7 +2,7 @@
 buildscript {
     ext {
         // https://developer.android.com/jetpack/androidx/releases/compose
-        compose_version = '1.1.0-beta03'
+        compose_version = '1.2.0-alpha03'
         // https://developer.android.com/jetpack/compose/setup#configure_kotlin
         kotlin_version = '1.5.31'
         // https://github.com/google/dagger/releases
@@ -14,7 +14,7 @@ buildscript {
         // https://github.com/google/accompanist/releases
         accompanist_version = '0.20.0'
         // https://developer.android.com/jetpack/androidx/releases/lifecycle#kotlin
-        lifecycle_version = '2.4.0'
+        lifecycle_version = '2.4.1'
     }
     repositories {
         google()
