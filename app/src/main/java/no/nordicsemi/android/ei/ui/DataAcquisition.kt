@@ -11,6 +11,8 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
@@ -44,7 +46,7 @@ fun DataAcquisition(
     pagerState: PagerState,
     listStates: List<LazyListState>,
     samples: List<Flow<PagingData<Sample>>>,
-    samplingState: Message.Sample,
+    samplingState: Message.Sample
 ) {
     HorizontalPager(
         count = PAGE_COUNT,
@@ -53,9 +55,9 @@ fun DataAcquisition(
     ) { page ->
         CollectedDataList(
             state = listStates[page],
+            samplingState = samplingState,
             pagingDataFlow = samples[page],
-            tab = HorizontalPagerTab.indexed(page),
-            samplingState = samplingState
+            tab = HorizontalPagerTab.indexed(page)
         )
     }
 }
@@ -67,15 +69,17 @@ private fun CollectedDataList(
     state: LazyListState,
     samplingState: Message.Sample,
     pagingDataFlow: Flow<PagingData<Sample>>,
-    tab: HorizontalPagerTab,
+    tab: HorizontalPagerTab
 ) {
     val samples: LazyPagingItems<Sample> = pagingDataFlow.collectAsLazyPagingItems()
     // Refresh the samples when after a successful sampling
-    samplingState.takeIf {
-        it is Message.Sample.Finished && it.sampleFinished && it.error != null
-    }?.let {
+    val shouldRefresh by derivedStateOf {
+        samplingState is Message.Sample.Finished && samplingState.sampleFinished && samplingState.error != null
+    }
+    if(shouldRefresh){
         samples.refresh()
     }
+
     samples.let { lazyPagingItems ->
         LazyColumn(
             modifier = modifier

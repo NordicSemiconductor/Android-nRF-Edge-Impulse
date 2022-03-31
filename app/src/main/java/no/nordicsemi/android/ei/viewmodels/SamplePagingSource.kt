@@ -39,7 +39,7 @@ class SamplePagingSource(
             }
             LoadResult.Page(
                 data = response.samples,
-                prevKey = null,
+                prevKey = if (offset == LIST_SAMPLES_PAGE_INDEX) null else offset - PAGE_SIZE,
                 nextKey = nextKey
             )
 
