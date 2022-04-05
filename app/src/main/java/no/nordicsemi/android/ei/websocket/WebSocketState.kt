@@ -1,0 +1,10 @@
+package no.nordicsemi.android.ei.websocket
+
+import okhttp3.Response
+
+sealed class WebSocketState {
+    data class Open(val response: Response): WebSocketState()
+    data class Closing(val code: Int, val reason: String): WebSocketState()
+    data class Closed(val code: Int, val reason: String): WebSocketState()
+    data class Failed(val throwable: Throwable, val response: Response?): WebSocketState()
+}

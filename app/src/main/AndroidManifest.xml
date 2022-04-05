@@ -1,25 +1,110 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="no.nordicsemi.android.ei">
 
+    <!-- Make the app only available for devices supporting BLE -->
+    <uses-feature
+        android:name="android.hardware.bluetooth_le"
+        android:required="true" />
+
+    <uses-permission
+        android:name="android.permission.MANAGE_ACCOUNTS"
+        android:maxSdkVersion="22" />
+    <uses-permission
+        android:name="android.permission.GET_ACCOUNTS"
+        android:maxSdkVersion="22" />
+    <uses-permission
+        android:name="android.permission.USE_CREDENTIALS"
+        android:maxSdkVersion="22" />
+    <uses-permission
+        android:name="android.permission.AUTHENTICATE_ACCOUNTS"
+        android:maxSdkVersion="22" />
+    <uses-permission
+        android:name="android.permission.INTERNET" />
+    <!--
+	 Bluetooth permission is required on Android 4.3 - 11 in order to communicate with
+	 Bluetooth LE devices.
+	-->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30"/>
+    <!--
+	 Bluetooth Admin permission is required on Android 4.3 - 11 in order to scan for
+	 Bluetooth LE devices.
+	-->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" />
+    <!--
+	 Location permission is required from Android 6 to 11 to be able to scan for advertising
+	 Bluetooth LE devices. Some BLE devices, called beacons, may be used to position the phone.
+	 This is to ensure that the user agrees to do so.
+	 This app does not use this location information in any way.
+	 Since Android 10 ACCESS_FINE_LOCATION is required and for that, the COARSE one also needs
+	 to be specified.
+    -->
+    <uses-permission
+        android:name="android.permission.ACCESS_COARSE_LOCATION"
+        android:maxSdkVersion="30" />
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:maxSdkVersion="30" />
+    <!--
+     On Android 12 new set of Bluetooth permissions were added. BLUETOOTH_SCAN permission is
+     needed to scan for Bluetooth LE devices. The "never for location" flag is set, as we are not
+     interested in finding the user location, and we are OK with the fact, that beacons info
+     will be removed from the scan results.
+    -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="s" />
+    <!--
+     This permission is required in order to connect to a Bluetooth LE device on Android 12
+     onwards.
+    -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_CONNECT"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="s" />
+
     <application
+        android:name=".di.MainApplication"
         android:allowBackup="true"
+        android:fullBackupContent="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.nRFEdgeImpulse">
+        android:supportsRtl="true">
+
         <activity
-            android:name="no.nordicsemi.android.ei.MainActivity"
+            android:name=".account.LoginActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/AppTheme" />
+
+        <activity
+            android:name=".MainActivity"
+            android:theme="@style/AppTheme.SplashScreen"
             android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.nRFEdgeImpulse.NoActionBar">
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".account.AuthenticatorService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.accounts.AccountAuthenticator" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accounts.AccountAuthenticator"
+                android:resource="@xml/authenticator" />
+        </service>
     </application>
 
 </manifest>
