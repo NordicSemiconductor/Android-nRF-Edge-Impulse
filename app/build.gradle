@@ -92,7 +92,7 @@ dependencies {
     // BLE Library - https://github.com/NordicSemiconductor/Android-BLE-Library/releases
     implementation 'no.nordicsemi.android:ble-ktx:2.4.0'
     // MCU Manager Library - https://github.com/NordicSemiconductor/Android-nRF-Connect-Device-Manager
-    implementation 'no.nordicsemi.android:mcumgr-ble:1.1.0'
+    implementation 'no.nordicsemi.android:mcumgr-ble:1.2.0'
 
     testImplementation 'junit:junit:4.13.2'
     testImplementation "com.google.truth:truth:1.1.3"

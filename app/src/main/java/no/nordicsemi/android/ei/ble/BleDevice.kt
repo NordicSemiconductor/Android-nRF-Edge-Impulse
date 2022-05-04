@@ -76,10 +76,12 @@ class BleDevice(
     }
 
     // TODO should the API be suspendable, or just calling .enqueue()?
-    fun connect() {
+    fun connect(onConnected: (() -> Unit)? = null, onTimeout: ((Int) -> Unit)? = null) {
         connect(device)
             .retry(3, 100)
             .useAutoConnect(false)
+            .done { onConnected?.invoke() }
+            .fail { _, status -> onTimeout?.invoke(status) }
             .enqueue()
     }
 

@@ -25,7 +25,7 @@ sealed class DeploymentState(private val order: Int) : Comparable<DeploymentStat
     object Confirming : DeploymentState(5)
 
     /** When the device is being RESET by the MCU manager **/
-    object ApplyingUpdate : DeploymentState(6)
+    data class ApplyingUpdate(val percent: Int = 0) : DeploymentState(6)
 
     /** When the upgrade is being Completed by the MCU manager **/
     object Complete : DeploymentState(7)

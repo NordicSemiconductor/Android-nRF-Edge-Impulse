@@ -15,7 +15,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ble.ktx.state.ConnectionState
@@ -91,9 +90,9 @@ class CommsManager(
     /**
      * Initiates BLE connection to the device by launching a coroutine
      */
-    fun connect() {
+    fun connect(onConnected: (() -> Unit)? = null, onTimeout: ((Int) -> Unit)? = null) {
         scope.launch((exceptionHandler)) {
-            bleDevice.connect()
+            bleDevice.connect(onConnected, onTimeout)
         }
     }
 
