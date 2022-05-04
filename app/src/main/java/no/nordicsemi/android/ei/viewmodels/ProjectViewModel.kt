@@ -293,7 +293,7 @@ class ProjectViewModel @Inject constructor(
     /**
      * Updates the Category of the data sample
      */
-    fun onCategoryChanged(category: Category){
+    fun onCategoryChanged(category: Category) {
         this.category = category
     }
 
@@ -336,7 +336,11 @@ class ProjectViewModel @Inject constructor(
      * Connect to a device
      * @param device Discovered bluetooth device.
      */
-    fun connect(device: DiscoveredBluetoothDevice) {
+    fun connect(
+        device: DiscoveredBluetoothDevice,
+        onConnected: (() -> Unit)? = null,
+        onTimeout: ((Int) -> Unit)? = null
+    ) {
         commsManagers.getOrPut(key = device.deviceId, defaultValue = {
             CommsManager(
                 scope = viewModelScope,
@@ -353,7 +357,7 @@ class ProjectViewModel @Inject constructor(
                 context = getApplication()
             )
         }).apply {
-            connect()
+            connect(onConnected, onTimeout)
             // Register a collector what would listen to connectivity changes
             viewModelScope.launch {
                 this@apply.connectionState().collect {
@@ -565,6 +569,7 @@ class ProjectViewModel @Inject constructor(
             dfuManager = FirmwareUpgradeManager(transport, this).apply {
                 setWindowUploadCapacity(3)
                 setMemoryAlignment(4)
+                setEstimatedSwapTime(40_000)
                 var images = arrayListOf<Pair<Int, ByteArray>>()
                 try {
                     McuMgrImage.getHash(data)
@@ -572,7 +577,8 @@ class ProjectViewModel @Inject constructor(
                 } catch (e: Exception) {
                     try {
                         images = ZipPackage(data).binaries
-                    } catch (e1: Exception) { }
+                    } catch (e1: Exception) {
+                    }
                 }
                 (transport as McuMgrBleTransport).apply {
                     setLoggingEnabled(true)
@@ -689,18 +695,17 @@ class ProjectViewModel @Inject constructor(
         if (deploymentState is Uploading) {
             initialBytes = 0
         }
+
         if (deploymentState is ApplyingUpdate) {
             viewModelScope.launch {
-                delay(2000)
-                deploymentTarget?.let { device ->
-                    val bluetoothDevice = bluetoothAdapter.getRemoteDevice(device.deviceId)
-                    connect(
-                        DiscoveredBluetoothDevice(
-                            name = bluetoothDevice.name,
-                            rssi = 0,
-                            bluetoothDevice = bluetoothDevice
-                        )
-                    )
+                var counter = 0
+                while (counter < 50) {
+                    delay(1000)
+                    if(deploymentState !is ApplyingUpdate) {
+                        break
+                    }
+                    counter++
+                    deploymentState = ApplyingUpdate(percent = counter * 2)
                 }
             }
         }
@@ -730,18 +735,26 @@ class ProjectViewModel @Inject constructor(
 
     override fun onUpgradeCompleted() {
         viewModelScope.launch {
-            delay(10000) //Adds a delay waiting for thingy to restart after an update.
             resetDfu()
-            deploymentState = Complete
             // If the upgrade successfully completes let's reconnect to the device.
             deploymentTarget?.let { device ->
                 val bluetoothDevice = bluetoothAdapter.getRemoteDevice(device.deviceId)
                 connect(
-                    DiscoveredBluetoothDevice(
-                        name = bluetoothDevice.name,
+                    device = DiscoveredBluetoothDevice(
+                        name = device.name,
                         rssi = 0,
                         bluetoothDevice = bluetoothDevice
-                    )
+                    ),
+                    onConnected = {
+                        viewModelScope.launch {
+                            deploymentState = Complete
+                        }
+                    },
+                    onTimeout = {
+                        viewModelScope.launch {
+                            deploymentState = Failed(Complete)
+                        }
+                    }
                 )
             }
         }
@@ -781,7 +794,7 @@ private fun FirmwareUpgradeManager.State.toDeploymentState() = when (this) {
     UPLOAD -> {
         Uploading()
     }
-    TEST, RESET -> ApplyingUpdate
+    TEST, RESET -> ApplyingUpdate()
     CONFIRM -> Confirming
 }
 

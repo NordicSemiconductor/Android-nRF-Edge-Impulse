@@ -248,7 +248,7 @@ private fun DeployImpulse(
 private fun StateRow(
     icon: ImageVector = Icons.Filled.Check,
     tint: Color = Color.Gray,
-    text: String,
+    mainText: String,
     transferSpeed: String = "",
     contentAlpha: Float = ContentAlpha.disabled,
     content: @Composable () -> Unit = {}
@@ -272,7 +272,7 @@ private fun StateRow(
         ) {
             Row(modifier = Modifier.fillMaxWidth()) {
                 CompositionLocalProvider(LocalContentAlpha provides contentAlpha) {
-                    Text(modifier = Modifier.weight(1.0f), text = text, textAlign = TextAlign.Start)
+                    Text(modifier = Modifier.weight(1.0f), text = mainText, textAlign = TextAlign.Start)
                     Text(
                         text = transferSpeed,
                         textAlign = TextAlign.End
@@ -292,9 +292,16 @@ fun BuildRow(
         state is Building -> StateRow(
             icon = Icons.Outlined.Construction,
             tint = NordicBlue,
-            text = "Building...",
+            mainText = "Building...",
             contentAlpha = ContentAlpha.high
         ) {
+            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+                Text(
+                    text = "This may take few minutes.",
+                    textAlign = TextAlign.Start,
+                    style = MaterialTheme.typography.caption
+                )
+            }
             LinearProgressIndicator(
                 modifier = Modifier
                     .padding(top = 4.dp)
@@ -305,22 +312,22 @@ fun BuildRow(
         state is Failed && state.state is Building -> StateRow(
             icon = Icons.Outlined.Construction,
             tint = Color.Red,
-            text = "Build failed",
+            mainText = "Build failed",
             contentAlpha = ContentAlpha.high
         )
         state is Canceled && state.state is Building -> StateRow(
             icon = Icons.Outlined.Construction,
             tint = Color.Red,
-            text = "Build canceled",
+            mainText = "Build canceled",
             contentAlpha = ContentAlpha.high
         )
         state > Building -> StateRow(
             icon = Icons.Outlined.Construction,
             tint = NordicBlue,
-            text = "Built",
+            mainText = "Built",
             contentAlpha = ContentAlpha.high
         )
-        else -> StateRow(icon = Icons.Outlined.Construction, text = "Build")
+        else -> StateRow(icon = Icons.Outlined.Construction, mainText = "Build")
     }
 }
 
@@ -332,7 +339,7 @@ fun DownloadRow(
         state is Downloading -> StateRow(
             icon = Icons.Outlined.CloudDownload,
             tint = NordicBlue,
-            text = "Downloading...",
+            mainText = "Downloading...",
             contentAlpha = ContentAlpha.high
         ) {
             LinearProgressIndicator(
@@ -345,22 +352,22 @@ fun DownloadRow(
         state is Failed && state.state is Downloading -> StateRow(
             icon = Icons.Outlined.CloudDownload,
             tint = Color.Red,
-            text = "Download failed",
+            mainText = "Download failed",
             contentAlpha = ContentAlpha.high
         )
         state is Canceled && state.state is Downloading -> StateRow(
             icon = Icons.Outlined.CloudDownload,
             tint = Color.Red,
-            text = "Download canceled",
+            mainText = "Download canceled",
             contentAlpha = ContentAlpha.high
         )
         state > Downloading -> StateRow(
             icon = Icons.Outlined.CloudDownload,
             tint = NordicBlue,
-            text = "Downloaded",
+            mainText = "Downloaded",
             contentAlpha = ContentAlpha.high
         )
-        else -> StateRow(icon = Icons.Outlined.CloudDownload, text = "Download")
+        else -> StateRow(icon = Icons.Outlined.CloudDownload, mainText = "Download")
     }
 }
 
@@ -372,7 +379,7 @@ fun VerifyRow(
         state is Verifying -> StateRow(
             icon = Icons.Outlined.Verified,
             tint = NordicBlue,
-            text = "Verifying...",
+            mainText = "Verifying...",
             contentAlpha = ContentAlpha.high
         ) {
             LinearProgressIndicator(
@@ -385,22 +392,22 @@ fun VerifyRow(
         state is Failed && state.state is Verifying -> StateRow(
             icon = Icons.Outlined.Verified,
             tint = Color.Red,
-            text = "Verification failed",
+            mainText = "Verification failed",
             contentAlpha = ContentAlpha.high
         )
         state is Canceled && state.state is Verifying -> StateRow(
             icon = Icons.Outlined.Verified,
             tint = Color.Red,
-            text = "Verification canceled",
+            mainText = "Verification canceled",
             contentAlpha = ContentAlpha.high
         )
         state > Verifying -> StateRow(
             icon = Icons.Outlined.Verified,
             tint = NordicBlue,
-            text = "Verified",
+            mainText = "Verified",
             contentAlpha = ContentAlpha.high
         )
-        else -> StateRow(icon = Icons.Outlined.Verified, text = "Verify")
+        else -> StateRow(icon = Icons.Outlined.Verified, mainText = "Verify")
     }
 }
 
@@ -417,9 +424,9 @@ fun UploadRow(
             StateRow(
                 icon = Icons.Outlined.Upload,
                 tint = NordicBlue,
-                text = "Uploading...",
-                contentAlpha = ContentAlpha.high,
-                transferSpeed = stringResource(R.string.label_transfer_speed, transferSpeed)
+                mainText = "Uploading...",
+                transferSpeed = stringResource(R.string.label_transfer_speed, transferSpeed),
+                contentAlpha = ContentAlpha.high
             ) {
                 LinearProgressIndicator(
                     modifier = Modifier
@@ -433,23 +440,23 @@ fun UploadRow(
         state is Failed && state.state is Uploading -> StateRow(
             icon = Icons.Outlined.Upload,
             tint = Color.Red,
-            text = "Upload failed",
+            mainText = "Upload failed",
             contentAlpha = ContentAlpha.high
         )
         state is Canceled && state.state is Uploading -> StateRow(
             icon = Icons.Outlined.Upload,
             tint = Color.Red,
-            text = "Upload canceled",
+            mainText = "Upload canceled",
             contentAlpha = ContentAlpha.high
         )
         state > Uploading(transferSpeed = transferSpeed) -> StateRow(
             icon = Icons.Outlined.Upload,
             tint = NordicBlue,
-            text = "Uploaded",
-            contentAlpha = ContentAlpha.high,
-            transferSpeed = stringResource(R.string.label_transfer_speed, transferSpeed)
+            mainText = "Uploaded",
+            transferSpeed = stringResource(R.string.label_transfer_speed, transferSpeed),
+            contentAlpha = ContentAlpha.high
         )
-        else -> StateRow(icon = Icons.Outlined.Upload, text = "Upload")
+        else -> StateRow(icon = Icons.Outlined.Upload, mainText = "Upload")
     }
 }
 
@@ -461,7 +468,7 @@ fun ConfirmRow(
         state is Confirming -> StateRow(
             icon = Icons.Outlined.Grading,
             tint = NordicBlue,
-            text = "Confirming...",
+            mainText = "Confirming...",
             contentAlpha = ContentAlpha.high
         ) {
             LinearProgressIndicator(
@@ -474,22 +481,22 @@ fun ConfirmRow(
         state is Failed && state.state is Confirming -> StateRow(
             icon = Icons.Outlined.Grading,
             tint = Color.Red,
-            text = "Confirmation failed",
+            mainText = "Confirmation failed",
             contentAlpha = ContentAlpha.high
         )
         state is Canceled && state.state is Confirming -> StateRow(
             icon = Icons.Outlined.Grading,
             tint = Color.Red,
-            text = "Confirmation canceled",
+            mainText = "Confirmation canceled",
             contentAlpha = ContentAlpha.high
         )
         state > Confirming -> StateRow(
             icon = Icons.Outlined.Grading,
             tint = NordicBlue,
-            text = "Confirmed",
+            mainText = "Confirmed",
             contentAlpha = ContentAlpha.high
         )
-        else -> StateRow(icon = Icons.Outlined.Grading, text = "Confirm")
+        else -> StateRow(icon = Icons.Outlined.Grading, mainText = "Confirm")
     }
 }
 
@@ -501,35 +508,36 @@ fun ApplyingUpdateRow(
         state is ApplyingUpdate -> StateRow(
             icon = Icons.Outlined.SystemUpdateAlt,
             tint = NordicBlue,
-            text = "Applying update...",
+            mainText = "Applying update...",
             contentAlpha = ContentAlpha.high
         ) {
             LinearProgressIndicator(
                 modifier = Modifier
                     .padding(top = 4.dp)
                     .height(height = 2.dp)
-                    .fillMaxWidth()
+                    .fillMaxWidth(),
+                progress = state.percent / 100f
             )
         }
         state is Failed && state.state is ApplyingUpdate -> StateRow(
             icon = Icons.Outlined.SystemUpdateAlt,
             tint = Color.Red,
-            text = "Applying update failed",
+            mainText = "Applying update failed",
             contentAlpha = ContentAlpha.high
         )
         state is Canceled && state.state is ApplyingUpdate -> StateRow(
             icon = Icons.Outlined.SystemUpdateAlt,
             tint = Color.Red,
-            text = "Applying update canceled",
+            mainText = "Applying update canceled",
             contentAlpha = ContentAlpha.high
         )
-        state > ApplyingUpdate -> StateRow(
+        state > ApplyingUpdate() -> StateRow(
             icon = Icons.Outlined.SystemUpdateAlt,
             tint = NordicBlue,
-            text = "Update Applied",
+            mainText = "Update Applied",
             contentAlpha = ContentAlpha.high
         )
-        else -> StateRow(icon = Icons.Outlined.SystemUpdateAlt, text = "Apply update")
+        else -> StateRow(icon = Icons.Outlined.SystemUpdateAlt, mainText = "Apply update")
     }
 }
 
@@ -541,28 +549,28 @@ fun CompletedRow(
         state is Complete -> StateRow(
             icon = Icons.Outlined.DoneAll,
             tint = NordicBlue,
-            text = "Completed",
+            mainText = "Completed",
             contentAlpha = ContentAlpha.high
         )
         state is Failed && state.state is Complete -> StateRow(
             icon = Icons.Outlined.DoneAll,
             tint = Color.Red,
-            text = "Failed",
+            mainText = "Failed",
             contentAlpha = ContentAlpha.high
         )
         state is Canceled && state.state is Complete -> StateRow(
             icon = Icons.Outlined.DoneAll,
             tint = Color.Red,
-            text = "Canceled",
+            mainText = "Canceled",
             contentAlpha = ContentAlpha.high
         )
         state > Complete -> StateRow(
             icon = Icons.Outlined.DoneAll,
             tint = NordicBlue,
-            text = "Completed",
+            mainText = "Completed",
             contentAlpha = ContentAlpha.high
         )
-        else -> StateRow(icon = Icons.Outlined.DoneAll, text = "Complete")
+        else -> StateRow(icon = Icons.Outlined.DoneAll, mainText = "Complete")
     }
 }
 
