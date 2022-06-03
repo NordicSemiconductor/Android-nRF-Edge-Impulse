@@ -2,11 +2,11 @@
 buildscript {
     ext {
         // https://developer.android.com/jetpack/androidx/releases/compose
-        compose_version = '1.2.0-alpha06'
+        compose_version = '1.2.0-beta03'
         // https://developer.android.com/jetpack/compose/setup#configure_kotlin
-        kotlin_version = '1.6.10'
+        kotlin_version = '1.6.21'
         // https://github.com/google/dagger/releases
-        hilt_dagger_version = '2.41'
+        hilt_dagger_version = '2.42'
         // https://developer.android.com/training/dependency-injection/hilt-android
         hilt_android_version = '1.0.0'
         // https://github.com/google/accompanist/releases
@@ -14,14 +14,14 @@ buildscript {
         // https://github.com/google/accompanist/releases
         accompanist_version = '0.20.0'
         // https://developer.android.com/jetpack/androidx/releases/lifecycle#kotlin
-        lifecycle_version = '2.5.0-alpha05'
+        lifecycle_version = '2.5.0-rc01'
     }
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.2.0-rc02'
+        classpath 'com.android.tools.build:gradle:7.2.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "com.google.dagger:hilt-android-gradle-plugin:$hilt_dagger_version"
     }
