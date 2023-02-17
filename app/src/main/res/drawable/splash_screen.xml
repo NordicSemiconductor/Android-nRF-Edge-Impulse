@@ -1,3 +1,11 @@
+<!--
+  ~ /*
+  ~  * Copyright (c) 2022, Nordic Semiconductor
+  ~  *
+  ~  * SPDX-License-Identifier: Apache-2.0
+  ~  */
+  -->
+
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
 	android:width="142dp"
 	android:height="121dp"

@@ -1,3 +1,11 @@
+/*
+ *
+ *  * Copyright (c) 2022, Nordic Semiconductor
+ *  *
+ *  * SPDX-License-Identifier: Apache-2.0
+ *
+ */
+
 package no.nordicsemi.android.ei
 
 import android.os.Build
@@ -44,7 +52,6 @@ class MainActivity : ComponentActivity() {
         var splashScreenVisible by mutableStateOf(true)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && coldStart) {
             coldStart = false
-
             val then = System.currentTimeMillis()
             splashScreen.setKeepOnScreenCondition {
                 val now = System.currentTimeMillis()

@@ -1,9 +1,20 @@
+/*
+ *
+ *  * Copyright (c) 2022, Nordic Semiconductor
+ *  *
+ *  * SPDX-License-Identifier: Apache-2.0
+ *
+ */
+
 package no.nordicsemi.android.ei.ui
 
 import android.accounts.OperationCanceledException
 import android.app.Activity
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Warning

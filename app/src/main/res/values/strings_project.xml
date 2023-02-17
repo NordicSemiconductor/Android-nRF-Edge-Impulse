@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ /*
+  ~  * Copyright (c) 2022, Nordic Semiconductor
+  ~  *
+  ~  * SPDX-License-Identifier: Apache-2.0
+  ~  */
+  -->
+
 <resources>
     <string name="label_devices">Devices</string>
     <string name="label_data_acquisition">Data Acquisition</string>

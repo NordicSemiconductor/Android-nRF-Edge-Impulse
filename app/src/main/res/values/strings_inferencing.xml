@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ /*
+  ~  * Copyright (c) 2022, Nordic Semiconductor
+  ~  *
+  ~  * SPDX-License-Identifier: Apache-2.0
+  ~  */
+  -->
+
 <resources>
     <string name="title_inferencing">Inferencing</string>
     <string name="connect_device_for_inferencing">Please connect to a configured device or add a new device on the Devices tab to start inferencing.</string>

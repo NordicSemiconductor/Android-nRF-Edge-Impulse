@@ -1,3 +1,11 @@
+/*
+ *
+ *  * Copyright (c) 2022, Nordic Semiconductor
+ *  *
+ *  * SPDX-License-Identifier: Apache-2.0
+ *
+ */
+
 package no.nordicsemi.android.ei.ui
 
 import androidx.compose.foundation.*
@@ -55,7 +63,6 @@ import coil.request.ImageRequest
 import coil.transform.CircleCropTransformation
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import kotlinx.coroutines.flow.collect
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ShowDialog
 import no.nordicsemi.android.ei.model.Collaborator

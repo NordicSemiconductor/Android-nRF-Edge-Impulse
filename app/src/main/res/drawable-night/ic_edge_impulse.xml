@@ -1,3 +1,11 @@
+<!--
+  ~ /*
+  ~  * Copyright (c) 2022, Nordic Semiconductor
+  ~  *
+  ~  * SPDX-License-Identifier: Apache-2.0
+  ~  */
+  -->
+
 <vector android:height="24dp" android:viewportHeight="400"
     android:viewportWidth="400" android:width="24dp" xmlns:android="http://schemas.android.com/apk/res/android">
     <path android:fillColor="@color/white" android:pathData="M257.66,179.41c-11.66,0 -21.11,9.45 -21.11,21.11c0,11.66 9.45,21.11 21.11,21.11h69.81l-16.06,-42.22H257.66z"/>

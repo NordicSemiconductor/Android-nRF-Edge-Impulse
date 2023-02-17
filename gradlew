@@ -1,5 +1,13 @@
 #!/usr/bin/env sh
 
+#
+# /*
+#  * Copyright (c) 2022, Nordic Semiconductor
+#  *
+#  * SPDX-License-Identifier: Apache-2.0
+#  */
+#
+
 ##############################################################################
 ##
 ##  Gradle start up script for UN*X

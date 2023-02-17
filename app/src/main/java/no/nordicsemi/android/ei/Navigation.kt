@@ -1,3 +1,11 @@
+/*
+ *
+ *  * Copyright (c) 2022, Nordic Semiconductor
+ *  *
+ *  * SPDX-License-Identifier: Apache-2.0
+ *
+ */
+
 package no.nordicsemi.android.ei
 
 import androidx.compose.runtime.Composable
@@ -5,7 +13,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import no.nordicsemi.android.ei.ui.*
+import no.nordicsemi.android.ei.ui.Dashboard
+import no.nordicsemi.android.ei.ui.Login
+import no.nordicsemi.android.ei.ui.Project
 
 @Composable
 fun Navigation(
