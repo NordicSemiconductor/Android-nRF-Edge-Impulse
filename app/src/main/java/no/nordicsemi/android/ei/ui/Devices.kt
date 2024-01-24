@@ -74,7 +74,6 @@ import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import no.nordicsemi.android.ei.BottomNavigationScreen
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.ble.rssiAsPercent
@@ -103,7 +102,6 @@ fun Devices(
     refreshingState: Boolean,
     onRefresh: () -> Unit,
     scannerState: ScannerState,
-    screen: BottomNavigationScreen,
     onBluetoothStateChanged: (Boolean) -> Unit,
     connect: (DiscoveredBluetoothDevice) -> Unit,
     disconnect: (DiscoveredBluetoothDevice) -> Unit,
@@ -266,15 +264,16 @@ fun Devices(
                             } == null
                         }
                         // Display only if at least one was found.
-                        .takeIf { it.isNotEmpty() }?.let { discoveredDevices ->
+                        .takeIf { it.isNotEmpty() }
+                        ?.let { discoveredDevices ->
                             this@LazyColumn.items(
                                 items = discoveredDevices,
                                 key = { it.bluetoothDevice.address }
                             ) { discoveredDevice ->
                                 DiscoveredDeviceRow(
                                     device = discoveredDevice,
-                                    state = activeDevices[discoveredDevice.deviceId]?.connectivityState
-                                        ?: DeviceState.IN_RANGE,
+                                    state = activeDevices[discoveredDevice.deviceId]
+                                        ?.connectivityState ?: DeviceState.IN_RANGE,
                                     onDeviceClicked = { connect(it) },
                                     onDeviceAuthenticated = { onRefresh() }
                                 )
@@ -311,33 +310,30 @@ private fun BluetoothPermissionsRequired(
         )
     )
 
-    bluetoothPermissionsState.permissions.forEach {
-        when {
-            it.status.isGranted -> {
-                BluetoothRequired(
-                    modifier = modifier,
-                    scannerState = scannerState
-                ) {
-                    onBluetoothStateChanged(it)
-                }
-            }
+    when {
+        bluetoothPermissionsState.allPermissionsGranted -> {
+            LocationRequired(
+                modifier = modifier,
+                scannerState = scannerState,
+                onBluetoothStateChanged = onBluetoothStateChanged
+            )
+        }
 
-            it.status.shouldShowRationale -> {
-                PermissionDeniedContent(
-                    modifier = modifier,
-                    title = stringResource(id = R.string.bluetooth_scan_connect_permission_denied_title),
-                    text = stringResource(id = R.string.bluetooth_scan_connect_permission_denied_info)
-                )
-            }
+        bluetoothPermissionsState.shouldShowRationale -> {
+            PermissionDeniedContent(
+                modifier = modifier,
+                title = stringResource(id = R.string.bluetooth_scan_connect_permission_denied_title),
+                text = stringResource(id = R.string.bluetooth_scan_connect_permission_denied_info)
+            )
+        }
 
-            else -> {
-                PermissionNotGrantedContent(
-                    modifier = modifier,
-                    title = stringResource(id = R.string.bluetooth_scan_connect_permission_required_title),
-                    text = stringResource(id = R.string.bluetooth_scan_connect_permission_info),
-                    onRequestPermission = { bluetoothPermissionsState.launchMultiplePermissionRequest() }
-                )
-            }
+        else -> {
+            PermissionNotGrantedContent(
+                modifier = modifier,
+                title = stringResource(id = R.string.bluetooth_scan_connect_permission_required_title),
+                text = stringResource(id = R.string.bluetooth_scan_connect_permission_info),
+                onRequestPermission = { bluetoothPermissionsState.launchMultiplePermissionRequest() }
+            )
         }
     }
 }
