@@ -29,12 +29,26 @@ import no.nordicsemi.android.ble.ktx.state.ConnectionState
 import no.nordicsemi.android.ble.ktx.stateAsFlow
 import no.nordicsemi.android.ei.ble.BleDevice
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
-import no.nordicsemi.android.ei.model.*
+import no.nordicsemi.android.ei.model.ConfigureMessage
+import no.nordicsemi.android.ei.model.DataSample
+import no.nordicsemi.android.ei.model.DevelopmentKeys
+import no.nordicsemi.android.ei.model.DeviceMessage
+import no.nordicsemi.android.ei.model.Direction
+import no.nordicsemi.android.ei.model.InferencingMessage
 import no.nordicsemi.android.ei.model.InferencingMessage.InferencingRequest
 import no.nordicsemi.android.ei.model.InferencingMessage.InferencingResponse
-import no.nordicsemi.android.ei.model.Message.*
+import no.nordicsemi.android.ei.model.Message
+import no.nordicsemi.android.ei.model.Message.Configure
+import no.nordicsemi.android.ei.model.Message.Hello
+import no.nordicsemi.android.ei.model.Message.HelloResponse
 import no.nordicsemi.android.ei.model.Message.Sample
-import no.nordicsemi.android.ei.model.Message.Sample.*
+import no.nordicsemi.android.ei.model.Message.Sample.Finished
+import no.nordicsemi.android.ei.model.Message.Sample.ProgressEvent
+import no.nordicsemi.android.ei.model.Message.Sample.Request
+import no.nordicsemi.android.ei.model.Message.Sample.Response
+import no.nordicsemi.android.ei.model.Message.Sample.Unknown
+import no.nordicsemi.android.ei.model.Sensor
+import no.nordicsemi.android.ei.model.WebSocketMessage
 import no.nordicsemi.android.ei.util.exhaustive
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import no.nordicsemi.android.ei.viewmodels.state.InferencingState
@@ -147,7 +161,7 @@ class CommsManager(
                 is WebSocketState.Open -> {
                     // Initialize notifications. This will enable notifications and cause a
                     // Hello message to be sent from the device.
-                    bleDevice.initialize()
+                    bleDevice.initDeviceNotifications()
                 }
                 else -> {
                 }
@@ -161,7 +175,7 @@ class CommsManager(
         }.collect { message ->
             when (message) {
                 is HelloResponse -> {
-                    // if the Hello message returned with a success wrap the received response and send it to the device
+                    // If the Hello message returned with a success wrap the received response and send it to the device
                     message.takeIf {
                         it.hello
                     }?.let {
