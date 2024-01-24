@@ -419,6 +419,4 @@ class CommsManager(
     }
 }
 
-
-private val regex = Regex("^[0-9]+")
 private const val MESSAGE = "message"
