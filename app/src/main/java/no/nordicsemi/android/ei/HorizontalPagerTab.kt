@@ -17,9 +17,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 /**
  * HorizontalPagerTab
  *
- * @param title    String resource for the HorizontalPagerTab item title
- * @param category Category of samples to be loaded
- * @param icon     ImageVector to use when no data is available
+ * @param title    String resource for the HorizontalPagerTab item title.
+ * @param category Category of samples to be loaded.
+ * @param icon     ImageVector to use when no data is available.
  */
 enum class HorizontalPagerTab(
     @StringRes val title: Int,

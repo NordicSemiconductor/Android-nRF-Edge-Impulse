@@ -33,7 +33,7 @@ class EiWebSocket @Inject constructor(
     private val _message =
         MutableSharedFlow<String>(
             extraBufferCapacity = 10,
-            onBufferOverflow = BufferOverflow.DROP_OLDEST
+            onBufferOverflow = BufferOverflow.SUSPEND
         )
 
     private lateinit var pingTask: TimerTask

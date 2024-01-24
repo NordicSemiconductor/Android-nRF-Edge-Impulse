@@ -6,25 +6,54 @@
  *
  */
 
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package no.nordicsemi.android.ei.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.Label
+import androidx.compose.material.icons.automirrored.outlined.Label
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material.icons.rounded.DeveloperBoard
-import androidx.compose.runtime.*
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -48,11 +77,11 @@ import no.nordicsemi.android.ei.model.Message.Sample.Unknown
 import no.nordicsemi.android.ei.model.Sensor
 import no.nordicsemi.android.ei.ui.layouts.DeviceDisconnected
 import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
-import java.util.*
+import java.util.Locale
 
 @Composable
 fun RecordSampleLargeScreen(
-    viewModel:ProjectViewModel,
+    viewModel: ProjectViewModel,
     connectedDevices: List<Device>,
     onSamplingMessageDismissed: (Boolean) -> Unit,
     buttonContent: @Composable () -> Unit
@@ -66,16 +95,16 @@ fun RecordSampleLargeScreen(
         )
         Column(
             modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .verticalScroll(state = rememberScrollState())
-                    .weight(weight = 1f, fill = false)
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .verticalScroll(state = rememberScrollState())
+                .weight(weight = 1f, fill = false)
         ) {
             RecordSampleContent(
                 connectedDevices = connectedDevices,
                 samplingState = viewModel.samplingState,
                 category = viewModel.category,
-                onCategorySelected = { viewModel.onCategoryChanged(it)},
+                onCategorySelected = { viewModel.onCategoryChanged(it) },
                 dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
                 onDataAcquisitionTargetSelected = {
                     viewModel.onDataAcquisitionTargetSelected(
@@ -99,16 +128,14 @@ fun RecordSampleLargeScreen(
 
 @Composable
 fun RecordSampleSmallScreen(
-    viewModel:ProjectViewModel,
+    viewModel: ProjectViewModel,
     connectedDevices: List<Device>,
     onSamplingMessageDismissed: (Boolean) -> Unit,
     buttonContent: @Composable () -> Unit,
     onCloseClicked: () -> Unit
 ) {
-    val scaffoldState = rememberScaffoldState(snackbarHostState = SnackbarHostState())
     Scaffold(
         modifier = Modifier.wrapContentHeight(),
-        scaffoldState = scaffoldState,
         topBar = {
             TopAppBar(
                 title = {
@@ -124,7 +151,7 @@ fun RecordSampleSmallScreen(
                 })
         }
     ) {
-        Column {
+        Column(modifier = Modifier.padding(it)) {
             SamplingMessage(
                 isSamplingMessageVisible = viewModel.samplingState !is Unknown,
                 onSamplingMessageDismissed = onSamplingMessageDismissed,
@@ -141,7 +168,7 @@ fun RecordSampleSmallScreen(
                     connectedDevices = connectedDevices,
                     samplingState = viewModel.samplingState,
                     category = viewModel.category,
-                    onCategorySelected = { viewModel.onCategoryChanged(it)},
+                    onCategorySelected = { viewModel.onCategoryChanged(it) },
                     dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
                     onDataAcquisitionTargetSelected = {
                         viewModel.onDataAcquisitionTargetSelected(
@@ -363,20 +390,21 @@ private fun CategorySelection(
             categories.forEach { category ->
                 DropdownMenuItem(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
+                    text = {
+                        Text(
+                            modifier = Modifier.weight(1.0f),
+                            text = category.type.replaceFirstChar {
+                                if (it.isLowerCase()) it.titlecase(
+                                    Locale.US
+                                ) else it.toString()
+                            }
+                        )
+                    },
                     onClick = {
                         onCategorySelected(category)
                         isCategoryExpanded = false
                     }
-                ) {
-                    Text(
-                        modifier = Modifier.weight(1.0f),
-                        text = category.type.replaceFirstChar {
-                            if (it.isLowerCase()) it.titlecase(
-                                Locale.US
-                            ) else it.toString()
-                        }
-                    )
-                }
+                )
             }
         }
     }
@@ -406,7 +434,7 @@ private fun LabelInput(
         leadingIcon = {
             Icon(
                 modifier = Modifier.size(24.dp),
-                imageVector = Icons.Outlined.Label,
+                imageVector = Icons.AutoMirrored.Outlined.Label,
                 contentDescription = null
             )
         },
@@ -417,8 +445,8 @@ private fun LabelInput(
         Text(
             modifier = Modifier.padding(start = 16.dp),
             text = stringResource(R.string.label_empty_label_error),
-            color = MaterialTheme.colors.error,
-            style = MaterialTheme.typography.caption
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall
         )
     }
 }
@@ -486,17 +514,18 @@ private fun SensorSelection(
             }) {
             device.sensors.forEach { sensor ->
                 DropdownMenuItem(
+                    text = {
+                        Text(
+                            modifier = Modifier.weight(1.0f),
+                            text = sensor.name
+                        )
+                    },
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                     onClick = {
                         onSensorSelected(sensor)
                         isSensorsMenuExpanded = false
                     }
-                ) {
-                    Text(
-                        modifier = Modifier.weight(1.0f),
-                        text = sensor.name
-                    )
-                }
+                )
             }
         }
     }
@@ -674,18 +703,19 @@ private fun FrequencySelection(
                 }) {
                 sensor.frequencies.forEach { frequency ->
                     DropdownMenuItem(
+                        text = {
+                            Text(
+                                modifier = Modifier.weight(1.0f),
+                                text = frequency.toString()
+                            )
+                        },
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally),
                         onClick = {
                             onFrequencySelected(frequency)
                             isFrequencyMenuExpanded = false
                         }
-                    ) {
-                        Text(
-                            modifier = Modifier.weight(1.0f),
-                            text = frequency.toString()
-                        )
-                    }
+                    )
                 }
             }
         }
@@ -708,18 +738,19 @@ fun ShowDevicesDropdown(
             connectedDevices.forEach { device ->
                 DropdownMenuItem(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
+                    text =  {
+                        Text(
+                            modifier = Modifier.weight(1.0f),
+                            text = device.name
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .background(color = Color.Green, shape = CircleShape)
+                        )
+                    },
                     onClick = { onDeviceSelected(device) }
-                ) {
-                    Text(
-                        modifier = Modifier.weight(1.0f),
-                        text = device.name
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .background(color = Color.Green, shape = CircleShape)
-                    )
-                }
+                )
             }
         }
     )

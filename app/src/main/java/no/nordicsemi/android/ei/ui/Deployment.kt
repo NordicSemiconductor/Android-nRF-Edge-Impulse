@@ -8,18 +8,48 @@
 
 package no.nordicsemi.android.ei.ui
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Grading
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.outlined.CloudDownload
+import androidx.compose.material.icons.outlined.Construction
+import androidx.compose.material.icons.outlined.DoneAll
+import androidx.compose.material.icons.outlined.SystemUpdateAlt
+import androidx.compose.material.icons.outlined.Upload
+import androidx.compose.material.icons.outlined.Verified
 import androidx.compose.material.icons.rounded.DeveloperBoard
 import androidx.compose.material.icons.rounded.Launch
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -29,16 +59,26 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.comms.DeploymentState
-import no.nordicsemi.android.ei.comms.DeploymentState.*
+import no.nordicsemi.android.ei.comms.DeploymentState.ApplyingUpdate
+import no.nordicsemi.android.ei.comms.DeploymentState.Building
+import no.nordicsemi.android.ei.comms.DeploymentState.Canceled
+import no.nordicsemi.android.ei.comms.DeploymentState.Complete
+import no.nordicsemi.android.ei.comms.DeploymentState.Confirming
+import no.nordicsemi.android.ei.comms.DeploymentState.Downloading
+import no.nordicsemi.android.ei.comms.DeploymentState.Failed
+import no.nordicsemi.android.ei.comms.DeploymentState.NotStarted
+import no.nordicsemi.android.ei.comms.DeploymentState.Uploading
+import no.nordicsemi.android.ei.comms.DeploymentState.Verifying
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.ui.layouts.DeviceDisconnected
 import no.nordicsemi.android.ei.ui.theme.NordicBlue
-import java.util.*
+import java.util.Locale
 
 @Composable
 fun Deployment(
@@ -74,16 +114,16 @@ private fun DesignImpulse(
         Text(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
             text = stringResource(R.string.title_design_impulse),
-            style = MaterialTheme.typography.h6
+            style = MaterialTheme.typography.titleLarge
         )
-        Surface(modifier = Modifier.fillMaxWidth(), elevation = 2.dp) {
+        Surface(modifier = Modifier.fillMaxWidth(), tonalElevation = 2.dp, shadowElevation = 2.dp) {
             Column(
                 modifier = Modifier
                     .padding(all = 16.dp)
             ) {
                 Text(
                     text = stringResource(R.string.title_create_impulse),
-                    style = MaterialTheme.typography.h6
+                    style = MaterialTheme.typography.titleLarge
                 )
                 Spacer(modifier = Modifier.size(size = 16.dp))
                 Text(
@@ -138,13 +178,13 @@ private fun DeployImpulse(
         }
     }
     Column(modifier = Modifier.padding(bottom = 72.dp)) {
-        Surface(elevation = 2.dp) {
+        Surface(shadowElevation = 2.dp) {
             Column(
                 modifier = Modifier.padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp)
             ) {
                 Text(
                     text = stringResource(R.string.title_deploy_impulse),
-                    style = MaterialTheme.typography.h6
+                    style = MaterialTheme.typography.titleLarge
                 )
                 OutlinedTextField(
                     modifier = Modifier
@@ -167,7 +207,7 @@ private fun DeployImpulse(
                                 .size(24.dp),
                             imageVector = Icons.Rounded.DeveloperBoard,
                             contentDescription = null,
-                            tint = MaterialTheme.colors.onSurface
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     },
                     trailingIcon = {
@@ -224,12 +264,13 @@ private fun DeployImpulse(
                         NotStarted, is Canceled, is Failed, is Complete -> onDeployClick(
                             deploymentTarget
                         )
+
                         else -> onCancelDeployClick()
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
                     when (deploymentState) {
-                        NotStarted, is Canceled, is Failed, is Complete -> MaterialTheme.colors.primary
+                        NotStarted, is Canceled, is Failed, is Complete -> MaterialTheme.colorScheme.primary
                         else -> Color.Red
                     }
                 )
@@ -258,7 +299,7 @@ private fun StateRow(
     tint: Color = Color.Gray,
     mainText: String,
     transferSpeed: String = "",
-    contentAlpha: Float = ContentAlpha.disabled,
+    contentAlpha: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
     content: @Composable () -> Unit = {}
 ) {
     Row(
@@ -279,8 +320,12 @@ private fun StateRow(
                 .padding(start = 16.dp)
         ) {
             Row(modifier = Modifier.fillMaxWidth()) {
-                CompositionLocalProvider(LocalContentAlpha provides contentAlpha) {
-                    Text(modifier = Modifier.weight(1.0f), text = mainText, textAlign = TextAlign.Start)
+                CompositionLocalProvider(LocalContentColor provides contentAlpha) {
+                    Text(
+                        modifier = Modifier.weight(1.0f),
+                        text = mainText,
+                        textAlign = TextAlign.Start
+                    )
                     Text(
                         text = transferSpeed,
                         textAlign = TextAlign.End
@@ -301,15 +346,14 @@ fun BuildRow(
             icon = Icons.Outlined.Construction,
             tint = NordicBlue,
             mainText = "Building...",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         ) {
-            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-                Text(
-                    text = "This may take few minutes.",
-                    textAlign = TextAlign.Start,
-                    style = MaterialTheme.typography.caption
-                )
-            }
+            Text(
+                text = "This may take few minutes.",
+                textAlign = TextAlign.Start,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Normal
+            )
             LinearProgressIndicator(
                 modifier = Modifier
                     .padding(top = 4.dp)
@@ -317,24 +361,28 @@ fun BuildRow(
                     .fillMaxWidth()
             )
         }
+
         state is Failed && state.state is Building -> StateRow(
             icon = Icons.Outlined.Construction,
             tint = Color.Red,
             mainText = "Build failed",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         state is Canceled && state.state is Building -> StateRow(
             icon = Icons.Outlined.Construction,
             tint = Color.Red,
             mainText = "Build canceled",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         state > Building -> StateRow(
             icon = Icons.Outlined.Construction,
             tint = NordicBlue,
             mainText = "Built",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         else -> StateRow(icon = Icons.Outlined.Construction, mainText = "Build")
     }
 }
@@ -348,7 +396,7 @@ fun DownloadRow(
             icon = Icons.Outlined.CloudDownload,
             tint = NordicBlue,
             mainText = "Downloading...",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         ) {
             LinearProgressIndicator(
                 modifier = Modifier
@@ -357,24 +405,28 @@ fun DownloadRow(
                     .fillMaxWidth()
             )
         }
+
         state is Failed && state.state is Downloading -> StateRow(
             icon = Icons.Outlined.CloudDownload,
             tint = Color.Red,
             mainText = "Download failed",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         state is Canceled && state.state is Downloading -> StateRow(
             icon = Icons.Outlined.CloudDownload,
             tint = Color.Red,
             mainText = "Download canceled",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         state > Downloading -> StateRow(
             icon = Icons.Outlined.CloudDownload,
             tint = NordicBlue,
             mainText = "Downloaded",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         else -> StateRow(icon = Icons.Outlined.CloudDownload, mainText = "Download")
     }
 }
@@ -388,7 +440,7 @@ fun VerifyRow(
             icon = Icons.Outlined.Verified,
             tint = NordicBlue,
             mainText = "Verifying...",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         ) {
             LinearProgressIndicator(
                 modifier = Modifier
@@ -397,24 +449,28 @@ fun VerifyRow(
                     .fillMaxWidth()
             )
         }
+
         state is Failed && state.state is Verifying -> StateRow(
             icon = Icons.Outlined.Verified,
             tint = Color.Red,
             mainText = "Verification failed",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         state is Canceled && state.state is Verifying -> StateRow(
             icon = Icons.Outlined.Verified,
             tint = Color.Red,
             mainText = "Verification canceled",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         state > Verifying -> StateRow(
             icon = Icons.Outlined.Verified,
             tint = NordicBlue,
             mainText = "Verified",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         else -> StateRow(icon = Icons.Outlined.Verified, mainText = "Verify")
     }
 }
@@ -423,9 +479,7 @@ fun VerifyRow(
 fun UploadRow(
     state: DeploymentState
 ) {
-    var transferSpeed by rememberSaveable {
-        mutableStateOf(0f)
-    }
+    var transferSpeed by rememberSaveable { mutableFloatStateOf(0f) }
     when {
         state is Uploading -> {
             transferSpeed = state.transferSpeed
@@ -434,36 +488,40 @@ fun UploadRow(
                 tint = NordicBlue,
                 mainText = "Uploading...",
                 transferSpeed = stringResource(R.string.label_transfer_speed, transferSpeed),
-                contentAlpha = ContentAlpha.high
+                contentAlpha = MaterialTheme.colorScheme.onSurface
             ) {
                 LinearProgressIndicator(
                     modifier = Modifier
                         .padding(top = 4.dp)
                         .height(height = 2.dp)
                         .fillMaxWidth(),
-                    progress = state.percent / 100f
+                    progress = { state.percent / 100f }
                 )
             }
         }
+
         state is Failed && state.state is Uploading -> StateRow(
             icon = Icons.Outlined.Upload,
             tint = Color.Red,
             mainText = "Upload failed",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         state is Canceled && state.state is Uploading -> StateRow(
             icon = Icons.Outlined.Upload,
             tint = Color.Red,
             mainText = "Upload canceled",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         state > Uploading(transferSpeed = transferSpeed) -> StateRow(
             icon = Icons.Outlined.Upload,
             tint = NordicBlue,
             mainText = "Uploaded",
             transferSpeed = stringResource(R.string.label_transfer_speed, transferSpeed),
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         else -> StateRow(icon = Icons.Outlined.Upload, mainText = "Upload")
     }
 }
@@ -474,10 +532,10 @@ fun ConfirmRow(
 ) {
     when {
         state is Confirming -> StateRow(
-            icon = Icons.Outlined.Grading,
+            icon = Icons.AutoMirrored.Outlined.Grading,
             tint = NordicBlue,
             mainText = "Confirming...",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         ) {
             LinearProgressIndicator(
                 modifier = Modifier
@@ -486,25 +544,29 @@ fun ConfirmRow(
                     .fillMaxWidth()
             )
         }
+
         state is Failed && state.state is Confirming -> StateRow(
-            icon = Icons.Outlined.Grading,
+            icon = Icons.AutoMirrored.Outlined.Grading,
             tint = Color.Red,
             mainText = "Confirmation failed",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         state is Canceled && state.state is Confirming -> StateRow(
-            icon = Icons.Outlined.Grading,
+            icon = Icons.AutoMirrored.Outlined.Grading,
             tint = Color.Red,
             mainText = "Confirmation canceled",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         state > Confirming -> StateRow(
-            icon = Icons.Outlined.Grading,
+            icon = Icons.AutoMirrored.Outlined.Grading,
             tint = NordicBlue,
             mainText = "Confirmed",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
-        else -> StateRow(icon = Icons.Outlined.Grading, mainText = "Confirm")
+
+        else -> StateRow(icon = Icons.AutoMirrored.Outlined.Grading, mainText = "Confirm")
     }
 }
 
@@ -517,34 +579,40 @@ fun ApplyingUpdateRow(
             icon = Icons.Outlined.SystemUpdateAlt,
             tint = NordicBlue,
             mainText = "Applying update...",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         ) {
             LinearProgressIndicator(
                 modifier = Modifier
                     .padding(top = 4.dp)
                     .height(height = 2.dp)
                     .fillMaxWidth(),
-                progress = state.percent / 100f
+                progress = {
+                    state.percent / 100f
+                }
             )
         }
+
         state is Failed && state.state is ApplyingUpdate -> StateRow(
             icon = Icons.Outlined.SystemUpdateAlt,
             tint = Color.Red,
             mainText = "Applying update failed",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         state is Canceled && state.state is ApplyingUpdate -> StateRow(
             icon = Icons.Outlined.SystemUpdateAlt,
             tint = Color.Red,
             mainText = "Applying update canceled",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         state > ApplyingUpdate() -> StateRow(
             icon = Icons.Outlined.SystemUpdateAlt,
             tint = NordicBlue,
             mainText = "Update Applied",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         else -> StateRow(icon = Icons.Outlined.SystemUpdateAlt, mainText = "Apply update")
     }
 }
@@ -558,26 +626,30 @@ fun CompletedRow(
             icon = Icons.Outlined.DoneAll,
             tint = NordicBlue,
             mainText = "Completed",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         state is Failed && state.state is Complete -> StateRow(
             icon = Icons.Outlined.DoneAll,
             tint = Color.Red,
             mainText = "Failed",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         state is Canceled && state.state is Complete -> StateRow(
             icon = Icons.Outlined.DoneAll,
             tint = Color.Red,
             mainText = "Canceled",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         state > Complete -> StateRow(
             icon = Icons.Outlined.DoneAll,
             tint = NordicBlue,
             mainText = "Completed",
-            contentAlpha = ContentAlpha.high
+            contentAlpha = MaterialTheme.colorScheme.onSurface
         )
+
         else -> StateRow(icon = Icons.Outlined.DoneAll, mainText = "Complete")
     }
 }

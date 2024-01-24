@@ -8,19 +8,51 @@
 
 package no.nordicsemi.android.ei.ui
 
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -29,12 +61,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusOrder
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -51,7 +81,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -76,9 +105,8 @@ import no.nordicsemi.android.ei.ui.theme.NordicMiddleGrey
 import no.nordicsemi.android.ei.viewmodels.DashboardViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Event
 import java.net.UnknownHostException
-import java.util.*
+import java.util.Locale
 
-@OptIn(ExperimentalCoilApi::class)
 @Composable
 fun Dashboard(
     viewModel: DashboardViewModel,
@@ -113,9 +141,11 @@ fun Dashboard(
                             )
                         )
                     }
+
                     is Event.Project.Selected -> {
                         onProjectSelected(event.project)
                     }
+
                     is Event.Error -> {
                         isCreateProjectDialogVisible = false
                         showSnackbar(
@@ -134,7 +164,6 @@ fun Dashboard(
     }
 
     Scaffold(
-        scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
         topBar = {
             UserAppBar(
                 title = {
@@ -175,8 +204,8 @@ fun Dashboard(
                                 modifier = Modifier
                                     .padding(horizontal = 16.dp, vertical = 16.dp),
                                 text = stringResource(id = R.string.title_projects),
-                                color = MaterialTheme.colors.onSurface,
-                                style = MaterialTheme.typography.h6
+                                color = MaterialTheme.colorScheme.onSurface,
+                                style = MaterialTheme.typography.titleLarge
                             )
                         }
                         items(
@@ -191,7 +220,7 @@ fun Dashboard(
                                     )
                                 }
                             )
-                            Divider(modifier = Modifier.width(Dp.Hairline))
+                            HorizontalDivider()
                         }
                     }
                 } ?: run {
@@ -202,7 +231,11 @@ fun Dashboard(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
+                        CompositionLocalProvider(
+                            value = LocalContentColor provides MaterialTheme.colorScheme.onSurface.copy(
+                                alpha = 0.38f
+                            )
+                        ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_project_diagram),
                                 contentDescription = null,
@@ -211,7 +244,7 @@ fun Dashboard(
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 text = stringResource(R.string.label_no_projects),
-                                style = MaterialTheme.typography.h6
+                                style = MaterialTheme.typography.titleLarge
                             )
                         }
                     }
@@ -245,13 +278,13 @@ fun Dashboard(
             .offset(y = UserAppBarImageSize / 2)
             .padding(start = 16.dp)
             .border(
-                border = BorderStroke(3.dp, color = MaterialTheme.colors.onPrimary),
+                border = BorderStroke(3.dp, color = MaterialTheme.colorScheme.onPrimary),
                 shape = CircleShape
             )
             .height(UserAppBarImageSize)
             .aspectRatio(1.0f)
             .shadow(
-                elevation = AppBarDefaults.TopAppBarElevation,
+                elevation = 4.dp,
                 shape = CircleShape
             ),
         shape = CircleShape,
@@ -262,17 +295,31 @@ fun Dashboard(
                     when {
                         photo.isNotBlank() -> photo
                         else -> Image(
-                            modifier = Modifier.border(border = BorderStroke(10.dp, color = MaterialTheme.colors.surface.copy(0.6f))),
+                            modifier = Modifier.border(
+                                border = BorderStroke(
+                                    10.dp,
+                                    color = MaterialTheme.colorScheme.surface.copy(0.6f)
+                                )
+                            ),
                             imageVector = Icons.Filled.AccountCircle,
                             contentDescription = null,
-                            colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface.copy(0.6f))
+                            colorFilter = ColorFilter.tint(
+                                MaterialTheme.colorScheme.onSurface.copy(
+                                    0.6f
+                                )
+                            )
                         )
                     }
                 } ?: Image(
-                    modifier = Modifier.border(border = BorderStroke(3.dp, color = MaterialTheme.colors.surface.copy(0.6f))),
+                    modifier = Modifier.border(
+                        border = BorderStroke(
+                            3.dp,
+                            color = MaterialTheme.colorScheme.surface.copy(0.6f)
+                        )
+                    ),
                     imageVector = Icons.Filled.AccountCircle,
                     contentDescription = null,
-                    colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface.copy(0.6f))
+                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface.copy(0.6f))
                 )).apply(block = fun ImageRequest.Builder.() {
                     crossfade(true)
                     placeholder(R.drawable.ic_baseline_account_circle_24)
@@ -293,7 +340,7 @@ fun ProjectRow(
 ) {
     Row(
         modifier = modifier
-            .background(MaterialTheme.colors.surface)
+            .background(MaterialTheme.colorScheme.surface)
             .clickable {
                 onProjectSelected()
             }
@@ -340,25 +387,26 @@ private fun Collaborator(collaborators: List<Collaborator>) {
                 // lets limit the images to max collaborators
                 if (index in 0 until maxImages) {
                     Image(
-                        painter = rememberAsyncImagePainter(ImageRequest.Builder(LocalContext.current)
-                            .data(
-                                data = if (collaborator.photo.isNotBlank()) {
-                                    collaborator.photo
-                                } else {
-                                    Image(
-                                        imageVector = Icons.Filled.AccountCircle,
-                                        modifier = Modifier.requiredSize(imageSize + 8.dp),
-                                        contentDescription = null,
-                                        contentScale = ContentScale.FillBounds,
-                                        colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
-                                        alpha = 0.6f
-                                    )
-                                }
-                            ).apply(block = fun ImageRequest.Builder.() {
-                                crossfade(true)
-                                placeholder(R.drawable.ic_outline_account_circle_24)
-                                transformations(CircleCropTransformation())
-                            }).build()
+                        painter = rememberAsyncImagePainter(
+                            ImageRequest.Builder(LocalContext.current)
+                                .data(
+                                    data = if (collaborator.photo.isNotBlank()) {
+                                        collaborator.photo
+                                    } else {
+                                        Image(
+                                            imageVector = Icons.Filled.AccountCircle,
+                                            modifier = Modifier.requiredSize(imageSize + 8.dp),
+                                            contentDescription = null,
+                                            contentScale = ContentScale.FillBounds,
+                                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface),
+                                            alpha = 0.6f
+                                        )
+                                    }
+                                ).apply(block = fun ImageRequest.Builder.() {
+                                    crossfade(true)
+                                    placeholder(R.drawable.ic_outline_account_circle_24)
+                                    transformations(CircleCropTransformation())
+                                }).build()
                         ),
                         contentDescription = null,
                         modifier = Modifier.requiredSize(imageSize),
@@ -375,7 +423,7 @@ private fun Collaborator(collaborators: List<Collaborator>) {
                             .background(color = NordicMiddleGrey)
                             .padding(8.dp),
                         color = Color.White,
-                        style = MaterialTheme.typography.h6,
+                        style = MaterialTheme.typography.titleLarge,
                         textAlign = TextAlign.Center,
                         maxLines = 1
                     )
@@ -386,7 +434,6 @@ private fun Collaborator(collaborators: List<Collaborator>) {
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun CreateProjectDialog(
     onCreateProject: (String) -> Unit,
@@ -398,9 +445,9 @@ private fun CreateProjectDialog(
     var projectName by rememberSaveable { mutableStateOf("") }
     var isCreateClicked by rememberSaveable { mutableStateOf(false) }
     ShowDialog(
-        drawableRes = R.drawable.ic_project_diagram,
+        imageVector = Icons.Outlined.Share,
         title = stringResource(id = R.string.dialog_title_create_project),
-        onDismissed = onDismiss,
+        onDismissRequest = onDismiss,
         properties = DialogProperties(
             dismissOnBackPress = !isCreateClicked,
             dismissOnClickOutside = !isCreateClicked
@@ -409,7 +456,7 @@ private fun CreateProjectDialog(
                 Text(
                     modifier = Modifier.padding(top = 8.dp, bottom = 8.dp),
                     text = stringResource(R.string.label_enter_project_name),
-                    color = MaterialTheme.colors.onSurface
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Column(
                     modifier = Modifier
@@ -425,7 +472,6 @@ private fun CreateProjectDialog(
                         },
                         modifier = Modifier
                             .focusRequester(focusRequester = focusRequester)
-                            .focusOrder(focusRequester = focusRequester)
                             .fillMaxWidth()
                             .padding(top = 8.dp, bottom = 8.dp, end = 16.dp),
                         label = { Text(stringResource(R.string.field_project_name)) },
@@ -439,14 +485,14 @@ private fun CreateProjectDialog(
                             keyboardController?.hide()
                         }),
                         singleLine = true,
-                        colors = TextFieldDefaults.outlinedTextFieldColors(textColor = MaterialTheme.colors.onSurface)
+                        /*colors = TextFieldDefaults.outlinedTextFieldColors(textColor = MaterialTheme.colorScheme.onSurface)*/
                     )
                     if (isError) {
                         Text(
                             modifier = Modifier.padding(start = 16.dp),
                             text = stringResource(R.string.label_empty_project_name_error),
-                            color = MaterialTheme.colors.error,
-                            style = MaterialTheme.typography.caption
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
                         )
                     }
                     Spacer(modifier = Modifier.height(height = 16.dp))
@@ -459,16 +505,12 @@ private fun CreateProjectDialog(
                 ) {
                     TextButton(
                         onClick = { onDismiss() }) {
-                        Text(
-                            text = stringResource(R.string.action_cancel)
-                                .uppercase(Locale.US)
-                        )
+                        Text(text = stringResource(R.string.action_cancel).uppercase(Locale.US))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     TextButton(
                         modifier = Modifier
-                            .focusRequester(focusRequester = focusRequester)
-                            .focusOrder(focusRequester = focusRequester),
+                            .focusRequester(focusRequester = focusRequester),
                         enabled = projectName.isNotBlank(),
                         onClick = {
                             isCreateClicked = !isCreateClicked
@@ -513,13 +555,8 @@ private fun ShowAboutDialog(onDismiss: () -> Unit) {
                         textAlign = TextAlign.End
                     )
                 }
-                TextButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.align(Alignment.End)
-                ) {
-                    Text(
-                        text = stringResource(R.string.action_ok)
-                    )
+                TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End)) {
+                    Text(text = stringResource(R.string.action_ok))
                 }
             }
         }
@@ -543,7 +580,7 @@ private fun ShowDownloadingDevelopmentKeysDialog(
             modifier = modifier
                 .width(width = 280.dp)
                 .fillMaxWidth()
-                .background(MaterialTheme.colors.surface)
+                .background(MaterialTheme.colorScheme.surface)
                 .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
         ) {
             Row(
@@ -555,13 +592,13 @@ private fun ShowDownloadingDevelopmentKeysDialog(
                     modifier = Modifier.size(24.dp),
                     painter = painterResource(id = R.drawable.ic_baseline_hourglass_top),
                     contentDescription = null,
-                    tint = MaterialTheme.colors.onSurface
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
                     text = stringResource(R.string.label_please_wait),
-                    color = MaterialTheme.colors.onSurface,
-                    style = MaterialTheme.typography.h6
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.titleLarge
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
@@ -573,8 +610,8 @@ private fun ShowDownloadingDevelopmentKeysDialog(
             Spacer(modifier = Modifier.height(32.dp))
             Text(
                 text = stringResource(R.string.label_fetching_development_keys_socket_token),
-                color = MaterialTheme.colors.onSurface,
-                style = MaterialTheme.typography.body1
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.bodySmall
             )
         }
     }

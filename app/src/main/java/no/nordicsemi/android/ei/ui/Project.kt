@@ -6,31 +6,66 @@
  *
  */
 
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class)
+
 package no.nordicsemi.android.ei.ui
 
-import android.content.res.Configuration.*
+import android.content.res.Configuration.ORIENTATION_LANDSCAPE
+import android.content.res.Configuration.SCREENLAYOUT_SIZE_LARGE
+import android.content.res.Configuration.SCREENLAYOUT_SIZE_MASK
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.*
-import androidx.compose.material.ModalBottomSheetValue.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Sensors
 import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -42,17 +77,21 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import no.nordicsemi.android.ei.*
+import no.nordicsemi.android.ei.BottomNavigationScreen
+import no.nordicsemi.android.ei.HorizontalPagerTab
 import no.nordicsemi.android.ei.R
+import no.nordicsemi.android.ei.Route
+import no.nordicsemi.android.ei.ShowDataAcquisitionDialog
+import no.nordicsemi.android.ei.ShowDialog
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.Message.Sample.Finished
 import no.nordicsemi.android.ei.model.Message.Sample.Unknown
+import no.nordicsemi.android.ei.showSnackbar
 import no.nordicsemi.android.ei.ui.layouts.CollapsibleFloatingActionButton
 import no.nordicsemi.android.ei.ui.layouts.TabTopAppBar
 import no.nordicsemi.android.ei.ui.layouts.isScrollingUp
@@ -63,7 +102,7 @@ import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Event
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import java.net.UnknownHostException
-import java.util.*
+import java.util.Locale
 
 @Composable
 fun Project(
@@ -78,9 +117,11 @@ fun Project(
         )
     }
 
-    val connectedDevices by derivedStateOf {
-        viewModel.configuredDevices.filter { device ->
-            viewModel.commsManagers[device.deviceId]?.connectivityState == DeviceState.AUTHENTICATED
+    val connectedDevices by remember {
+        derivedStateOf {
+            viewModel.configuredDevices.filter { device ->
+                viewModel.commsManagers[device.deviceId]?.connectivityState == DeviceState.AUTHENTICATED
+            }
         }
     }
 
@@ -159,9 +200,9 @@ private fun LargeScreen(
                                     }
                                 ) {
                                     Text(
-                                        text = stringResource(R.string.action_cancel)
-                                            .uppercase(Locale.US),
-                                        style = MaterialTheme.typography.button
+                                        text = stringResource(R.string.action_cancel).uppercase(
+                                            Locale.US
+                                        )
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -171,9 +212,9 @@ private fun LargeScreen(
                                     onClick = { viewModel.startSampling() }
                                 ) {
                                     Text(
-                                        text = stringResource(R.string.action_start_sampling)
-                                            .uppercase(Locale.US),
-                                        style = MaterialTheme.typography.button
+                                        text = stringResource(R.string.action_start_sampling).uppercase(
+                                            Locale.US
+                                        )
                                     )
                                 }
                             }
@@ -181,12 +222,12 @@ private fun LargeScreen(
                     )
                 })
         }
+
         else -> {
         }
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun SmallScreen(
     viewModel: ProjectViewModel,
@@ -198,20 +239,49 @@ private fun SmallScreen(
 ) {
     val scope = rememberCoroutineScope()
     val isLandscape = LocalConfiguration.current.orientation == ORIENTATION_LANDSCAPE
+    var showBottomSheet by remember { mutableStateOf(false) }
     val modalBottomSheetState =
         rememberModalBottomSheetState(
-            initialValue = Hidden, confirmStateChange = {
-                if (it == HalfExpanded || it == Expanded) true
+            confirmValueChange = {
+                if (it == SheetValue.PartiallyExpanded || it == SheetValue.Expanded)
+                    true
                 else (viewModel.samplingState is Finished || viewModel.samplingState is Unknown)
             }
         )
-    val isBackHandlerEnabled by derivedStateOf {
-        modalBottomSheetState.isVisible
+    val isBackHandlerEnabled by remember {
+        derivedStateOf {
+            modalBottomSheetState.isVisible
+        }
     }
 
-    ModalBottomSheetLayout(
-        sheetState = modalBottomSheetState,
-        sheetContent = {
+    ProjectContent(
+        viewModel = viewModel,
+        scope = scope,
+        connectedDevices = connectedDevices,
+        samplingState = viewModel.samplingState,
+        isBackHandlerEnabled = isBackHandlerEnabled,
+        selectedScreen = selectedScreen,
+        onScreenChanged = onScreenChanged,
+        isSamplingMessageVisible = viewModel.samplingState !is Unknown && !viewModel.isSamplingStartedFromDevice,
+        onSamplingMessageDismissed = onSamplingMessageDismissed,
+        isFabVisible = selectedScreen.shouldFabBeVisible,
+        onFabClicked = {
+            showBottomSheet = true
+        },
+        onBackPressed = {
+            if (modalBottomSheetState.isVisible &&
+                (viewModel.samplingState is Finished || viewModel.samplingState is Unknown)
+            )
+                showBottomSheet = false
+            else onBackPressed()
+        }
+    )
+    if (showBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { },
+            sheetState = modalBottomSheetState,
+            scrimColor = Color.Black.copy(alpha = 0.5f)
+        ) {
             RecordSampleSmallScreen(
                 viewModel = viewModel,
                 connectedDevices = connectedDevices,
@@ -231,53 +301,22 @@ private fun SmallScreen(
                             Text(
                                 text = stringResource(R.string.action_start_sampling).uppercase(
                                     Locale.US
-                                ),
-                                style = MaterialTheme.typography.button
+                                )
                             )
                         }
                     }
                 },
                 onCloseClicked = {
                     if (viewModel.samplingState is Finished || viewModel.samplingState is Unknown) {
-                        hideBottomSheet(
-                            scope = scope,
-                            modalBottomSheetState = modalBottomSheetState
-                        )
+                        showBottomSheet = false
                         viewModel.resetSamplingState()
                     }
                 }
             )
-        },
-        scrimColor = Color.Black.copy(alpha = 0.5f)
-    ) {
-        ProjectContent(
-            viewModel = viewModel,
-            scope = scope,
-            connectedDevices = connectedDevices,
-            samplingState = viewModel.samplingState,
-            isBackHandlerEnabled = isBackHandlerEnabled,
-            selectedScreen = selectedScreen,
-            onScreenChanged = onScreenChanged,
-            isSamplingMessageVisible = viewModel.samplingState !is Unknown && !viewModel.isSamplingStartedFromDevice,
-            onSamplingMessageDismissed = onSamplingMessageDismissed,
-            isFabVisible = selectedScreen.shouldFabBeVisible,
-            onFabClicked = {
-                showBottomSheet(
-                    scope = scope,
-                    modalBottomSheetState = modalBottomSheetState,
-                    isLandsScape = isLandscape,
-                )
-            },
-            onBackPressed = {
-                if (modalBottomSheetState.isVisible && (viewModel.samplingState is Finished || viewModel.samplingState is Unknown))
-                    hideBottomSheet(scope = scope, modalBottomSheetState = modalBottomSheetState)
-                else onBackPressed()
-            }
-        )
+        }
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalPagerApi::class)
 @Composable
 private fun ProjectContent(
     viewModel: ProjectViewModel,
@@ -305,10 +344,9 @@ private fun ProjectContent(
     val testingListState = rememberLazyListState()
     val listStates = listOf(trainingListState, testingListState)
     val inferencingState by remember { viewModel.inferencingState }
-    val inferencingResults by remember { viewModel.inferencingResults }
-    // Backdrop scaffold state used in the devices screen
-    val backdropScaffoldState =
-        rememberBackdropScaffoldState(initialValue = BackdropValue.Revealed)
+    val inferencingResults by remember {
+        viewModel.inferencingResults
+    }
     var isWarningDialogVisible by rememberSaveable { mutableStateOf(false) }
 
     LocalLifecycleOwner.current.lifecycleScope.launchWhenStarted {
@@ -326,6 +364,7 @@ private fun ProjectContent(
                             }
                         )
                     }
+
                     else -> {
                     }
                 }
@@ -333,35 +372,22 @@ private fun ProjectContent(
         }
     }
     Scaffold(
-        scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
         topBar = {
             ProjectTopAppBar(
-                modifier = Modifier.fillMaxWidth(),
+                /*modifier = Modifier.fillMaxWidth(),*/
                 projectName = viewModel.project.name,
                 selectedScreen = selectedScreen,
                 pagerState = pagerState,
                 onBackPressed = {
                     //We should only exit this screen if the backdrop is revealed and no devices are connected.
-                    if (backdropScaffoldState.isRevealed) {
-                        when (connectedDevices.isNotEmpty()) {
-                            true -> isWarningDialogVisible = true
-                            false -> onBackPressed()
-                        }
-                    } else {
-                        animateBottomSheet(
-                            scope = scope,
-                            scaffoldState = backdropScaffoldState,
-                            targetValue = BackdropValue.Revealed
-                        )
+                    when (connectedDevices.isNotEmpty()) {
+                        true -> isWarningDialogVisible = true
+                        false -> onBackPressed()
                     }
                 },
             )
         },
-        bottomBar = {
-            ProjectBottomNavigation(
-                navController = navController,
-            )
-        },
+        bottomBar = { ProjectBottomNavigation(navController = navController) },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
             if (isFabVisible) {
@@ -377,7 +403,8 @@ private fun ProjectContent(
             }
         }
     ) { innerPadding ->
-        Column {
+        val padding = innerPadding.calculateTopPadding()
+        Column(modifier = Modifier.padding(top = padding/*, bottom = padding*/)) {
             SamplingMessage(
                 isSamplingMessageVisible = isSamplingMessageVisible,
                 onSamplingMessageDismissed = onSamplingMessageDismissed,
@@ -403,15 +430,13 @@ private fun ProjectContent(
                         scope = scope,
                         viewModel = devicesViewModel,
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues = innerPadding),
+                            .fillMaxSize(),
                         configuredDevices = viewModel.configuredDevices,
                         activeDevices = viewModel.commsManagers,
                         refreshingState = viewModel.isRefreshing,
                         onRefresh = { viewModel.listDevices() },
                         scannerState = devicesViewModel.scannerState,
                         screen = selectedScreen,
-                        backdropScaffoldState = backdropScaffoldState,
                         onBluetoothStateChanged = { isEnabled ->
                             if (isEnabled) devicesViewModel.startScan()
                             else devicesViewModel.stopScan()
@@ -433,9 +458,7 @@ private fun ProjectContent(
                         onBack = onBackPressed
                     )
                     DataAcquisition(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues = innerPadding),
+                        modifier = Modifier.fillMaxSize(),
                         pagerState = pagerState,
                         listStates = listStates,
                         samples = listOf(
@@ -447,9 +470,7 @@ private fun ProjectContent(
                 }
                 composable(route = BottomNavigationScreen.DEPLOYMENT.route) {
                     Deployment(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues = innerPadding),
+                        modifier = Modifier.fillMaxSize(),
                         project = viewModel.project,
                         connectedDevices = connectedDevices,
                         deploymentTarget = viewModel.deploymentTarget,
@@ -461,9 +482,7 @@ private fun ProjectContent(
                 }
                 composable(route = BottomNavigationScreen.INFERENCING.route) {
                     InferencingScreen(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues = innerPadding),
+                        modifier = Modifier.fillMaxSize(),
                         connectedDevices = connectedDevices,
                         inferenceResults = inferencingResults,
                         inferencingTarget = viewModel.inferencingTarget,
@@ -491,7 +510,7 @@ private fun ProjectContent(
                 Text(
                     modifier = Modifier.padding(end = 8.dp),
                     text = stringResource(R.string.label_warning_projects),
-                    style = MaterialTheme.typography.subtitle1
+                    style = MaterialTheme.typography.bodyLarge
                 )
 
                 Row(
@@ -500,14 +519,8 @@ private fun ProjectContent(
                         .padding(top = 16.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(
-                        onClick = { isWarningDialogVisible = !isWarningDialogVisible }
-                    ) {
-                        Text(
-                            text = stringResource(R.string.action_cancel).uppercase(
-                                Locale.US
-                            )
-                        )
+                    TextButton(onClick = { isWarningDialogVisible = !isWarningDialogVisible }) {
+                        Text(text = stringResource(R.string.action_cancel).uppercase(Locale.US))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     TextButton(
@@ -518,9 +531,8 @@ private fun ProjectContent(
                         }
                     ) {
                         Text(
-                            text = stringResource(R.string.action_dialog_continue).uppercase(
-                                Locale.US
-                            )
+                            text = stringResource(R.string.action_dialog_continue)
+                                .uppercase(Locale.US)
                         )
                     }
                 }
@@ -528,7 +540,6 @@ private fun ProjectContent(
     }
 }
 
-@OptIn(ExperimentalPagerApi::class)
 @Composable
 private fun ProjectTopAppBar(
     modifier: Modifier = Modifier,
@@ -537,10 +548,7 @@ private fun ProjectTopAppBar(
     pagerState: PagerState,
     onBackPressed: () -> Unit
 ) {
-    val tabs = listOf(
-        HorizontalPagerTab.TRAINING,
-        HorizontalPagerTab.TESTING,
-    )
+    val tabs = listOf(HorizontalPagerTab.TRAINING, HorizontalPagerTab.TESTING)
 
     when (selectedScreen) {
         BottomNavigationScreen.DATA_ACQUISITION -> {
@@ -552,7 +560,7 @@ private fun ProjectTopAppBar(
                     }
                     val icon = @Composable {
                         Icon(
-                            painter = rememberVectorPainter(image = it.icon),
+                            imageVector = it.icon,
                             contentDescription = null
                         )
                     }
@@ -561,17 +569,16 @@ private fun ProjectTopAppBar(
                 pagerState = pagerState,
                 modifier = modifier,
                 navigationIcon = {
-                    IconButton(onClick = {
-                        onBackPressed()
-                    }) {
+                    IconButton(onClick = onBackPressed) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null
                         )
                     }
                 }
             )
         }
+
         else -> {
             TopAppBar(
                 title = { Title(text = projectName) },
@@ -581,7 +588,7 @@ private fun ProjectTopAppBar(
                         onBackPressed()
                     }) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null
                         )
                     }
@@ -616,20 +623,16 @@ private fun ProjectBottomNavigation(
         BottomNavigationScreen.DEPLOYMENT,
         BottomNavigationScreen.INFERENCING
     )
-    BottomNavigation(
-        backgroundColor = MaterialTheme.colors.surface
-    ) {
+    NavigationBar {
         screens.forEach { screen ->
-            BottomNavigationItem(
+            NavigationBarItem(
                 icon = {
-                    Icon(
-                        painter = painterResource(id = screen.drawableRes),
-                        contentDescription = null
-                    )
+                    Icon(imageVector = screen.imageVector, contentDescription = null)
                 },
                 label = {
                     Text(
-                        text = stringResource(id = screen.resourceId), /*overflow = TextOverflow.Ellipsis,*/
+                        text = stringResource(id = screen.resourceId),
+                        overflow = TextOverflow.Ellipsis,
                         maxLines = 1
                     )
                 },
@@ -650,42 +653,17 @@ private fun ProjectBottomNavigation(
                             restoreState = true
                         }
                     }
-                },
-                selectedContentColor = MaterialTheme.colors.primaryVariant,
-                unselectedContentColor = LocalContentColor.current.copy(alpha = 0.6f)
+                }/*,
+                selectedContentColor = MaterialTheme.colorScheme.primaryVariant,
+                unselectedContentColor = LocalContentColor.current.copy(alpha = 0.6f)*/
             )
         }
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
-private fun showBottomSheet(
-    scope: CoroutineScope,
-    modalBottomSheetState: ModalBottomSheetState,
-    isLandsScape: Boolean,
-) {
-    showBottomSheet(
-        scope = scope,
-        modalBottomSheetState = modalBottomSheetState,
-        targetValue = if (isLandsScape) Expanded else HalfExpanded
-    )
-}
-
-@OptIn(ExperimentalMaterialApi::class)
-fun showBottomSheet(
-    scope: CoroutineScope,
-    modalBottomSheetState: ModalBottomSheetState,
-    targetValue: ModalBottomSheetValue
-) {
-    scope.launch {
-        modalBottomSheetState.animateTo(targetValue = targetValue)
-    }
-}
-
-@OptIn(ExperimentalMaterialApi::class)
 fun hideBottomSheet(
     scope: CoroutineScope,
-    modalBottomSheetState: ModalBottomSheetState
+    modalBottomSheetState: SheetState
 ) {
     scope.launch {
         modalBottomSheetState.hide()
@@ -722,26 +700,32 @@ fun SamplingMessage(
                             if (isSamplingStartedFromDevice) stringResource(R.string.label_sending_sample_request)
                             else stringResource(R.string.label_ei_sending_sample_request)
                         }
+
                         is Message.Sample.Response -> {
                             if (isSamplingStartedFromDevice) stringResource(R.string.label_sampling_response_received)
                             else stringResource(R.string.label_ei_sampling_response_received)
                         }
+
                         is Message.Sample.ProgressEvent.Started -> {
                             if (isSamplingStartedFromDevice) stringResource(R.string.label_sampling_started)
                             else stringResource(R.string.label_ei_sampling_started)
                         }
+
                         is Message.Sample.ProgressEvent.Processing -> {
                             if (isSamplingStartedFromDevice) stringResource(R.string.label_sampling_processing)
                             else stringResource(R.string.label_ei_sampling_processing)
                         }
+
                         is Message.Sample.ProgressEvent.Uploading -> {
                             stringResource(R.string.label_uploading_started)
                         }
+
                         is Finished -> stringResource(R.string.label_sampling_finished).plus(
                             if (samplingState.error != null)
                                 ": ${samplingState.error}"
                             else "."
                         )
+
                         is Message.Sample.ProgressEvent.Reading -> stringResource(R.string.label_sampling_reading)
                     },
                     color = Color.White
@@ -759,6 +743,7 @@ fun SamplingMessage(
                             }
                         )
                     }
+
                     else -> {
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),

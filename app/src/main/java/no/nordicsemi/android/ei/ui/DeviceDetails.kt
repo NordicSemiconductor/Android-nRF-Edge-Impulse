@@ -8,17 +8,42 @@
 
 package no.nordicsemi.android.ei.ui
 
-import androidx.annotation.DrawableRes
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.automirrored.outlined.Label
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Cloud
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.GraphicEq
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.PermIdentity
+import androidx.compose.material.icons.outlined.SettingsEthernet
+import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.rounded.DeveloperBoard
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,7 +53,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -37,11 +61,16 @@ import kotlinx.datetime.Instant
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
-import no.nordicsemi.android.ei.viewmodels.state.DeviceState.*
+import no.nordicsemi.android.ei.viewmodels.state.DeviceState.AUTHENTICATED
+import no.nordicsemi.android.ei.viewmodels.state.DeviceState.AUTHENTICATING
+import no.nordicsemi.android.ei.viewmodels.state.DeviceState.CONNECTING
+import no.nordicsemi.android.ei.viewmodels.state.DeviceState.IN_RANGE
+import no.nordicsemi.android.ei.viewmodels.state.DeviceState.NOT_IN_RANGE
 import no.nordicsemi.android.ei.viewmodels.state.buttonBackgroundColor
 import no.nordicsemi.android.ei.viewmodels.state.indicatorColor
 import java.text.DateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun DeviceDetails(
@@ -58,16 +87,11 @@ fun DeviceDetails(
             .padding(bottom = 56.dp)
     ) {
         item {
-            DeviceName(
-                device = device,
-                onRenameClick = onRenameClick
-            )
-            Connectivity(
-                deviceState = deviceState
-            )
+            DeviceName(device = device, onRenameClick = onRenameClick)
+            Connectivity(deviceState = deviceState)
             Row(
                 modifier = Modifier
-                    .background(color = MaterialTheme.colors.background)
+                    .background(color = MaterialTheme.colorScheme.background)
                     .fillMaxWidth()
                     .padding(16.dp), horizontalArrangement = Arrangement.Center
             ) {
@@ -111,19 +135,16 @@ fun DeviceDetails(
         item {
             Row(
                 modifier = Modifier
-                    .background(color = MaterialTheme.colors.background)
+                    .background(color = MaterialTheme.colorScheme.background)
                     .fillMaxWidth()
                     .padding(top = 16.dp, bottom = 32.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
                 Button(
                     onClick = { onDeleteClick(device) },
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
                 ) {
-                    Text(
-                        text = stringResource(R.string.action_delete).uppercase(Locale.US),
-                        color = Color.White
-                    )
+                    Text(text = stringResource(R.string.action_delete).uppercase(Locale.US), color = Color.White)
                 }
             }
         }
@@ -131,22 +152,15 @@ fun DeviceDetails(
 
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun DeviceName(
     device: Device,
     onRenameClick: (Device, String) -> Unit,
 ) {
+    var onEditClick by rememberSaveable { mutableStateOf(false) }
+    var deviceName by rememberSaveable(device) { mutableStateOf(device.name) }
 
-    var onEditClick by rememberSaveable {
-        mutableStateOf(false)
-    }
-
-    var deviceName by rememberSaveable(device) {
-        mutableStateOf(device.name)
-    }
-
-    Crossfade(targetState = onEditClick) {
+    Crossfade(targetState = onEditClick, label = "name") {
         when (it) {
             true -> {
                 Row(
@@ -158,15 +172,12 @@ private fun DeviceName(
                     OutlinedTextField(
                         value = deviceName,
                         onValueChange = { deviceName = it },
-                        modifier = Modifier
-                            .weight(1.0f),
-                        label = {
-                            Text(text = stringResource(R.string.label_name))
-                        },
+                        modifier = Modifier.weight(1.0f),
+                        label = { Text(text = stringResource(R.string.label_name)) },
                         leadingIcon = {
                             Icon(
                                 modifier = Modifier.size(24.dp),
-                                imageVector = Icons.Outlined.Label,
+                                imageVector = Icons.AutoMirrored.Outlined.Label,
                                 contentDescription = null
                             )
                         },
@@ -181,11 +192,10 @@ private fun DeviceName(
                         }
                     ) {
                         Icon(
-                            modifier = Modifier
-                                .size(24.dp),
+                            modifier = Modifier.size(24.dp),
                             imageVector = Icons.Outlined.Close,
                             contentDescription = null,
-                            tint = MaterialTheme.colors.primary
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                     IconButton(
@@ -196,11 +206,10 @@ private fun DeviceName(
                         enabled = deviceName.isNotBlank()
                     ) {
                         Icon(
-                            modifier = Modifier
-                                .size(24.dp),
+                            modifier = Modifier.size(24.dp),
                             imageVector = Icons.Outlined.Check,
                             contentDescription = null,
-                            tint = MaterialTheme.colors.primary
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
 
@@ -217,9 +226,9 @@ private fun DeviceName(
                     Icon(
                         modifier = Modifier
                             .size(24.dp),
-                        imageVector = Icons.Outlined.Label,
+                        imageVector = Icons.AutoMirrored.Outlined.Label,
                         contentDescription = null,
-                        tint = MaterialTheme.colors.onSurface
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                     Column(
                         modifier = Modifier
@@ -228,11 +237,11 @@ private fun DeviceName(
                     ) {
                         Text(
                             text = stringResource(id = R.string.label_name),
-                            style = MaterialTheme.typography.body1
+                            style = MaterialTheme.typography.bodyLarge
                         )
                         Text(
                             text = deviceName,
-                            style = MaterialTheme.typography.body2,
+                            style = MaterialTheme.typography.bodySmall,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -246,7 +255,7 @@ private fun DeviceName(
                         )
                     }
                 }
-                Divider()
+                HorizontalDivider()
             }
         }
     }
@@ -276,9 +285,7 @@ private fun DeviceInformation(device: Device) {
             imageVector = Icons.Outlined.History,
             text = stringResource(R.string.label_created_at),
             subText = dateTimeInstance.format(
-                Date(
-                    Instant.parse(device.created).toEpochMilliseconds()
-                )
+                Date(Instant.parse(device.created).toEpochMilliseconds())
             )
         )
         RowItem(
@@ -286,9 +293,7 @@ private fun DeviceInformation(device: Device) {
             imageVector = Icons.Outlined.Visibility,
             text = stringResource(R.string.label_last_seen),
             subText = dateTimeInstance.format(
-                Date(
-                    Instant.parse(device.lastSeen).toEpochMilliseconds()
-                )
+                Date(Instant.parse(device.lastSeen).toEpochMilliseconds())
             )
         )
     }
@@ -304,7 +309,7 @@ private fun Connectivity(
             .size(24.dp)
             .animateContentSize(),
         imageVector = Icons.Outlined.Cloud,
-        tint = deviceState?.indicatorColor() ?: MaterialTheme.colors.onSurface,
+        tint = deviceState?.indicatorColor() ?: MaterialTheme.colorScheme.onSurface,
         text = stringResource(R.string.label_connected_to_remote_management),
         subText = when (deviceState) {
             NOT_IN_RANGE, IN_RANGE -> stringResource(R.string.label_disconnected)
@@ -342,13 +347,11 @@ private fun SensorInformation(device: Device) {
             subText = stringResource(id = R.string.label_sample_duration, sensor.maxSampleLengths)
         )
         RowItem(
-            drawableRes = R.drawable.ic_waveform,
+            imageVector = Icons.Outlined.GraphicEq,
             text = stringResource(R.string.label_frequencies),
             subText = sensor.frequencies.joinToString(
                 separator = stringResource(R.string.label_frequencies_separator),
-                postfix = stringResource(
-                    R.string.label_unit_hertz
-                )
+                postfix = stringResource(R.string.label_unit_hertz)
             )
         )
     }
@@ -361,7 +364,7 @@ private fun SectionTitle(text: String, content: @Composable () -> Unit = {}) {
             modifier = Modifier
                 .weight(1.0f),
             text = text,
-            style = MaterialTheme.typography.h6
+            style = MaterialTheme.typography.titleMedium
         )
         content()
     }
@@ -371,7 +374,7 @@ private fun SectionTitle(text: String, content: @Composable () -> Unit = {}) {
 private fun RowItem(
     modifier: Modifier,
     imageVector: ImageVector,
-    tint: Color = MaterialTheme.colors.onSurface,
+    tint: Color = MaterialTheme.colorScheme.onSurface,
     text: String,
     subText: String?
 ) {
@@ -393,23 +396,17 @@ private fun RowItem(
                 .fillMaxWidth()
                 .padding(start = 16.dp)
         ) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.body1
-            )
+            Text(text = text, style = MaterialTheme.typography.bodyLarge)
             subText?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.body2
-                )
+                Text(text = it, style = MaterialTheme.typography.bodyMedium)
             }
         }
     }
-    Divider()
+    HorizontalDivider()
 }
 
 @Composable
-private fun RowItem(@DrawableRes drawableRes: Int, text: String, subText: String?) {
+private fun RowItem(imageVector: ImageVector, text: String, subText: String?) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -420,26 +417,20 @@ private fun RowItem(@DrawableRes drawableRes: Int, text: String, subText: String
         Icon(
             modifier = Modifier
                 .size(24.dp),
-            painter = painterResource(id = drawableRes),
+            imageVector = imageVector,
             contentDescription = null,
-            tint = MaterialTheme.colors.onSurface
+            tint = MaterialTheme.colorScheme.onSurface
         )
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 16.dp)
         ) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.body1
-            )
+            Text(text = text, style = MaterialTheme.typography.bodyLarge)
             subText?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.body2
-                )
+                Text(text = it, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
-    Divider()
+    HorizontalDivider()
 }

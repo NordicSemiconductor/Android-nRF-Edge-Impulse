@@ -88,11 +88,11 @@
         <activity
             android:name=".account.LoginActivity"
             android:windowSoftInputMode="adjustResize"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/NordicTheme" />
 
         <activity
             android:name=".MainActivity"
-            android:theme="@style/AppTheme.SplashScreen"
+            android:theme="@style/NordicTheme.SplashScreen"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

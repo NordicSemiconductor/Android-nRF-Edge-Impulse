@@ -22,7 +22,7 @@ import no.nordicsemi.android.ble.BleManager
 import no.nordicsemi.android.ble.data.JsonMerger
 import no.nordicsemi.android.ble.ktx.getCharacteristic
 import no.nordicsemi.android.ei.util.guard
-import java.util.*
+import java.util.UUID
 
 class BleDevice(
     val device: BluetoothDevice,
@@ -110,7 +110,7 @@ class BleDevice(
     /**
      * Enables notifications. The first message that should be received is the Hello message.
      */
-    fun initialize() {
+    public override fun initialize() {
         enableNotifications(tx).enqueue()
     }
 

@@ -11,20 +11,34 @@ package no.nordicsemi.android.ei.ui
 import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
@@ -36,17 +50,17 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import no.nordicsemi.android.common.theme.NordicTheme
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ui.theme.NordicBlue
-import no.nordicsemi.android.ei.ui.theme.NordicTheme
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun Login(
     modifier: Modifier = Modifier,
@@ -109,7 +123,6 @@ fun Login(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun Login(
     modifier: Modifier,
@@ -187,7 +200,8 @@ private fun Login(
                 .fillMaxWidth(),
             enabled = enabled,
             label = { Text(stringResource(R.string.field_password)) },
-            visualTransformation = if (passwordState) VisualTransformation.None else PasswordVisualTransformation(),
+            visualTransformation = if (passwordState) VisualTransformation.None
+            else PasswordVisualTransformation(),
             leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
             trailingIcon = {
                 IconButton(
@@ -256,7 +270,6 @@ private fun Login(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun SmallScreenLandscapeLogin(
     modifier: Modifier,
@@ -282,7 +295,9 @@ private fun SmallScreenLandscapeLogin(
         horizontalArrangement = Arrangement.Center
     ) {
         Column(
-            modifier = modifier.weight(1.0f).fillMaxSize(),
+            modifier = modifier
+                .weight(1.0f)
+                .fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.End
         ) {
@@ -306,7 +321,9 @@ private fun SmallScreenLandscapeLogin(
             }
         }
         Column(
-            modifier = modifier.weight(1.5f).fillMaxSize(),
+            modifier = modifier
+                .weight(1.5f)
+                .fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -362,6 +379,7 @@ private fun SmallScreenLandscapeLogin(
                 keyboardOptions = KeyboardOptions(
                     autoCorrect = false,
                     imeAction = ImeAction.Done,
+                    keyboardType = KeyboardType.Password
                 ),
                 keyboardActions = KeyboardActions {
                     keyboardController?.hide()
@@ -417,7 +435,7 @@ private fun SmallScreenLandscapeLogin(
 @Preview(name = "Dark")
 @Composable
 fun LoginPreviewDark() {
-    NordicTheme(darkTheme = true) {
+    NordicTheme {
         Surface {
             Login(error = "Invalid password")
         }
@@ -427,7 +445,7 @@ fun LoginPreviewDark() {
 @Preview(name = "Light")
 @Composable
 fun LoginPreviewLight() {
-    NordicTheme(darkTheme = false) {
+    NordicTheme {
         Surface {
             Login(error = "Invalid password")
         }

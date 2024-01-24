@@ -11,13 +11,13 @@ package no.nordicsemi.android.ei.account
 import android.accounts.AccountAuthenticatorResponse
 import android.accounts.AccountManager
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
 
 /**
  * This is [android.accounts.AccountAuthenticatorActivity] converted to [AppCompatActivity].
  * @see <a href="https://developer.android.com/reference/android/accounts/AccountAuthenticatorActivity">AccountAuthenticatorActivity</a>
  */
-open class AccountAuthenticatorActivity: AppCompatActivity() {
+open class AccountAuthenticatorActivity: ComponentActivity() {
     private var accountAuthenticatorResponse: AccountAuthenticatorResponse? = null
     private var resultBundle: Bundle? = null
 

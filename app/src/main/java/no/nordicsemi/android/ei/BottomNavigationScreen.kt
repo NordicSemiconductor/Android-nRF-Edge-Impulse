@@ -8,8 +8,13 @@
 
 package no.nordicsemi.android.ei
 
-import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Assessment
+import androidx.compose.material.icons.rounded.DeveloperBoard
+import androidx.compose.material.icons.rounded.Storage
+import androidx.compose.material.icons.rounded.ViewInAr
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavDestination
 
 /**
@@ -17,39 +22,39 @@ import androidx.navigation.NavDestination
  *
  * @param route Route
  * @param resourceId String resource for the bottom navigation bar item name
- * @param drawableRes ImageVector for the icon
+ * @param imageVector ImageVector for the icon
  */
 enum class BottomNavigationScreen(
     val route: String,
     @StringRes val resourceId: Int,
-    @DrawableRes val drawableRes: Int,
+    val imageVector: ImageVector,
     val shouldFabBeVisible: Boolean,
 ) {
     DEVICES(
         route = Route.devices,
         resourceId = R.string.label_devices,
-        drawableRes = R.drawable.ic_round_developer_board_24,
+        imageVector = Icons.Rounded.DeveloperBoard,
         shouldFabBeVisible = false
     ),
 
     DATA_ACQUISITION(
         route = Route.dataAcquisition,
         resourceId = R.string.label_data_acquisition,
-        drawableRes = R.drawable.ic_round_storage_24,
+        imageVector = Icons.Rounded.Storage,
         shouldFabBeVisible = true
     ),
 
     DEPLOYMENT(
         route = Route.deployment,
         resourceId = R.string.label_deployment,
-        drawableRes = R.drawable.ic_deployment_24,
+        imageVector = Icons.Rounded.ViewInAr,
         shouldFabBeVisible = false
     ),
 
     INFERENCING(
         route = Route.inferencing,
         resourceId = R.string.title_inferencing,
-        drawableRes = R.drawable.ic_outline_inferencing_24,
+        imageVector = Icons.Rounded.Assessment,
         shouldFabBeVisible = false
     );
 

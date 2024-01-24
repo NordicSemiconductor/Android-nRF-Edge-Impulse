@@ -16,14 +16,13 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
+import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import dagger.hilt.android.AndroidEntryPoint
+import no.nordicsemi.android.common.theme.NordicTheme
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.Uris
 import no.nordicsemi.android.ei.ui.Login
-import no.nordicsemi.android.ei.ui.theme.NordicTheme
 import no.nordicsemi.android.ei.util.asMessage
 import no.nordicsemi.android.ei.viewmodels.LoginViewModel
 import no.nordicsemi.android.ei.viewmodels.state.LoginState
@@ -40,15 +39,15 @@ class LoginActivity : AccountAuthenticatorActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val accountType = intent.getStringExtra(KEY_ACCOUNT_TYPE) ?: getString(R.string.account_type)
+        val accountType =
+            intent.getStringExtra(KEY_ACCOUNT_TYPE) ?: getString(R.string.account_type)
         val accountName = intent.getStringExtra(KEY_ACCOUNT_NAME)
-        val authTokenType = intent.getStringExtra(KEY_AUTH_TOKEN_TYPE) ?: getString(R.string.account_token_type)
+        val authTokenType =
+            intent.getStringExtra(KEY_AUTH_TOKEN_TYPE) ?: getString(R.string.account_token_type)
 
         setContent {
             NordicTheme {
-                Scaffold(
-                    backgroundColor = MaterialTheme.colors.background
-                ) { innerPadding ->
+                Scaffold { innerPadding ->
                     val viewModel: LoginViewModel by viewModels()
                     when (val state = viewModel.state) {
                         is LoginState.LoggedIn -> finishLogin(
@@ -57,6 +56,7 @@ class LoginActivity : AccountAuthenticatorActivity() {
                             state.tokenType,
                             state.token
                         )
+
                         else -> Login(
                             modifier = Modifier.padding(innerPadding),
                             enabled = state !is LoginState.InProgress,
