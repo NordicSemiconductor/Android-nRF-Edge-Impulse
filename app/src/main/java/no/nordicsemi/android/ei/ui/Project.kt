@@ -365,8 +365,7 @@ private fun ProjectContent(
                         )
                     }
 
-                    else -> {
-                    }
+                    else -> {}
                 }
             }
         }
@@ -434,22 +433,17 @@ private fun ProjectContent(
                         configuredDevices = viewModel.configuredDevices,
                         activeDevices = viewModel.commsManagers,
                         refreshingState = viewModel.isRefreshing,
-                        onRefresh = { viewModel.listDevices() },
+                        onRefresh = viewModel::listDevices,
                         scannerState = devicesViewModel.scannerState,
-                        screen = selectedScreen,
                         onBluetoothStateChanged = { isEnabled ->
                             if (isEnabled) devicesViewModel.startScan()
                             else devicesViewModel.stopScan()
                         },
-                        connect = { viewModel.connect(device = it) },
-                        disconnect = { viewModel.disconnect(device = it) },
-                        onRenameClick = { device, name ->
-                            viewModel.rename(
-                                device = device,
-                                name = name
-                            )
-                        }
-                    ) { viewModel.delete(it) }
+                        connect = viewModel::connect,
+                        disconnect = viewModel::disconnect,
+                        onRenameClick = viewModel::rename,
+                        onDeleteClick = viewModel::delete
+                    )
                 }
                 composable(route = BottomNavigationScreen.DATA_ACQUISITION.route) {
                     val dataAcquisitionViewModel = hiltViewModel<DataAcquisitionViewModel>()
@@ -474,10 +468,10 @@ private fun ProjectContent(
                         project = viewModel.project,
                         connectedDevices = connectedDevices,
                         deploymentTarget = viewModel.deploymentTarget,
-                        onDeploymentTargetSelected = { viewModel.onDeploymentTargetSelected(it) },
+                        onDeploymentTargetSelected = viewModel::onDeploymentTargetSelected,
                         deploymentState = viewModel.deploymentState,
                         onDeployClick = { viewModel.deploy() },
-                        onCancelDeployClick = { viewModel.cancelDeploy() }
+                        onCancelDeployClick = viewModel::cancelDeploy
                     )
                 }
                 composable(route = BottomNavigationScreen.INFERENCING.route) {
@@ -486,13 +480,10 @@ private fun ProjectContent(
                         connectedDevices = connectedDevices,
                         inferenceResults = inferencingResults,
                         inferencingTarget = viewModel.inferencingTarget,
-                        onInferencingTargetSelected = { viewModel.onInferencingTargetSelected(it) },
-                        inferencingState = inferencingState
-                    ) { inferencingRequest ->
-                        viewModel.sendInferencingRequest(
-                            inferencingRequest = inferencingRequest
-                        )
-                    }
+                        onInferencingTargetSelected = viewModel::onInferencingTargetSelected,
+                        inferencingState = inferencingState,
+                        sendInferencingRequest = viewModel::sendInferencingRequest
+                    )
                 }
             }
         }
