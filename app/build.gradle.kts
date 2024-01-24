@@ -16,7 +16,7 @@ plugins {
 android {
     namespace = "no.nordicsemi.android.ei"
     defaultConfig {
-        applicationId = "no.nordicsemi.android.ei"
+        applicationId = "no.nordicsemi.android.nrfei"
     }
 }
 
