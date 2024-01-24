@@ -109,7 +109,7 @@ fun Devices(
     onDeleteClick: (Device) -> Unit
 ) {
     val scanningState = scannerState.scanningState
-    val sheetState = rememberStandardBottomSheetState()
+    val sheetState = rememberStandardBottomSheetState(skipHiddenState = false)
     val scaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = sheetState
     )
