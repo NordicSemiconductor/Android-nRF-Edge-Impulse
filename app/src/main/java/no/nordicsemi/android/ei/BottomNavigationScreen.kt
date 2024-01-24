@@ -10,7 +10,7 @@ package no.nordicsemi.android.ei
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Assessment
+import androidx.compose.material.icons.outlined.Assessment
 import androidx.compose.material.icons.rounded.DeveloperBoard
 import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material.icons.rounded.ViewInAr
@@ -54,7 +54,7 @@ enum class BottomNavigationScreen(
     INFERENCING(
         route = Route.inferencing,
         resourceId = R.string.title_inferencing,
-        imageVector = Icons.Rounded.Assessment,
+        imageVector = Icons.Outlined.Assessment,
         shouldFabBeVisible = false
     );
 
