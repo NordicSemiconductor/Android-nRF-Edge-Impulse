@@ -433,10 +433,10 @@ private fun calculateWith(
 } else {
     if (cellCount < 5) (screenWidth / cellCount).dp
     else {
-        if (isLargeScreen) MAX_CELL_WIDTH
+        if (isLargeScreen) (screenWidth / cellCount).dp
         else MIN_CELL_WIDTH
     }
 }
 
-private val MIN_CELL_WIDTH = 100.dp
+private val MIN_CELL_WIDTH = 98.dp
 private val MAX_CELL_WIDTH = 140.dp
