@@ -38,22 +38,23 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.DeveloperBoard
 import androidx.compose.material.icons.rounded.ExpandMore
-import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberBottomSheetScaffoldState
-import androidx.compose.material3.rememberStandardBottomSheetState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -108,21 +109,153 @@ fun Devices(
     onRenameClick: (Device, String) -> Unit,
     onDeleteClick: (Device) -> Unit
 ) {
+    var showBottomSheet by rememberSaveable { mutableStateOf(false) }
     val scanningState = scannerState.scanningState
-    val sheetState = rememberStandardBottomSheetState(skipHiddenState = false)
-    val scaffoldState = rememberBottomSheetScaffoldState(
-        bottomSheetState = sheetState
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    BackHandler(
+        enabled = bottomSheetState.isVisible,
+        onBack = { scope.launch { bottomSheetState.hide() } }
     )
-    BackHandler(enabled = sheetState.isVisible, onBack = {
-        scope.launch { sheetState.hide() }
-    })
-    /*if (screen != BottomNavigationScreen.DEVICES) {
-        scope.launch { sheetState.hide() }
-    }*/
-    BottomSheetScaffold(
-        scaffoldState = scaffoldState,
-        sheetPeekHeight = 0.dp,
-        sheetContent = {
+    SwipeRefresh(
+        state = rememberSwipeRefreshState(refreshingState),
+        onRefresh = onRefresh,
+        modifier = modifier/*.padding(it)*/,
+        // TODO After Compose is stable, try removing this and swiping in Scanner tab.
+        // Those 3 properties below copy the default values from SwipeRefresh.
+        // Without them, the Scanner page crashes when devices are displayed and Swipe is used.
+        indicator = { s, trigger ->
+            SwipeRefreshIndicator(s, trigger)
+        },
+        indicatorAlignment = Alignment.TopCenter,
+        indicatorPadding = PaddingValues(0.dp)
+    ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(color = MaterialTheme.colorScheme.background),
+            contentPadding = PaddingValues(bottom = 144.dp)
+        ) {
+            item {
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    text = stringResource(R.string.label_devices),
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
+            configuredDevices.takeIf { devices ->
+                devices.isNotEmpty()
+            }?.let { configuredDevices ->
+                items(
+                    items = configuredDevices,
+                    key = { device -> device.deviceId }
+                ) { configuredDevice ->
+                    ConfiguredDeviceRow(
+                        device = configuredDevice,
+                        state = viewModel.deviceState(
+                            configuredDevice = configuredDevice, activeDevices = activeDevices
+                        ),
+                        onDeviceClicked = { device ->
+                            viewModel.onDeviceSelected(device)
+                            showBottomSheet = !showBottomSheet
+                        }
+                    )
+                    HorizontalDivider()
+                }
+            } ?: item {
+                NoConfiguredDevicesInfo(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                )
+            }
+
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        modifier = Modifier
+                            .weight(1.0f),
+                        text = stringResource(R.string.label_scanner),
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    if (scanningState == ScanningState.Started) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .align(Alignment.CenterVertically)
+                        )
+                    }
+                }
+            }
+            item {
+                when {
+                    Utils.isSorAbove() -> BluetoothPermissionsRequired(
+                        modifier = modifier,
+                        scannerState = scannerState,
+                        onBluetoothStateChanged = onBluetoothStateChanged
+                    )
+
+                    Utils.isBetweenMarshmallowAndS() -> LocationPermissionRequired(
+                        modifier = modifier,
+                        scannerState = scannerState,
+                        onBluetoothStateChanged = onBluetoothStateChanged
+                    )
+
+                    else -> BluetoothRequired(
+                        modifier = modifier,
+                        scannerState = scannerState,
+                        onBluetoothStateChanged = onBluetoothStateChanged
+                    )
+                }
+            }
+            if (scannerState.scanningState is ScanningState.Started) {
+                scannerState.discoveredDevices
+                    // Filter only devices that have not been configured.
+                    .filter { discoveredDevice ->
+                        configuredDevices.find { configuredDevice ->
+                            configuredDevice.deviceId == discoveredDevice.bluetoothDevice.address
+                        } == null
+                    }
+                    // Display only if at least one was found.
+                    .takeIf { it.isNotEmpty() }
+                    ?.let { discoveredDevices ->
+                        this@LazyColumn.items(
+                            items = discoveredDevices,
+                            key = { it.bluetoothDevice.address }
+                        ) { discoveredDevice ->
+                            DiscoveredDeviceRow(
+                                device = discoveredDevice,
+                                state = activeDevices[discoveredDevice.deviceId]
+                                    ?.connectivityState ?: DeviceState.IN_RANGE,
+                                onDeviceClicked = { connect(it) },
+                                onDeviceAuthenticated = { onRefresh() }
+                            )
+                            HorizontalDivider()
+                        }
+                    }
+                // Else, show a placeholder.
+                    ?: this@LazyColumn.item {
+                        NoDevicesInRangeInfo(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        )
+                    }
+            }
+
+        }
+    }
+
+    if (showBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showBottomSheet = false },
+            sheetState = bottomSheetState
+        ) {
             Row {
                 Text(
                     modifier = Modifier
@@ -131,9 +264,13 @@ fun Devices(
                     text = stringResource(R.string.label_device_information),
                     style = MaterialTheme.typography.titleLarge
                 )
-                IconButton(onClick = { scope.launch { sheetState.hide() } }) {
-                    Icon(imageVector = Icons.Rounded.ExpandMore, contentDescription = null)
-                }
+                IconButton(
+                    onClick = {
+                        hideBottomSheet(scope = scope, bottomSheetState = bottomSheetState) {
+                            showBottomSheet = false
+                        }
+                    }
+                ) { Icon(imageVector = Icons.Rounded.ExpandMore, contentDescription = null) }
             }
             viewModel.device?.let { device ->
                 DeviceDetails(
@@ -151,146 +288,24 @@ fun Devices(
                     onRenameClick = onRenameClick,
                     onDeleteClick = { dev ->
                         onDeleteClick(dev)
-                        scope.launch { sheetState.hide() }
+                        hideBottomSheet(scope, bottomSheetState) {
+                            showBottomSheet = false
+                        }
                     },
                 )
             }
         }
-    ) {
-        SwipeRefresh(
-            state = rememberSwipeRefreshState(refreshingState),
-            onRefresh = onRefresh,
-            modifier = modifier/*.padding(it)*/,
-            // TODO After Compose is stable, try removing this and swiping in Scanner tab.
-            // Those 3 properties below copy the default values from SwipeRefresh.
-            // Without them, the Scanner page crashes when devices are displayed and Swipe is used.
-            indicator = { s, trigger ->
-                SwipeRefreshIndicator(s, trigger)
-            },
-            indicatorAlignment = Alignment.TopCenter,
-            indicatorPadding = PaddingValues(0.dp)
-        ) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(color = MaterialTheme.colorScheme.background),
-                contentPadding = PaddingValues(bottom = 144.dp)
-            ) {
-                item {
-                    Text(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        text = stringResource(R.string.label_devices),
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                }
-                configuredDevices.takeIf { devices ->
-                    devices.isNotEmpty()
-                }?.let { configuredDevices ->
-                    items(
-                        items = configuredDevices,
-                        key = { device -> device.deviceId }
-                    ) { configuredDevice ->
-                        ConfiguredDeviceRow(
-                            device = configuredDevice,
-                            state = viewModel.deviceState(
-                                configuredDevice = configuredDevice,
-                                activeDevices = activeDevices
-                            ),
-                            onDeviceClicked = { device ->
-                                viewModel.onDeviceSelected(device)
-                                scope.launch { sheetState.expand() }
-                            }
-                        )
-                        HorizontalDivider()
-                    }
-                } ?: item {
-                    NoConfiguredDevicesInfo(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                    )
-                }
+    }
+}
 
-                item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    ) {
-                        Text(
-                            modifier = Modifier
-                                .weight(1.0f),
-                            text = stringResource(R.string.label_scanner),
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                        if (scanningState == ScanningState.Started) {
-                            CircularProgressIndicator(
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .align(Alignment.CenterVertically)
-                            )
-                        }
-                    }
-                }
-                item {
-                    when {
-                        Utils.isSorAbove() -> BluetoothPermissionsRequired(
-                            modifier = modifier,
-                            scannerState = scannerState,
-                            onBluetoothStateChanged = onBluetoothStateChanged
-                        )
-
-                        Utils.isBetweenMarshmallowAndS() -> LocationPermissionRequired(
-                            modifier = modifier,
-                            scannerState = scannerState,
-                            onBluetoothStateChanged = onBluetoothStateChanged
-                        )
-
-                        else -> BluetoothRequired(
-                            modifier = modifier,
-                            scannerState = scannerState,
-                            onBluetoothStateChanged = onBluetoothStateChanged
-                        )
-                    }
-                }
-                if (scannerState.scanningState is ScanningState.Started) {
-                    scannerState.discoveredDevices
-                        // Filter only devices that have not been configured.
-                        .filter { discoveredDevice ->
-                            configuredDevices.find { configuredDevice ->
-                                configuredDevice.deviceId == discoveredDevice.bluetoothDevice.address
-                            } == null
-                        }
-                        // Display only if at least one was found.
-                        .takeIf { it.isNotEmpty() }
-                        ?.let { discoveredDevices ->
-                            this@LazyColumn.items(
-                                items = discoveredDevices,
-                                key = { it.bluetoothDevice.address }
-                            ) { discoveredDevice ->
-                                DiscoveredDeviceRow(
-                                    device = discoveredDevice,
-                                    state = activeDevices[discoveredDevice.deviceId]
-                                        ?.connectivityState ?: DeviceState.IN_RANGE,
-                                    onDeviceClicked = { connect(it) },
-                                    onDeviceAuthenticated = { onRefresh() }
-                                )
-                                HorizontalDivider()
-                            }
-                        }
-                    // Else, show a placeholder.
-                        ?: this@LazyColumn.item {
-                            NoDevicesInRangeInfo(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                            )
-                        }
-                }
-
-            }
+private fun hideBottomSheet(
+    scope: CoroutineScope,
+    bottomSheetState: SheetState,
+    onBottomSheetHide: () -> Unit
+) {
+    scope.launch { bottomSheetState.hide() }.invokeOnCompletion {
+        if (!bottomSheetState.isVisible) {
+            onBottomSheetHide()
         }
     }
 }
