@@ -84,7 +84,6 @@ fun DeviceDetails(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(bottom = 56.dp)
     ) {
         item {
             DeviceName(device = device, onRenameClick = onRenameClick)
@@ -93,7 +92,8 @@ fun DeviceDetails(
                 modifier = Modifier
                     .background(color = MaterialTheme.colorScheme.background)
                     .fillMaxWidth()
-                    .padding(16.dp), horizontalArrangement = Arrangement.Center
+                    .padding(16.dp)
+                , horizontalArrangement = Arrangement.Center
             ) {
                 Button(
                     onClick = {
@@ -102,8 +102,7 @@ fun DeviceDetails(
                             CONNECTING,
                             AUTHENTICATING,
                             AUTHENTICATED -> onDisconnectClick()
-                            else -> {
-                            }
+                            else -> {}
                         }
                     },
                     enabled = when (deviceState) {
