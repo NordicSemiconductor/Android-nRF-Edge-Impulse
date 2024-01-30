@@ -116,7 +116,7 @@ private fun DesignImpulse(
             text = stringResource(R.string.title_design_impulse),
             style = MaterialTheme.typography.titleLarge
         )
-        Surface(modifier = Modifier.fillMaxWidth(), tonalElevation = 2.dp, shadowElevation = 2.dp) {
+        Surface(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier
                     .padding(all = 16.dp)
@@ -178,9 +178,9 @@ private fun DeployImpulse(
         }
     }
     Column(modifier = Modifier.padding(bottom = 72.dp)) {
-        Surface(shadowElevation = 2.dp) {
+        Surface {
             Column(
-                modifier = Modifier.padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp)
+                modifier = Modifier.padding(all = 16.dp)
             ) {
                 Text(
                     text = stringResource(R.string.title_deploy_impulse),
