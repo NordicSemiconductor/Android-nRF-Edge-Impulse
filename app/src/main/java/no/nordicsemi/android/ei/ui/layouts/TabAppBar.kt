@@ -33,10 +33,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.launch
+import no.nordicsemi.android.common.theme.R
 
 @Composable
 fun TabTopAppBar(
@@ -46,7 +48,7 @@ fun TabTopAppBar(
     pagerState: PagerState? = null,
     navigationIcon: @Composable (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
-    backgroundColor: Color = MaterialTheme.colorScheme.surface,
+    backgroundColor: Color = colorResource(id = R.color.appBarColor),
     contentColor: Color = contentColorFor(backgroundColor),
     elevation: Dp = 0.dp,
 ) {
@@ -62,7 +64,7 @@ fun TabTopAppBar(
         if (navigationIcon == null) {
             Spacer(TitleInsetWithoutIcon)
         } else {
-            Row(TitleIconModifier, verticalAlignment = Alignment.CenterVertically) {
+            Row(/*TitleIconModifier,*/ verticalAlignment = Alignment.CenterVertically) {
                 CompositionLocalProvider(
                     LocalContentColor provides MaterialTheme.colorScheme.onSurface,
                     content = navigationIcon
@@ -73,7 +75,7 @@ fun TabTopAppBar(
         Row(
             Modifier
                 .fillMaxHeight()
-                .weight(1f),
+                /*.weight(1f)*/,
             verticalAlignment = Alignment.CenterVertically
         ) {
             ProvideTextStyle(value = MaterialTheme.typography.titleLarge) {
@@ -143,7 +145,8 @@ private fun TabAppBar(
                             Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
                         )
                     }
-                }
+                },
+                containerColor = backgroundColor,
             ) {
                 // Adds tabs for all of pages
                 val coroutineScope = rememberCoroutineScope()
@@ -165,10 +168,13 @@ private fun TabAppBar(
 }
 
 private val AppBarHeight = 56.dp
+
 // TODO: this should probably be part of the touch target of the start and end icons, clarify this
 private val AppBarHorizontalPadding = 4.dp
+
 // Start inset for the title when there is no navigation icon provided
 private val TitleInsetWithoutIcon = Modifier.width(16.dp - AppBarHorizontalPadding)
+
 // Start inset for the title when there is a navigation icon provided
 private val TitleIconModifier = Modifier
     .fillMaxHeight()

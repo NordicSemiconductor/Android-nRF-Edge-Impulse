@@ -6,6 +6,8 @@
  *
  */
 
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package no.nordicsemi.android.ei.ui.layouts
 
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +23,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -41,10 +44,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import no.nordicsemi.android.common.theme.R.color
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.ui.ShowDropdown
@@ -57,7 +62,7 @@ fun UserAppBar(
     title: @Composable () -> Unit,
     user: User,
     modifier: Modifier = Modifier,
-    backgroundColor: Color = MaterialTheme.colorScheme.surface,
+    backgroundColor: Color = colorResource(id = color.appBarColor),
     contentColor: Color = contentColorFor(backgroundColor),
     elevation: Dp = 4.dp,
     onAboutClick: () -> Unit = {},
