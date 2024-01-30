@@ -22,6 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Grading
+import androidx.compose.material.icons.automirrored.rounded.Launch
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.CloudDownload
@@ -31,7 +32,6 @@ import androidx.compose.material.icons.outlined.SystemUpdateAlt
 import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material.icons.outlined.Verified
 import androidx.compose.material.icons.rounded.DeveloperBoard
-import androidx.compose.material.icons.rounded.Launch
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -150,7 +150,7 @@ private fun DesignImpulse(
                     )
                     Icon(
                         modifier = Modifier.padding(start = 8.dp),
-                        imageVector = Icons.Rounded.Launch,
+                        imageVector = Icons.AutoMirrored.Rounded.Launch,
                         contentDescription = null
                     )
                 }
