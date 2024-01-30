@@ -8,25 +8,38 @@
 
 package no.nordicsemi.android.ei.ui.layouts
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
-import androidx.compose.material.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults.SecondaryIndicator
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.PagerState
-import com.google.accompanist.pager.pagerTabIndicatorOffset
 import kotlinx.coroutines.launch
+import no.nordicsemi.android.common.theme.R
 
-@ExperimentalPagerApi
 @Composable
 fun TabTopAppBar(
     title: @Composable () -> Unit,
@@ -35,16 +48,15 @@ fun TabTopAppBar(
     pagerState: PagerState? = null,
     navigationIcon: @Composable (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
-    backgroundColor: Color = MaterialTheme.colors.primarySurface,
+    backgroundColor: Color = colorResource(id = R.color.appBarColor),
     contentColor: Color = contentColorFor(backgroundColor),
-    elevation: Dp = AppBarDefaults.TopAppBarElevation,
+    elevation: Dp = 0.dp,
 ) {
     TabAppBar(
         backgroundColor = backgroundColor,
         contentColor = contentColor,
         elevation = elevation,
-        contentPadding = AppBarDefaults.ContentPadding,
-        shape = RectangleShape,
+        contentPadding = PaddingValues(4.dp),
         modifier = modifier,
         tabs = tabs,
         pagerState = pagerState
@@ -52,9 +64,9 @@ fun TabTopAppBar(
         if (navigationIcon == null) {
             Spacer(TitleInsetWithoutIcon)
         } else {
-            Row(TitleIconModifier, verticalAlignment = Alignment.CenterVertically) {
+            Row(/*TitleIconModifier,*/ verticalAlignment = Alignment.CenterVertically) {
                 CompositionLocalProvider(
-                    LocalContentAlpha provides ContentAlpha.high,
+                    LocalContentColor provides MaterialTheme.colorScheme.onSurface,
                     content = navigationIcon
                 )
             }
@@ -63,18 +75,18 @@ fun TabTopAppBar(
         Row(
             Modifier
                 .fillMaxHeight()
-                .weight(1f),
+                /*.weight(1f)*/,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ProvideTextStyle(value = MaterialTheme.typography.h6) {
+            ProvideTextStyle(value = MaterialTheme.typography.titleLarge) {
                 CompositionLocalProvider(
-                    LocalContentAlpha provides ContentAlpha.high,
+                    LocalContentColor provides MaterialTheme.colorScheme.onSurface,
                     content = title
                 )
             }
         }
 
-        CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
             Row(
                 Modifier.fillMaxHeight(),
                 horizontalArrangement = Arrangement.End,
@@ -91,14 +103,12 @@ fun TabTopAppBar(
  * For an Tab App Bar that follows Material spec guidelines to be placed on the top of the screen,
  * see [TabTopAppBar].
  */
-@ExperimentalPagerApi
 @Composable
 private fun TabAppBar(
     backgroundColor: Color,
     contentColor: Color,
     elevation: Dp,
     contentPadding: PaddingValues,
-    shape: Shape,
     modifier: Modifier = Modifier,
     tabs: List<Pair<@Composable () -> Unit, (@Composable () -> Unit)?>>,
     pagerState: PagerState? = null,
@@ -107,8 +117,8 @@ private fun TabAppBar(
     Surface(
         color = backgroundColor,
         contentColor = contentColor,
-        elevation = elevation,
-        shape = shape,
+        shadowElevation = elevation,
+        tonalElevation = elevation,
         modifier = modifier
     ) {
         Column {
@@ -127,15 +137,16 @@ private fun TabAppBar(
                 // Override the indicator, using the provided pagerTabIndicatorOffset modifier
                 indicator = { tabPositions ->
                     pagerState?.let {
-                        TabRowDefaults.Indicator(
-                            Modifier.pagerTabIndicatorOffset(pagerState, tabPositions)
+                        SecondaryIndicator(
+                            modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex])
                         )
                     } ?: run {
-                        TabRowDefaults.Indicator(
-                            Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex])
+                        SecondaryIndicator(
+                            Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
                         )
                     }
-                }
+                },
+                containerColor = backgroundColor,
             ) {
                 // Adds tabs for all of pages
                 val coroutineScope = rememberCoroutineScope()
@@ -157,10 +168,13 @@ private fun TabAppBar(
 }
 
 private val AppBarHeight = 56.dp
+
 // TODO: this should probably be part of the touch target of the start and end icons, clarify this
 private val AppBarHorizontalPadding = 4.dp
+
 // Start inset for the title when there is no navigation icon provided
 private val TitleInsetWithoutIcon = Modifier.width(16.dp - AppBarHorizontalPadding)
+
 // Start inset for the title when there is a navigation icon provided
 private val TitleIconModifier = Modifier
     .fillMaxHeight()

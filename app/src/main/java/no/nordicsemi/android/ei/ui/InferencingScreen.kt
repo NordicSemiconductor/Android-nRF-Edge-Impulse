@@ -12,17 +12,40 @@ import android.content.res.Configuration
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.rounded.DeveloperBoard
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -43,10 +66,8 @@ import no.nordicsemi.android.ei.model.InferencingMessage.InferencingRequest
 import no.nordicsemi.android.ei.ui.layouts.DeviceDisconnected
 import no.nordicsemi.android.ei.util.round
 import no.nordicsemi.android.ei.viewmodels.state.InferencingState
-import java.util.*
+import java.util.Locale
 
-
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun InferencingScreen(
     modifier: Modifier,
@@ -64,7 +85,7 @@ fun InferencingScreen(
         LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     Column(
         modifier = modifier
-            .background(color = MaterialTheme.colors.background)
+            .background(color = MaterialTheme.colorScheme.background)
     ) {
         StartInferencing(
             isLargeScreen = isLargeScreen,
@@ -99,7 +120,7 @@ private fun StartInferencing(
     sendInferencingRequest: (InferencingRequest) -> Unit
 ) {
     var isDevicesMenuExpanded by remember { mutableStateOf(false) }
-    var width by rememberSaveable { mutableStateOf(0) }
+    var width by rememberSaveable { mutableIntStateOf(0) }
 
     if (isLargeScreen || isLandscape) {
         Row(
@@ -112,7 +133,7 @@ private fun StartInferencing(
                 modifier = Modifier
                     .wrapContentWidth(),
                 text = stringResource(R.string.title_inferencing),
-                style = MaterialTheme.typography.h6
+                style = MaterialTheme.typography.titleLarge
             )
             Spacer(modifier = Modifier.size(16.dp))
             OutlinedTextField(
@@ -130,7 +151,7 @@ private fun StartInferencing(
                             .size(24.dp),
                         imageVector = Icons.Rounded.DeveloperBoard,
                         contentDescription = null,
-                        tint = MaterialTheme.colors.onSurface
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 },
                 trailingIcon = {
@@ -191,7 +212,7 @@ private fun StartInferencing(
                 .fillMaxWidth()
                 .padding(vertical = 16.dp, horizontal = 16.dp),
             text = stringResource(R.string.title_inferencing),
-            style = MaterialTheme.typography.h6
+            style = MaterialTheme.typography.titleLarge
         )
         OutlinedTextField(
             modifier = Modifier
@@ -209,7 +230,7 @@ private fun StartInferencing(
                         .size(24.dp),
                     imageVector = Icons.Rounded.DeveloperBoard,
                     contentDescription = null,
-                    tint = MaterialTheme.colors.onSurface
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             },
             trailingIcon = {
@@ -261,7 +282,7 @@ private fun StartInferencing(
                 },
                 colors = ButtonDefaults.buttonColors(
                     if (inferencingState is InferencingState.Started) Color.Red
-                    else MaterialTheme.colors.primary
+                    else MaterialTheme.colorScheme.primary
                 )
             ) {
                 Text(
@@ -309,7 +330,7 @@ private fun InferencingTable(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(color = MaterialTheme.colors.background)
+                        .background(color = MaterialTheme.colorScheme.background)
                 ) {
                     results.firstOrNull()?.let { result ->
                         result.classification.forEach {
@@ -336,11 +357,11 @@ private fun InferencingTable(
                         )
                     }
                 }
-                Divider()
+                HorizontalDivider()
             }
             items(items = results) { results ->
                 InferencingResult(inferenceResults = results, cellWidth = cellWidth)
-                Divider()
+                HorizontalDivider()
             }
         }
     }
@@ -351,7 +372,7 @@ private fun InferencingResult(inferenceResults: InferenceResults, cellWidth: Dp)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(color = MaterialTheme.colors.surface)
+            .background(color = MaterialTheme.colorScheme.surface)
     ) {
         inferenceResults.classification.forEach { classification ->
             Text(
@@ -399,7 +420,7 @@ private fun InferencingResult(inferenceResults: InferenceResults, cellWidth: Dp)
 private fun Double.color(): Color {
     return if (this > 0.6) {
         Color.Green.copy(red = 0.14f, green = 0.86f, blue = 0f)
-    } else MaterialTheme.colors.onSurface.copy(0.6f)
+    } else MaterialTheme.colorScheme.onSurface.copy(0.6f)
 }
 
 private fun calculateWith(
@@ -413,10 +434,10 @@ private fun calculateWith(
 } else {
     if (cellCount < 5) (screenWidth / cellCount).dp
     else {
-        if (isLargeScreen) MAX_CELL_WIDTH
+        if (isLargeScreen) (screenWidth / cellCount).dp
         else MIN_CELL_WIDTH
     }
 }
 
-private val MIN_CELL_WIDTH = 100.dp
+private val MIN_CELL_WIDTH = 98.dp
 private val MAX_CELL_WIDTH = 140.dp

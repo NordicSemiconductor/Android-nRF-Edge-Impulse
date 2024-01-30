@@ -8,7 +8,8 @@
 
 package no.nordicsemi.android.ei.ui.layouts
 
-import androidx.compose.material.Text
+
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import no.nordicsemi.android.ei.R

@@ -8,7 +8,7 @@
 
 package no.nordicsemi.android.ei.viewmodels.state
 
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import no.nordicsemi.android.ei.ui.theme.NordicDarkGrey
@@ -46,7 +46,7 @@ fun DeviceState?.buttonBackgroundColor() = when (this) {
     DeviceState.NOT_IN_RANGE,
     DeviceState.IN_RANGE,
     DeviceState.CONNECTING,
-    DeviceState.AUTHENTICATING -> MaterialTheme.colors.primary
+    DeviceState.AUTHENTICATING -> MaterialTheme.colorScheme.primary
     DeviceState.AUTHENTICATED -> Color.Red
-    else -> MaterialTheme.colors.primary
+    else -> MaterialTheme.colorScheme.primary
 }

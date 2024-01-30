@@ -6,6 +6,8 @@
  *
  */
 
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package no.nordicsemi.android.ei.ui
 
 import android.bluetooth.BluetoothAdapter
@@ -21,15 +23,37 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.rounded.DeveloperBoard
-import androidx.compose.material.icons.rounded.ExpandMore
-import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,13 +63,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.permissions.*
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import no.nordicsemi.android.ei.BottomNavigationScreen
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.ble.rssiAsPercent
@@ -53,13 +80,18 @@ import no.nordicsemi.android.ei.ble.state.ScannerState
 import no.nordicsemi.android.ei.ble.state.ScanningState
 import no.nordicsemi.android.ei.comms.CommsManager
 import no.nordicsemi.android.ei.model.Device
-import no.nordicsemi.android.ei.ui.layouts.*
+import no.nordicsemi.android.ei.ui.layouts.BluetoothDisabledInfo
+import no.nordicsemi.android.ei.ui.layouts.BottomSheetAppBar
+import no.nordicsemi.android.ei.ui.layouts.LocationTurnedOffInfo
+import no.nordicsemi.android.ei.ui.layouts.NoConfiguredDevicesInfo
+import no.nordicsemi.android.ei.ui.layouts.NoDevicesInRangeInfo
+import no.nordicsemi.android.ei.ui.layouts.PermissionDeniedContent
+import no.nordicsemi.android.ei.ui.layouts.PermissionNotGrantedContent
 import no.nordicsemi.android.ei.util.Utils
 import no.nordicsemi.android.ei.viewmodels.DevicesViewModel
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import no.nordicsemi.android.ei.viewmodels.state.indicatorColor
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun Devices(
     scope: CoroutineScope,
@@ -70,202 +102,168 @@ fun Devices(
     refreshingState: Boolean,
     onRefresh: () -> Unit,
     scannerState: ScannerState,
-    screen: BottomNavigationScreen,
-    backdropScaffoldState: BackdropScaffoldState,
     onBluetoothStateChanged: (Boolean) -> Unit,
     connect: (DiscoveredBluetoothDevice) -> Unit,
     disconnect: (DiscoveredBluetoothDevice) -> Unit,
     onRenameClick: (Device, String) -> Unit,
     onDeleteClick: (Device) -> Unit
 ) {
+    var showBottomSheet by rememberSaveable { mutableStateOf(false) }
     val scanningState = scannerState.scanningState
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     BackHandler(
-        enabled = backdropScaffoldState.isConcealed,
-        onBack = {
-            animateBottomSheet(
-                scope = scope,
-                scaffoldState = backdropScaffoldState,
-                BackdropValue.Revealed
-            )
-        }
+        enabled = bottomSheetState.isVisible,
+        onBack = { scope.launch { bottomSheetState.hide() } }
     )
-    if (screen != BottomNavigationScreen.DEVICES) {
-        animateBottomSheet(
-            scope = scope,
-            scaffoldState = backdropScaffoldState,
-            BackdropValue.Revealed
-        )
-    }
-    BackdropScaffold(
-        scaffoldState = backdropScaffoldState,
-        appBar = {
-            TopAppBar(
-                content = {
+    SwipeRefresh(
+        state = rememberSwipeRefreshState(refreshingState),
+        onRefresh = onRefresh,
+        modifier = modifier/*.padding(it)*/,
+        // TODO After Compose is stable, try removing this and swiping in Scanner tab.
+        // Those 3 properties below copy the default values from SwipeRefresh.
+        // Without them, the Scanner page crashes when devices are displayed and Swipe is used.
+        indicator = { s, trigger ->
+            SwipeRefreshIndicator(s, trigger)
+        },
+        indicatorAlignment = Alignment.TopCenter,
+        indicatorPadding = PaddingValues(0.dp)
+    ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(color = MaterialTheme.colorScheme.background),
+            contentPadding = PaddingValues(bottom = 144.dp)
+        ) {
+            item {
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    text = stringResource(R.string.label_devices),
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
+            configuredDevices.takeIf { devices ->
+                devices.isNotEmpty()
+            }?.let { configuredDevices ->
+                items(
+                    items = configuredDevices,
+                    key = { device -> device.deviceId }
+                ) { configuredDevice ->
+                    ConfiguredDeviceRow(
+                        device = configuredDevice,
+                        state = viewModel.deviceState(
+                            configuredDevice = configuredDevice, activeDevices = activeDevices
+                        ),
+                        onDeviceClicked = { device ->
+                            viewModel.onDeviceSelected(device)
+                            showBottomSheet = !showBottomSheet
+                        }
+                    )
+                    HorizontalDivider()
+                }
+            } ?: item {
+                NoConfiguredDevicesInfo(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                )
+            }
+
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
                     Text(
                         modifier = Modifier
-                            .padding(start = 16.dp)
                             .weight(1.0f),
-                        text = stringResource(R.string.label_device_information),
-                        style = MaterialTheme.typography.h6
+                        text = stringResource(R.string.label_scanner),
+                        style = MaterialTheme.typography.titleLarge
                     )
-                    IconButton(onClick = {
-                        animateBottomSheet(
-                            scope = scope,
-                            scaffoldState = backdropScaffoldState,
-                            BackdropValue.Revealed
-                        )
-                    }) {
-                        Icon(
+                    if (scanningState == ScanningState.Started) {
+                        CircularProgressIndicator(
                             modifier = Modifier
-                                .padding(end = 16.dp),
-                            imageVector = Icons.Rounded.ExpandMore,
-                            contentDescription = null
+                                .size(24.dp)
+                                .align(Alignment.CenterVertically)
                         )
                     }
-                },
-                backgroundColor = MaterialTheme.colors.background,
-                elevation = 0.dp
-            )
-        },
-        backLayerContent = {
-            SwipeRefresh(
-                state = rememberSwipeRefreshState(refreshingState),
-                onRefresh = onRefresh,
-                modifier = modifier,
-                // TODO After Compose is stable, try removing this and swiping in Scanner tab.
-                // Those 3 properties below copy the default values from SwipeRefresh.
-                // Without them, the Scanner page crashes when devices are displayed and Swipe is used.
-                indicator = { s, trigger ->
-                    SwipeRefreshIndicator(s, trigger)
-                },
-                indicatorAlignment = Alignment.TopCenter,
-                indicatorPadding = PaddingValues(0.dp)
-            ) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(color = MaterialTheme.colors.background)
-                ) {
-                    item {
-                        Text(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            text = stringResource(R.string.label_devices),
-                            style = MaterialTheme.typography.h6
-                        )
+                }
+            }
+            item {
+                when {
+                    Utils.isSorAbove() -> BluetoothPermissionsRequired(
+                        modifier = modifier,
+                        scannerState = scannerState,
+                        onBluetoothStateChanged = onBluetoothStateChanged
+                    )
+
+                    Utils.isBetweenMarshmallowAndS() -> LocationPermissionRequired(
+                        modifier = modifier,
+                        scannerState = scannerState,
+                        onBluetoothStateChanged = onBluetoothStateChanged
+                    )
+
+                    else -> BluetoothRequired(
+                        modifier = modifier,
+                        scannerState = scannerState,
+                        onBluetoothStateChanged = onBluetoothStateChanged
+                    )
+                }
+            }
+            if (scannerState.scanningState is ScanningState.Started) {
+                scannerState.discoveredDevices
+                    // Filter only devices that have not been configured.
+                    .filter { discoveredDevice ->
+                        configuredDevices.find { configuredDevice ->
+                            configuredDevice.deviceId == discoveredDevice.bluetoothDevice.address
+                        } == null
                     }
-                    configuredDevices.takeIf { it.isNotEmpty() }?.let { configuredDevices ->
-                        items(
-                            items = configuredDevices,
-                            key = { it.deviceId }
-                        ) { configuredDevice ->
-                            ConfiguredDeviceRow(
-                                device = configuredDevice,
-                                state = viewModel.deviceState(
-                                    configuredDevice = configuredDevice,
-                                    activeDevices = activeDevices
-                                ),
-                                onDeviceClicked = { device ->
-                                    viewModel.onDeviceSelected(device)
-                                    animateBottomSheet(
-                                        scope = scope,
-                                        scaffoldState = backdropScaffoldState,
-                                        BackdropValue.Concealed
-                                    )
-                                }
+                    // Display only if at least one was found.
+                    .takeIf { it.isNotEmpty() }
+                    ?.let { discoveredDevices ->
+                        this@LazyColumn.items(
+                            items = discoveredDevices,
+                            key = { it.bluetoothDevice.address }
+                        ) { discoveredDevice ->
+                            DiscoveredDeviceRow(
+                                device = discoveredDevice,
+                                state = activeDevices[discoveredDevice.deviceId]
+                                    ?.connectivityState ?: DeviceState.IN_RANGE,
+                                onDeviceClicked = { connect(it) },
+                                onDeviceAuthenticated = { onRefresh() }
                             )
-                            Divider()
+                            HorizontalDivider()
                         }
-                    } ?: item {
-                        NoConfiguredDevicesInfo(
+                    }
+                // Else, show a placeholder.
+                    ?: this@LazyColumn.item {
+                        NoDevicesInRangeInfo(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp)
                         )
                     }
-
-                    item {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp)
-                        ) {
-                            Text(
-                                modifier = Modifier
-                                    .weight(1.0f),
-                                text = stringResource(R.string.label_scanner),
-                                style = MaterialTheme.typography.h6
-                            )
-                            if (scanningState == ScanningState.Started) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .align(Alignment.CenterVertically)
-                                )
-                            }
-                        }
-                    }
-                    item {
-                        when {
-                            Utils.isSorAbove() -> BluetoothPermissionsRequired(
-                                modifier = modifier,
-                                scannerState = scannerState,
-                                onBluetoothStateChanged = onBluetoothStateChanged
-                            )
-                            Utils.isBetweenMarshmallowAndS() -> LocationPermissionRequired(
-                                modifier = modifier,
-                                scannerState = scannerState,
-                                onBluetoothStateChanged = onBluetoothStateChanged
-                            )
-                            else -> BluetoothRequired(
-                                modifier = modifier,
-                                scannerState = scannerState,
-                                onBluetoothStateChanged = onBluetoothStateChanged
-                            )
-                        }
-                    }
-                    if (scannerState.scanningState is ScanningState.Started) {
-                        scannerState.discoveredDevices
-                            // Filter only devices that have not been configured.
-                            .filter { discoveredDevice ->
-                                configuredDevices.find { configuredDevice ->
-                                    configuredDevice.deviceId == discoveredDevice.bluetoothDevice.address
-                                } == null
-                            }
-                            // Display only if at least one was found.
-                            .takeIf { it.isNotEmpty() }?.let { discoveredDevices ->
-                                this@LazyColumn.items(
-                                    items = discoveredDevices,
-                                    key = { it.bluetoothDevice.address }
-                                ) { discoveredDevice ->
-                                    DiscoveredDeviceRow(
-                                        device = discoveredDevice,
-                                        state = activeDevices[discoveredDevice.deviceId]?.connectivityState
-                                            ?: DeviceState.IN_RANGE,
-                                        onDeviceClicked = { connect(it) },
-                                        onDeviceAuthenticated = { onRefresh() }
-                                    )
-                                    Divider()
-                                }
-                            }
-                        // Else, show a placeholder.
-                            ?: this@LazyColumn.item {
-                                NoDevicesInRangeInfo(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp)
-                                )
-                            }
-                    }
-
-                }
             }
-        },
-        persistentAppBar = false,
-        frontLayerElevation = 6.dp,
-        frontLayerShape = MaterialTheme.shapes.large,
-        frontLayerContent = {
+
+        }
+    }
+
+    if (showBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showBottomSheet = false },
+            sheetState = bottomSheetState
+        ) {
+            BottomSheetAppBar(
+                imageVector = Icons.Default.Close,
+                title = stringResource(id = R.string.label_device_information),
+                onBackPressed = {
+                    hideBottomSheet(scope = scope, bottomSheetState = bottomSheetState) {
+                        showBottomSheet = false
+                    }
+                }
+            )
             viewModel.device?.let { device ->
                 DeviceDetails(
                     device = device,
@@ -279,21 +277,28 @@ fun Devices(
                     onDisconnectClick = {
                         viewModel.discoveredBluetoothDevice(device)?.let(disconnect)
                     },
-                    onRenameClick = onRenameClick,
-                    onDeleteClick = {
-                        onDeleteClick(it)
-                        animateBottomSheet(
-                            scope = scope,
-                            scaffoldState = backdropScaffoldState,
-                            BackdropValue.Revealed
-                        )
-                    },
-                )
+                    onRenameClick = onRenameClick
+                ) { dev ->
+                    onDeleteClick(dev)
+                    hideBottomSheet(scope, bottomSheetState) {
+                        showBottomSheet = false
+                    }
+                }
             }
-        },
-        headerHeight = 0.dp,
-        backLayerBackgroundColor = MaterialTheme.colors.surface
-    )
+        }
+    }
+}
+
+internal fun hideBottomSheet(
+    scope: CoroutineScope,
+    bottomSheetState: SheetState,
+    onBottomSheetHide: () -> Unit
+) {
+    scope.launch { bottomSheetState.hide() }.invokeOnCompletion {
+        if (!bottomSheetState.isVisible) {
+            onBottomSheetHide()
+        }
+    }
 }
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -310,32 +315,33 @@ private fun BluetoothPermissionsRequired(
             android.Manifest.permission.BLUETOOTH_CONNECT
         )
     )
-    PermissionsRequired(
-        multiplePermissionsState = bluetoothPermissionsState,
-        permissionsNotGrantedContent = {
+
+    when {
+        bluetoothPermissionsState.allPermissionsGranted -> {
+            LocationRequired(
+                modifier = modifier,
+                scannerState = scannerState,
+                onBluetoothStateChanged = onBluetoothStateChanged
+            )
+        }
+
+        bluetoothPermissionsState.shouldShowRationale -> {
+            PermissionDeniedContent(
+                modifier = modifier,
+                title = stringResource(id = R.string.bluetooth_scan_connect_permission_denied_title),
+                text = stringResource(id = R.string.bluetooth_scan_connect_permission_denied_info)
+            )
+        }
+
+        else -> {
             PermissionNotGrantedContent(
                 modifier = modifier,
                 title = stringResource(id = R.string.bluetooth_scan_connect_permission_required_title),
                 text = stringResource(id = R.string.bluetooth_scan_connect_permission_info),
                 onRequestPermission = { bluetoothPermissionsState.launchMultiplePermissionRequest() }
             )
-        },
-        permissionsNotAvailableContent = {
-            PermissionDeniedContent(
-                modifier = modifier,
-                title = stringResource(id = R.string.bluetooth_scan_connect_permission_denied_title),
-                text = stringResource(id = R.string.bluetooth_scan_connect_permission_denied_info)
-            )
-        },
-        content = {
-            BluetoothRequired(
-                modifier = modifier,
-                scannerState = scannerState
-            ) {
-                onBluetoothStateChanged(it)
-            }
         }
-    )
+    }
 }
 
 @Composable
@@ -362,6 +368,7 @@ private fun BluetoothRequired(
                 isBluetoothEnabled = true
                 onBluetoothStateChanged(isBluetoothEnabled)
             }
+
             BluetoothAdapter.STATE_TURNING_OFF, BluetoothAdapter.STATE_OFF -> {
                 if (previousState != BluetoothAdapter.STATE_TURNING_OFF &&
                     previousState != BluetoothAdapter.STATE_OFF
@@ -390,34 +397,36 @@ private fun LocationPermissionRequired(
     scannerState: ScannerState,
     onBluetoothStateChanged: (Boolean) -> Unit
 ) {
-    val locationPermission = rememberPermissionState(
+    val permissionState = rememberPermissionState(
         permission = android.Manifest.permission.ACCESS_FINE_LOCATION
     )
-    PermissionRequired(
-        permissionState = locationPermission,
-        permissionNotGrantedContent = {
-            PermissionNotGrantedContent(
-                modifier = modifier,
-                title = stringResource(id = R.string.location_permission_title),
-                text = stringResource(id = R.string.location_permission_info),
-                onRequestPermission = { locationPermission.launchPermissionRequest() }
-            )
-        },
-        permissionNotAvailableContent = {
-            PermissionDeniedContent(
-                modifier = modifier,
-                title = stringResource(id = R.string.location_permission_denied_title),
-                text = stringResource(id = R.string.location_permission_denied_info)
-            )
-        },
-        content = {
+
+    when {
+        permissionState.status.isGranted -> {
             LocationRequired(
                 modifier = modifier,
                 scannerState = scannerState,
                 onBluetoothStateChanged = onBluetoothStateChanged
             )
         }
-    )
+
+        permissionState.status.shouldShowRationale -> {
+            PermissionDeniedContent(
+                modifier = modifier,
+                title = stringResource(id = R.string.location_permission_denied_title),
+                text = stringResource(id = R.string.location_permission_denied_info)
+            )
+        }
+
+        else -> {
+            PermissionNotGrantedContent(
+                modifier = modifier,
+                title = stringResource(id = R.string.location_permission_title),
+                text = stringResource(id = R.string.location_permission_info),
+                onRequestPermission = { permissionState.launchPermissionRequest() }
+            )
+        }
+    }
 }
 
 @Composable
@@ -478,7 +487,7 @@ fun ConfiguredDeviceRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(color = MaterialTheme.colors.surface)
+            .background(color = MaterialTheme.colorScheme.surface)
             .clickable(
                 /*enabled = state == DeviceState.IN_RANGE || state == DeviceState.AUTHENTICATED,*/
                 onClick = { onDeviceClicked(device) },
@@ -502,8 +511,8 @@ fun ConfiguredDeviceRow(
         Text(
             modifier = Modifier.weight(1.0f),
             text = device.name,
-            color = MaterialTheme.colors.onSurface,
-            style = MaterialTheme.typography.body1,
+            color = MaterialTheme.colorScheme.onSurface,
+            style = MaterialTheme.typography.bodyLarge,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -528,7 +537,7 @@ fun DiscoveredDeviceRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(color = MaterialTheme.colors.surface)
+            .background(color = MaterialTheme.colorScheme.surface)
             .clickable(
                 enabled = state == DeviceState.IN_RANGE,
                 onClick = { onDeviceClicked(device) },
@@ -541,7 +550,7 @@ fun DiscoveredDeviceRow(
             modifier = Modifier
                 .size(40.dp)
                 .background(
-                    color = MaterialTheme.colors.primary,
+                    color = MaterialTheme.colorScheme.primary,
                     shape = CircleShape
                 )
                 .padding(8.dp),
@@ -551,13 +560,13 @@ fun DiscoveredDeviceRow(
         Column(modifier = Modifier.weight(weight = 1.0f)) {
             Text(
                 text = device.name ?: stringResource(id = R.string.unknown),
-                color = MaterialTheme.colors.onSurface,
-                style = MaterialTheme.typography.body1
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.bodyLarge
             )
             Text(
                 text = device.bluetoothDevice.address,
-                color = MaterialTheme.colors.onSurface,
-                style = MaterialTheme.typography.caption
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.bodySmall
             )
         }
         Spacer(modifier = Modifier.width(width = 16.dp))
@@ -572,6 +581,7 @@ fun DiscoveredDeviceRow(
                         .align(Alignment.CenterVertically)
                 )
             }
+
             DeviceState.CONNECTING,
             DeviceState.AUTHENTICATING -> {
                 CircularProgressIndicator(
@@ -580,6 +590,7 @@ fun DiscoveredDeviceRow(
                         .align(Alignment.CenterVertically)
                 )
             }
+
             DeviceState.AUTHENTICATED -> {
                 // Once the device is authenticated we should refresh the list of devices.
                 onDeviceAuthenticated()
@@ -595,15 +606,4 @@ private fun getRssiRes(rssi: Int): Int = when (rssi) {
     in 41..60 -> R.drawable.ic_signal_2_bar
     in 61..80 -> R.drawable.ic_signal_3_bar
     else -> R.drawable.ic_signal_4_bar
-}
-
-@OptIn(ExperimentalMaterialApi::class)
-fun animateBottomSheet(
-    scope: CoroutineScope,
-    scaffoldState: BackdropScaffoldState,
-    targetValue: BackdropValue
-) {
-    scope.launch {
-        scaffoldState.animateTo(targetValue)
-    }
 }

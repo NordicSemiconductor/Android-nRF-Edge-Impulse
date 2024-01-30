@@ -22,7 +22,7 @@ import no.nordicsemi.android.ble.BleManager
 import no.nordicsemi.android.ble.data.JsonMerger
 import no.nordicsemi.android.ble.ktx.getCharacteristic
 import no.nordicsemi.android.ei.util.guard
-import java.util.*
+import java.util.UUID
 
 class BleDevice(
     val device: BluetoothDevice,
@@ -45,38 +45,35 @@ class BleDevice(
         Log.println(priority, "BleDevice", message)
     }
 
-    override fun getGattCallback(): BleManagerGattCallback = object : BleManagerGattCallback() {
+    override fun isRequiredServiceSupported(gatt: BluetoothGatt): Boolean {
+        gatt.getService(serviceUuid)
+            .guard { return false }
+            .apply {
+                rx = getCharacteristic(
+                    rxUuid,
+                    BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE
+                )
+                    .guard { return false }
+                tx = getCharacteristic(txUuid, BluetoothGattCharacteristic.PROPERTY_NOTIFY)
+                    .guard { return false }
+            }
+        return true
+    }
 
-        override fun isRequiredServiceSupported(gatt: BluetoothGatt): Boolean {
-            gatt.getService(serviceUuid)
-                .guard { return false }
-                .apply {
-                    rx = getCharacteristic(
-                        rxUuid,
-                        BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE
-                    )
-                        .guard { return false }
-                    tx = getCharacteristic(txUuid, BluetoothGattCharacteristic.PROPERTY_NOTIFY)
-                        .guard { return false }
+    override fun onServicesInvalidated() {
+        tx = null
+        rx = null
+    }
+
+    override fun initialize() {
+        requestMtu(512).enqueue()
+        setNotificationCallback(tx)
+            .merge(JsonMerger())
+            .with { _, data ->
+                emitter?.let { emit ->
+                    data.getStringValue(0)?.also(emit)
                 }
-            return true
-        }
-
-        override fun onServicesInvalidated() {
-            tx = null
-            rx = null
-        }
-
-        override fun initialize() {
-            requestMtu(512).enqueue()
-            setNotificationCallback(tx)
-                .merge(JsonMerger())
-                .with { _, data ->
-                    emitter?.let { emit ->
-                        data.getStringValue(0)?.also(emit)
-                    }
-                }
-        }
+            }
     }
 
     override fun getMinLogPriority(): Int {
@@ -110,7 +107,7 @@ class BleDevice(
     /**
      * Enables notifications. The first message that should be received is the Hello message.
      */
-    fun initialize() {
+    fun initDeviceNotifications() {
         enableNotifications(tx).enqueue()
     }
 

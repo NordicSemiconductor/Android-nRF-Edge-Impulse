@@ -10,12 +10,22 @@ package no.nordicsemi.android.ei
 
 import android.os.Build
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.DrawableRes
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,39 +34,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import no.nordicsemi.android.ei.ui.LoadingProgressIndicator
-import no.nordicsemi.android.ei.ui.theme.NordicTheme
+import no.nordicsemi.android.common.theme.NordicActivity
+import no.nordicsemi.android.common.theme.NordicTheme
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : NordicActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Set up the splash screen.
-        //
-        // On Android 12+ the splash screen will be animated, while on 6 - 11 will present a still
-        // image. See more: https://developer.android.com/guide/topics/ui/splash-screen/
-        val splashScreen = installSplashScreen()
-
         // Animated Vector Drawable is only supported on API 31+.
         var splashScreenVisible by mutableStateOf(true)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && coldStart) {
-            coldStart = false
-            val then = System.currentTimeMillis()
-            splashScreen.setKeepOnScreenCondition {
-                val now = System.currentTimeMillis()
-                splashScreenVisible = now < then + 900
-                splashScreenVisible
+            splashScreen.setOnExitAnimationListener {
+                splashScreenVisible = false
             }
         } else {
             splashScreenVisible = false
@@ -66,13 +63,11 @@ class MainActivity : ComponentActivity() {
             NordicTheme {
                 // Loading indicator is shown behind the splash screen. Otherwise, in case the
                 // user is not logged in, LoginActivity would be displayed immediately.
-                if (splashScreenVisible) {
+                /*if (splashScreenVisible) {
                     LoadingProgressIndicator()
                 } else {
-                    Navigation(
-                        onCancelled = { finish() }
-                    )
-                }
+                }*/
+                Navigation(onCancelled = { finish() })
             }
         }
     }
@@ -94,54 +89,6 @@ fun showSnackbar(
     coroutineScope.launch {
         snackbarHostState.showSnackbar(message = message)
     }
-}
-
-@Composable
-fun ShowDialog(
-    @DrawableRes drawableRes: Int,
-    title: String,
-    onDismissed: () -> Unit,
-    properties: DialogProperties,
-    content: @Composable () -> Unit
-) {
-    Dialog(
-        onDismissRequest = onDismissed,
-        properties = properties,
-        content = {
-            Surface(
-                modifier = Modifier
-                    .wrapContentSize()
-                    .clip(shape = RoundedCornerShape(4.dp))
-            ) {
-                Column(
-                    modifier = Modifier
-                        .padding(start = 24.dp, end = 8.dp, bottom = 8.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(64.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            modifier = Modifier.size(24.dp),
-                            painter = painterResource(id = drawableRes),
-                            contentDescription = null,
-                            tint = MaterialTheme.colors.onSurface
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = title,
-                            color = MaterialTheme.colors.onSurface,
-                            style = MaterialTheme.typography.h6,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                    content()
-                }
-            }
-        }
-    )
 }
 
 @Composable
@@ -175,13 +122,13 @@ fun ShowDialog(
                             modifier = Modifier.size(24.dp),
                             imageVector = imageVector,
                             contentDescription = null,
-                            tint = MaterialTheme.colors.onSurface
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = title,
-                            color = MaterialTheme.colors.onSurface,
-                            style = MaterialTheme.typography.h6,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
@@ -221,13 +168,13 @@ fun ShowDataAcquisitionDialog(
                             modifier = Modifier.size(24.dp),
                             imageVector = imageVector,
                             contentDescription = null,
-                            tint = MaterialTheme.colors.onSurface
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = title,
-                            color = MaterialTheme.colors.onSurface,
-                            style = MaterialTheme.typography.h6,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
