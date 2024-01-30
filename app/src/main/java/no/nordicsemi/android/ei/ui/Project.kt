@@ -10,7 +10,6 @@
 
 package no.nordicsemi.android.ei.ui
 
-import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.content.res.Configuration.SCREENLAYOUT_SIZE_LARGE
 import android.content.res.Configuration.SCREENLAYOUT_SIZE_MASK
 import androidx.activity.compose.BackHandler
@@ -43,14 +42,12 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -80,7 +77,7 @@ import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.pager.PagerState
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import no.nordicsemi.android.common.theme.view.NordicAppBar
 import no.nordicsemi.android.ei.BottomNavigationScreen
 import no.nordicsemi.android.ei.HorizontalPagerTab
 import no.nordicsemi.android.ei.R
@@ -238,8 +235,7 @@ private fun SmallScreen(
     onBackPressed: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    val isLandscape = LocalConfiguration.current.orientation == ORIENTATION_LANDSCAPE
-    var showBottomSheet by remember { mutableStateOf(false) }
+    var showBottomSheet by rememberSaveable { mutableStateOf(false) }
     val modalBottomSheetState =
         rememberModalBottomSheetState(
             confirmValueChange = {
@@ -262,7 +258,8 @@ private fun SmallScreen(
         isBackHandlerEnabled = isBackHandlerEnabled,
         selectedScreen = selectedScreen,
         onScreenChanged = onScreenChanged,
-        isSamplingMessageVisible = viewModel.samplingState !is Unknown && !viewModel.isSamplingStartedFromDevice,
+        isSamplingMessageVisible = viewModel.samplingState !is Unknown &&
+                !viewModel.isSamplingStartedFromDevice,
         onSamplingMessageDismissed = onSamplingMessageDismissed,
         isFabVisible = selectedScreen.shouldFabBeVisible,
         onFabClicked = {
@@ -271,16 +268,23 @@ private fun SmallScreen(
         onBackPressed = {
             if (modalBottomSheetState.isVisible &&
                 (viewModel.samplingState is Finished || viewModel.samplingState is Unknown)
-            )
+            ) {
                 showBottomSheet = false
-            else onBackPressed()
+            } else onBackPressed()
         }
     )
     if (showBottomSheet) {
         ModalBottomSheet(
-            onDismissRequest = { },
-            sheetState = modalBottomSheetState,
-            scrimColor = Color.Black.copy(alpha = 0.5f)
+            modifier = Modifier.fillMaxSize(),
+            onDismissRequest = {
+                if (viewModel.samplingState is Finished || viewModel.samplingState is Unknown) {
+                    hideBottomSheet(scope = scope, bottomSheetState = modalBottomSheetState) {
+                        showBottomSheet = false
+                    }
+                    viewModel.resetSamplingState()
+                }
+            },
+            sheetState = modalBottomSheetState
         ) {
             RecordSampleSmallScreen(
                 viewModel = viewModel,
@@ -294,9 +298,11 @@ private fun SmallScreen(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Button(
-                            enabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
-                                    (viewModel.samplingState is Finished || viewModel.samplingState is Unknown),
-                            onClick = { viewModel.startSampling() }
+                            enabled = connectedDevices.isNotEmpty() &&
+                                    viewModel.label.isNotEmpty() &&
+                                    (viewModel.samplingState is Finished ||
+                                            viewModel.samplingState is Unknown),
+                            onClick = viewModel::startSampling
                         ) {
                             Text(
                                 text = stringResource(R.string.action_start_sampling).uppercase(
@@ -571,7 +577,12 @@ private fun ProjectTopAppBar(
         }
 
         else -> {
-            TopAppBar(
+            NordicAppBar(
+                text = projectName,
+                onNavigationButtonClick = onBackPressed,
+                showBackButton = true
+            )
+            /*TopAppBar(
                 title = { Title(text = projectName) },
                 modifier = modifier,
                 navigationIcon = {
@@ -584,7 +595,7 @@ private fun ProjectTopAppBar(
                         )
                     }
                 }
-            )
+            )*/
         }
     }
 }
@@ -649,15 +660,6 @@ private fun ProjectBottomNavigation(
                 unselectedContentColor = LocalContentColor.current.copy(alpha = 0.6f)*/
             )
         }
-    }
-}
-
-fun hideBottomSheet(
-    scope: CoroutineScope,
-    modalBottomSheetState: SheetState
-) {
-    scope.launch {
-        modalBottomSheetState.hide()
     }
 }
 

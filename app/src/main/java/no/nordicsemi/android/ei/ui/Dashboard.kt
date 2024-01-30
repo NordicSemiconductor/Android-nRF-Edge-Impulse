@@ -174,6 +174,7 @@ fun Dashboard(
                 onLogoutClick = {
                     onLogout(viewModel.logout())
                 },
+                elevation = 0.dp
             )
         },
         floatingActionButton = {

@@ -41,6 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -119,7 +120,7 @@ private fun StartInferencing(
     sendInferencingRequest: (InferencingRequest) -> Unit
 ) {
     var isDevicesMenuExpanded by remember { mutableStateOf(false) }
-    var width by rememberSaveable { mutableStateOf(0) }
+    var width by rememberSaveable { mutableIntStateOf(0) }
 
     if (isLargeScreen || isLandscape) {
         Row(

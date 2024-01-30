@@ -79,7 +79,7 @@ fun DeviceDetails(
     onConnectClick: () -> Unit,
     onDisconnectClick: () -> Unit,
     onRenameClick: (Device, String) -> Unit,
-    onDeleteClick: (Device) -> Unit,
+    onDeleteClick: (Device) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -92,8 +92,8 @@ fun DeviceDetails(
                 modifier = Modifier
                     .background(color = MaterialTheme.colorScheme.background)
                     .fillMaxWidth()
-                    .padding(16.dp)
-                , horizontalArrangement = Arrangement.Center
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.Center
             ) {
                 Button(
                     onClick = {
@@ -102,6 +102,7 @@ fun DeviceDetails(
                             CONNECTING,
                             AUTHENTICATING,
                             AUTHENTICATED -> onDisconnectClick()
+
                             else -> {}
                         }
                     },
@@ -118,6 +119,7 @@ fun DeviceDetails(
                             IN_RANGE, NOT_IN_RANGE -> stringResource(id = R.string.action_connect)
                             CONNECTING,
                             AUTHENTICATING -> stringResource(id = R.string.action_cancel)
+
                             AUTHENTICATED -> stringResource(id = R.string.action_disconnect)
                             else -> stringResource(id = R.string.action_connect)
                         }.uppercase(Locale.US),
@@ -143,7 +145,10 @@ fun DeviceDetails(
                     onClick = { onDeleteClick(device) },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
                 ) {
-                    Text(text = stringResource(R.string.action_delete).uppercase(Locale.US), color = Color.White)
+                    Text(
+                        text = stringResource(R.string.action_delete).uppercase(Locale.US),
+                        color = Color.White
+                    )
                 }
             }
         }
@@ -214,6 +219,7 @@ private fun DeviceName(
 
                 }
             }
+
             false -> {
                 Row(
                     modifier = Modifier

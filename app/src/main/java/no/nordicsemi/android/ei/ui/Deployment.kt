@@ -46,6 +46,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -170,7 +171,7 @@ private fun DeployImpulse(
     onCancelDeployClick: () -> Unit
 ) {
     var isDevicesMenuExpanded by remember { mutableStateOf(false) }
-    var width by rememberSaveable { mutableStateOf(0) }
+    var width by rememberSaveable { mutableIntStateOf(0) }
 
     connectedDevices.takeIf { it.isNotEmpty() }?.apply {
         if (deploymentTarget == null) {
