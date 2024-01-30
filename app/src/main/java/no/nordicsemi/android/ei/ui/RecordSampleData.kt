@@ -18,11 +18,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -45,17 +45,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusDirection
@@ -75,6 +73,7 @@ import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.Message.Sample.Finished
 import no.nordicsemi.android.ei.model.Message.Sample.Unknown
 import no.nordicsemi.android.ei.model.Sensor
+import no.nordicsemi.android.ei.ui.layouts.BottomSheetAppBar
 import no.nordicsemi.android.ei.ui.layouts.DeviceDisconnected
 import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import java.util.Locale
@@ -134,63 +133,53 @@ fun RecordSampleSmallScreen(
     buttonContent: @Composable () -> Unit,
     onCloseClicked: () -> Unit
 ) {
-    Scaffold(
-        modifier = Modifier.wrapContentHeight(),
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(text = stringResource(R.string.title_record_new_data))
-                },
-                navigationIcon = {
-                    IconButton(onClick = onCloseClicked) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = null
-                        )
-                    }
-                })
-        }
+    BottomSheetAppBar(
+        imageVector = Icons.Default.Close,
+        title = stringResource(R.string.title_record_new_data),
+        onBackPressed = onCloseClicked
+    )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = MaterialTheme.colorScheme.background)
     ) {
-        Column(modifier = Modifier.padding(it)) {
-            SamplingMessage(
-                isSamplingMessageVisible = viewModel.samplingState !is Unknown,
-                onSamplingMessageDismissed = onSamplingMessageDismissed,
+        SamplingMessage(
+            isSamplingMessageVisible = viewModel.samplingState !is Unknown,
+            onSamplingMessageDismissed = onSamplingMessageDismissed,
+            samplingState = viewModel.samplingState,
+            isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .verticalScroll(state = rememberScrollState())
+        ) {
+            RecordSampleContent(
+                connectedDevices = connectedDevices,
                 samplingState = viewModel.samplingState,
-                isSamplingStartedFromDevice = viewModel.isSamplingStartedFromDevice
+                category = viewModel.category,
+                onCategorySelected = { viewModel.onCategoryChanged(it) },
+                dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
+                onDataAcquisitionTargetSelected = {
+                    viewModel.onDataAcquisitionTargetSelected(
+                        device = it
+                    )
+                },
+                label = viewModel.label,
+                onLabelChanged = { viewModel.onLabelChanged(label = it) },
+                selectedSensor = viewModel.sensor,
+                onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
+                sampleLength = viewModel.sampleLength,
+                onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
+                selectedFrequency = viewModel.frequency,
+                onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) },
             )
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .verticalScroll(state = rememberScrollState())
-            ) {
-                RecordSampleContent(
-                    connectedDevices = connectedDevices,
-                    samplingState = viewModel.samplingState,
-                    category = viewModel.category,
-                    onCategorySelected = { viewModel.onCategoryChanged(it) },
-                    dataAcquisitionTarget = viewModel.dataAcquisitionTarget,
-                    onDataAcquisitionTargetSelected = {
-                        viewModel.onDataAcquisitionTargetSelected(
-                            device = it
-                        )
-                    },
-                    label = viewModel.label,
-                    onLabelChanged = { viewModel.onLabelChanged(label = it) },
-                    selectedSensor = viewModel.sensor,
-                    onSensorSelected = { viewModel.onSensorSelected(sensor = it) },
-                    sampleLength = viewModel.sampleLength,
-                    onSampleLengthChanged = { viewModel.onSampleLengthChanged(it) },
-                    selectedFrequency = viewModel.frequency,
-                    onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) },
-                )
-                buttonContent()
-            }
+            buttonContent()
         }
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun RecordSampleContent(
     samplingState: Message.Sample,
@@ -269,7 +258,7 @@ private fun DeviceSelection(
     dataAcquisitionTarget: Device?,
     onDataAcquisitionTargetSelected: (Device) -> Unit
 ) {
-    var width by rememberSaveable { mutableStateOf(0) }
+    var width by rememberSaveable { mutableIntStateOf(0) }
     var isDevicesMenuExpanded by rememberSaveable { mutableStateOf(false) }
     Column {
         OutlinedTextField(
@@ -335,7 +324,7 @@ private fun CategorySelection(
     category: Category,
     onCategorySelected: (Category) -> Unit
 ) {
-    var width by rememberSaveable { mutableStateOf(0) }
+    var width by rememberSaveable { mutableIntStateOf(0) }
     var isCategoryExpanded by rememberSaveable { mutableStateOf(false) }
     Column {
         OutlinedTextField(
@@ -459,7 +448,7 @@ private fun SensorSelection(
     selectedSensor: Sensor?,
     onSensorSelected: (Sensor) -> Unit
 ) {
-    var width by rememberSaveable { mutableStateOf(0) }
+    var width by rememberSaveable { mutableIntStateOf(0) }
     var isSensorsMenuExpanded by rememberSaveable { mutableStateOf(false) }
     Column {
         OutlinedTextField(
@@ -531,7 +520,6 @@ private fun SensorSelection(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun SampleLengthInput(
     connectedDevices: List<Device>,
@@ -543,7 +531,6 @@ private fun SampleLengthInput(
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     Column {
-
         OutlinedTextField(
             value = sampleLength.toString(),
             onValueChange = {},
@@ -643,7 +630,6 @@ private fun SampleLengthInput(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun FrequencySelection(
     connectedDevices: List<Device>,
@@ -652,7 +638,7 @@ private fun FrequencySelection(
     selectedFrequency: Number?,
     onFrequencySelected: (Number) -> Unit
 ) {
-    var width by rememberSaveable { mutableStateOf(0) }
+    var width by rememberSaveable { mutableIntStateOf(0) }
     var isFrequencyMenuExpanded by rememberSaveable { mutableStateOf(false) }
     Column {
         OutlinedTextField(
@@ -738,7 +724,7 @@ fun ShowDevicesDropdown(
             connectedDevices.forEach { device ->
                 DropdownMenuItem(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
-                    text =  {
+                    text = {
                         Text(
                             modifier = Modifier.weight(1.0f),
                             text = device.name

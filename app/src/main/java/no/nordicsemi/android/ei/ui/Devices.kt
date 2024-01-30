@@ -36,13 +36,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.rounded.DeveloperBoard
-import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
@@ -83,6 +81,7 @@ import no.nordicsemi.android.ei.ble.state.ScanningState
 import no.nordicsemi.android.ei.comms.CommsManager
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.ui.layouts.BluetoothDisabledInfo
+import no.nordicsemi.android.ei.ui.layouts.BottomSheetAppBar
 import no.nordicsemi.android.ei.ui.layouts.LocationTurnedOffInfo
 import no.nordicsemi.android.ei.ui.layouts.NoConfiguredDevicesInfo
 import no.nordicsemi.android.ei.ui.layouts.NoDevicesInRangeInfo
@@ -256,22 +255,15 @@ fun Devices(
             onDismissRequest = { showBottomSheet = false },
             sheetState = bottomSheetState
         ) {
-            Row {
-                Text(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    text = stringResource(R.string.label_device_information),
-                    style = MaterialTheme.typography.titleLarge
-                )
-                IconButton(
-                    onClick = {
-                        hideBottomSheet(scope = scope, bottomSheetState = bottomSheetState) {
-                            showBottomSheet = false
-                        }
+            BottomSheetAppBar(
+                imageVector = Icons.Default.Close,
+                title = stringResource(id = R.string.label_device_information),
+                onBackPressed = {
+                    hideBottomSheet(scope = scope, bottomSheetState = bottomSheetState) {
+                        showBottomSheet = false
                     }
-                ) { Icon(imageVector = Icons.Rounded.ExpandMore, contentDescription = null) }
-            }
+                }
+            )
             viewModel.device?.let { device ->
                 DeviceDetails(
                     device = device,
@@ -285,20 +277,19 @@ fun Devices(
                     onDisconnectClick = {
                         viewModel.discoveredBluetoothDevice(device)?.let(disconnect)
                     },
-                    onRenameClick = onRenameClick,
-                    onDeleteClick = { dev ->
-                        onDeleteClick(dev)
-                        hideBottomSheet(scope, bottomSheetState) {
-                            showBottomSheet = false
-                        }
-                    },
-                )
+                    onRenameClick = onRenameClick
+                ) { dev ->
+                    onDeleteClick(dev)
+                    hideBottomSheet(scope, bottomSheetState) {
+                        showBottomSheet = false
+                    }
+                }
             }
         }
     }
 }
 
-private fun hideBottomSheet(
+internal fun hideBottomSheet(
     scope: CoroutineScope,
     bottomSheetState: SheetState,
     onBottomSheetHide: () -> Unit
