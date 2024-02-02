@@ -538,7 +538,6 @@ private fun ProjectContent(
 
 @Composable
 private fun ProjectTopAppBar(
-    modifier: Modifier = Modifier,
     projectName: String,
     selectedScreen: BottomNavigationScreen,
     pagerState: PagerState,
