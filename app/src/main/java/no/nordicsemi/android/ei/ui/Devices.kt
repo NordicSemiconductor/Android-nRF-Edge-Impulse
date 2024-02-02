@@ -41,6 +41,7 @@ import androidx.compose.material.icons.rounded.DeveloperBoard
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
@@ -132,7 +133,7 @@ fun Devices(
             modifier = Modifier
                 .fillMaxSize()
                 .background(color = MaterialTheme.colorScheme.background),
-            contentPadding = PaddingValues(bottom = 144.dp)
+            contentPadding = PaddingValues(bottom = 160.dp)
         ) {
             item {
                 Text(
@@ -573,12 +574,13 @@ fun DiscoveredDeviceRow(
         when (state) {
             // RSSI image can be displayed even when not in range
             DeviceState.IN_RANGE, DeviceState.NOT_IN_RANGE -> {
-                Image(
+                Icon(
                     painter = painterResource(id = getRssiRes(device.rssiAsPercent())),
                     contentDescription = null,
                     modifier = Modifier
                         .size(24.dp)
-                        .align(Alignment.CenterVertically)
+                        .align(Alignment.CenterVertically),
+                    tint = MaterialTheme.colorScheme.onBackground
                 )
             }
 

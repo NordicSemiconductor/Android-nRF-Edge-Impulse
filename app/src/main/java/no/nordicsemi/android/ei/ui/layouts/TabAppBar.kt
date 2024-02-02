@@ -6,6 +6,8 @@
  *
  */
 
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package no.nordicsemi.android.ei.ui.layouts
 
 import androidx.compose.foundation.layout.Arrangement
@@ -18,14 +20,15 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.TabRowDefaults.SecondaryIndicator
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -39,6 +42,45 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.common.theme.R
+
+@Composable
+fun TabTopAppBar1(
+    title: @Composable () -> Unit,
+    tabs: List<Pair<@Composable () -> Unit, (@Composable () -> Unit)?>>,
+    pagerState: PagerState? = null,
+    navigationIcon: @Composable (() -> Unit),
+    actions: @Composable RowScope.() -> Unit = {},
+    backgroundColor: Color = colorResource(id = R.color.appBarColor),
+) {
+    val selectedTabIndex = pagerState?.currentPage ?: 0
+    Column {
+        TopAppBar(
+            title = title,
+            navigationIcon = navigationIcon,
+            actions = actions,
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = backgroundColor)
+        )
+        PrimaryTabRow(
+            selectedTabIndex = selectedTabIndex,
+            containerColor = backgroundColor
+        ) {
+            // Adds tabs for all of pages
+            val coroutineScope = rememberCoroutineScope()
+            tabs.forEachIndexed { index, tab ->
+                Tab(
+                    text = tab.first,
+                    icon = tab.second,
+                    selected = pagerState?.currentPage == index,
+                    onClick = {
+                        coroutineScope.launch {
+                            pagerState?.scrollToPage(index)
+                        }
+                    },
+                )
+            }
+        }
+    }
+}
 
 @Composable
 fun TabTopAppBar(
@@ -73,9 +115,7 @@ fun TabTopAppBar(
         }
 
         Row(
-            Modifier
-                .fillMaxHeight()
-                /*.weight(1f)*/,
+            modifier = Modifier.fillMaxHeight(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             ProvideTextStyle(value = MaterialTheme.typography.titleLarge) {
@@ -125,13 +165,33 @@ private fun TabAppBar(
             Row(
                 Modifier
                     .padding(contentPadding)
-                    .height(AppBarHeight),
+                    .padding(top = 8.dp)
+                    .height(AppBarHeight + 32.dp),
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
                 content = content
             )
             val selectedTabIndex = pagerState?.currentPage ?: 0
-            TabRow(
+            PrimaryTabRow(
+                selectedTabIndex = selectedTabIndex,
+                containerColor = backgroundColor
+            ) {
+                // Adds tabs for all of pages
+                val coroutineScope = rememberCoroutineScope()
+                tabs.forEachIndexed { index, tab ->
+                    Tab(
+                        text = tab.first,
+                        icon = tab.second,
+                        selected = pagerState?.currentPage == index,
+                        onClick = {
+                            coroutineScope.launch {
+                                pagerState?.scrollToPage(index)
+                            }
+                        },
+                    )
+                }
+            }
+            /*TabRow(
                 // Selected tab is the current page
                 selectedTabIndex = selectedTabIndex,
                 // Override the indicator, using the provided pagerTabIndicatorOffset modifier
@@ -142,7 +202,7 @@ private fun TabAppBar(
                         )
                     } ?: run {
                         SecondaryIndicator(
-                            Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
+                            modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex])
                         )
                     }
                 },
@@ -162,7 +222,7 @@ private fun TabAppBar(
                         },
                     )
                 }
-            }
+            }*/
         }
     }
 }

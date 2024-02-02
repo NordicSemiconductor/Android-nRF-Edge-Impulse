@@ -11,6 +11,7 @@ package no.nordicsemi.android.ei
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -58,6 +59,8 @@ class MainActivity : NordicActivity() {
         } else {
             splashScreenVisible = false
         }
+
+        enableEdgeToEdge()
 
         setContent {
             NordicTheme {

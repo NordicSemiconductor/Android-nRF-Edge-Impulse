@@ -26,6 +26,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -208,10 +210,9 @@ private fun Login(
                     onClick = { onPasswordStateChanged(!passwordState) }
                 ) {
                     Icon(
-                        painter = painterResource(
-                            if (passwordState) R.drawable.ic_baseline_visibility_24
-                            else R.drawable.ic_baseline_visibility_off_24
-                        ),
+                        imageVector = if (passwordState)
+                            Icons.Outlined.Visibility
+                        else Icons.Outlined.VisibilityOff,
                         contentDescription = stringResource(R.string.action_show_password)
                     )
                 }
@@ -364,14 +365,10 @@ private fun SmallScreenLandscapeLogin(
                 visualTransformation = if (passwordState) VisualTransformation.None else PasswordVisualTransformation(),
                 leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
                 trailingIcon = {
-                    IconButton(
-                        onClick = { onPasswordStateChanged(!passwordState) }
-                    ) {
+                    IconButton(onClick = { onPasswordStateChanged(!passwordState) }) {
                         Icon(
-                            painter = painterResource(
-                                if (passwordState) R.drawable.ic_baseline_visibility_24
-                                else R.drawable.ic_baseline_visibility_off_24
-                            ),
+                            imageVector = if (passwordState) Icons.Outlined.Visibility
+                            else Icons.Outlined.VisibilityOff,
                             contentDescription = stringResource(R.string.action_show_password)
                         )
                     }

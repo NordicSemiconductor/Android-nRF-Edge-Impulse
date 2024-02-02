@@ -6,6 +6,8 @@
  *
  */
 
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package no.nordicsemi.android.ei.ui
 
 import androidx.compose.foundation.BorderStroke
@@ -19,16 +21,22 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -40,9 +48,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.HourglassTop
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -72,7 +83,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -97,7 +107,6 @@ import no.nordicsemi.android.ei.ShowDialog
 import no.nordicsemi.android.ei.model.Collaborator
 import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.showSnackbar
-import no.nordicsemi.android.ei.ui.layouts.CollapsibleFloatingActionButton
 import no.nordicsemi.android.ei.ui.layouts.UserAppBar
 import no.nordicsemi.android.ei.ui.layouts.UserAppBarImageSize
 import no.nordicsemi.android.ei.ui.layouts.isScrollingUp
@@ -164,31 +173,35 @@ fun Dashboard(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             UserAppBar(
-                title = {
-                    Text(text = stringResource(id = R.string.label_welcome))
-                },
+                title = stringResource(id = R.string.label_welcome),
                 user = user,
                 onAboutClick = { isAboutDialogVisible = !isAboutDialogVisible },
-                onLogoutClick = {
-                    onLogout(viewModel.logout())
-                },
-                elevation = 0.dp
+                onLogoutClick = { onLogout(viewModel.logout()) }
             )
         },
         floatingActionButton = {
-            CollapsibleFloatingActionButton(
-                imageVector = Icons.Default.Add,
-                text = stringResource(R.string.action_create_project),
-                expanded = { lazyListState.isScrollingUp() },
-                onClick = {
-                    isCreateProjectDialogVisible = !isCreateProjectDialogVisible
-                }
+            ExtendedFloatingActionButton(
+                text = { Text(text = stringResource(R.string.action_create_project).uppercase(Locale.US)) },
+                icon = { Icon(imageVector = Icons.Default.Add, contentDescription = null) },
+                onClick = { isCreateProjectDialogVisible = !isCreateProjectDialogVisible },
+                expanded = lazyListState.isScrollingUp()
             )
         }
     ) { innerPadding ->
         SwipeRefresh(
+            modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(paddingValues = innerPadding)
+                .consumeWindowInsets(paddingValues = innerPadding)
+                .windowInsetsPadding(
+                    insets = WindowInsets.safeDrawing.only(
+                        sides = WindowInsetsSides.Horizontal
+                    ),
+                ),
             state = swipeRefreshState,
             onRefresh = { viewModel.refreshUser() },
             content = {
@@ -196,7 +209,7 @@ fun Dashboard(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(innerPadding),
+                        /*.padding(innerPadding)*/,
                         contentPadding = PaddingValues(top = 72.dp, bottom = 36.dp),
                         state = lazyListState
                     ) {
@@ -238,7 +251,7 @@ fun Dashboard(
                             )
                         ) {
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_project_diagram),
+                                imageVector = Icons.Outlined.Share,
                                 contentDescription = null,
                                 modifier = Modifier.size(72.dp)
                             )
@@ -273,11 +286,10 @@ fun Dashboard(
             ShowDownloadingDevelopmentKeysDialog()
         }
     }
-
     Surface(
         modifier = Modifier
-            .offset(y = UserAppBarImageSize / 2)
-            .padding(start = 16.dp)
+            .offset(y = (56.dp))
+            .padding(start = 16.dp, top = 32.dp)
             .border(
                 border = BorderStroke(3.dp, color = MaterialTheme.colorScheme.onPrimary),
                 shape = CircleShape
@@ -591,7 +603,7 @@ private fun ShowDownloadingDevelopmentKeysDialog(
             ) {
                 Icon(
                     modifier = Modifier.size(24.dp),
-                    painter = painterResource(id = R.drawable.ic_baseline_hourglass_top),
+                    imageVector = Icons.Outlined.HourglassTop,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurface
                 )

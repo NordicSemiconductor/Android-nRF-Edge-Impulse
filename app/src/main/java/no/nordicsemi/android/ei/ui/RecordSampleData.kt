@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Sensors
+import androidx.compose.material.icons.outlined.GraphicEq
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material.icons.rounded.DeveloperBoard
 import androidx.compose.material3.DropdownMenu
@@ -62,7 +63,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -657,7 +657,7 @@ private fun FrequencySelection(
             leadingIcon = {
                 Icon(
                     modifier = Modifier.size(24.dp),
-                    painter = painterResource(id = R.drawable.ic_waveform),
+                    imageVector = Icons.Outlined.GraphicEq,
                     contentDescription = null
                 )
             },
@@ -725,15 +725,22 @@ fun ShowDevicesDropdown(
                 DropdownMenuItem(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                     text = {
-                        Text(
-                            modifier = Modifier.weight(1.0f),
-                            text = device.name
-                        )
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .background(color = Color.Green, shape = CircleShape)
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .padding(start = 8.dp)
+                                    .background(color = Color.Green, shape = CircleShape)
+                            )
+                            Text(
+                                modifier = Modifier
+                                    .weight(1.0f)
+                                    .padding(start = 16.dp),
+                                text = device.name
+                            )
+                        }
                     },
                     onClick = { onDeviceSelected(device) }
                 )

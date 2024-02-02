@@ -133,7 +133,7 @@ class DashboardViewModel @Inject constructor(
                 dashboardRepository.getSocketToken(developmentKeys.apiKey, projectId = project.id)
                     .let { response ->
                         guard(response.success) {
-                            throw  Throwable(response.error)
+                            throw Throwable(response.error)
                         }
                         response.token
                     }

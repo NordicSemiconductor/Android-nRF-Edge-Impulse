@@ -178,7 +178,7 @@ private fun DeployImpulse(
             onDeploymentTargetSelected(connectedDevices[0])
         }
     }
-    Column(modifier = Modifier.padding(bottom = 72.dp)) {
+    Column(modifier = Modifier.padding(bottom = 100.dp)) {
         Surface {
             Column(
                 modifier = Modifier.padding(all = 16.dp)

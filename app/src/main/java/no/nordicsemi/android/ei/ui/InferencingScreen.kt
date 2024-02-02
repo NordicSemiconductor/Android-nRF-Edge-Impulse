@@ -80,12 +80,14 @@ fun InferencingScreen(
 ) {
 
     val isLargeScreen =
-        LocalConfiguration.current.screenLayout and Configuration.SCREENLAYOUT_SIZE_MASK >= Configuration.SCREENLAYOUT_SIZE_LARGE
+        LocalConfiguration.current.screenLayout and
+                Configuration.SCREENLAYOUT_SIZE_MASK >= Configuration.SCREENLAYOUT_SIZE_LARGE
     val isLandscape =
         LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     Column(
         modifier = modifier
             .background(color = MaterialTheme.colorScheme.background)
+            .padding(bottom = 100.dp),
     ) {
         StartInferencing(
             isLargeScreen = isLargeScreen,

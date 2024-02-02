@@ -35,6 +35,7 @@ import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -89,8 +90,7 @@ import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.Message.Sample.Finished
 import no.nordicsemi.android.ei.model.Message.Sample.Unknown
 import no.nordicsemi.android.ei.showSnackbar
-import no.nordicsemi.android.ei.ui.layouts.CollapsibleFloatingActionButton
-import no.nordicsemi.android.ei.ui.layouts.TabTopAppBar
+import no.nordicsemi.android.ei.ui.layouts.TabTopAppBar1
 import no.nordicsemi.android.ei.ui.layouts.isScrollingUp
 import no.nordicsemi.android.ei.ui.theme.NordicMiddleGrey
 import no.nordicsemi.android.ei.viewmodels.DataAcquisitionViewModel
@@ -396,14 +396,13 @@ private fun ProjectContent(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
             if (isFabVisible) {
-                CollapsibleFloatingActionButton(
-                    imageVector = Icons.Default.Add,
-                    text = stringResource(id = R.string.action_record_new_data),
-                    expanded = {
-                        val currentListState = listStates[pagerState.currentPage]
-                        currentListState.isScrollingUp()
+                ExtendedFloatingActionButton(
+                    text = {
+                        Text(text = stringResource(id = R.string.action_record_new_data).uppercase(Locale.US))
                     },
-                    onClick = onFabClicked
+                    icon = { Icon(imageVector = Icons.Default.Add, contentDescription = null) },
+                    onClick = onFabClicked,
+                    expanded = listStates[pagerState.currentPage].isScrollingUp()
                 )
             }
         }
@@ -549,27 +548,31 @@ private fun ProjectTopAppBar(
 
     when (selectedScreen) {
         BottomNavigationScreen.DATA_ACQUISITION -> {
-            TabTopAppBar(
+            TabTopAppBar1(
                 title = { Title(text = projectName) },
                 tabs = tabs.map {
                     val text = @Composable {
-                        Text(text = stringResource(id = it.title).uppercase(Locale.US))
+                        Text(
+                            text = stringResource(id = it.title).uppercase(Locale.US),
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
                     }
                     val icon = @Composable {
                         Icon(
                             imageVector = it.icon,
-                            contentDescription = null
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                     text to icon
                 },
                 pagerState = pagerState,
-                modifier = modifier,
                 navigationIcon = {
                     IconButton(onClick = onBackPressed) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 }
@@ -609,7 +612,8 @@ private fun Title(
         text = text,
         modifier = modifier.padding(end = 16.dp),
         maxLines = 1,
-        overflow = TextOverflow.Ellipsis
+        overflow = TextOverflow.Ellipsis,
+        color = MaterialTheme.colorScheme.onPrimary,
     )
 }
 

@@ -111,7 +111,7 @@ private fun CollectedDataList(
             modifier = modifier
                 .fillMaxSize(),
             state = state,
-            contentPadding = PaddingValues(bottom = 144.dp)
+            contentPadding = PaddingValues(bottom = 160.dp)
         ) {
             if (lazyPagingItems.itemCount > 0) {
                 stickyHeader {
