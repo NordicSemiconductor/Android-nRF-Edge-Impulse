@@ -28,4 +28,6 @@
     <string name="action_stop">Stop</string>
     <string name="field_code">Code</string>
     <string name="error_login_cancelled">Login cancelled</string>
+    <string name="label_authentication_code">Authentication Code</string>
+    <string name="label_multi_factor_auth_rationale">Enter the code displayed on your authenticator app.</string>
 </resources>

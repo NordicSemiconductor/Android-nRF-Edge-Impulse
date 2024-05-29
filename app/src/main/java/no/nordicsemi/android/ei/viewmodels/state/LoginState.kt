@@ -11,7 +11,7 @@ package no.nordicsemi.android.ei.viewmodels.state
 sealed class LoginState {
     data object LoggedOut : LoginState()
     data object InProgress : LoginState()
-    data object AwaitingTwoFactorAuthentication : LoginState()
+    data object AwaitingMultiFactorAuthentication : LoginState()
     data class LoggedIn(
         val username: String,
         val password: String,
