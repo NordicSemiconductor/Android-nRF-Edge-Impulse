@@ -8,7 +8,6 @@
 
 package no.nordicsemi.android.ei
 
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -22,15 +21,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,15 +48,6 @@ class MainActivity : NordicActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Animated Vector Drawable is only supported on API 31+.
-        var splashScreenVisible by mutableStateOf(true)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && coldStart) {
-            splashScreen.setOnExitAnimationListener {
-                splashScreenVisible = false
-            }
-        } else {
-            splashScreenVisible = false
-        }
 
         enableEdgeToEdge()
 
@@ -74,14 +63,6 @@ class MainActivity : NordicActivity() {
             }
         }
     }
-
-    companion object {
-        // This flag is false when the app is first started (cold start).
-        // In this case, the animation will be fully shown (1 sec).
-        // Subsequent launches will display it only briefly.
-        // It is only used on API 31+
-        private var coldStart = true
-    }
 }
 
 fun showSnackbar(
@@ -92,6 +73,38 @@ fun showSnackbar(
     coroutineScope.launch {
         snackbarHostState.showSnackbar(message = message)
     }
+}
+
+@Composable
+fun ShowAlertDialog(
+    imageVector: ImageVector,
+    title: String,
+    text: @Composable () -> Unit = {},
+    dismissText: String? = null,
+    onDismiss: () -> Unit = {},
+    confirmText: String,
+    onConfirm: () -> Unit,
+    properties: DialogProperties = DialogProperties(),
+) {
+    AlertDialog(
+        icon = { Icon(imageVector = imageVector, contentDescription = null) },
+        title = { Text(text = title, style = MaterialTheme.typography.titleLarge) },
+        text = text,
+        onDismissRequest = onDismiss,
+        dismissButton = {
+            dismissText?.let {
+                TextButton(onClick = onDismiss) {
+                    Text(text = dismissText)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(text = confirmText)
+            }
+        },
+        properties = properties
+    )
 }
 
 @Composable

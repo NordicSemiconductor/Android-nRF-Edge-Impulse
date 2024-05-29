@@ -22,7 +22,11 @@ import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.repository.LoginRepository
 import no.nordicsemi.android.ei.viewmodels.state.LoginState
-import no.nordicsemi.android.ei.viewmodels.state.LoginState.*
+import no.nordicsemi.android.ei.viewmodels.state.LoginState.AwaitingTwoFactorAuthentication
+import no.nordicsemi.android.ei.viewmodels.state.LoginState.Error
+import no.nordicsemi.android.ei.viewmodels.state.LoginState.InProgress
+import no.nordicsemi.android.ei.viewmodels.state.LoginState.LoggedIn
+import no.nordicsemi.android.ei.viewmodels.state.LoginState.LoggedOut
 import javax.inject.Inject
 
 @HiltViewModel
@@ -34,22 +38,41 @@ class LoginViewModel @Inject constructor(
     var state: LoginState by mutableStateOf(LoggedOut)
         private set
 
-    fun login(username: String, password: String, authTokenType: String) {
+    fun login(username: String, password: String, code: String? = null, authTokenType: String) {
         val context = getApplication() as Context
         state = InProgress
         val handler = CoroutineExceptionHandler { _, throwable ->
             state = Error(throwable)
         }
         viewModelScope.launch(handler) {
-            repo.login(username, password).let { response ->
-                response.token?.let { token ->
-                    state = LoggedIn(username, password, token, authTokenType)
-                } ?: run {
-                    val message = response.error ?: context.getString(R.string.error_invalid_token)
-                    state = Error(Throwable(message))
+            repo.login(username, password, code).let { response ->
+                if (response.success) {
+                    response.token?.let { token ->
+                        state = LoggedIn(username, password, token, authTokenType)
+                    } ?: run {
+                        val message =
+                            response.error ?: context.getString(R.string.error_invalid_token)
+                        state = Error(Throwable(message))
+                    }
+                } else {
+                    response.error?.takeIf {
+                        // Error thrown by edge impulse when two factor authentication is enabled.
+                        // https://docs.edgeimpulse.com/reference/edge-impulse-api/login/get_jwt_token
+                        it.contains("ERR_TOTP_TOKEN IS REQUIRED")
+                    }?.let {
+                        state = AwaitingTwoFactorAuthentication
+                    } ?: run {
+                        val message =
+                            response.error ?: context.getString(R.string.error_unknown)
+                        state = Error(Throwable(message))
+                    }
                 }
             }
         }
     }
 
+    fun cancelLogin() {
+        val context = getApplication() as Context
+        state = Error(Throwable(context.getString(R.string.error_login_cancelled)))
+    }
 }
