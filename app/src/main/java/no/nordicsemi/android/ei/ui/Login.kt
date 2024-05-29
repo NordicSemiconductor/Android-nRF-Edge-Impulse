@@ -9,6 +9,7 @@
 package no.nordicsemi.android.ei.ui
 
 import android.content.res.Configuration
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,6 +27,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Pin
+import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Button
@@ -59,19 +62,25 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import no.nordicsemi.android.common.theme.NordicTheme
 import no.nordicsemi.android.ei.R
+import no.nordicsemi.android.ei.ShowAlertDialog
 import no.nordicsemi.android.ei.ui.theme.NordicBlue
+import no.nordicsemi.android.ei.util.asMessage
 
 @Composable
 fun Login(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    onLogin: (username: String, password: String) -> Unit = { _: String, _: String -> },
+    onLogin: (username: String, password: String, code: String?) -> Unit = { _: String, _: String, _: String? ->
+    },
+    onLoginCancel: () -> Unit = {},
     onForgotPassword: () -> Unit = {},
     onSignUp: () -> Unit = {},
     login: String? = null,
-    error: String? = null,
+    showTwoFactorAuthDialog: Boolean = false,
+    error: Throwable? = null,
 ) {
 
     val isLargeScreen =
@@ -100,8 +109,10 @@ fun Login(
             onPasswordStateChanged = { passwordState = it },
             enabled = enabled,
             onLogin = onLogin,
+            onLoginCancel = onLoginCancel,
             onForgotPassword = onForgotPassword,
             onSignUp = onSignUp,
+            showTwoFactorAuthDialog = showTwoFactorAuthDialog,
             error = error
         )
     } else {
@@ -118,8 +129,10 @@ fun Login(
             onPasswordStateChanged = { passwordState = it },
             enabled = enabled,
             onLogin = onLogin,
+            onLoginCancel = onLoginCancel,
             onForgotPassword = onForgotPassword,
             onSignUp = onSignUp,
+            showTwoFactorAuthDialog = showTwoFactorAuthDialog,
             error = error
         )
     }
@@ -138,10 +151,12 @@ private fun Login(
     passwordState: Boolean,
     onPasswordStateChanged: (Boolean) -> Unit,
     enabled: Boolean = true,
-    onLogin: (username: String, password: String) -> Unit = { _: String, _: String -> },
+    onLogin: (username: String, password: String, code: String?) -> Unit,
+    onLoginCancel: () -> Unit = {},
     onForgotPassword: () -> Unit = {},
     onSignUp: () -> Unit = {},
-    error: String? = null,
+    showTwoFactorAuthDialog: Boolean = false,
+    error: Throwable? = null,
 ) {
     Column(
         modifier = modifier
@@ -167,10 +182,9 @@ private fun Login(
                     .size(64.dp),
             )
         }
-
-        error?.let { message ->
+        error?.let {
             Text(
-                text = stringResource(R.string.label_login_error, message),
+                text = stringResource(R.string.label_login_error, it.asMessage()),
                 modifier = Modifier.padding(bottom = 16.dp),
                 fontWeight = FontWeight.SemiBold,
             )
@@ -223,7 +237,7 @@ private fun Login(
             ),
             keyboardActions = KeyboardActions {
                 keyboardController?.hide()
-                onLogin(username, password)
+                onLogin(username, password, null)
             },
             singleLine = true
         )
@@ -238,7 +252,7 @@ private fun Login(
         Button(
             onClick = {
                 keyboardController?.hide()
-                onLogin(username, password)
+                onLogin(username, password, null)
             },
             modifier = Modifier
                 .height(46.dp)
@@ -269,6 +283,18 @@ private fun Login(
             )
         }
     }
+
+    if (showTwoFactorAuthDialog) {
+        Log.d("Login", "Show two factor authentication dialog")
+        TwoFactorAuthenticationDialog(
+            onCodeEntered = {
+                onLogin(username, password, it)
+            },
+            onDismiss = {
+                onLoginCancel()
+            }
+        )
+    }
 }
 
 @Composable
@@ -284,10 +310,12 @@ private fun SmallScreenLandscapeLogin(
     passwordState: Boolean,
     onPasswordStateChanged: (Boolean) -> Unit,
     enabled: Boolean = true,
-    onLogin: (username: String, password: String) -> Unit = { _: String, _: String -> },
+    onLogin: (username: String, password: String, code: String?) -> Unit,
+    onLoginCancel: () -> Unit = {},
     onForgotPassword: () -> Unit = {},
     onSignUp: () -> Unit = {},
-    error: String? = null,
+    showTwoFactorAuthDialog: Boolean = false,
+    error: Throwable? = null,
 ) {
     Row(
         modifier = modifier
@@ -328,9 +356,9 @@ private fun SmallScreenLandscapeLogin(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            error?.let { message ->
+            error?.let {
                 Text(
-                    text = stringResource(R.string.label_login_error, message),
+                    text = stringResource(R.string.label_login_error, it.asMessage()),
                     modifier = Modifier.padding(bottom = 16.dp),
                     fontWeight = FontWeight.SemiBold,
                 )
@@ -380,7 +408,7 @@ private fun SmallScreenLandscapeLogin(
                 ),
                 keyboardActions = KeyboardActions {
                     keyboardController?.hide()
-                    onLogin(username, password)
+                    onLogin(username, password, null)
                 },
                 singleLine = true
             )
@@ -395,7 +423,7 @@ private fun SmallScreenLandscapeLogin(
             Button(
                 onClick = {
                     keyboardController?.hide()
-                    onLogin(username, password)
+                    onLogin(username, password, null)
                 },
                 modifier = Modifier
                     .height(46.dp)
@@ -427,6 +455,65 @@ private fun SmallScreenLandscapeLogin(
             }
         }
     }
+    if(showTwoFactorAuthDialog){
+        TwoFactorAuthenticationDialog(
+            onCodeEntered = { onLogin(username, password, it) },
+            onDismiss = { onLoginCancel() }
+        )
+    }
+}
+
+@Composable
+private fun TwoFactorAuthenticationDialog(
+    onCodeEntered: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var code by rememberSaveable { mutableStateOf("") }
+    var error by rememberSaveable { mutableStateOf(false) }
+    ShowAlertDialog(
+        imageVector = Icons.Outlined.Security,
+        title = "Authentication Code",
+        text = {
+            Column {
+                Text(
+                    text = "Enter the code displayed on your authenticator app.",
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                OutlinedTextField(
+                    value = code,
+                    onValueChange = {
+                        error = it.isEmpty()
+                        code = it
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    label = { Text(stringResource(R.string.field_code)) },
+                    leadingIcon = { Icon(Icons.Outlined.Pin, contentDescription = null) },
+                    keyboardOptions = KeyboardOptions(
+                        autoCorrect = false,
+                        imeAction = ImeAction.Done,
+                        keyboardType = KeyboardType.Number
+                    ),
+                    keyboardActions = KeyboardActions {
+                        onCodeEntered(code)
+                    },
+                    singleLine = true
+                )
+            }
+        },
+        dismissText = stringResource(id = R.string.action_cancel),
+        onDismiss = onDismiss,
+        confirmText = stringResource(id = R.string.action_ok),
+        onConfirm = {
+            if (code.isNotEmpty()) {
+                onCodeEntered(code)
+            }
+        },
+        properties = DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        )
+    )
 }
 
 @Preview(name = "Dark")
@@ -434,7 +521,7 @@ private fun SmallScreenLandscapeLogin(
 fun LoginPreviewDark() {
     NordicTheme {
         Surface {
-            Login(error = "Invalid password")
+            Login(error = Throwable("Invalid password"))
         }
     }
 }
@@ -444,7 +531,7 @@ fun LoginPreviewDark() {
 fun LoginPreviewLight() {
     NordicTheme {
         Surface {
-            Login(error = "Invalid password")
+            Login(error = Throwable("Invalid password"))
         }
     }
 }

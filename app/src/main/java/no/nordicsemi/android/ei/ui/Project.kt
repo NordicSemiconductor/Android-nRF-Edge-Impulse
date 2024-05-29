@@ -83,8 +83,8 @@ import no.nordicsemi.android.ei.BottomNavigationScreen
 import no.nordicsemi.android.ei.HorizontalPagerTab
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.Route
+import no.nordicsemi.android.ei.ShowAlertDialog
 import no.nordicsemi.android.ei.ShowDataAcquisitionDialog
-import no.nordicsemi.android.ei.ShowDialog
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.Message.Sample.Finished
@@ -494,45 +494,20 @@ private fun ProjectContent(
         }
     }
     if (isWarningDialogVisible) {
-        ShowDialog(
+        ShowAlertDialog(
             imageVector = Icons.Rounded.Warning,
-            title = stringResource(R.string.title_warning),
-            onDismissRequest = { isWarningDialogVisible = !isWarningDialogVisible },
-            properties = DialogProperties(
-                dismissOnBackPress = false,
-                dismissOnClickOutside = false
-            ),
-            content = {
-                Text(
-                    modifier = Modifier.padding(end = 8.dp),
-                    text = stringResource(R.string.label_warning_projects),
-                    style = MaterialTheme.typography.bodyLarge
-                )
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = { isWarningDialogVisible = !isWarningDialogVisible }) {
-                        Text(text = stringResource(R.string.action_cancel).uppercase(Locale.US))
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    TextButton(
-                        onClick = {
-                            isWarningDialogVisible = !isWarningDialogVisible
-                            viewModel.disconnectAllDevices()
-                            onBackPressed()
-                        }
-                    ) {
-                        Text(
-                            text = stringResource(R.string.action_dialog_continue)
-                                .uppercase(Locale.US)
-                        )
-                    }
-                }
-            })
+            title = stringResource(id = R.string.title_warning),
+            dismissText = stringResource(id = R.string.action_cancel),
+            onDismiss = {
+                isWarningDialogVisible = !isWarningDialogVisible
+            },
+            confirmText = stringResource(id = R.string.action_continue),
+            onConfirm = {
+                isWarningDialogVisible = !isWarningDialogVisible
+                viewModel.disconnectAllDevices()
+                onBackPressed()
+            }
+        )
     }
 }
 

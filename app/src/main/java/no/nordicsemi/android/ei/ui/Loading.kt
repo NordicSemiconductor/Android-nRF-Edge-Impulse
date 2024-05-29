@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
@@ -55,7 +56,7 @@ fun Login(
 ) {
     val activity = LocalContext.current as Activity
     var state by rememberLoadingState(LoadingState.LoggingIn)
-    var retry by remember { mutableStateOf(0) }
+    var retry by remember { mutableIntStateOf(0) }
 
     when (state) {
         is LoadingState.Error ->
@@ -160,8 +161,8 @@ private fun LoadingFailed(
 }
 
 sealed class LoadingState(@StringRes open val messageResId: Int) {
-    object LoggingIn : LoadingState(R.string.label_logging_in)
-    object ObtainingUserData : LoadingState(R.string.label_obtaining_user_data)
+    data object LoggingIn : LoadingState(R.string.label_logging_in)
+    data object ObtainingUserData : LoadingState(R.string.label_obtaining_user_data)
     data class Error(@StringRes override val messageResId: Int) : LoadingState(messageResId) {
         constructor(throwable: Throwable) : this(
             when (throwable) {

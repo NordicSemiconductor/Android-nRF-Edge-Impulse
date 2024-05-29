@@ -17,7 +17,7 @@
     <string name="name_edge_impulse">Edge Impulse</string>
 
     <string name="empty" />
-    <string name="action_dialog_continue">Continue</string>
+    <string name="action_continue">Continue</string>
     <string name="title_warning">Warning</string>
     <string name="label_details">Details</string>
     <string name="label_name">Name</string>
@@ -26,4 +26,6 @@
     <string name="label_unsupported">Unsupported</string>
     <string name="action_start">Start</string>
     <string name="action_stop">Stop</string>
+    <string name="field_code">Code</string>
+    <string name="error_login_cancelled">Login cancelled</string>
 </resources>

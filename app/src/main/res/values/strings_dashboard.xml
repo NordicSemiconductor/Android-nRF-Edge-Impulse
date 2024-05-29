@@ -17,7 +17,7 @@
     <string name="error_refreshing_failed">Refreshing failed.</string>
 
     <string name="dialog_title_create_project">Create New Project</string>
-    <string name="label_enter_project_name">Enter a name for your new project</string>
+    <string name="label_enter_project_name">Enter a name for your new project.</string>
     <string name="field_project_name">Project Name</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_create">Create</string>

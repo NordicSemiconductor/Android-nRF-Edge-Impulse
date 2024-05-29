@@ -19,5 +19,7 @@ data class LoginRequest(
     /** Password. */
     val password: String,
     /** Evaluation user UUID. */
-    val uuid: String?
+    val uuid: String?,
+    /** Two-factor authentication token. */
+    val totpToken: String?
 )

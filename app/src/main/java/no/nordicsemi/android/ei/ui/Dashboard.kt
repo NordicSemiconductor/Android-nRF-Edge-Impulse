@@ -63,7 +63,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -103,7 +102,7 @@ import coil.transform.CircleCropTransformation
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import no.nordicsemi.android.ei.R
-import no.nordicsemi.android.ei.ShowDialog
+import no.nordicsemi.android.ei.ShowAlertDialog
 import no.nordicsemi.android.ei.model.Collaborator
 import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.showSnackbar
@@ -457,14 +456,10 @@ private fun CreateProjectDialog(
     var isError by rememberSaveable { mutableStateOf(false) }
     var projectName by rememberSaveable { mutableStateOf("") }
     var isCreateClicked by rememberSaveable { mutableStateOf(false) }
-    ShowDialog(
+    ShowAlertDialog(
         imageVector = Icons.Outlined.Share,
         title = stringResource(id = R.string.dialog_title_create_project),
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            dismissOnBackPress = !isCreateClicked,
-            dismissOnClickOutside = !isCreateClicked
-        ), content = {
+        text = {
             Column {
                 Text(
                     modifier = Modifier.padding(top = 8.dp, bottom = 8.dp),
@@ -475,7 +470,6 @@ private fun CreateProjectDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .verticalScroll(state = rememberScrollState())
-                        .weight(weight = 1.0f, fill = false)
                 ) {
                     OutlinedTextField(
                         value = projectName,
@@ -498,7 +492,6 @@ private fun CreateProjectDialog(
                             keyboardController?.hide()
                         }),
                         singleLine = true,
-                        /*colors = TextFieldDefaults.outlinedTextFieldColors(textColor = MaterialTheme.colorScheme.onSurface)*/
                     )
                     if (isError) {
                         Text(
@@ -508,52 +501,28 @@ private fun CreateProjectDialog(
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
-                    Spacer(modifier = Modifier.height(height = 16.dp))
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(end = 8.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(
-                        onClick = { onDismiss() }) {
-                        Text(text = stringResource(R.string.action_cancel).uppercase(Locale.US))
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    TextButton(
-                        modifier = Modifier
-                            .focusRequester(focusRequester = focusRequester),
-                        enabled = projectName.isNotBlank(),
-                        onClick = {
-                            isCreateClicked = !isCreateClicked
-                            onCreateProject(projectName)
-                        }
-                    ) {
-                        Text(
-                            text = stringResource(R.string.action_create)
-                                .uppercase(Locale.US)
-                        )
-                    }
                 }
             }
-        })
+        },
+        dismissText = stringResource(id = R.string.action_cancel),
+        onDismiss = onDismiss,
+        confirmText = stringResource(id = R.string.action_create),
+        onConfirm = {
+            isCreateClicked = !isCreateClicked
+            onCreateProject(projectName)
+        }
+    )
 }
 
 @Composable
 private fun ShowAboutDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
-    ShowDialog(
+    ShowAlertDialog(
         imageVector = Icons.Outlined.Info,
         title = stringResource(id = R.string.action_about),
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true
-        ),
-        content = {
+        text = {
             Column {
-                Row(modifier = Modifier.padding(end = 16.dp, bottom = 16.dp)) {
+                Row {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         modifier = Modifier.weight(1.0f),
@@ -568,11 +537,14 @@ private fun ShowAboutDialog(onDismiss: () -> Unit) {
                         textAlign = TextAlign.End
                     )
                 }
-                TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End)) {
-                    Text(text = stringResource(R.string.action_ok))
-                }
             }
-        }
+        },
+        confirmText = stringResource(id = R.string.action_ok),
+        onConfirm = onDismiss,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true
+        )
     )
 }
 
