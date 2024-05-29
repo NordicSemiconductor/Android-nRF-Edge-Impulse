@@ -108,54 +108,6 @@ fun ShowAlertDialog(
 }
 
 @Composable
-fun ShowDialog(
-    imageVector: ImageVector,
-    title: String,
-    onDismissRequest: () -> Unit,
-    properties: DialogProperties,
-    content: @Composable () -> Unit
-) {
-    Dialog(
-        onDismissRequest = onDismissRequest,
-        properties = properties,
-        content = {
-            Surface(
-                modifier = Modifier
-                    .wrapContentSize()
-                    .clip(shape = RoundedCornerShape(4.dp))
-            ) {
-                Column(
-                    modifier = Modifier
-                        .padding(start = 24.dp, end = 8.dp, bottom = 8.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(64.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            modifier = Modifier.size(24.dp),
-                            imageVector = imageVector,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = title,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                    content()
-                }
-            }
-        }
-    )
-}
-
-@Composable
 fun ShowDataAcquisitionDialog(
     imageVector: ImageVector,
     title: String,

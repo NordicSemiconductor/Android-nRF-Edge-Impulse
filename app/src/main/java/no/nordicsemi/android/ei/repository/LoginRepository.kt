@@ -20,7 +20,7 @@ class LoginRepository @Inject constructor(
     @IODispatcher isDispatcher: CoroutineDispatcher
 ) : BaseRepository(service = service, ioDispatcher = isDispatcher) {
 
-    suspend fun login(username: String, password: String) = withContext(ioDispatcher) {
-        service.login(loginRequest = LoginRequest(username, password, null))
+    suspend fun login(username: String, password: String, code:String?) = withContext(ioDispatcher) {
+        service.login(loginRequest = LoginRequest(username, password, null, code))
     }
 }
