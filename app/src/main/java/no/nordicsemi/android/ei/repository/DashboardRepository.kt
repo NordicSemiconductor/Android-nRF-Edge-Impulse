@@ -13,6 +13,7 @@ import kotlinx.coroutines.withContext
 import no.nordicsemi.android.ei.di.IODispatcher
 import no.nordicsemi.android.ei.service.EiService
 import no.nordicsemi.android.ei.service.param.CreateProjectRequest
+import no.nordicsemi.android.ei.service.param.DeleteCurrentUserRequest
 import javax.inject.Inject
 
 class DashboardRepository @Inject constructor(
@@ -30,5 +31,9 @@ class DashboardRepository @Inject constructor(
 
     suspend fun getSocketToken(apiKey: String, projectId: Int) = withContext(ioDispatcher) {
         service.getSocketToken(apiKey = apiKey, projectId = projectId)
+    }
+
+    suspend fun deleteCurrentUser(token: String, password: String, code:String?) = withContext(ioDispatcher) {
+        service.deleteCurrentUser(jwt = token, deleteCurrentUserRequest = DeleteCurrentUserRequest(password, code))
     }
 }

@@ -51,6 +51,7 @@ fun UserAppBar(
     user: User,
     backgroundColor: Color = colorResource(id = color.appBarColor),
     onAboutClick: () -> Unit = {},
+    onDeleteUserClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -88,12 +89,22 @@ fun UserAppBar(
                     )
                     DropdownMenuItem(
                         text = {
+                            Text(text = stringResource(id = R.string.action_delete_user))
+                        },
+                        onClick = {
+                            showMenu = !showMenu
+                            onDeleteUserClick()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = {
                             Text(text = stringResource(id = R.string.action_logout))
                         },
                         onClick = {
                             showMenu = !showMenu
                             onLogoutClick()
-                        })
+                        }
+                    )
                 }
             }
         )

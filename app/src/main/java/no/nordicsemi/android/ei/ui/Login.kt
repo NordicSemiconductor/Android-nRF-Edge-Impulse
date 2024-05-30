@@ -9,7 +9,6 @@
 package no.nordicsemi.android.ei.ui
 
 import android.content.res.Configuration
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -132,7 +131,7 @@ fun Login(
             onLoginCancel = onLoginCancel,
             onForgotPassword = onForgotPassword,
             onSignUp = onSignUp,
-            showTwoFactorAuthDialog = showTwoFactorAuthDialog,
+            showMultiFactorAuthDialog = showTwoFactorAuthDialog,
             error = error
         )
     }
@@ -155,7 +154,7 @@ private fun Login(
     onLoginCancel: () -> Unit = {},
     onForgotPassword: () -> Unit = {},
     onSignUp: () -> Unit = {},
-    showTwoFactorAuthDialog: Boolean = false,
+    showMultiFactorAuthDialog: Boolean = false,
     error: Throwable? = null,
 ) {
     Column(
@@ -284,9 +283,8 @@ private fun Login(
         }
     }
 
-    if (showTwoFactorAuthDialog) {
-        Log.d("Login", "Show two factor authentication dialog")
-        TwoFactorAuthenticationDialog(
+    if (showMultiFactorAuthDialog) {
+        MultiFactorAuthenticationDialog(
             onCodeEntered = {
                 onLogin(username, password, it)
             },
@@ -456,7 +454,7 @@ private fun SmallScreenLandscapeLogin(
         }
     }
     if(showTwoFactorAuthDialog){
-        TwoFactorAuthenticationDialog(
+        MultiFactorAuthenticationDialog(
             onCodeEntered = { onLogin(username, password, it) },
             onDismiss = { onLoginCancel() }
         )
@@ -464,7 +462,7 @@ private fun SmallScreenLandscapeLogin(
 }
 
 @Composable
-private fun TwoFactorAuthenticationDialog(
+private fun MultiFactorAuthenticationDialog(
     onCodeEntered: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -472,11 +470,11 @@ private fun TwoFactorAuthenticationDialog(
     var error by rememberSaveable { mutableStateOf(false) }
     ShowAlertDialog(
         imageVector = Icons.Outlined.Security,
-        title = "Authentication Code",
+        title = stringResource(R.string.label_authentication_code),
         text = {
             Column {
                 Text(
-                    text = "Enter the code displayed on your authenticator app.",
+                    text = stringResource(R.string.label_multi_factor_auth_rationale),
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
                 OutlinedTextField(

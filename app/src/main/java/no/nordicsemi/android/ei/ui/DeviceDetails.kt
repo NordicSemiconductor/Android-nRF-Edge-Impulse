@@ -376,7 +376,7 @@ private fun SectionTitle(text: String, content: @Composable () -> Unit = {}) {
 }
 
 @Composable
-private fun RowItem(
+internal fun RowItem(
     modifier: Modifier,
     imageVector: ImageVector,
     tint: Color = MaterialTheme.colorScheme.onSurface,

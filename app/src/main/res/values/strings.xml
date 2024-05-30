@@ -28,4 +28,9 @@
     <string name="action_stop">Stop</string>
     <string name="field_code">Code</string>
     <string name="error_login_cancelled">Login cancelled</string>
+    <string name="label_authenticator_code">Authentication Code</string>
+    <string name="label_multi_factor_auth_rationale">Enter the code displayed on your authenticator app.</string>
+    <string name="label_delete_user_confirmation">Deleting your account is irrevocable, and will also delete your projects.
+        \n\nTo delete your Edge Impulse account enter your password and a one-time passcode from your authenticator app. </string>
+    <string name="label_email_address">E-mail address</string>
 </resources>

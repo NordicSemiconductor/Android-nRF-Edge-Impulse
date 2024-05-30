@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.repository.LoginRepository
 import no.nordicsemi.android.ei.viewmodels.state.LoginState
-import no.nordicsemi.android.ei.viewmodels.state.LoginState.AwaitingTwoFactorAuthentication
+import no.nordicsemi.android.ei.viewmodels.state.LoginState.AwaitingMultiFactorAuthentication
 import no.nordicsemi.android.ei.viewmodels.state.LoginState.Error
 import no.nordicsemi.android.ei.viewmodels.state.LoginState.InProgress
 import no.nordicsemi.android.ei.viewmodels.state.LoginState.LoggedIn
@@ -60,7 +60,7 @@ class LoginViewModel @Inject constructor(
                         // https://docs.edgeimpulse.com/reference/edge-impulse-api/login/get_jwt_token
                         it.contains("ERR_TOTP_TOKEN IS REQUIRED")
                     }?.let {
-                        state = AwaitingTwoFactorAuthentication
+                        state = AwaitingMultiFactorAuthentication
                     } ?: run {
                         val message =
                             response.error ?: context.getString(R.string.error_unknown)
