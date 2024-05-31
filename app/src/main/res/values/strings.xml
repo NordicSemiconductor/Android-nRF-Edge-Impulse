@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ /*
   ~  * Copyright (c) 2022, Nordic Semiconductor
   ~  *
@@ -22,6 +21,7 @@
     <string name="label_details">Details</string>
     <string name="label_name">Name</string>
     <string name="action_delete">Delete</string>
+    <string name="how_to_delete">How to delete your account?</string>
     <string name="label_supported">Supported</string>
     <string name="label_unsupported">Unsupported</string>
     <string name="action_start">Start</string>
@@ -30,7 +30,11 @@
     <string name="error_login_cancelled">Login cancelled</string>
     <string name="label_authenticator_code">Authentication Code</string>
     <string name="label_multi_factor_auth_rationale">Enter the code displayed on your authenticator app.</string>
+    <string name="label_delete_user_irrevocable">Deleting your account is irrevocable, and will also delete your projects.</string>
+    <string name="label_delete_user_rationale">To delete your Edge Impulse account enter your password and a one-time passcode from your authenticator app.</string>
     <string name="label_delete_user_confirmation">Deleting your account is irrevocable, and will also delete your projects.
-        \n\nTo delete your Edge Impulse account enter your password and a one-time passcode from your authenticator app. </string>
+        \n\nTo delete your Edge Impulse account enter your password and a one-time passcode from your authenticator app.</string>
     <string name="label_email_address">E-mail address</string>
+    <string name="label_projects_to_be_deleted">Projects to be deleted</string>
+    <string name="label_authentication_code">Authentication Code</string>
 </resources>

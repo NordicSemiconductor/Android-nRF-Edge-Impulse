@@ -118,6 +118,7 @@ import java.util.Locale
 fun Dashboard(
     viewModel: DashboardViewModel,
     onProjectSelected: (Project) -> Unit,
+    onDeleteUser: () -> Unit,
     onLogout: (Unit) -> Unit
 ) {
     val context = LocalContext.current
@@ -131,7 +132,6 @@ fun Dashboard(
     val lazyListState = rememberLazyListState()
 
     var showCreateProjectDialog by rememberSaveable { mutableStateOf(false) }
-    var showDeleteUserDialog by rememberSaveable { mutableStateOf(false) }
     var showAboutDialog by rememberSaveable { mutableStateOf(false) }
 
     coroutineScope.launchWhenStarted {
@@ -178,9 +178,7 @@ fun Dashboard(
                 title = stringResource(id = R.string.label_welcome),
                 user = user,
                 onAboutClick = { showAboutDialog = !showAboutDialog },
-                onDeleteUserClick = {
-                    showDeleteUserDialog = !showDeleteUserDialog
-                },
+                onDeleteUserClick = onDeleteUser,
                 onLogoutClick = { onLogout(viewModel.logout()) }
             )
         },
@@ -283,18 +281,6 @@ fun Dashboard(
                 }
             )
         }
-        if (showDeleteUserDialog) {
-            DeleteUser(
-                email = user.email,
-                isMfaConfigured = user.mfaConfigured,
-                deleteUser = { password, code ->
-                    viewModel.deleteUser(password, code)
-                },
-                onDismiss = { showDeleteUserDialog = !showDeleteUserDialog },
-                onConfirm = { showDeleteUserDialog = !showDeleteUserDialog }
-
-            )
-        }
 
         if (developmentKeysState) {
             ShowDownloadingDevelopmentKeysDialog()
@@ -363,7 +349,7 @@ fun Dashboard(
 fun ProjectRow(
     modifier: Modifier = Modifier,
     project: Project,
-    onProjectSelected: () -> Unit
+    onProjectSelected: () -> Unit = {}
 ) {
     Row(
         modifier = modifier
