@@ -10,7 +10,6 @@ package no.nordicsemi.android.ei.viewmodels
 
 import android.app.Application
 import android.content.Context
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -146,19 +145,6 @@ class DashboardViewModel @Inject constructor(
             eventChannel.send(Event.Project.Selected(project))
             isDownloadingDevelopmentKeys = false
         }
-    }
-
-    suspend fun deleteUser(password: String, code: String?) {
-        val response = dashboardRepository.deleteCurrentUser(
-            token = userDataRepo.token,
-            password = password,
-            code = code
-        )
-        Log.d("AAA", "deleteUser: $response")
-        guard(response.success) {
-            throw Throwable(response.error)
-        }
-        handleLogout()
     }
 
     fun logout() {
