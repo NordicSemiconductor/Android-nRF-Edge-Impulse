@@ -70,7 +70,7 @@ class LoginActivity : AccountAuthenticatorActivity() {
                                 open(Uris.SignUp)
                             },
                             login = accountName ?: "",
-                            showTwoFactorAuthDialog = state is LoginState.AwaitingTwoFactorAuthentication,
+                            showTwoFactorAuthDialog = state is LoginState.AwaitingMultiFactorAuthentication,
                             error = (state as? LoginState.Error)?.error
                         )
                     }
