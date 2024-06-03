@@ -10,7 +10,6 @@ package no.nordicsemi.android.ei.viewmodels
 
 import android.app.Application
 import android.content.Context
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -29,6 +28,7 @@ import no.nordicsemi.android.ei.di.UserManager
 import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.repository.DashboardRepository
 import no.nordicsemi.android.ei.repository.UserDataRepository
+import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.viewmodels.state.DeleteState
 import javax.inject.Inject
 
@@ -53,21 +53,20 @@ class DeleteUserViewModel @Inject constructor(
     fun deleteUser(password: String, code: String?) {
         _state.value = DeleteState.Deleting
         val handler = CoroutineExceptionHandler { _, throwable ->
-            Log.d("AAA", "deleteUser: $throwable")
             viewModelScope
                 .launch {
                     _state.value = DeleteState.Error(throwable)
                 }
         }
         viewModelScope.launch(handler) {
-            /*val response = dashboardRepository.deleteCurrentUser(
+            val response = dashboardRepository.deleteCurrentUser(
                 token = userDataRepo.token,
                 password = password,
                 code = code
             )
             guard(response.success) {
                 throw Throwable(response.error)
-            }*/
+            }
             _state.value = DeleteState.Deleted
             handleLogout()
         }
