@@ -37,4 +37,5 @@
     <string name="label_email_address">E-mail address</string>
     <string name="label_projects_to_be_deleted">Projects to be deleted</string>
     <string name="label_authentication_code">Authentication Code</string>
+    <string name="label_multi_factor_auth_rationale">Enter the code displayed on your authenticator app.</string>
 </resources>
