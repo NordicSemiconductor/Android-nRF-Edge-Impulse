@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import no.nordicsemi.android.ei.ui.Dashboard
+import no.nordicsemi.android.ei.ui.DeleteUser
 import no.nordicsemi.android.ei.ui.Login
 import no.nordicsemi.android.ei.ui.Project
 
@@ -44,12 +45,31 @@ fun Navigation(
                 onProjectSelected = {
                     navController.navigate(Route.project)
                 },
+                onDeleteUser = {
+                    navController.navigate(Route.deleteUser)
+                },
                 onLogout = {
                     navController.navigate(Route.login) {
                         popUpTo(Route.dashboard) {
                             inclusive = true
                         }
                     }
+                }
+            )
+        }
+
+        composable(Route.deleteUser) {
+            DeleteUser(
+                viewModel = hiltViewModel(),
+                onDeleted = {
+                    navController.navigate(Route.login) {
+                        popUpTo(Route.dashboard) {
+                            inclusive = true
+                        }
+                    }
+                },
+                onBackPressed = {
+                    navController.popBackStack()
                 }
             )
         }

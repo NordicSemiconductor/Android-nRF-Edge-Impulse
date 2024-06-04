@@ -9,10 +9,35 @@
 package no.nordicsemi.android.ei.service
 
 import no.nordicsemi.android.ei.model.User
-import no.nordicsemi.android.ei.service.param.*
+import no.nordicsemi.android.ei.service.param.BuildOnDeviceModelRequest
+import no.nordicsemi.android.ei.service.param.BuildOnDeviceModelResponse
+import no.nordicsemi.android.ei.service.param.CreateProjectRequest
+import no.nordicsemi.android.ei.service.param.CreateProjectResponse
+import no.nordicsemi.android.ei.service.param.DeleteCurrentUserRequest
+import no.nordicsemi.android.ei.service.param.DeleteCurrentUserResponse
+import no.nordicsemi.android.ei.service.param.DeleteDeviceResponse
+import no.nordicsemi.android.ei.service.param.DeploymentInfoResponse
+import no.nordicsemi.android.ei.service.param.DevelopmentKeysResponse
+import no.nordicsemi.android.ei.service.param.GetSocketTokenResponse
+import no.nordicsemi.android.ei.service.param.ListDevicesResponse
+import no.nordicsemi.android.ei.service.param.ListSamplesResponse
+import no.nordicsemi.android.ei.service.param.LoginRequest
+import no.nordicsemi.android.ei.service.param.LoginResponse
+import no.nordicsemi.android.ei.service.param.RenameDeviceRequest
+import no.nordicsemi.android.ei.service.param.RenameDeviceResponse
+import no.nordicsemi.android.ei.service.param.StartSamplingRequest
+import no.nordicsemi.android.ei.service.param.StartSamplingResponse
 import okhttp3.ResponseBody
 import retrofit2.Response
-import retrofit2.http.*
+import retrofit2.http.Body
+import retrofit2.http.DELETE
+import retrofit2.http.GET
+import retrofit2.http.HTTP
+import retrofit2.http.Header
+import retrofit2.http.Headers
+import retrofit2.http.POST
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface EiService {
 
@@ -33,6 +58,18 @@ interface EiService {
     @Headers("Accept: application/json", "Content-Type: application/json")
     @GET("api/user")
     suspend fun getCurrentUser(@Header("x-jwt-token") jwt: String): User
+
+    /**
+     * Deletes the current user information about the current user. This function is only available through a JWT token.
+     *
+     * @see <a href="https://docs.edgeimpulse.com/reference#createuser">Docs: Get current user</a>
+     */
+    @Headers("Accept: application/json", "Content-Type: application/json")
+    @HTTP(method = "DELETE", path = "api/user", hasBody = true)
+    suspend fun deleteCurrentUser(
+        @Header("x-jwt-token") jwt: String,
+        @Body deleteCurrentUserRequest: DeleteCurrentUserRequest
+    ): DeleteCurrentUserResponse
 
     /**
      * Create a new project.

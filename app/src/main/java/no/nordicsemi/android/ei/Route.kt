@@ -10,6 +10,7 @@ package no.nordicsemi.android.ei
 
 object Route {
     const val login = "login"
+    const val deleteUser = "deleteUser"
     const val dashboard = "dashboard"
     const val project = "project"
 

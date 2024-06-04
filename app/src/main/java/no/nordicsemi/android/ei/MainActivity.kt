@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -85,9 +86,19 @@ fun ShowAlertDialog(
     confirmText: String,
     onConfirm: () -> Unit,
     properties: DialogProperties = DialogProperties(),
+    isDestructive: Boolean = false
 ) {
     AlertDialog(
-        icon = { Icon(imageVector = imageVector, contentDescription = null) },
+        icon = {
+            Icon(
+                imageVector = imageVector,
+                contentDescription = null,
+                tint = when {
+                    isDestructive -> MaterialTheme.colorScheme.error
+                    else -> LocalContentColor.current
+                }
+            )
+        },
         title = { Text(text = title, style = MaterialTheme.typography.titleLarge) },
         text = text,
         onDismissRequest = onDismiss,
@@ -100,7 +111,13 @@ fun ShowAlertDialog(
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(text = confirmText)
+                Text(
+                    text = confirmText,
+                    color = when {
+                        isDestructive -> MaterialTheme.colorScheme.error
+                        else -> LocalContentColor.current
+                    }
+                )
             }
         },
         properties = properties

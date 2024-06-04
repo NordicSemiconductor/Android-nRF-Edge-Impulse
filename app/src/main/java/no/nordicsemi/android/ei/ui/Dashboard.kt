@@ -49,7 +49,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.HourglassTop
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -119,6 +118,7 @@ import java.util.Locale
 fun Dashboard(
     viewModel: DashboardViewModel,
     onProjectSelected: (Project) -> Unit,
+    onDeleteUser: () -> Unit,
     onLogout: (Unit) -> Unit
 ) {
     val context = LocalContext.current
@@ -131,15 +131,15 @@ fun Dashboard(
     val snackbarHostState = remember { SnackbarHostState() }
     val lazyListState = rememberLazyListState()
 
-    var isCreateProjectDialogVisible by rememberSaveable { mutableStateOf(false) }
-    var isAboutDialogVisible by rememberSaveable { mutableStateOf(false) }
+    var showCreateProjectDialog by rememberSaveable { mutableStateOf(false) }
+    var showAboutDialog by rememberSaveable { mutableStateOf(false) }
 
     coroutineScope.launchWhenStarted {
         viewModel.eventFlow.runCatching {
             this.collect { event ->
                 when (event) {
                     is Event.Project.Created -> {
-                        isCreateProjectDialogVisible = false
+                        showCreateProjectDialog = false
                         showSnackbar(
                             coroutineScope = coroutineScope,
                             snackbarHostState = snackbarHostState,
@@ -155,7 +155,7 @@ fun Dashboard(
                     }
 
                     is Event.Error -> {
-                        isCreateProjectDialogVisible = false
+                        showCreateProjectDialog = false
                         showSnackbar(
                             coroutineScope = coroutineScope,
                             snackbarHostState = snackbarHostState,
@@ -177,7 +177,8 @@ fun Dashboard(
             UserAppBar(
                 title = stringResource(id = R.string.label_welcome),
                 user = user,
-                onAboutClick = { isAboutDialogVisible = !isAboutDialogVisible },
+                onAboutClick = { showAboutDialog = !showAboutDialog },
+                onDeleteUserClick = onDeleteUser,
                 onLogoutClick = { onLogout(viewModel.logout()) }
             )
         },
@@ -185,7 +186,7 @@ fun Dashboard(
             ExtendedFloatingActionButton(
                 text = { Text(text = stringResource(R.string.action_create_project).uppercase(Locale.US)) },
                 icon = { Icon(imageVector = Icons.Default.Add, contentDescription = null) },
-                onClick = { isCreateProjectDialogVisible = !isCreateProjectDialogVisible },
+                onClick = { showCreateProjectDialog = !showCreateProjectDialog },
                 expanded = lazyListState.isScrollingUp()
             )
         }
@@ -263,20 +264,20 @@ fun Dashboard(
                     }
                 }
             })
-        if (isCreateProjectDialogVisible) {
+        if (showCreateProjectDialog) {
             CreateProjectDialog(
                 onCreateProject = { projectName ->
                     viewModel.createProject(projectName)
                 },
                 onDismiss = {
-                    isCreateProjectDialogVisible = !isCreateProjectDialogVisible
+                    showCreateProjectDialog = !showCreateProjectDialog
                 }
             )
         }
-        if (isAboutDialogVisible) {
-            ShowAboutDialog(
+        if (showAboutDialog) {
+            AboutDialog(
                 onDismiss = {
-                    isAboutDialogVisible = !isAboutDialogVisible
+                    showAboutDialog = !showAboutDialog
                 }
             )
         }
@@ -348,7 +349,7 @@ fun Dashboard(
 fun ProjectRow(
     modifier: Modifier = Modifier,
     project: Project,
-    onProjectSelected: () -> Unit
+    onProjectSelected: () -> Unit = {}
 ) {
     Row(
         modifier = modifier
@@ -513,41 +514,6 @@ private fun CreateProjectDialog(
         }
     )
 }
-
-@Composable
-private fun ShowAboutDialog(onDismiss: () -> Unit) {
-    val context = LocalContext.current
-    ShowAlertDialog(
-        imageVector = Icons.Outlined.Info,
-        title = stringResource(id = R.string.action_about),
-        text = {
-            Column {
-                Row {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        modifier = Modifier.weight(1.0f),
-                        text = stringResource(R.string.label_version)
-                    )
-                    Text(
-                        modifier = Modifier.weight(1.0f),
-                        text = context.packageManager.getPackageInfo(
-                            context.packageName,
-                            0
-                        ).versionName,
-                        textAlign = TextAlign.End
-                    )
-                }
-            }
-        },
-        confirmText = stringResource(id = R.string.action_ok),
-        onConfirm = onDismiss,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true
-        )
-    )
-}
-
 
 @Composable
 private fun ShowDownloadingDevelopmentKeysDialog(
