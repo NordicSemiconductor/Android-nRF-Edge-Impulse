@@ -10,7 +10,7 @@ package no.nordicsemi.android.ei.viewmodels.event
 
 sealed class Event {
 
-    data object Uninitialized: Event()
+    data object None: Event()
 
     sealed class Project {
         data class Created(val projectName: String): Event()
@@ -19,4 +19,3 @@ sealed class Event {
 
     data class Error(val throwable: Throwable): Event()
 }
-

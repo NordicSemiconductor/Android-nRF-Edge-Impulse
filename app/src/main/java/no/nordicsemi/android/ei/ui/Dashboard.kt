@@ -83,6 +83,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -124,7 +125,6 @@ fun Dashboard(
     onLogout: (Unit) -> Unit
 ) {
     val context = LocalContext.current
-
     val user = viewModel.user
     val swipeRefreshState = rememberSwipeRefreshState(viewModel.isRefreshing)
     val developmentKeysState = viewModel.isDownloadingDevelopmentKeys
@@ -135,10 +135,13 @@ fun Dashboard(
     var showCreateProjectDialog by rememberSaveable { mutableStateOf(false) }
     var showAboutDialog by rememberSaveable { mutableStateOf(false) }
 
-    val event by viewModel.eventFlow.collectAsStateWithLifecycle()
+    val event by viewModel.eventFlow.collectAsStateWithLifecycle(
+        initialValue = Event.None,
+        lifecycle = LocalLifecycleOwner.current.lifecycle
+    )
 
+    Log.d("AAA", event.toString())
     LaunchedEffect(event) {
-        Log.d("AAA", "event: $event")
         when (event) {
             is Event.Project.Created -> {
                 showCreateProjectDialog = false
@@ -166,7 +169,7 @@ fun Dashboard(
                 )
             }
 
-            Event.Uninitialized -> {
+            Event.None -> {
                 // Do nothing
             }
         }
