@@ -83,7 +83,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -98,7 +97,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.lifecycleScope
 import coil.annotation.ExperimentalCoilApi
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -126,7 +124,6 @@ fun Dashboard(
     onLogout: (Unit) -> Unit
 ) {
     val context = LocalContext.current
-    val lifecycleScope = LocalLifecycleOwner.current.lifecycleScope
 
     val user = viewModel.user
     val swipeRefreshState = rememberSwipeRefreshState(viewModel.isRefreshing)
@@ -188,6 +185,8 @@ fun Dashboard(
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
+                modifier = Modifier
+                    .navigationBarsPadding(),
                 text = { Text(text = stringResource(R.string.action_create_project).uppercase(Locale.US)) },
                 icon = { Icon(imageVector = Icons.Default.Add, contentDescription = null) },
                 onClick = { showCreateProjectDialog = !showCreateProjectDialog },
