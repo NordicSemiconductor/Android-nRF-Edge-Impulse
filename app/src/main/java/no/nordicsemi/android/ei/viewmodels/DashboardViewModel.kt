@@ -74,10 +74,10 @@ class DashboardViewModel @Inject constructor(
 
     fun refreshUser() {
         isRefreshing = true
+        _state.value = None
         val handler = CoroutineExceptionHandler { _, throwable ->
-            viewModelScope
-                .launch { _state.value = Error(throwable) }
-                .also { isRefreshing = false }
+            _state.value = Error(throwable)
+            isRefreshing = false
         }
         viewModelScope.launch(handler) {
             dashboardRepository
@@ -94,6 +94,7 @@ class DashboardViewModel @Inject constructor(
     }
 
     fun createProject(projectName: String) {
+        _state.value = None
         val handler = CoroutineExceptionHandler { _, throwable ->
             _state.value = Error(throwable)
         }
@@ -113,6 +114,7 @@ class DashboardViewModel @Inject constructor(
     }
 
     fun selectProject(project: Project) {
+        _state.value = None
         isDownloadingDevelopmentKeys = true
         val handler = CoroutineExceptionHandler { _, throwable ->
             _state.value = Error(throwable)
