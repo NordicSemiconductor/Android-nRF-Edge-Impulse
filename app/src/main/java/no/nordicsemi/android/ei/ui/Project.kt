@@ -500,6 +500,12 @@ private fun ProjectContent(
         ShowAlertDialog(
             imageVector = Icons.Rounded.Warning,
             title = stringResource(id = R.string.title_warning),
+            text = {
+                Text(
+                    text = stringResource(id = R.string.label_warning_projects),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
             dismissText = stringResource(id = R.string.action_cancel),
             onDismiss = {
                 isWarningDialogVisible = !isWarningDialogVisible
