@@ -51,8 +51,9 @@ dependencies {
     implementation(libs.accompanist.pager)
     implementation(libs.accompanist.pagerindicators)
 
-    implementation(libs.coil.kt.compose)
-    implementation("com.google.code.gson:gson:2.10.1")
+    // implementation(libs.coil.kt.compose)
+    implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation(libs.gson)
 
     testImplementation(libs.junit4)
     testImplementation(libs.kotlin.junit)
