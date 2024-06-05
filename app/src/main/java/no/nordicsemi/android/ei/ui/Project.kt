@@ -51,6 +51,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -69,7 +70,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -89,7 +90,6 @@ import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.Message.Sample.Finished
 import no.nordicsemi.android.ei.model.Message.Sample.Unknown
-import no.nordicsemi.android.ei.showSnackbar
 import no.nordicsemi.android.ei.ui.layouts.TabTopAppBar1
 import no.nordicsemi.android.ei.ui.layouts.isScrollingUp
 import no.nordicsemi.android.ei.ui.theme.NordicMiddleGrey
@@ -340,6 +340,7 @@ private fun ProjectContent(
 ) {
     val context = LocalContext.current
     val navController = rememberNavController()
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
     // TODO: Check why this listener is called twice
     navController.addOnDestinationChangedListener { _, destination, _ ->
         onScreenChanged(BottomNavigationScreen.fromNav(destination))
@@ -354,26 +355,24 @@ private fun ProjectContent(
         viewModel.inferencingResults
     }
     var isWarningDialogVisible by rememberSaveable { mutableStateOf(false) }
-
-    LocalLifecycleOwner.current.lifecycleScope.launchWhenStarted {
-        viewModel.eventFlow.runCatching {
-            this.collect { event ->
-                when (event) {
-                    is Event.Error -> {
-                        showSnackbar(
-                            coroutineScope = scope,
-                            snackbarHostState = snackbarHostState,
-                            message = when (event.throwable) {
-                                is UnknownHostException -> context.getString(R.string.error_no_internet)
-                                else -> event.throwable.localizedMessage
-                                    ?: context.getString(R.string.error_refreshing_failed)
-                            }
-                        )
+    val event by viewModel.eventFlow.collectAsStateWithLifecycle(
+        initialValue = Event.None,
+        lifecycle = lifecycle
+    )
+    LaunchedEffect(event) {
+        when (event) {
+            is Event.Error -> {
+                val e = event as Event.Error
+                snackbarHostState.showSnackbar(
+                    message = when (e.throwable) {
+                        is UnknownHostException -> context.getString(R.string.error_no_internet)
+                        else -> e.throwable.localizedMessage
+                            ?: context.getString(R.string.error_refreshing_failed)
                     }
-
-                    else -> {}
-                }
+                )
             }
+
+            else -> {}
         }
     }
     Scaffold(
@@ -398,7 +397,11 @@ private fun ProjectContent(
             if (isFabVisible) {
                 ExtendedFloatingActionButton(
                     text = {
-                        Text(text = stringResource(id = R.string.action_record_new_data).uppercase(Locale.US))
+                        Text(
+                            text = stringResource(id = R.string.action_record_new_data).uppercase(
+                                Locale.US
+                            )
+                        )
                     },
                     icon = { Icon(imageVector = Icons.Default.Add, contentDescription = null) },
                     onClick = onFabClicked,
