@@ -10,6 +10,7 @@
 
 package no.nordicsemi.android.ei.ui
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -29,6 +30,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -59,11 +61,13 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -93,6 +97,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import coil.annotation.ExperimentalCoilApi
 import coil.compose.rememberAsyncImagePainter
@@ -104,7 +109,6 @@ import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.ShowAlertDialog
 import no.nordicsemi.android.ei.model.Collaborator
 import no.nordicsemi.android.ei.model.Project
-import no.nordicsemi.android.ei.showSnackbar
 import no.nordicsemi.android.ei.ui.layouts.UserAppBar
 import no.nordicsemi.android.ei.ui.layouts.UserAppBarImageSize
 import no.nordicsemi.android.ei.ui.layouts.isScrollingUp
@@ -122,7 +126,7 @@ fun Dashboard(
     onLogout: (Unit) -> Unit
 ) {
     val context = LocalContext.current
-    val coroutineScope = LocalLifecycleOwner.current.lifecycleScope
+    val lifecycleScope = LocalLifecycleOwner.current.lifecycleScope
 
     val user = viewModel.user
     val swipeRefreshState = rememberSwipeRefreshState(viewModel.isRefreshing)
@@ -134,39 +138,39 @@ fun Dashboard(
     var showCreateProjectDialog by rememberSaveable { mutableStateOf(false) }
     var showAboutDialog by rememberSaveable { mutableStateOf(false) }
 
-    coroutineScope.launchWhenStarted {
-        viewModel.eventFlow.runCatching {
-            this.collect { event ->
-                when (event) {
-                    is Event.Project.Created -> {
-                        showCreateProjectDialog = false
-                        showSnackbar(
-                            coroutineScope = coroutineScope,
-                            snackbarHostState = snackbarHostState,
-                            message = context.getString(
-                                R.string.project_created_successfully,
-                                event.projectName
-                            )
-                        )
-                    }
+    val event by viewModel.eventFlow.collectAsStateWithLifecycle()
 
-                    is Event.Project.Selected -> {
-                        onProjectSelected(event.project)
-                    }
+    LaunchedEffect(event) {
+        Log.d("AAA", "event: $event")
+        when (event) {
+            is Event.Project.Created -> {
+                showCreateProjectDialog = false
+                snackbarHostState.showSnackbar(
+                    message = context.getString(
+                        R.string.project_created_successfully,
+                        (event as Event.Project.Created).projectName
+                    )
+                )
+            }
 
-                    is Event.Error -> {
-                        showCreateProjectDialog = false
-                        showSnackbar(
-                            coroutineScope = coroutineScope,
-                            snackbarHostState = snackbarHostState,
-                            message = when (event.throwable) {
-                                is UnknownHostException -> context.getString(R.string.error_no_internet)
-                                else -> event.throwable.localizedMessage
-                                    ?: context.getString(R.string.error_refreshing_failed)
-                            }
-                        )
+            is Event.Project.Selected -> {
+                onProjectSelected((event as Event.Project.Selected).project)
+            }
+
+            is Event.Error -> {
+                showCreateProjectDialog = false
+                val e = event as Event.Error
+                snackbarHostState.showSnackbar(
+                    message = when (e.throwable) {
+                        is UnknownHostException -> context.getString(R.string.error_no_internet)
+                        else -> e.throwable.localizedMessage
+                            ?: context.getString(R.string.error_refreshing_failed)
                     }
-                }
+                )
+            }
+
+            Event.Uninitialized -> {
+                // Do nothing
             }
         }
     }
@@ -189,7 +193,8 @@ fun Dashboard(
                 onClick = { showCreateProjectDialog = !showCreateProjectDialog },
                 expanded = lazyListState.isScrollingUp()
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     ) { innerPadding ->
         SwipeRefresh(
             modifier =
@@ -200,7 +205,7 @@ fun Dashboard(
                 .windowInsetsPadding(
                     insets = WindowInsets.safeDrawing.only(
                         sides = WindowInsetsSides.Horizontal
-                    ),
+                    )
                 ),
             state = swipeRefreshState,
             onRefresh = { viewModel.refreshUser() },

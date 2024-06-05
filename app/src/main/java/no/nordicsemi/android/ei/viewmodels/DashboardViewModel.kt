@@ -19,9 +19,8 @@ import dagger.hilt.EntryPoints
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.account.AccountHelper
 import no.nordicsemi.android.ei.di.ProjectManager
@@ -34,6 +33,8 @@ import no.nordicsemi.android.ei.repository.UserDataRepository
 import no.nordicsemi.android.ei.service.param.developmentKeys
 import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.viewmodels.event.Event
+import no.nordicsemi.android.ei.viewmodels.event.Event.Error
+import no.nordicsemi.android.ei.viewmodels.event.Event.Uninitialized
 import javax.inject.Inject
 
 @HiltViewModel
@@ -42,8 +43,8 @@ class DashboardViewModel @Inject constructor(
     private val userManager: UserManager,
     private val dashboardRepository: DashboardRepository,
 ) : AndroidViewModel(context as Application) {
-    private val eventChannel = Channel<Event>(Channel.BUFFERED)
-    val eventFlow = eventChannel.receiveAsFlow()
+    private var _state = MutableStateFlow<Event>(Uninitialized)
+    val eventFlow = _state.asStateFlow()
 
     // User is kept outside of refresh state, as it is available also when refreshing.
     var user: User by mutableStateOf(userDataRepo.user)
@@ -71,7 +72,7 @@ class DashboardViewModel @Inject constructor(
         isRefreshing = true
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope
-                .launch { eventChannel.send(Event.Error(throwable)) }
+                .launch { _state.value = Error(throwable) }
                 .also { isRefreshing = false }
         }
         viewModelScope.launch(handler) {
@@ -88,12 +89,9 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     fun createProject(projectName: String) {
         val handler = CoroutineExceptionHandler { _, throwable ->
-            viewModelScope.launch {
-                eventChannel.send(Event.Error(throwable))
-            }
+            _state.value = Error(throwable)
         }
         viewModelScope.launch(handler) {
             dashboardRepository
@@ -104,7 +102,7 @@ class DashboardViewModel @Inject constructor(
                     guard(response.success) {
                         throw Throwable(response.error)
                     }
-                    eventChannel.send(Event.Project.Created(projectName))
+                    _state.value = Event.Project.Created(projectName)
                     refreshUser()
                 }
         }
@@ -114,7 +112,7 @@ class DashboardViewModel @Inject constructor(
         isDownloadingDevelopmentKeys = true
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope
-                .launch { eventChannel.send(Event.Error(throwable)) }
+                .launch { _state.value = Error(throwable) }
                 .also { isDownloadingDevelopmentKeys = false }
         }
         viewModelScope.launch(handler) {
@@ -142,7 +140,7 @@ class DashboardViewModel @Inject constructor(
                 keys = developmentKeys,
                 socketToken = socketToken
             )
-            eventChannel.send(Event.Project.Selected(project))
+            _state.value = Event.Project.Selected(project)
             isDownloadingDevelopmentKeys = false
         }
     }
