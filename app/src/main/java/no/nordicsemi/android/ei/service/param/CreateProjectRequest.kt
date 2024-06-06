@@ -15,5 +15,15 @@ package no.nordicsemi.android.ei.service.param
  */
 data class CreateProjectRequest(
     /** Project name */
-    val projectName: String
+    val projectName: String,
+    /** Project type */
+    val projectVisibility: String,
 )
+
+enum class ProjectVisibility {
+    PRIVATE,
+    PUBLIC;
+
+    val value: String
+        get() = name.lowercase()
+}

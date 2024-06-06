@@ -42,11 +42,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
@@ -57,7 +53,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -75,20 +70,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
@@ -96,7 +87,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
-import coil.annotation.ExperimentalCoilApi
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import coil.transform.CircleCropTransformation
@@ -105,7 +95,6 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Collaborator
 import no.nordicsemi.android.ei.model.Project
-import no.nordicsemi.android.ei.ui.layouts.AlertDialog
 import no.nordicsemi.android.ei.ui.layouts.UserAppBar
 import no.nordicsemi.android.ei.ui.layouts.UserAppBarImageSize
 import no.nordicsemi.android.ei.ui.layouts.isScrollingUp
@@ -264,8 +253,8 @@ fun Dashboard(
             })
         if (showCreateProjectDialog) {
             CreateProjectDialog(
-                onCreateProject = { projectName ->
-                    viewModel.createProject(projectName)
+                onCreateProject = { projectName, projectVisibility ->
+                    viewModel.createProject(projectName, projectVisibility)
                 },
                 onDismiss = { showCreateProjectDialog = !showCreateProjectDialog }
             )
@@ -381,7 +370,6 @@ fun ProjectRow(
     }
 }
 
-@OptIn(ExperimentalCoilApi::class)
 @Composable
 private fun Collaborator(collaborators: List<Collaborator>) {
     var startPadding = 0.dp
@@ -446,74 +434,6 @@ private fun Collaborator(collaborators: List<Collaborator>) {
             startPadding += (imageSize / MAX_COLLABORATOR_IMAGES)
         }
     }
-}
-
-@Composable
-private fun CreateProjectDialog(
-    onCreateProject: (String) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val focusRequester = FocusRequester()
-    val keyboardController = LocalSoftwareKeyboardController.current
-    var isError by rememberSaveable { mutableStateOf(false) }
-    var projectName by rememberSaveable { mutableStateOf("") }
-    var isCreateClicked by rememberSaveable { mutableStateOf(false) }
-    AlertDialog(
-        imageVector = Icons.Outlined.Share,
-        title = stringResource(id = R.string.dialog_title_create_project),
-        text = {
-            Column {
-                Text(
-                    modifier = Modifier.padding(top = 8.dp, bottom = 8.dp),
-                    text = stringResource(R.string.label_enter_project_name),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(state = rememberScrollState())
-                ) {
-                    OutlinedTextField(
-                        value = projectName,
-                        onValueChange = {
-                            projectName = it
-                            isError = projectName.isBlank()
-                        },
-                        modifier = Modifier
-                            .focusRequester(focusRequester = focusRequester)
-                            .fillMaxWidth()
-                            .padding(top = 8.dp, bottom = 8.dp, end = 16.dp),
-                        label = { Text(stringResource(R.string.field_project_name)) },
-                        isError = isError,
-                        keyboardOptions = KeyboardOptions(
-                            autoCorrect = false,
-                            imeAction = ImeAction.Next
-                        ),
-                        keyboardActions = KeyboardActions(onNext = {
-                            focusRequester.freeFocus()
-                            keyboardController?.hide()
-                        }),
-                        singleLine = true,
-                    )
-                    if (isError) {
-                        Text(
-                            modifier = Modifier.padding(start = 16.dp),
-                            text = stringResource(R.string.label_empty_project_name_error),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                }
-            }
-        },
-        dismissText = stringResource(id = R.string.action_cancel),
-        onDismiss = onDismiss,
-        confirmText = stringResource(id = R.string.action_create),
-        onConfirm = {
-            isCreateClicked = !isCreateClicked
-            onCreateProject(projectName)
-        }
-    )
 }
 
 private const val MAX_COLLABORATOR_IMAGES = 4
