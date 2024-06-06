@@ -37,4 +37,6 @@
     <string name="label_email_address">E-mail address</string>
     <string name="label_projects_to_be_deleted">Projects to be deleted</string>
     <string name="label_authentication_code">Authentication Code</string>
+    <string name="label_private">Private - Private projects can only be viewed and edited by collaborators.</string>
+    <string name="label_public">Public - Public projects can be viewed by anyone on the internet and edited by collaborators.</string>
 </resources>

@@ -14,6 +14,7 @@ import no.nordicsemi.android.ei.di.IODispatcher
 import no.nordicsemi.android.ei.service.EiService
 import no.nordicsemi.android.ei.service.param.CreateProjectRequest
 import no.nordicsemi.android.ei.service.param.DeleteCurrentUserRequest
+import no.nordicsemi.android.ei.service.param.ProjectVisibility
 import javax.inject.Inject
 
 class DashboardRepository @Inject constructor(
@@ -21,8 +22,8 @@ class DashboardRepository @Inject constructor(
     @IODispatcher ioDispatcher: CoroutineDispatcher
 ) : BaseRepository(service = service, ioDispatcher = ioDispatcher) {
 
-    suspend fun createProject(token: String, projectName: String) = withContext(ioDispatcher) {
-        service.createProject(jwt = token, createProjectRequest = CreateProjectRequest(projectName))
+    suspend fun createProject(token: String, projectName: String, projectVisibility: ProjectVisibility = ProjectVisibility.PRIVATE) = withContext(ioDispatcher) {
+        service.createProject(jwt = token, createProjectRequest = CreateProjectRequest(projectName, projectVisibility.value))
     }
 
     suspend fun developmentKeys(token: String, projectId: Int) = withContext(ioDispatcher) {

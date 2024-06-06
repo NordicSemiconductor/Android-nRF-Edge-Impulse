@@ -30,6 +30,7 @@ import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.repository.DashboardRepository
 import no.nordicsemi.android.ei.repository.UserDataRepository
+import no.nordicsemi.android.ei.service.param.ProjectVisibility
 import no.nordicsemi.android.ei.service.param.developmentKeys
 import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.viewmodels.event.Event
@@ -88,7 +89,10 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
-    fun createProject(projectName: String) {
+    fun createProject(
+        projectName: String,
+        projectVisibility: ProjectVisibility = ProjectVisibility.PRIVATE
+    ) {
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope.launch {
                 eventChannel.send(Error(throwable))
@@ -98,7 +102,8 @@ class DashboardViewModel @Inject constructor(
             dashboardRepository
                 .createProject(
                     token = userDataRepo.token,
-                    projectName = projectName
+                    projectName = projectName,
+                    projectVisibility = projectVisibility
                 ).let { response ->
                     guard(response.success) {
                         throw Throwable(response.error)
