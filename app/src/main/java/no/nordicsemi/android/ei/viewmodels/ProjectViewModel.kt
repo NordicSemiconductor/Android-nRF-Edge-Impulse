@@ -42,10 +42,9 @@ import io.runtime.mcumgr.exception.McuMgrException
 import io.runtime.mcumgr.image.McuMgrImage
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ble.ConnectionPriorityRequest
 import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
@@ -108,13 +107,10 @@ class ProjectViewModel @Inject constructor(
             .projectDataRepository()
 
     /** The channel for emitting one-time events. */
-    private var _state = MutableStateFlow<Event>(Event.None)
+    private val eventChannel = Channel<Event>(Channel.BUFFERED)
 
     /** The flow that emits events. */
-    val eventFlow = _state.shareIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000)
-    )
+    val eventFlow = eventChannel.receiveAsFlow()
 
     /** The project associated with the View Model. */
     val project
@@ -210,7 +206,10 @@ class ProjectViewModel @Inject constructor(
         scope = viewModelScope,
         gson = gson,
         exceptionHandler = CoroutineExceptionHandler { _, throwable ->
-            _state.value = Event.Error(throwable = throwable)
+            viewModelScope.launch {
+                eventChannel
+                    .send(Event.Error(throwable = throwable))
+            }
         },
         socketToken = projectDataRepository.socketToken,
         client = client
@@ -255,8 +254,11 @@ class ProjectViewModel @Inject constructor(
         if (swipedToRefresh)
             isRefreshing = true
         val handler = CoroutineExceptionHandler { _, throwable ->
-            _state.value = Event.Error(throwable = throwable)
-            isRefreshing = false
+            viewModelScope.launch {
+                eventChannel
+                    .send(Event.Error(throwable = throwable))
+                    .also { isRefreshing = false }
+            }
         }
         viewModelScope.launch(handler) {
             projectRepository.listDevices(
@@ -295,7 +297,8 @@ class ProjectViewModel @Inject constructor(
      */
     private fun registerForBuildManager() {
         deploymentJob = viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
-            _state.value = Event.Error(throwable)
+            viewModelScope
+                .launch { eventChannel.send(Event.Error(throwable)) }
         }) {
             buildManager.buildStateAsFlow().collect {
                 deploymentState = it
@@ -375,7 +378,9 @@ class ProjectViewModel @Inject constructor(
                 device = device,
                 client = client,
                 exceptionHandler = CoroutineExceptionHandler { _, throwable ->
-                    _state.value = Event.Error(throwable = throwable)
+                    viewModelScope.launch {
+                        eventChannel.send(Event.Error(throwable = throwable))
+                    }
                 },
                 context = getApplication()
             )
@@ -438,7 +443,7 @@ class ProjectViewModel @Inject constructor(
      */
     fun startSampling() {
         viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
-            _state.value = Event.Error(throwable)
+            viewModelScope.launch { eventChannel.send(Event.Error(throwable)) }
         }) {
             dataAcquisitionTarget?.let { device ->
                 sensor?.let { sensor ->
@@ -480,7 +485,7 @@ class ProjectViewModel @Inject constructor(
      */
     fun deploy() {
         deploymentJob = viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
-            _state.value = Event.Error(throwable)
+            viewModelScope.launch { eventChannel.send(Event.Error(throwable)) }
         }) {
             projectRepository.deploymentInfo(
                 projectId = project.id,
@@ -633,8 +638,11 @@ class ProjectViewModel @Inject constructor(
      */
     fun rename(device: Device, name: String) {
         viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
-            _state.value = Event.Error(throwable)
-            isDeviceRenameRequested = false
+            viewModelScope.launch {
+                eventChannel
+                    .send(Event.Error(throwable))
+                    .also { isDeviceRenameRequested = false }
+            }
         }) {
             projectRepository.renameDevice(
                 apiKey = keys.apiKey,
@@ -656,8 +664,11 @@ class ProjectViewModel @Inject constructor(
      */
     fun delete(device: Device) {
         viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
-            _state.value = Event.Error(throwable)
-            isDeviceRenameRequested = false
+            viewModelScope.launch {
+                eventChannel
+                    .send(Event.Error(throwable))
+                    .also { isDeviceRenameRequested = false }
+            }
         }) {
             projectRepository.deleteDevice(
                 apiKey = keys.apiKey,
@@ -713,7 +724,7 @@ class ProjectViewModel @Inject constructor(
                 var counter = 0
                 while (counter < 50) {
                     delay(1000)
-                    if(deploymentState !is ApplyingUpdate) {
+                    if (deploymentState !is ApplyingUpdate) {
                         break
                     }
                     counter++
@@ -799,13 +810,9 @@ class ProjectViewModel @Inject constructor(
  * Converts the firmware upgrade manager state to Deployment state
  */
 private fun FirmwareUpgradeManager.State.toDeploymentState() = when (this) {
-    NONE -> {
-        NotStarted
-    }
+    NONE -> NotStarted
     VALIDATE -> Verifying
-    UPLOAD -> {
-        Uploading()
-    }
+    UPLOAD -> Uploading()
     TEST, RESET -> ApplyingUpdate()
     CONFIRM -> Confirming
 }

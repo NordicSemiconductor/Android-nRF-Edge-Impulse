@@ -17,12 +17,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -48,7 +46,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -70,7 +67,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -84,12 +82,11 @@ import no.nordicsemi.android.ei.BottomNavigationScreen
 import no.nordicsemi.android.ei.HorizontalPagerTab
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.Route
-import no.nordicsemi.android.ei.ShowAlertDialog
-import no.nordicsemi.android.ei.ShowDataAcquisitionDialog
 import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.Message.Sample.Finished
 import no.nordicsemi.android.ei.model.Message.Sample.Unknown
+import no.nordicsemi.android.ei.ui.layouts.AlertDialog
 import no.nordicsemi.android.ei.ui.layouts.TabTopAppBar1
 import no.nordicsemi.android.ei.ui.layouts.isScrollingUp
 import no.nordicsemi.android.ei.ui.theme.NordicMiddleGrey
@@ -340,7 +337,7 @@ private fun ProjectContent(
 ) {
     val context = LocalContext.current
     val navController = rememberNavController()
-    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val lifecycleOwner = LocalLifecycleOwner.current
     // TODO: Check why this listener is called twice
     navController.addOnDestinationChangedListener { _, destination, _ ->
         onScreenChanged(BottomNavigationScreen.fromNav(destination))
@@ -355,24 +352,23 @@ private fun ProjectContent(
         viewModel.inferencingResults
     }
     var isWarningDialogVisible by rememberSaveable { mutableStateOf(false) }
-    val event by viewModel.eventFlow.collectAsStateWithLifecycle(
-        initialValue = Event.None,
-        lifecycle = lifecycle
-    )
-    LaunchedEffect(event) {
-        when (event) {
-            is Event.Error -> {
-                val e = event as Event.Error
-                snackbarHostState.showSnackbar(
-                    message = when (e.throwable) {
-                        is UnknownHostException -> context.getString(R.string.error_no_internet)
-                        else -> e.throwable.localizedMessage
-                            ?: context.getString(R.string.error_refreshing_failed)
+    LaunchedEffect(Unit) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.eventFlow.collect {
+                when (it) {
+                    is Event.Error -> {
+                        snackbarHostState.showSnackbar(
+                            message = when (it.throwable) {
+                                is UnknownHostException -> context.getString(R.string.error_no_internet)
+                                else -> it.throwable.localizedMessage
+                                    ?: context.getString(R.string.error_refreshing_failed)
+                            }
+                        )
                     }
-                )
-            }
 
-            else -> {}
+                    else -> {}
+                }
+            }
         }
     }
     Scaffold(
@@ -383,7 +379,8 @@ private fun ProjectContent(
                 selectedScreen = selectedScreen,
                 pagerState = pagerState,
                 onBackPressed = {
-                    //We should only exit this screen if the backdrop is revealed and no devices are connected.
+                    // We should only exit this screen if the backdrop is revealed and no devices
+                    // are connected.
                     when (connectedDevices.isNotEmpty()) {
                         true -> isWarningDialogVisible = true
                         false -> onBackPressed()
@@ -658,10 +655,7 @@ fun SamplingMessage(
     isSamplingStartedFromDevice: Boolean
 ) {
     if (isSamplingMessageVisible) {
-        Surface(
-            modifier = Modifier
-                .wrapContentSize()
-        ) {
+        Surface(modifier = Modifier.wrapContentSize()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
