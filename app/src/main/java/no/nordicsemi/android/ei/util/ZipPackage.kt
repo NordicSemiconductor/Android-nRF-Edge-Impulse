@@ -1,83 +1,117 @@
-/*
- *
- *  * Copyright (c) 2022, Nordic Semiconductor
- *  *
- *  * SPDX-License-Identifier: Apache-2.0
- *
- */
-
 package no.nordicsemi.android.ei.util
 
 import androidx.annotation.Keep
-import androidx.annotation.NonNull
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
-import com.google.gson.annotations.SerializedName
+import io.runtime.mcumgr.dfu.model.McuMgrImageSet
+import io.runtime.mcumgr.dfu.model.McuMgrTargetImage
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
 import java.io.InputStreamReader
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 
-
-private const val MANIFEST = "manifest.json"
-
-class ZipPackage(@NonNull data: ByteArray) {
-
-    private val gson = GsonBuilder()
-        .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-        .create()
-
-    private lateinit var manifest: Manifest
-    var binaries = arrayListOf<android.util.Pair<Int, ByteArray>>()
-        private set
-
+class ZipPackage(data: ByteArray) {
+    @Suppress("unused")
     @Keep
-    inner class Manifest(val formatVersion: Int, val files: Array<File>) {
+    private class Manifest {
+        private val formatVersion = 0
+        val files: Array<File> = arrayOf()
+
         @Keep
-        inner class File(
-            val version: String,
-            val file: String,
-            val size: Int = 0,
-            @SerializedName("image_index")
+        class File {
+            /**
+             * The version number of the image. This is a string in the format "X.Y.Z-text".
+             */
+            private val version: String? = null
+
+            /**
+             * The name of the image file.
+             */
+            val file: String? = null
+
+            /**
+             * The size of the image file in bytes. This is declared size and does not have to
+             * be equal to the actual file size.
+             */
+            private val size = 0
+
+            /**
+             * Image index is used for multi-core devices. Index 0 is the main core (app core),
+             * index 1 is secondary core (net core), etc.
+             *
+             *
+             * For single-core devices this is not present in the manifest file and defaults to 0.
+             */
             val imageIndex: Int = 0
-        )
+
+            /**
+             * The slot number where the image is to be sent. By default images are sent to the
+             * secondary slot and then swapped to the primary slot after the image is confirmed
+             * and the device is reset.
+             *
+             *
+             * However, if the device supports Direct XIP feature it is possible to run an app
+             * from a secondary slot. The image has to be compiled for this slot. A ZIP package
+             * can contain images for both slots. Only the one targeting the available one will
+             * be sent.
+             * @since NCS v 2.5, nRF Connect Device Manager 1.8.
+             */
+            val slot: Int = McuMgrTargetImage.SLOT_SECONDARY
+        }
     }
+
+    private var manifest: Manifest? = null
+    val binaries: McuMgrImageSet
 
     init {
-        initZipPackage(data = data)
-    }
-
-    @Throws(IOException::class)
-    private fun initZipPackage(@NonNull data: ByteArray) {
         var ze: ZipEntry
         val entries: MutableMap<String?, ByteArray> = HashMap()
 
         // Unzip the file and look for the manifest.json.
         val zis = ZipInputStream(ByteArrayInputStream(data))
-        while (true) {
-            ze = zis.nextEntry ?: break
+        while ((zis.nextEntry.also { ze = it }) != null) {
             if (ze.isDirectory) throw IOException("Invalid ZIP")
+
             val name = validateFilename(ze.name)
-            when {
-                name == MANIFEST -> {
-                    manifest = gson.fromJson(InputStreamReader(zis), Manifest::class.java)
-                }
-                name.endsWith(".bin") -> {
-                    val content = zis.readBytes()//getData(zis)
-                    entries[name] = content
-                }
-                else -> {}
+
+            if (name == MANIFEST) {
+                val gson = GsonBuilder()
+                    .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+                    .create()
+                manifest = gson.fromJson(InputStreamReader(zis), Manifest::class.java)
+            } else if (name.endsWith(".bin")) {
+                val content = getData(zis)
+                entries[name] = content
+            } else {
+                throw IOException("Unsupported file found: $name")
             }
         }
 
+        binaries = McuMgrImageSet()
+
         // Search for images.
-        manifest.files.onEach { file ->
+        for (file in manifest!!.files) {
             val name = file.file
             val content = entries[name] ?: throw IOException("File not found: $name")
-            binaries.add(android.util.Pair(file.imageIndex, content))
+
+            binaries.add(McuMgrTargetImage(file.imageIndex, file.slot, content))
         }
+    }
+
+    @Throws(IOException::class)
+    private fun getData(zis: ZipInputStream): ByteArray {
+        val buffer = ByteArray(1024)
+
+        // Read file content to byte array
+        val os = ByteArrayOutputStream()
+        var count: Int
+        while ((zis.read(buffer).also { count = it }) != -1) {
+            os.write(buffer, 0, count)
+        }
+        return os.toByteArray()
     }
 
     /**
@@ -92,31 +126,27 @@ class ZipPackage(@NonNull data: ByteArray) {
      *
      *
      * @param filename The path to the file.
-     * @param intendedDir The intended directory where the zip should be.
      * @return The validated path to the file.
      * @throws java.io.IOException Thrown in case of path traversal issues.
      */
     @Throws(IOException::class)
     private fun validateFilename(
-        @NonNull filename: String,
-        @NonNull intendedDir: String = "."
+        filename: String
     ): String {
         val f = File(filename)
-        val canonicalPath: String = f.canonicalPath
-        val iD = File(intendedDir)
-        val canonicalID: String = iD.canonicalPath
-        return when {
-            canonicalPath.startsWith(canonicalID) -> {
-                canonicalPath.substring(1) // remove leading "/"
-            }
-            else -> {
-                throw IllegalStateException("File is outside extraction target directory.")
-            }
+        val canonicalPath = f.canonicalPath
+
+        val iD = File(".")
+        val canonicalID = iD.canonicalPath
+
+        if (canonicalPath.startsWith(canonicalID)) {
+            return canonicalPath.substring(1) // remove leading "/"
+        } else {
+            throw IllegalStateException("File is outside extraction target directory.")
         }
     }
 
-    init {
-        initZipPackage(data = data)
+    companion object {
+        private const val MANIFEST = "manifest.json"
     }
-
 }
