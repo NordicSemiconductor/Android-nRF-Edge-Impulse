@@ -79,7 +79,6 @@ import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.ui.layouts.DeviceDisconnected
 import no.nordicsemi.android.ei.ui.theme.NordicBlue
-import java.util.Locale
 
 @Composable
 fun Deployment(
@@ -144,11 +143,7 @@ private fun DesignImpulse(
                     localUriHandler.openUri(uri = uri)
                 }) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = stringResource(id = R.string.action_ei_studio).uppercase(
-                            Locale.US
-                        )
-                    )
+                    Text(text = stringResource(id = R.string.action_ei_studio))
                     Icon(
                         modifier = Modifier.padding(start = 8.dp),
                         imageVector = Icons.AutoMirrored.Rounded.Launch,
@@ -283,8 +278,6 @@ private fun DeployImpulse(
                             NotStarted, is Canceled, is Failed, is Complete -> R.string.action_deploy
                             else -> R.string.action_cancel
                         }
-                    ).uppercase(
-                        Locale.US
                     ),
                     textAlign = TextAlign.Center,
                     color = Color.White

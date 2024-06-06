@@ -66,7 +66,6 @@ import no.nordicsemi.android.ei.model.InferencingMessage.InferencingRequest
 import no.nordicsemi.android.ei.ui.layouts.DeviceDisconnected
 import no.nordicsemi.android.ei.util.round
 import no.nordicsemi.android.ei.viewmodels.state.InferencingState
-import java.util.Locale
 
 @Composable
 fun InferencingScreen(
@@ -202,8 +201,6 @@ private fun StartInferencing(
                             InferencingState.Started -> R.string.action_stop
                             InferencingState.Stopped -> R.string.action_start
                         }
-                    ).uppercase(
-                        Locale.US
                     )
                 )
             }
@@ -293,8 +290,6 @@ private fun StartInferencing(
                             InferencingState.Started -> R.string.action_stop
                             InferencingState.Stopped -> R.string.action_start
                         }
-                    ).uppercase(
-                        Locale.US
                     ),
                     color = Color.White
                 )

@@ -15,12 +15,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import no.nordicsemi.android.ei.R
-import no.nordicsemi.android.ei.ShowAlertDialog
+import no.nordicsemi.android.ei.ui.layouts.AlertDialog
 
 @Composable
 fun AboutDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
-    ShowAlertDialog(
+    AlertDialog(
         imageVector = Icons.Outlined.Info,
         title = stringResource(id = R.string.action_about),
         text = {

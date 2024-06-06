@@ -12,9 +12,17 @@ import com.google.gson.JsonElement
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import no.nordicsemi.android.ei.websocket.WebSocketState.*
-import okhttp3.*
-import java.util.*
+import no.nordicsemi.android.ei.websocket.WebSocketState.Closed
+import no.nordicsemi.android.ei.websocket.WebSocketState.Closing
+import no.nordicsemi.android.ei.websocket.WebSocketState.Failed
+import no.nordicsemi.android.ei.websocket.WebSocketState.Open
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
+import java.util.Timer
+import java.util.TimerTask
 import javax.inject.Inject
 
 /**

@@ -8,11 +8,24 @@
 
 package no.nordicsemi.android.ei.util
 
-import com.google.gson.*
+import com.google.gson.JsonDeserializationContext
+import com.google.gson.JsonDeserializer
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonSerializationContext
+import com.google.gson.JsonSerializer
 import no.nordicsemi.android.ei.model.Message
-import no.nordicsemi.android.ei.model.Message.*
-import no.nordicsemi.android.ei.model.Message.Sample.*
-import no.nordicsemi.android.ei.model.Message.Sample.ProgressEvent.*
+import no.nordicsemi.android.ei.model.Message.Configure
+import no.nordicsemi.android.ei.model.Message.Error
+import no.nordicsemi.android.ei.model.Message.Hello
+import no.nordicsemi.android.ei.model.Message.HelloResponse
+import no.nordicsemi.android.ei.model.Message.Sample.Finished
+import no.nordicsemi.android.ei.model.Message.Sample.ProgressEvent.Processing
+import no.nordicsemi.android.ei.model.Message.Sample.ProgressEvent.Reading
+import no.nordicsemi.android.ei.model.Message.Sample.ProgressEvent.Started
+import no.nordicsemi.android.ei.model.Message.Sample.ProgressEvent.Uploading
+import no.nordicsemi.android.ei.model.Message.Sample.Request
+import no.nordicsemi.android.ei.model.Message.Sample.Response
 import java.lang.reflect.Type
 import java.security.InvalidParameterException
 

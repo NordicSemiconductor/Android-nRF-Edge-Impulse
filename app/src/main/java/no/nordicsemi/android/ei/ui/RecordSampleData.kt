@@ -82,8 +82,7 @@ import java.util.Locale
 fun RecordSampleLargeScreen(
     viewModel: ProjectViewModel,
     connectedDevices: List<Device>,
-    onSamplingMessageDismissed: (Boolean) -> Unit,
-    buttonContent: @Composable () -> Unit
+    onSamplingMessageDismissed: (Boolean) -> Unit
 ) {
     Column {
         SamplingMessage(
@@ -120,7 +119,6 @@ fun RecordSampleLargeScreen(
                 onFrequencySelected = { viewModel.onFrequencySelected(frequency = it) },
             )
         }
-        buttonContent()
     }
 }
 

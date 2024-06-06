@@ -54,7 +54,6 @@ import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.viewmodels.DeleteUserViewModel
 import no.nordicsemi.android.ei.viewmodels.state.DeleteState
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -287,7 +286,7 @@ private fun DeleteUserContent(
             } else {
                 Text(
                     modifier = Modifier.defaultMinSize(minWidth = 80.dp),
-                    text = stringResource(R.string.action_delete).uppercase(Locale.US),
+                    text = stringResource(R.string.action_delete),
                     textAlign = TextAlign.Center,
                     color = Color.White
                 )
