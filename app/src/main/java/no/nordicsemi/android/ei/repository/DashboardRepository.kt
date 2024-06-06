@@ -22,8 +22,18 @@ class DashboardRepository @Inject constructor(
     @IODispatcher ioDispatcher: CoroutineDispatcher
 ) : BaseRepository(service = service, ioDispatcher = ioDispatcher) {
 
-    suspend fun createProject(token: String, projectName: String, projectVisibility: ProjectVisibility = ProjectVisibility.PRIVATE) = withContext(ioDispatcher) {
-        service.createProject(jwt = token, createProjectRequest = CreateProjectRequest(projectName, projectVisibility.value))
+    suspend fun createProject(
+        token: String,
+        projectName: String,
+        projectVisibility: ProjectVisibility = ProjectVisibility.PRIVATE
+    ) = withContext(ioDispatcher) {
+        service.createProject(
+            jwt = token,
+            createProjectRequest = CreateProjectRequest(
+                projectName = projectName,
+                projectVisibility = projectVisibility.value
+            )
+        )
     }
 
     suspend fun developmentKeys(token: String, projectId: Int) = withContext(ioDispatcher) {
@@ -34,7 +44,11 @@ class DashboardRepository @Inject constructor(
         service.getSocketToken(apiKey = apiKey, projectId = projectId)
     }
 
-    suspend fun deleteCurrentUser(token: String, password: String, code:String?) = withContext(ioDispatcher) {
-        service.deleteCurrentUser(jwt = token, deleteCurrentUserRequest = DeleteCurrentUserRequest(password, code))
-    }
+    suspend fun deleteCurrentUser(token: String, password: String, code: String?) =
+        withContext(ioDispatcher) {
+            service.deleteCurrentUser(
+                jwt = token,
+                deleteCurrentUserRequest = DeleteCurrentUserRequest(password, code)
+            )
+        }
 }
