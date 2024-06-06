@@ -593,14 +593,14 @@ class ProjectViewModel @Inject constructor(
                 setWindowUploadCapacity(3)
                 setMemoryAlignment(4)
                 setEstimatedSwapTime(40_000)
-                var images = arrayListOf<Pair<Int, ByteArray>>()
+                var images = McuMgrImageSet() //arrayListOf<Pair<Int, ByteArray>>()
                 try {
                     McuMgrImage.getHash(data)
                     images.add(Pair(0, data))
                 } catch (e: Exception) {
                     try {
                         images = ZipPackage(data).binaries
-                    } catch (e1: Exception) {
+                    } catch (_: Exception) {
                     }
                 }
                 (transport as McuMgrBleTransport).apply {
