@@ -263,7 +263,7 @@ private fun Error(
         Text(text = message, style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = onClickRetry) {
-            Text(text = stringResource(R.string.action_try_again).uppercase(Locale.US))
+            Text(text = stringResource(R.string.action_try_again))
         }
     }
 }
@@ -301,7 +301,7 @@ private fun ErrorItem(
             )
             Spacer(modifier = Modifier.width(16.dp))
             Button(onClick = onClickRetry) {
-                Text(text = stringResource(R.string.action_try_again).uppercase(Locale.US))
+                Text(text = stringResource(R.string.action_try_again))
             }
         }
     }

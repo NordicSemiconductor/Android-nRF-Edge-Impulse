@@ -175,7 +175,7 @@ fun BluetoothDisabledInfo(
                     launcher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
                 }
             }
-        ) { Text(text = stringResource(R.string.action_enable).uppercase(Locale.US)) }
+        ) { Text(text = stringResource(R.string.action_enable)) }
     }
 }
 
@@ -204,7 +204,7 @@ fun PermissionNotGrantedContent(
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = { onRequestPermission() }
-        ) { Text(text = stringResource(R.string.action_grant_permission).uppercase(Locale.US)) }
+        ) { Text(text = stringResource(R.string.action_grant_permission)) }
     }
 }
 
@@ -243,7 +243,7 @@ fun PermissionDeniedContent(
                 )
             }
         ) {
-            Text(text = stringResource(R.string.action_permission_settings).uppercase(Locale.US))
+            Text(text = stringResource(R.string.action_permission_settings))
         }
     }
 }
@@ -274,7 +274,7 @@ fun LocationTurnedOffInfo(
             onClick = {
                 launcher.launch(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
             }
-        ) { Text(text = stringResource(R.string.action_permission_settings).uppercase(Locale.US),) }
+        ) { Text(text = stringResource(R.string.action_permission_settings)) }
     }
 }
 

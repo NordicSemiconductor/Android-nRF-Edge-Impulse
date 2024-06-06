@@ -70,7 +70,6 @@ import no.nordicsemi.android.ei.viewmodels.state.buttonBackgroundColor
 import no.nordicsemi.android.ei.viewmodels.state.indicatorColor
 import java.text.DateFormat
 import java.util.Date
-import java.util.Locale
 
 @Composable
 fun DeviceDetails(
@@ -122,7 +121,7 @@ fun DeviceDetails(
 
                             AUTHENTICATED -> stringResource(id = R.string.action_disconnect)
                             else -> stringResource(id = R.string.action_connect)
-                        }.uppercase(Locale.US),
+                        },
                         color = Color.White,
                         textAlign = TextAlign.Center,
                         maxLines = 1
@@ -146,7 +145,7 @@ fun DeviceDetails(
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
                 ) {
                     Text(
-                        text = stringResource(R.string.action_delete).uppercase(Locale.US),
+                        text = stringResource(R.string.action_delete),
                         color = Color.White
                     )
                 }
@@ -274,9 +273,7 @@ private fun DeviceInformation(device: Device) {
         RowItem(
             modifier = Modifier.size(24.dp),
             imageVector = Icons.Outlined.PermIdentity,
-            text = stringResource(R.string.label_id).uppercase(
-                Locale.US
-            ),
+            text = stringResource(R.string.label_id),
             subText = device.deviceId
         )
         RowItem(

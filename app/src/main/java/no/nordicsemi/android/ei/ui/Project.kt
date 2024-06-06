@@ -275,11 +275,7 @@ private fun SmallScreen(
                                             viewModel.samplingState is Unknown),
                             onClick = viewModel::startSampling
                         ) {
-                            Text(
-                                text = stringResource(R.string.action_start_sampling).uppercase(
-                                    Locale.US
-                                )
-                            )
+                            Text(text = stringResource(R.string.action_start_sampling))
                         }
                     }
                 },
@@ -367,13 +363,7 @@ private fun ProjectContent(
         floatingActionButton = {
             if (isFabVisible) {
                 ExtendedFloatingActionButton(
-                    text = {
-                        Text(
-                            text = stringResource(id = R.string.action_record_new_data).uppercase(
-                                Locale.US
-                            )
-                        )
-                    },
+                    text = { Text(text = stringResource(id = R.string.action_record_new_data)) },
                     icon = { Icon(imageVector = Icons.Default.Add, contentDescription = null) },
                     onClick = onFabClicked,
                     expanded = listStates[pagerState.currentPage].isScrollingUp()
@@ -507,7 +497,7 @@ private fun ProjectTopAppBar(
                 tabs = tabs.map {
                     val text = @Composable {
                         Text(
-                            text = stringResource(id = it.title).uppercase(Locale.US),
+                            text = stringResource(id = it.title),
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     }

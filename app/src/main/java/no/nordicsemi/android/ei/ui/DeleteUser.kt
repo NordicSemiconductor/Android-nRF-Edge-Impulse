@@ -287,7 +287,7 @@ private fun DeleteUserContent(
             } else {
                 Text(
                     modifier = Modifier.defaultMinSize(minWidth = 80.dp),
-                    text = stringResource(R.string.action_delete).uppercase(Locale.US),
+                    text = stringResource(R.string.action_delete),
                     textAlign = TextAlign.Center,
                     color = Color.White
                 )
