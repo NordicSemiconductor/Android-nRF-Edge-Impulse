@@ -10,6 +10,7 @@
 
 package no.nordicsemi.android.ei.ui
 
+import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -79,6 +80,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -130,11 +132,13 @@ fun Dashboard(
 
     var showCreateProjectDialog by rememberSaveable { mutableStateOf(false) }
     var showAboutDialog by rememberSaveable { mutableStateOf(false) }
+    val isLargeScreen =
+        LocalConfiguration.current.screenLayout and Configuration.SCREENLAYOUT_SIZE_MASK >= Configuration.SCREENLAYOUT_SIZE_LARGE
 
     LaunchedEffect(Unit) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.eventFlow.collect {
-                when(it) {
+                when (it) {
                     is Event.Project.Created -> {
                         showCreateProjectDialog = false
                         snackbarHostState.showSnackbar(
@@ -144,6 +148,7 @@ fun Dashboard(
                             )
                         )
                     }
+
                     is Event.Project.Selected -> onProjectSelected((it).project)
                     is Event.Error -> {
                         showCreateProjectDialog = false
@@ -262,16 +267,12 @@ fun Dashboard(
                 onCreateProject = { projectName ->
                     viewModel.createProject(projectName)
                 },
-                onDismiss = {
-                    showCreateProjectDialog = !showCreateProjectDialog
-                }
+                onDismiss = { showCreateProjectDialog = !showCreateProjectDialog }
             )
         }
         if (showAboutDialog) {
             AboutDialog(
-                onDismiss = {
-                    showAboutDialog = !showAboutDialog
-                }
+                onDismiss = { showAboutDialog = !showAboutDialog }
             )
         }
 
@@ -280,19 +281,26 @@ fun Dashboard(
         }
     }
     Surface(
-        modifier = Modifier
-            .offset(y = (56.dp))
-            .padding(start = 16.dp, top = 32.dp)
-            .border(
-                border = BorderStroke(3.dp, color = MaterialTheme.colorScheme.onPrimary),
-                shape = CircleShape
-            )
-            .height(UserAppBarImageSize)
-            .aspectRatio(1.0f)
-            .shadow(
-                elevation = 4.dp,
-                shape = CircleShape
-            ),
+        modifier = with(Modifier) {
+            offset(y = (56.dp))
+                .padding(
+                    start = 16.dp,
+                    top = when {
+                        isLargeScreen -> 32.dp
+                        else -> 56.dp
+                    }
+                )
+                .border(
+                    border = BorderStroke(3.dp, color = MaterialTheme.colorScheme.onPrimary),
+                    shape = CircleShape
+                )
+                .height(UserAppBarImageSize)
+                .aspectRatio(1.0f)
+                .shadow(
+                    elevation = 4.dp,
+                    shape = CircleShape
+                )
+        },
         shape = CircleShape,
     ) {
         Image(
