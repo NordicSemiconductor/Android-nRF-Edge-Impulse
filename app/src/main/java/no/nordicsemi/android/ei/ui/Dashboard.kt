@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -48,9 +49,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.outlined.HourglassTop
 import androidx.compose.material.icons.outlined.Share
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -59,11 +58,13 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -91,9 +92,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import coil.annotation.ExperimentalCoilApi
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -101,10 +101,9 @@ import coil.transform.CircleCropTransformation
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import no.nordicsemi.android.ei.R
-import no.nordicsemi.android.ei.ShowAlertDialog
 import no.nordicsemi.android.ei.model.Collaborator
 import no.nordicsemi.android.ei.model.Project
-import no.nordicsemi.android.ei.showSnackbar
+import no.nordicsemi.android.ei.ui.layouts.AlertDialog
 import no.nordicsemi.android.ei.ui.layouts.UserAppBar
 import no.nordicsemi.android.ei.ui.layouts.UserAppBarImageSize
 import no.nordicsemi.android.ei.ui.layouts.isScrollingUp
@@ -122,8 +121,7 @@ fun Dashboard(
     onLogout: (Unit) -> Unit
 ) {
     val context = LocalContext.current
-    val coroutineScope = LocalLifecycleOwner.current.lifecycleScope
-
+    val lifecycleOwner = LocalLifecycleOwner.current
     val user = viewModel.user
     val swipeRefreshState = rememberSwipeRefreshState(viewModel.isRefreshing)
     val developmentKeysState = viewModel.isDownloadingDevelopmentKeys
@@ -134,40 +132,33 @@ fun Dashboard(
     var showCreateProjectDialog by rememberSaveable { mutableStateOf(false) }
     var showAboutDialog by rememberSaveable { mutableStateOf(false) }
 
-    coroutineScope.launchWhenStarted {
-        viewModel.eventFlow.runCatching {
-            this.collect { event ->
-                when (event) {
+    LaunchedEffect(Unit) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.eventFlow.collect {
+                when(it) {
                     is Event.Project.Created -> {
                         showCreateProjectDialog = false
-                        showSnackbar(
-                            coroutineScope = coroutineScope,
-                            snackbarHostState = snackbarHostState,
+                        snackbarHostState.showSnackbar(
                             message = context.getString(
                                 R.string.project_created_successfully,
-                                event.projectName
+                                it.projectName
                             )
                         )
                     }
-
-                    is Event.Project.Selected -> {
-                        onProjectSelected(event.project)
-                    }
-
+                    is Event.Project.Selected -> onProjectSelected((it).project)
                     is Event.Error -> {
                         showCreateProjectDialog = false
-                        showSnackbar(
-                            coroutineScope = coroutineScope,
-                            snackbarHostState = snackbarHostState,
-                            message = when (event.throwable) {
+                        snackbarHostState.showSnackbar(
+                            message = when (it.throwable) {
                                 is UnknownHostException -> context.getString(R.string.error_no_internet)
-                                else -> event.throwable.localizedMessage
+                                else -> it.throwable.localizedMessage
                                     ?: context.getString(R.string.error_refreshing_failed)
                             }
                         )
                     }
                 }
             }
+
         }
     }
 
@@ -184,12 +175,15 @@ fun Dashboard(
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
+                modifier = Modifier
+                    .navigationBarsPadding(),
                 text = { Text(text = stringResource(R.string.action_create_project).uppercase(Locale.US)) },
                 icon = { Icon(imageVector = Icons.Default.Add, contentDescription = null) },
                 onClick = { showCreateProjectDialog = !showCreateProjectDialog },
                 expanded = lazyListState.isScrollingUp()
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     ) { innerPadding ->
         SwipeRefresh(
             modifier =
@@ -200,7 +194,7 @@ fun Dashboard(
                 .windowInsetsPadding(
                     insets = WindowInsets.safeDrawing.only(
                         sides = WindowInsetsSides.Horizontal
-                    ),
+                    )
                 ),
             state = swipeRefreshState,
             onRefresh = { viewModel.refreshUser() },
@@ -513,59 +507,6 @@ private fun CreateProjectDialog(
             onCreateProject(projectName)
         }
     )
-}
-
-@Composable
-private fun ShowDownloadingDevelopmentKeysDialog(
-    modifier: Modifier = Modifier,
-) {
-    Dialog(
-        onDismissRequest = {},
-        properties =
-        DialogProperties(
-            dismissOnBackPress = false,
-            dismissOnClickOutside = false
-        )
-    ) {
-        Column(
-            modifier = modifier
-                .width(width = 280.dp)
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .height(64.dp)
-                    .fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    modifier = Modifier.size(24.dp),
-                    imageVector = Icons.Outlined.HourglassTop,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Text(
-                    text = stringResource(R.string.label_please_wait),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    style = MaterialTheme.typography.titleLarge
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            CircularProgressIndicator(
-                modifier = Modifier
-                    .size(64.dp)
-                    .align(Alignment.CenterHorizontally)
-            )
-            Spacer(modifier = Modifier.height(32.dp))
-            Text(
-                text = stringResource(R.string.label_fetching_development_keys_socket_token),
-                color = MaterialTheme.colorScheme.onSurface,
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-    }
 }
 
 private const val MAX_COLLABORATOR_IMAGES = 4

@@ -17,4 +17,3 @@ sealed class Event {
 
     data class Error(val throwable: Throwable): Event()
 }
-

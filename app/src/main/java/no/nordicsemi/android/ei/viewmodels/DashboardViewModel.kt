@@ -19,7 +19,6 @@ import dagger.hilt.EntryPoints
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -34,6 +33,7 @@ import no.nordicsemi.android.ei.repository.UserDataRepository
 import no.nordicsemi.android.ei.service.param.developmentKeys
 import no.nordicsemi.android.ei.util.guard
 import no.nordicsemi.android.ei.viewmodels.event.Event
+import no.nordicsemi.android.ei.viewmodels.event.Event.Error
 import javax.inject.Inject
 
 @HiltViewModel
@@ -71,7 +71,7 @@ class DashboardViewModel @Inject constructor(
         isRefreshing = true
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope
-                .launch { eventChannel.send(Event.Error(throwable)) }
+                .launch { eventChannel.send(Error(throwable)) }
                 .also { isRefreshing = false }
         }
         viewModelScope.launch(handler) {
@@ -88,11 +88,10 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     fun createProject(projectName: String) {
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope.launch {
-                eventChannel.send(Event.Error(throwable))
+                eventChannel.send(Error(throwable))
             }
         }
         viewModelScope.launch(handler) {
@@ -114,7 +113,7 @@ class DashboardViewModel @Inject constructor(
         isDownloadingDevelopmentKeys = true
         val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope
-                .launch { eventChannel.send(Event.Error(throwable)) }
+                .launch { eventChannel.send(Error(throwable)) }
                 .also { isDownloadingDevelopmentKeys = false }
         }
         viewModelScope.launch(handler) {
@@ -129,14 +128,14 @@ class DashboardViewModel @Inject constructor(
                 response.developmentKeys()
             }
             // Retrieve the socket token for the project
-            val socketToken =
-                dashboardRepository.getSocketToken(developmentKeys.apiKey, projectId = project.id)
-                    .let { response ->
-                        guard(response.success) {
-                            throw Throwable(response.error)
-                        }
-                        response.token
+            val socketToken = dashboardRepository
+                .getSocketToken(developmentKeys.apiKey, projectId = project.id)
+                .let { response ->
+                    guard(response.success) {
+                        throw Throwable(response.error)
                     }
+                    response.token
+                }
             projectManager.projectSelected(
                 project = project,
                 keys = developmentKeys,

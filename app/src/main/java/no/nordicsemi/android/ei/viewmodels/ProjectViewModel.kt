@@ -12,7 +12,13 @@ import android.app.Application
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.util.Pair
-import androidx.compose.runtime.*
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -25,7 +31,13 @@ import io.runtime.mcumgr.ble.McuMgrBleTransport
 import io.runtime.mcumgr.dfu.FirmwareUpgradeCallback
 import io.runtime.mcumgr.dfu.FirmwareUpgradeController
 import io.runtime.mcumgr.dfu.FirmwareUpgradeManager
-import io.runtime.mcumgr.dfu.FirmwareUpgradeManager.State.*
+import io.runtime.mcumgr.dfu.FirmwareUpgradeManager.State.CONFIRM
+import io.runtime.mcumgr.dfu.FirmwareUpgradeManager.State.NONE
+import io.runtime.mcumgr.dfu.FirmwareUpgradeManager.State.RESET
+import io.runtime.mcumgr.dfu.FirmwareUpgradeManager.State.TEST
+import io.runtime.mcumgr.dfu.FirmwareUpgradeManager.State.UPLOAD
+import io.runtime.mcumgr.dfu.FirmwareUpgradeManager.State.VALIDATE
+import io.runtime.mcumgr.dfu.model.McuMgrImageSet
 import io.runtime.mcumgr.exception.McuMgrException
 import io.runtime.mcumgr.image.McuMgrImage
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -39,7 +51,16 @@ import no.nordicsemi.android.ei.ble.DiscoveredBluetoothDevice
 import no.nordicsemi.android.ei.comms.BuildManager
 import no.nordicsemi.android.ei.comms.CommsManager
 import no.nordicsemi.android.ei.comms.DeploymentState
-import no.nordicsemi.android.ei.comms.DeploymentState.*
+import no.nordicsemi.android.ei.comms.DeploymentState.ApplyingUpdate
+import no.nordicsemi.android.ei.comms.DeploymentState.Building
+import no.nordicsemi.android.ei.comms.DeploymentState.Canceled
+import no.nordicsemi.android.ei.comms.DeploymentState.Complete
+import no.nordicsemi.android.ei.comms.DeploymentState.Confirming
+import no.nordicsemi.android.ei.comms.DeploymentState.Downloading
+import no.nordicsemi.android.ei.comms.DeploymentState.Failed
+import no.nordicsemi.android.ei.comms.DeploymentState.NotStarted
+import no.nordicsemi.android.ei.comms.DeploymentState.Uploading
+import no.nordicsemi.android.ei.comms.DeploymentState.Verifying
 import no.nordicsemi.android.ei.di.ProjectComponentEntryPoint
 import no.nordicsemi.android.ei.di.ProjectManager
 import no.nordicsemi.android.ei.di.UserComponentEntryPoint
@@ -132,7 +153,7 @@ class ProjectViewModel @Inject constructor(
         private set
 
     /** Sample length used for data acquisition */
-    var sampleLength by mutableStateOf(5000)
+    var sampleLength by mutableIntStateOf(5000)
         private set
 
     /** Frequency used for data acquisition */
@@ -358,8 +379,7 @@ class ProjectViewModel @Inject constructor(
                 client = client,
                 exceptionHandler = CoroutineExceptionHandler { _, throwable ->
                     viewModelScope.launch {
-                        eventChannel
-                            .send(Event.Error(throwable = throwable))
+                        eventChannel.send(Event.Error(throwable = throwable))
                     }
                 },
                 context = getApplication()
@@ -423,10 +443,7 @@ class ProjectViewModel @Inject constructor(
      */
     fun startSampling() {
         viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
-            viewModelScope
-                .launch {
-                    eventChannel.send(Event.Error(throwable))
-                }
+            viewModelScope.launch { eventChannel.send(Event.Error(throwable)) }
         }) {
             dataAcquisitionTarget?.let { device ->
                 sensor?.let { sensor ->
@@ -446,8 +463,8 @@ class ProjectViewModel @Inject constructor(
                             guard(response.success) {
                                 throw Throwable(response.error)
                             }
-                            commsManagers[device.deviceId]?.isSamplingRequestedFromDevice =
-                                true
+                            commsManagers[device.deviceId]
+                                ?.isSamplingRequestedFromDevice = true
                         }
                     }
                 }
@@ -468,8 +485,7 @@ class ProjectViewModel @Inject constructor(
      */
     fun deploy() {
         deploymentJob = viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
-            viewModelScope
-                .launch { eventChannel.send(Event.Error(throwable)) }
+            viewModelScope.launch { eventChannel.send(Event.Error(throwable)) }
         }) {
             projectRepository.deploymentInfo(
                 projectId = project.id,
@@ -533,7 +549,6 @@ class ProjectViewModel @Inject constructor(
     /**
      * Download build.
      */
-    @Suppress("BlockingMethodInNonBlockingContext")
     private suspend fun downloadBuild() {
         deploymentState = Downloading
         if (hasDeployment()) {
@@ -623,11 +638,11 @@ class ProjectViewModel @Inject constructor(
      */
     fun rename(device: Device, name: String) {
         viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
-            viewModelScope
-                .launch {
-                    eventChannel.send(Event.Error(throwable))
-                        .also { isDeviceRenameRequested = false }
-                }
+            viewModelScope.launch {
+                eventChannel
+                    .send(Event.Error(throwable))
+                    .also { isDeviceRenameRequested = false }
+            }
         }) {
             projectRepository.renameDevice(
                 apiKey = keys.apiKey,
@@ -649,11 +664,11 @@ class ProjectViewModel @Inject constructor(
      */
     fun delete(device: Device) {
         viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
-            viewModelScope
-                .launch {
-                    eventChannel.send(Event.Error(throwable))
-                        .also { isDeviceRenameRequested = false }
-                }
+            viewModelScope.launch {
+                eventChannel
+                    .send(Event.Error(throwable))
+                    .also { isDeviceRenameRequested = false }
+            }
         }) {
             projectRepository.deleteDevice(
                 apiKey = keys.apiKey,
@@ -709,7 +724,7 @@ class ProjectViewModel @Inject constructor(
                 var counter = 0
                 while (counter < 50) {
                     delay(1000)
-                    if(deploymentState !is ApplyingUpdate) {
+                    if (deploymentState !is ApplyingUpdate) {
                         break
                     }
                     counter++
@@ -795,13 +810,9 @@ class ProjectViewModel @Inject constructor(
  * Converts the firmware upgrade manager state to Deployment state
  */
 private fun FirmwareUpgradeManager.State.toDeploymentState() = when (this) {
-    NONE -> {
-        NotStarted
-    }
+    NONE -> NotStarted
     VALIDATE -> Verifying
-    UPLOAD -> {
-        Uploading()
-    }
+    UPLOAD -> Uploading()
     TEST, RESET -> ApplyingUpdate()
     CONFIRM -> Confirming
 }
