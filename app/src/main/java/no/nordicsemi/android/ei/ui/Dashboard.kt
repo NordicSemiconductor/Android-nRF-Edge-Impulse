@@ -451,7 +451,7 @@ private fun CreateProjectDialog(
     var isError by rememberSaveable { mutableStateOf(false) }
     var projectName by rememberSaveable { mutableStateOf("") }
     var isCreateClicked by rememberSaveable { mutableStateOf(false) }
-    ShowAlertDialog(
+    AlertDialog(
         imageVector = Icons.Outlined.Share,
         title = stringResource(id = R.string.dialog_title_create_project),
         text = {

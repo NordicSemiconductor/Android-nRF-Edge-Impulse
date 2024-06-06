@@ -165,56 +165,30 @@ private fun LargeScreen(
     )
     if (isDialogVisible) when (selectedScreen) {
         BottomNavigationScreen.DATA_ACQUISITION -> {
-            ShowDataAcquisitionDialog(
+            DataAcquisitionDialog(
                 imageVector = Icons.Rounded.Sensors,
                 title = stringResource(R.string.title_record_new_data),
-                onDismissRequest = { isDialogVisible = false },
-                properties = DialogProperties(
-                    dismissOnBackPress = false,
-                    dismissOnClickOutside = false
-                ),
                 content = {
                     RecordSampleLargeScreen(
                         viewModel = viewModel,
                         connectedDevices = connectedDevices,
-                        onSamplingMessageDismissed = onSamplingMessageDismissed,
-                        buttonContent = {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp, horizontal = 24.dp),
-                                horizontalArrangement = Arrangement.End
-                            ) {
-                                TextButton(
-                                    enabled = viewModel.samplingState is Finished || viewModel.samplingState is Unknown,
-                                    onClick = {
-                                        isDialogVisible =
-                                            !(viewModel.samplingState is Finished || viewModel.samplingState is Unknown)
-                                        viewModel.resetSamplingState()
-                                    }
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.action_cancel).uppercase(
-                                            Locale.US
-                                        )
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                TextButton(
-                                    enabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
-                                            (viewModel.samplingState is Finished || viewModel.samplingState is Unknown),
-                                    onClick = { viewModel.startSampling() }
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.action_start_sampling).uppercase(
-                                            Locale.US
-                                        )
-                                    )
-                                }
-                            }
-                        }
+                        onSamplingMessageDismissed = onSamplingMessageDismissed
                     )
-                })
+                },
+                isDismissEnabled = viewModel.samplingState is Finished || viewModel.samplingState is Unknown,
+                onDismissRequest = {
+                    isDialogVisible =
+                        !(viewModel.samplingState is Finished || viewModel.samplingState is Unknown)
+                    viewModel.resetSamplingState()
+                },
+                isConfirmEnabled = connectedDevices.isNotEmpty() && viewModel.label.isNotEmpty() &&
+                        (viewModel.samplingState is Finished || viewModel.samplingState is Unknown),
+                onConfirm = { viewModel.startSampling() },
+                properties = DialogProperties(
+                    dismissOnBackPress = false,
+                    dismissOnClickOutside = false
+                )
+            )
         }
 
         else -> {
@@ -494,7 +468,7 @@ private fun ProjectContent(
         }
     }
     if (isWarningDialogVisible) {
-        ShowAlertDialog(
+        AlertDialog(
             imageVector = Icons.Rounded.Warning,
             title = stringResource(id = R.string.title_warning),
             text = {

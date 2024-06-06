@@ -64,7 +64,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import no.nordicsemi.android.common.theme.NordicTheme
 import no.nordicsemi.android.ei.R
-import no.nordicsemi.android.ei.ShowAlertDialog
+import no.nordicsemi.android.ei.ui.layouts.AlertDialog
 import no.nordicsemi.android.ei.ui.theme.NordicBlue
 import no.nordicsemi.android.ei.util.asMessage
 
@@ -468,7 +468,7 @@ private fun MultiFactorAuthenticationDialog(
 ) {
     var code by rememberSaveable { mutableStateOf("") }
     var error by rememberSaveable { mutableStateOf(false) }
-    ShowAlertDialog(
+    AlertDialog(
         imageVector = Icons.Outlined.Security,
         title = stringResource(R.string.label_authentication_code),
         text = {
