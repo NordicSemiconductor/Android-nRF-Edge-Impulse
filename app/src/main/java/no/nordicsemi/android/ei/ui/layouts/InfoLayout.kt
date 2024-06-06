@@ -46,7 +46,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.util.Utils
-import java.util.Locale
 
 @Composable
 fun InfoLayout(

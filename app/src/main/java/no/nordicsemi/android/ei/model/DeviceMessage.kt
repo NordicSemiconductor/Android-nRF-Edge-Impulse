@@ -12,7 +12,15 @@ import com.google.gson.annotations.SerializedName
 import no.nordicsemi.android.ei.model.Direction.RECEIVE
 import no.nordicsemi.android.ei.model.Direction.SEND
 import no.nordicsemi.android.ei.model.Method.POST
-import no.nordicsemi.android.ei.model.Type.*
+import no.nordicsemi.android.ei.model.Type.CONFIGURE
+import no.nordicsemi.android.ei.model.Type.HTTP
+import no.nordicsemi.android.ei.model.Type.INFERENCING_RESULTS
+import no.nordicsemi.android.ei.model.Type.INVALID
+import no.nordicsemi.android.ei.model.Type.START_INFERENCING
+import no.nordicsemi.android.ei.model.Type.START_INFERENCING_RESPONSE
+import no.nordicsemi.android.ei.model.Type.STOP_INFERENCING
+import no.nordicsemi.android.ei.model.Type.STOP_INFERENCING_RESPONSE
+import no.nordicsemi.android.ei.model.Type.WEBSOCKET
 
 sealed class DeviceMessage {
     abstract val type: Type

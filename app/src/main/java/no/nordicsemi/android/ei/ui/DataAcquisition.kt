@@ -59,7 +59,6 @@ import no.nordicsemi.android.ei.model.Message
 import no.nordicsemi.android.ei.model.Sample
 import no.nordicsemi.android.ei.ui.layouts.InfoLayout
 import no.nordicsemi.android.ei.util.asMessage
-import java.util.Locale
 
 private const val PAGE_COUNT = 2
 

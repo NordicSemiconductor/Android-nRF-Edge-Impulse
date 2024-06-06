@@ -11,8 +11,14 @@ package no.nordicsemi.android.ei.util
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
-import no.nordicsemi.android.ei.model.*
-import no.nordicsemi.android.ei.model.InferencingMessage.*
+import no.nordicsemi.android.ei.model.ConfigureMessage
+import no.nordicsemi.android.ei.model.DataSample
+import no.nordicsemi.android.ei.model.DeviceMessage
+import no.nordicsemi.android.ei.model.InferencingMessage.InferenceResults
+import no.nordicsemi.android.ei.model.InferencingMessage.InferencingRequest
+import no.nordicsemi.android.ei.model.InferencingMessage.InferencingResponse
+import no.nordicsemi.android.ei.model.InvalidMessage
+import no.nordicsemi.android.ei.model.WebSocketMessage
 import java.lang.reflect.Type
 
 class DeviceMessageTypeAdapter : JsonDeserializer<DeviceMessage> {

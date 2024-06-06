@@ -17,7 +17,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import no.nordicsemi.android.ei.comms.DeploymentState.*
+import no.nordicsemi.android.ei.comms.DeploymentState.Building
+import no.nordicsemi.android.ei.comms.DeploymentState.Canceled
+import no.nordicsemi.android.ei.comms.DeploymentState.Downloading
+import no.nordicsemi.android.ei.comms.DeploymentState.Failed
+import no.nordicsemi.android.ei.comms.DeploymentState.NotStarted
 import no.nordicsemi.android.ei.model.BuildLog
 import no.nordicsemi.android.ei.model.SocketToken
 import no.nordicsemi.android.ei.websocket.EiWebSocket

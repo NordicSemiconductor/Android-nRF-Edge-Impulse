@@ -96,7 +96,6 @@ import no.nordicsemi.android.ei.viewmodels.ProjectViewModel
 import no.nordicsemi.android.ei.viewmodels.event.Event
 import no.nordicsemi.android.ei.viewmodels.state.DeviceState
 import java.net.UnknownHostException
-import java.util.Locale
 
 @Composable
 fun Project(

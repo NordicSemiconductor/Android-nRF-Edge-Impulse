@@ -54,7 +54,6 @@ import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.viewmodels.DeleteUserViewModel
 import no.nordicsemi.android.ei.viewmodels.state.DeleteState
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

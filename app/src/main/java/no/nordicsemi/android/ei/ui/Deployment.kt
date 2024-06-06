@@ -79,7 +79,6 @@ import no.nordicsemi.android.ei.model.Device
 import no.nordicsemi.android.ei.model.Project
 import no.nordicsemi.android.ei.ui.layouts.DeviceDisconnected
 import no.nordicsemi.android.ei.ui.theme.NordicBlue
-import java.util.Locale
 
 @Composable
 fun Deployment(
