@@ -43,7 +43,6 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
 
-    implementation(libs.accompanist.systemuicontroller)
     implementation(libs.accompanist.permissions)
 
     // implementation(libs.coil.kt.compose)
