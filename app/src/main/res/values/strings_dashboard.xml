@@ -20,6 +20,7 @@
     <string name="dialog_title_create_project">Create New Project</string>
     <string name="label_enter_project_name">Enter a name for your new project:</string>
     <string name="field_project_name">Project Name</string>
+    <string name="label_empty_project_name_error">Project name cannot be empty.</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_create">Create</string>
     <string name="label_select_project_visibility">Select project visibility:</string>
@@ -29,6 +30,9 @@
     <string name="label_fetching_development_keys_socket_token">Fetching development keys and socket token…</string>
     <string name="action_about">About</string>
     <string name="action_ok">OK</string>
+
+    <string name="label_about">nRF Edge Impulse app is developed in collaboration with Edge Impulse
+        to train and deploy embedded machine learning models on the Nordic Thingy:53 using
+        Edge Impulse Studio.</string>
     <string name="label_version">Version</string>
-    <string name="label_empty_project_name_error">Project name cannot be empty.</string>
 </resources>
