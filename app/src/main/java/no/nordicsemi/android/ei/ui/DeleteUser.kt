@@ -92,7 +92,11 @@ fun DeleteUser(viewModel: DeleteUserViewModel, onDeleted: () -> Unit, onBackPres
                             text = stringResource(R.string.title_warning),
                             style = MaterialTheme.typography.titleLarge
                         )
-                        Surface(modifier = Modifier.fillMaxWidth()) {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.errorContainer,
+                        ) {
                             Column(
                                 modifier = Modifier
                                     .padding(all = 16.dp)
@@ -115,7 +119,8 @@ fun DeleteUser(viewModel: DeleteUserViewModel, onDeleted: () -> Unit, onBackPres
                         key = { project -> project.id }
                     ) { project ->
                         ProjectRow(
-                            project = project
+                            project = project,
+                            selectable = false,
                         )
                         HorizontalDivider()
                     }
@@ -152,7 +157,6 @@ private fun DeleteUserContent(
     var password by remember { mutableStateOf("") }
     var passwordState by rememberSaveable { mutableStateOf(false) }
     var code by remember { mutableStateOf("") }
-    var deleteUserRequested by remember { mutableStateOf(false) }
 
     Text(
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),

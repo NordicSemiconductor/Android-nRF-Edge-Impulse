@@ -14,7 +14,7 @@
     <string name="label_create_impulse_rationale">An impulse takes raw data, uses signal processing to extract features,
         and then uses a learning block to classify new data.</string>
     <string name="action_deploy">Deploy</string>
-    <string name="action_ei_studio">visit EI studio</string>
+    <string name="action_ei_studio">Visit EI Studio</string>
     <string name="label_building">Building…</string>
     <string name="label_downloading">Downloading…</string>
     <string name="label_verifying">Verifying…</string>

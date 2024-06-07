@@ -339,12 +339,13 @@ fun Dashboard(
 fun ProjectRow(
     modifier: Modifier = Modifier,
     project: Project,
+    selectable: Boolean = true,
     onProjectSelected: () -> Unit = {}
 ) {
     Row(
         modifier = modifier
             .background(MaterialTheme.colorScheme.surface)
-            .clickable {
+            .clickable(enabled = selectable) {
                 onProjectSelected()
             }
             .padding(start = 16.dp, top = 8.dp, bottom = 8.dp, end = 16.dp),

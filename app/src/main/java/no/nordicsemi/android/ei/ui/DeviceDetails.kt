@@ -22,7 +22,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Label
 import androidx.compose.material.icons.outlined.Check
@@ -80,79 +81,76 @@ fun DeviceDetails(
     onRenameClick: (Device, String) -> Unit,
     onDeleteClick: (Device) -> Unit
 ) {
-    LazyColumn(
+    Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
     ) {
-        item {
-            DeviceName(device = device, onRenameClick = onRenameClick)
-            Connectivity(deviceState = deviceState)
-            Row(
-                modifier = Modifier
-                    .background(color = MaterialTheme.colorScheme.background)
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.Center
+        DeviceName(device = device, onRenameClick = onRenameClick)
+        Connectivity(deviceState = deviceState)
+        Row(
+            modifier = Modifier
+                .background(color = MaterialTheme.colorScheme.background)
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Button(
+                onClick = {
+                    when (deviceState) {
+                        IN_RANGE -> onConnectClick()
+                        CONNECTING,
+                        AUTHENTICATING,
+                        AUTHENTICATED -> onDisconnectClick()
+
+                        else -> {}
+                    }
+                },
+                enabled = when (deviceState) {
+                    IN_RANGE, CONNECTING, AUTHENTICATING, AUTHENTICATED -> true
+                    else -> false
+                },
+                colors = ButtonDefaults.buttonColors(deviceState.buttonBackgroundColor())
             ) {
-                Button(
-                    onClick = {
-                        when (deviceState) {
-                            IN_RANGE -> onConnectClick()
-                            CONNECTING,
-                            AUTHENTICATING,
-                            AUTHENTICATED -> onDisconnectClick()
+                Text(
+                    modifier = Modifier
+                        .defaultMinSize(minWidth = 145.dp),
+                    text = when (deviceState) {
+                        IN_RANGE, NOT_IN_RANGE -> stringResource(id = R.string.action_connect)
+                        CONNECTING,
+                        AUTHENTICATING -> stringResource(id = R.string.action_cancel)
 
-                            else -> {}
-                        }
+                        AUTHENTICATED -> stringResource(id = R.string.action_disconnect)
+                        else -> stringResource(id = R.string.action_connect)
                     },
-                    enabled = when (deviceState) {
-                        IN_RANGE, CONNECTING, AUTHENTICATING, AUTHENTICATED -> true
-                        else -> false
-                    },
-                    colors = ButtonDefaults.buttonColors(deviceState.buttonBackgroundColor())
-                ) {
-                    Text(
-                        modifier = Modifier
-                            .defaultMinSize(minWidth = 145.dp),
-                        text = when (deviceState) {
-                            IN_RANGE, NOT_IN_RANGE -> stringResource(id = R.string.action_connect)
-                            CONNECTING,
-                            AUTHENTICATING -> stringResource(id = R.string.action_cancel)
-
-                            AUTHENTICATED -> stringResource(id = R.string.action_disconnect)
-                            else -> stringResource(id = R.string.action_connect)
-                        },
-                        color = Color.White,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1
-                    )
-                }
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1
+                )
             }
-            SensorInformation(device = device)
-            Capabilities(device = device)
-            DeviceInformation(device = device)
         }
-        item {
-            Row(
-                modifier = Modifier
-                    .background(color = MaterialTheme.colorScheme.background)
-                    .fillMaxWidth()
-                    .padding(top = 16.dp, bottom = 32.dp),
-                horizontalArrangement = Arrangement.Center
+        SensorInformation(device = device)
+        Capabilities(device = device)
+        DeviceInformation(device = device)
+
+        Row(
+            modifier = Modifier
+                .background(color = MaterialTheme.colorScheme.background)
+                .fillMaxWidth()
+                .padding(top = 16.dp, bottom = 32.dp),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Button(
+                onClick = { onDeleteClick(device) },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
             ) {
-                Button(
-                    onClick = { onDeleteClick(device) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-                ) {
-                    Text(
-                        text = stringResource(R.string.action_delete),
-                        color = Color.White
-                    )
-                }
+                Text(
+                    text = stringResource(R.string.action_delete),
+                    color = Color.White
+                )
             }
         }
     }
-
 }
 
 @Composable
@@ -361,7 +359,11 @@ private fun SensorInformation(device: Device) {
 
 @Composable
 private fun SectionTitle(text: String, content: @Composable () -> Unit = {}) {
-    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        modifier = Modifier
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Text(
             modifier = Modifier
                 .weight(1.0f),

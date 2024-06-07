@@ -123,7 +123,7 @@ private fun DesignImpulse(
             ) {
                 Text(
                     text = stringResource(R.string.title_create_impulse),
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleMedium,
                 )
                 Spacer(modifier = Modifier.size(size = 16.dp))
                 Text(
@@ -180,7 +180,7 @@ private fun DeployImpulse(
             ) {
                 Text(
                     text = stringResource(R.string.title_deploy_impulse),
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleMedium,
                 )
                 OutlinedTextField(
                     modifier = Modifier
