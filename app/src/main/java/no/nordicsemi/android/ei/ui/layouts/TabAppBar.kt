@@ -10,6 +10,7 @@
 
 package no.nordicsemi.android.ei.ui.layouts
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +29,7 @@ import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.contentColorFor
@@ -39,10 +42,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.common.theme.R
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TabTopAppBar1(
     title: @Composable () -> Unit,
@@ -62,7 +65,17 @@ fun TabTopAppBar1(
         )
         PrimaryTabRow(
             selectedTabIndex = selectedTabIndex,
-            containerColor = backgroundColor
+            containerColor = backgroundColor,
+            indicator = {
+                TabRowDefaults.PrimaryIndicator(
+                    modifier = Modifier.tabIndicatorOffset(
+                        selectedTabIndex,
+                        matchContentSize = false,
+                    ),
+                    color = MaterialTheme.colorScheme.secondary,
+                    width = Dp.Unspecified,
+                )
+            }
         ) {
             // Adds tabs for all of pages
             val coroutineScope = rememberCoroutineScope()
@@ -82,6 +95,7 @@ fun TabTopAppBar1(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TabTopAppBar(
     title: @Composable () -> Unit,
@@ -143,6 +157,7 @@ fun TabTopAppBar(
  * For an Tab App Bar that follows Material spec guidelines to be placed on the top of the screen,
  * see [TabTopAppBar].
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun TabAppBar(
     backgroundColor: Color,
@@ -191,38 +206,6 @@ private fun TabAppBar(
                     )
                 }
             }
-            /*TabRow(
-                // Selected tab is the current page
-                selectedTabIndex = selectedTabIndex,
-                // Override the indicator, using the provided pagerTabIndicatorOffset modifier
-                indicator = { tabPositions ->
-                    pagerState?.let {
-                        SecondaryIndicator(
-                            modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex])
-                        )
-                    } ?: run {
-                        SecondaryIndicator(
-                            modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex])
-                        )
-                    }
-                },
-                containerColor = backgroundColor,
-            ) {
-                // Adds tabs for all of pages
-                val coroutineScope = rememberCoroutineScope()
-                tabs.forEachIndexed { index, tab ->
-                    Tab(
-                        text = tab.first,
-                        icon = tab.second,
-                        selected = pagerState?.currentPage == index,
-                        onClick = {
-                            coroutineScope.launch {
-                                pagerState?.scrollToPage(index)
-                            }
-                        },
-                    )
-                }
-            }*/
         }
     }
 }

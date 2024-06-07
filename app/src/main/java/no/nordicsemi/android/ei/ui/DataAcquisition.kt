@@ -24,6 +24,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.outlined.ErrorOutline
@@ -50,8 +52,6 @@ import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.flow.Flow
 import no.nordicsemi.android.ei.HorizontalPagerTab
 import no.nordicsemi.android.ei.R
@@ -60,8 +60,7 @@ import no.nordicsemi.android.ei.model.Sample
 import no.nordicsemi.android.ei.ui.layouts.InfoLayout
 import no.nordicsemi.android.ei.util.asMessage
 
-private const val PAGE_COUNT = 2
-
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DataAcquisition(
     modifier: Modifier = Modifier,
@@ -71,7 +70,6 @@ fun DataAcquisition(
     samplingState: Message.Sample
 ) {
     HorizontalPager(
-        count = PAGE_COUNT,
         modifier = modifier,
         state = pagerState
     ) { page ->

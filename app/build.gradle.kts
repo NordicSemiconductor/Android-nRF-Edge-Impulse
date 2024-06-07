@@ -35,9 +35,6 @@ dependencies {
     implementation(libs.paging.runtime)
     implementation(libs.paging.common)
 
-    implementation(libs.accompanist.systemuicontroller)
-    implementation(libs.accompanist.swiperefresh)
-
     implementation(libs.kotlinx.datetime)
 
     implementation(libs.retrofit.core)
@@ -45,11 +42,9 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
 
-    implementation(libs.accompanist.swiperefresh)
     implementation(libs.accompanist.systemuicontroller)
+    implementation(libs.accompanist.swiperefresh)
     implementation(libs.accompanist.permissions)
-    implementation(libs.accompanist.pager)
-    implementation(libs.accompanist.pagerindicators)
 
     // implementation(libs.coil.kt.compose)
     implementation("io.coil-kt:coil-compose:2.6.0")

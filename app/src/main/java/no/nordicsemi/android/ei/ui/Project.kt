@@ -13,6 +13,7 @@ package no.nordicsemi.android.ei.ui
 import android.content.res.Configuration.SCREENLAYOUT_SIZE_LARGE
 import android.content.res.Configuration.SCREENLAYOUT_SIZE_MASK
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -74,8 +77,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.google.accompanist.pager.PagerState
-import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.CoroutineScope
 import no.nordicsemi.android.common.theme.view.NordicAppBar
 import no.nordicsemi.android.ei.BottomNavigationScreen
@@ -289,6 +290,7 @@ private fun SmallScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ProjectContent(
     viewModel: ProjectViewModel,
@@ -312,7 +314,10 @@ private fun ProjectContent(
         onScreenChanged(BottomNavigationScreen.fromNav(destination))
     }
     val snackbarHostState = remember { SnackbarHostState() }
-    val pagerState = rememberPagerState(initialPage = 0)
+    val pagerState = rememberPagerState(
+        initialPage = 0,
+        pageCount = { 2 },
+    )
     val trainingListState = rememberLazyListState()
     val testingListState = rememberLazyListState()
     val listStates = listOf(trainingListState, testingListState)
@@ -480,6 +485,7 @@ private fun ProjectContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 private fun ProjectTopAppBar(
     projectName: String,
