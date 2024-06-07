@@ -1,28 +1,39 @@
 # Android nRF Edge Impulse
-nRF Edge Impulse app is developed in collaboration with Edge Impulse to train and deploy embedded machine learning models on the Nordic Thingy:53 using Edge Impulse Studio.  Every Nordic Thingy:53 comes pre-installed with firmware compatible with the nRF Edge Impulse mobile app. The app allows you to upload raw sensor data via your mobile device to the cloud-based Edge Impulse Studio and deploy fully trained ML models to the Nordic Thingy:53 over Bluetooth® Low Energy (LE). 
+nRF Edge Impulse app is developed in collaboration with [Edge Impulse](https://edgeimpulse.com/) 
+to train and deploy embedded machine learning models on the 
+[Nordic Thingy:53](https://www.nordicsemi.com/Products/Development-hardware/Nordic-Thingy-53) 
+using [Edge Impulse Studio](https://studio.edgeimpulse.com/). 
 
-The app allows you to choose between existing projects in Edge Impulse studio data or creating a new project and can collect sensor data from the following set of sensors on the Nordic Thingy:53:  
+Every _Nordic Thingy:53_ comes pre-installed with firmware compatible with the nRF Edge Impulse 
+mobile app. The app allows you to upload raw sensor data via your mobile device to the cloud-based 
+Edge Impulse Studio and deploy fully trained ML models to the _Nordic Thingy:53_ over 
+Bluetooth® Low Energy (LE). 
 
-- Accelerometer  
-- Microphone  
-- Magnetometer  
-- Light  
-- Temperature, Pressure, Humidity and Air quality  
-- Inertial (Accelerometer and Magnetometer)  
-- Light and Environment  
-- Light and Inertial  
-- Environment and Inertial  
-- Light and Environment and Inertial  
+The app allows you to choose between existing projects in Edge Impulse studio data or creating 
+a new project and can collect sensor data from the following set of sensors on the _Nordic Thingy:53_:
 
-The collected sensor data can be labeled as training or testing data and may be inferenced directly in the app with machine learning model deployed to the Nordic Thingy:53.  
+- Accelerometer
+- Microphone
+- Magnetometer
+- Light
+- Temperature, Pressure, Humidity and Air quality
+- Inertial (Accelerometer and Magnetometer)
+- Light and Environment
+- Light and Inertial
+- Environment and Inertial
+- Light and Environment and Inertial
 
- A free Edge Impulse account, which can be created from the app or at www.edgeimpulse.com, is required to connect nRF Edge Impulse with Edge Impulse studio.
+The collected sensor data can be labeled as training or testing data and may be inferenced directly 
+in the app with machine learning model deployed to the _Nordic Thingy:53_.  
 
+A free Edge Impulse account, which can be created from the app or at www.edgeimpulse.com, 
+is required to connect nRF Edge Impulse with Edge Impulse studio.
 
 ## Links
-Check out our product page for the Nordic Thingy:53 guide https://www.nordicsemi.com/Products/Getting-Started-with-Thingy.
+Check out our product page for the _Nordic Thingy:53_ guide https://www.nordicsemi.com/Products/Getting-Started-with-Thingy.
 
-In addition, visit the nRF Edge Impulse product page to download our mobile applications for both Android and iOS https://www.nordicsemi.com/Products/Development-tools/nRF-Edge-Impulse.
+In addition, visit the nRF Edge Impulse product page to download our mobile applications for 
+both Android and iOS https://www.nordicsemi.com/Products/Development-tools/nRF-Edge-Impulse.
 
 ## Screenshots
 
