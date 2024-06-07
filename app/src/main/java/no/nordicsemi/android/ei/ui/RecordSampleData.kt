@@ -11,16 +11,15 @@ package no.nordicsemi.android.ei.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -59,7 +58,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -149,7 +147,7 @@ fun RecordSampleSmallScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
-                .verticalScroll(state = rememberScrollState())
+                .verticalScroll(state = rememberScrollState()),
         ) {
             RecordSampleContent(
                 connectedDevices = connectedDevices,
@@ -201,52 +199,56 @@ private fun RecordSampleContent(
             onDataAcquisitionTargetSelected(connectedDevices[0])
         }
     }
-    Spacer(modifier = Modifier.size(size = 16.dp))
-    DeviceSelection(
-        connectedDevices = connectedDevices,
-        samplingState = samplingState,
-        dataAcquisitionTarget = dataAcquisitionTarget,
-        onDataAcquisitionTargetSelected = onDataAcquisitionTargetSelected
-    )
-    CategorySelection(
-        connectedDevices = connectedDevices,
-        category = category,
-        samplingState = samplingState,
-        onCategorySelected = onCategorySelected
-    )
-    LabelInput(
-        connectedDevices = connectedDevices,
-        samplingState = samplingState,
-        label = label,
-        onLabelChanged = {
-            isLabelError = it.isEmpty()
-            onLabelChanged(it)
-        },
-        isLabelError = isLabelError
-    )
-    SensorSelection(
-        connectedDevices = connectedDevices,
-        dataAcquisitionTarget = dataAcquisitionTarget,
-        samplingState = samplingState,
-        selectedSensor = selectedSensor,
-        onSensorSelected = onSensorSelected
-    )
-    SampleLengthInput(
-        connectedDevices = connectedDevices,
-        samplingState = samplingState,
-        selectedSensor = selectedSensor,
-        sampleLength = sampleLength,
-        onSampleLengthChanged = onSampleLengthChanged
-    )
-    FrequencySelection(
-        connectedDevices = connectedDevices,
-        samplingState = samplingState,
-        selectedSensor = selectedSensor,
-        selectedFrequency = selectedFrequency,
-        onFrequencySelected = onFrequencySelected
-    )
+    Column(
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        DeviceSelection(
+            connectedDevices = connectedDevices,
+            samplingState = samplingState,
+            dataAcquisitionTarget = dataAcquisitionTarget,
+            onDataAcquisitionTargetSelected = onDataAcquisitionTargetSelected
+        )
+        CategorySelection(
+            connectedDevices = connectedDevices,
+            category = category,
+            samplingState = samplingState,
+            onCategorySelected = onCategorySelected
+        )
+        LabelInput(
+            connectedDevices = connectedDevices,
+            samplingState = samplingState,
+            label = label,
+            onLabelChanged = {
+                isLabelError = it.isEmpty()
+                onLabelChanged(it)
+            },
+            isLabelError = isLabelError
+        )
+        SensorSelection(
+            connectedDevices = connectedDevices,
+            dataAcquisitionTarget = dataAcquisitionTarget,
+            samplingState = samplingState,
+            selectedSensor = selectedSensor,
+            onSensorSelected = onSensorSelected
+        )
+        SampleLengthInput(
+            connectedDevices = connectedDevices,
+            samplingState = samplingState,
+            selectedSensor = selectedSensor,
+            sampleLength = sampleLength,
+            onSampleLengthChanged = onSampleLengthChanged
+        )
+        FrequencySelection(
+            connectedDevices = connectedDevices,
+            samplingState = samplingState,
+            selectedSensor = selectedSensor,
+            selectedFrequency = selectedFrequency,
+            onFrequencySelected = onFrequencySelected
+        )
+    }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DeviceSelection(
     connectedDevices: List<Device>,
@@ -256,17 +258,18 @@ private fun DeviceSelection(
 ) {
     var width by rememberSaveable { mutableIntStateOf(0) }
     var isDevicesMenuExpanded by rememberSaveable { mutableStateOf(false) }
+    val isEnabled = shouldEnable(
+        connectedDevices = connectedDevices,
+        samplingState = samplingState
+    )
     ExposedDropdownMenuBox(
         expanded = isDevicesMenuExpanded,
-        onExpandedChange = { isDevicesMenuExpanded = it }
+        onExpandedChange = { isDevicesMenuExpanded = isEnabled }
     ) {
         OutlinedTextField(
             value = dataAcquisitionTarget?.name ?: stringResource(id = R.string.empty),
             onValueChange = { },
-            enabled = shouldEnable(
-                connectedDevices = connectedDevices,
-                samplingState = samplingState
-            ),
+            enabled = isEnabled,
             modifier = Modifier
                 .fillMaxWidth()
                 .menuAnchor()
@@ -293,7 +296,7 @@ private fun DeviceSelection(
             singleLine = true
         )
         ShowDevicesDropdown(
-            modifier = Modifier.width(with(LocalDensity.current) { width.toDp() }),
+            modifier = Modifier.exposedDropdownSize(),
             expanded = isDevicesMenuExpanded,
             connectedDevices = connectedDevices,
             onDeviceSelected = { device ->
@@ -316,9 +319,13 @@ private fun CategorySelection(
 ) {
     var width by rememberSaveable { mutableIntStateOf(0) }
     var isCategoryExpanded by rememberSaveable { mutableStateOf(false) }
+    val isEnabled = shouldEnable(
+        connectedDevices = connectedDevices,
+        samplingState = samplingState
+    )
     ExposedDropdownMenuBox(
         expanded = isCategoryExpanded,
-        onExpandedChange = { isCategoryExpanded = it }
+        onExpandedChange = { isCategoryExpanded = isEnabled }
     ) {
         OutlinedTextField(
             value = category.type.replaceFirstChar {
@@ -327,15 +334,11 @@ private fun CategorySelection(
                 ) else it.toString()
             },
             onValueChange = { },
-            enabled = shouldEnable(
-                connectedDevices = connectedDevices,
-                samplingState = samplingState
-            ),
+            enabled = isEnabled,
             modifier = Modifier
                 .fillMaxWidth()
                 .menuAnchor()
-                .onSizeChanged { width = it.width }
-                .padding(top = 16.dp),
+                .onSizeChanged { width = it.width },
             readOnly = true,
             label = {
                 Text(text = stringResource(R.string.label_category))
@@ -358,11 +361,12 @@ private fun CategorySelection(
             singleLine = true
         )
         ShowDropdown(
-            modifier = Modifier.width(with(LocalDensity.current) { width.toDp() }),
+            modifier = Modifier.exposedDropdownSize(),
             expanded = isCategoryExpanded,
             onDismiss = {
                 isCategoryExpanded = false
-            }) {
+            }
+        ) {
             categories.forEach { category ->
                 DropdownMenuItem(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -402,8 +406,7 @@ private fun LabelInput(
             samplingState = samplingState
         ),
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp),
+            .fillMaxWidth(),
         label = {
             Text(text = stringResource(R.string.label_label))
         },
@@ -437,9 +440,13 @@ private fun SensorSelection(
 ) {
     var width by rememberSaveable { mutableIntStateOf(0) }
     var isSensorsMenuExpanded by rememberSaveable { mutableStateOf(false) }
+    val isEnabled = shouldEnable(
+        connectedDevices = connectedDevices,
+        samplingState = samplingState
+    )
     ExposedDropdownMenuBox(
         expanded = isSensorsMenuExpanded,
-        onExpandedChange = { isSensorsMenuExpanded = it }
+        onExpandedChange = { isSensorsMenuExpanded = isEnabled }
     ) {
         OutlinedTextField(
             value = selectedSensor?.name ?: stringResource(id = R.string.empty),
@@ -447,12 +454,8 @@ private fun SensorSelection(
             modifier = Modifier
                 .fillMaxWidth()
                 .menuAnchor()
-                .onSizeChanged { width = it.width }
-                .padding(top = 16.dp),
-            enabled = shouldEnable(
-                connectedDevices = connectedDevices,
-                samplingState = samplingState
-            ),
+                .onSizeChanged { width = it.width },
+            enabled = isEnabled,
             readOnly = true,
             label = {
                 Text(text = stringResource(R.string.label_sensor))
@@ -475,7 +478,7 @@ private fun SensorSelection(
         )
         dataAcquisitionTarget?.let { device ->
             ShowDropdown(
-                modifier = Modifier.width(with(LocalDensity.current) { width.toDp() }),
+                modifier = Modifier.exposedDropdownSize(),
                 expanded = isSensorsMenuExpanded,
                 onDismiss = {
                     isSensorsMenuExpanded = false
@@ -510,16 +513,16 @@ private fun SampleLengthInput(
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
+    val isEnabled = shouldEnable(
+        connectedDevices = connectedDevices,
+        samplingState = samplingState
+    )
     OutlinedTextField(
         value = sampleLength.toString(),
         onValueChange = {},
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp),
-        enabled = shouldEnable(
-            connectedDevices = connectedDevices,
-            samplingState = samplingState
-        ),
+            .fillMaxWidth(),
+        enabled = isEnabled,
         readOnly = true,
         label = {
             Text(text = stringResource(R.string.label_sample_length))
@@ -618,9 +621,13 @@ private fun FrequencySelection(
 ) {
     var width by rememberSaveable { mutableIntStateOf(0) }
     var isFrequencyMenuExpanded by rememberSaveable { mutableStateOf(false) }
+    val isEnabled = shouldEnable(
+        connectedDevices = connectedDevices,
+        samplingState = samplingState
+    )
     ExposedDropdownMenuBox(
         expanded = isFrequencyMenuExpanded,
-        onExpandedChange = { isFrequencyMenuExpanded = it }
+        onExpandedChange = { isFrequencyMenuExpanded = isEnabled }
     ) {
         OutlinedTextField(
             value = selectedFrequency?.toString() ?: stringResource(id = R.string.empty),
@@ -628,12 +635,8 @@ private fun FrequencySelection(
             modifier = Modifier
                 .fillMaxWidth()
                 .menuAnchor()
-                .onSizeChanged { width = it.width }
-                .padding(top = 16.dp),
-            enabled = shouldEnable(
-                connectedDevices = connectedDevices,
-                samplingState = samplingState
-            ),
+                .onSizeChanged { width = it.width },
+            enabled = isEnabled,
             readOnly = true,
             label = { Text(text = stringResource(R.string.label_frequency)) },
             leadingIcon = {
@@ -654,7 +657,7 @@ private fun FrequencySelection(
         )
         selectedSensor?.let { sensor ->
             ShowDropdown(
-                modifier = Modifier.width(with(LocalDensity.current) { width.toDp() }),
+                modifier = Modifier.exposedDropdownSize(),
                 expanded = isFrequencyMenuExpanded,
                 onDismiss = {
                     isFrequencyMenuExpanded = false

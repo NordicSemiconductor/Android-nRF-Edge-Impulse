@@ -1,9 +1,7 @@
 /*
+ * Copyright (c) 2022, Nordic Semiconductor
  *
- *  * Copyright (c) 2022, Nordic Semiconductor
- *  *
- *  * SPDX-License-Identifier: Apache-2.0
- *
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 package no.nordicsemi.android.ei.ui
@@ -32,9 +30,10 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.rounded.DeveloperBoard
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -52,7 +51,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -110,6 +108,7 @@ fun InferencingScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun StartInferencing(
     isLargeScreen: Boolean,
@@ -137,52 +136,51 @@ private fun StartInferencing(
                 style = MaterialTheme.typography.titleLarge
             )
             Spacer(modifier = Modifier.size(16.dp))
-            OutlinedTextField(
-                modifier = Modifier
-                    .weight(0.5f)
-                    .onSizeChanged { width = it.width },
-                value = inferencingTarget?.name ?: stringResource(id = R.string.empty),
-                enabled = connectedDevices.isNotEmpty(),
-                onValueChange = { },
-                readOnly = true,
-                label = { DeviceDisconnected(connectedDevices = connectedDevices) },
-                leadingIcon = {
-                    Icon(
-                        modifier = Modifier
-                            .size(24.dp),
-                        imageVector = Icons.Rounded.DeveloperBoard,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                },
-                trailingIcon = {
-                    IconButton(
-                        enabled = connectedDevices.isNotEmpty() && inferencingState is InferencingState.Stopped,
-                        onClick = {
-                            isDevicesMenuExpanded = true
-                        }
-                    ) {
+            ExposedDropdownMenuBox(
+                expanded = isDevicesMenuExpanded,
+                onExpandedChange = { isDevicesMenuExpanded = connectedDevices.isNotEmpty() }
+            ) {
+                OutlinedTextField(
+                    modifier = Modifier
+                        .weight(0.5f)
+                        .menuAnchor()
+                        .onSizeChanged { width = it.width },
+                    value = inferencingTarget?.name ?: stringResource(id = R.string.empty),
+                    enabled = connectedDevices.isNotEmpty(),
+                    onValueChange = { },
+                    readOnly = true,
+                    label = { DeviceDisconnected(connectedDevices = connectedDevices) },
+                    leadingIcon = {
+                        Icon(
+                            modifier = Modifier
+                                .size(24.dp),
+                            imageVector = Icons.Rounded.DeveloperBoard,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    },
+                    trailingIcon = {
                         Icon(
                             modifier = Modifier.rotate(if (isDevicesMenuExpanded) 180f else 0f),
                             imageVector = Icons.Default.ArrowDropDown,
                             contentDescription = null
                         )
-                        ShowDevicesDropdown(
-                            modifier = Modifier.width(with(LocalDensity.current) { width.toDp() }),
-                            expanded = isDevicesMenuExpanded,
-                            connectedDevices = connectedDevices,
-                            onDeviceSelected = { device ->
-                                isDevicesMenuExpanded = false
-                                onInferencingTargetSelected(device)
-                            },
-                            onDismiss = {
-                                isDevicesMenuExpanded = false
-                            }
-                        )
+                    },
+                    singleLine = true
+                )
+                ShowDevicesDropdown(
+                    modifier = Modifier.exposedDropdownSize(),
+                    expanded = isDevicesMenuExpanded,
+                    connectedDevices = connectedDevices,
+                    onDeviceSelected = { device ->
+                        isDevicesMenuExpanded = false
+                        onInferencingTargetSelected(device)
+                    },
+                    onDismiss = {
+                        isDevicesMenuExpanded = false
                     }
-                },
-                singleLine = true
-            )
+                )
+            }
             Spacer(modifier = Modifier.size(16.dp))
             Button(
                 modifier = Modifier.defaultMinSize(minWidth = 100.dp),
@@ -213,53 +211,52 @@ private fun StartInferencing(
             text = stringResource(R.string.title_inferencing),
             style = MaterialTheme.typography.titleLarge
         )
-        OutlinedTextField(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .onSizeChanged { width = it.width },
-            value = inferencingTarget?.name ?: stringResource(id = R.string.empty),
-            enabled = connectedDevices.isNotEmpty(),
-            onValueChange = { },
-            readOnly = true,
-            label = { DeviceDisconnected(connectedDevices = connectedDevices) },
-            leadingIcon = {
-                Icon(
-                    modifier = Modifier
-                        .size(24.dp),
-                    imageVector = Icons.Rounded.DeveloperBoard,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            },
-            trailingIcon = {
-                IconButton(
-                    enabled = connectedDevices.isNotEmpty() && inferencingState is InferencingState.Stopped,
-                    onClick = {
-                        isDevicesMenuExpanded = true
-                    }
-                ) {
+        ExposedDropdownMenuBox(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            expanded = isDevicesMenuExpanded,
+            onExpandedChange = { isDevicesMenuExpanded = connectedDevices.isNotEmpty() }
+        ) {
+            OutlinedTextField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor()
+                    .onSizeChanged { width = it.width },
+                value = inferencingTarget?.name ?: stringResource(id = R.string.empty),
+                enabled = connectedDevices.isNotEmpty(),
+                onValueChange = { },
+                readOnly = true,
+                label = { DeviceDisconnected(connectedDevices = connectedDevices) },
+                leadingIcon = {
+                    Icon(
+                        modifier = Modifier
+                            .size(24.dp),
+                        imageVector = Icons.Rounded.DeveloperBoard,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                trailingIcon = {
                     Icon(
                         modifier = Modifier.rotate(if (isDevicesMenuExpanded) 180f else 0f),
                         imageVector = Icons.Default.ArrowDropDown,
                         contentDescription = null
                     )
-                    ShowDevicesDropdown(
-                        modifier = Modifier.width(with(LocalDensity.current) { width.toDp() }),
-                        expanded = isDevicesMenuExpanded,
-                        connectedDevices = connectedDevices,
-                        onDeviceSelected = { device ->
-                            isDevicesMenuExpanded = false
-                            onInferencingTargetSelected(device)
-                        },
-                        onDismiss = {
-                            isDevicesMenuExpanded = false
-                        }
-                    )
+                },
+                singleLine = true
+            )
+            ShowDevicesDropdown(
+                modifier = Modifier.exposedDropdownSize(),
+                expanded = isDevicesMenuExpanded,
+                connectedDevices = connectedDevices,
+                onDeviceSelected = { device ->
+                    isDevicesMenuExpanded = false
+                    onInferencingTargetSelected(device)
+                },
+                onDismiss = {
+                    isDevicesMenuExpanded = false
                 }
-            },
-            singleLine = true
-        )
+            )
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()

@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -34,8 +33,9 @@ import androidx.compose.material.icons.outlined.Verified
 import androidx.compose.material.icons.rounded.DeveloperBoard
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -57,7 +57,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -156,6 +155,7 @@ private fun DesignImpulse(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DeployImpulse(
     connectedDevices: List<Device>,
@@ -167,6 +167,10 @@ private fun DeployImpulse(
 ) {
     var isDevicesMenuExpanded by remember { mutableStateOf(false) }
     var width by rememberSaveable { mutableIntStateOf(0) }
+    val isEnabled = shouldEnable(
+        connectedDevices = connectedDevices,
+        deploymentState = deploymentState
+    )
 
     connectedDevices.takeIf { it.isNotEmpty() }?.apply {
         if (deploymentTarget == null) {
@@ -182,61 +186,54 @@ private fun DeployImpulse(
                     text = stringResource(R.string.title_deploy_impulse),
                     style = MaterialTheme.typography.titleMedium,
                 )
-                OutlinedTextField(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp)
-                        .onSizeChanged { width = it.width },
-                    value = deploymentTarget?.name ?: stringResource(id = R.string.empty),
-                    enabled = shouldEnable(
-                        connectedDevices = connectedDevices,
-                        deploymentState = deploymentState
-                    ),
-                    onValueChange = { },
-                    readOnly = true,
-                    label = {
-                        DeviceDisconnected(connectedDevices = connectedDevices)
-                    },
-                    leadingIcon = {
-                        Icon(
-                            modifier = Modifier
-                                .size(24.dp),
-                            imageVector = Icons.Rounded.DeveloperBoard,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    },
-                    trailingIcon = {
-                        IconButton(
-                            enabled = shouldEnable(
-                                connectedDevices = connectedDevices,
-                                deploymentState = deploymentState
-                            ),
-                            onClick = {
-                                isDevicesMenuExpanded = true
-                            }
-                        ) {
+                ExposedDropdownMenuBox(
+                    modifier = Modifier.padding(vertical = 16.dp),
+                    expanded = isDevicesMenuExpanded,
+                    onExpandedChange = { isDevicesMenuExpanded = isEnabled }
+                ) {
+                    OutlinedTextField(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                            .onSizeChanged { width = it.width },
+                        value = deploymentTarget?.name ?: stringResource(id = R.string.empty),
+                        enabled = isEnabled,
+                        onValueChange = { },
+                        readOnly = true,
+                        label = {
+                            DeviceDisconnected(connectedDevices = connectedDevices)
+                        },
+                        leadingIcon = {
+                            Icon(
+                                modifier = Modifier
+                                    .size(24.dp),
+                                imageVector = Icons.Rounded.DeveloperBoard,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        },
+                        trailingIcon = {
                             Icon(
                                 modifier = Modifier.rotate(if (isDevicesMenuExpanded) 180f else 0f),
                                 imageVector = Icons.Default.ArrowDropDown,
                                 contentDescription = null
                             )
-                            ShowDevicesDropdown(
-                                modifier = Modifier.width(with(LocalDensity.current) { width.toDp() }),
-                                expanded = isDevicesMenuExpanded,
-                                connectedDevices = connectedDevices,
-                                onDeviceSelected = {
-                                    isDevicesMenuExpanded = false
-                                    onDeploymentTargetSelected(it)
-                                },
-                                onDismiss = {
-                                    isDevicesMenuExpanded = false
-                                }
-                            )
+                        },
+                        singleLine = true
+                    )
+                    ShowDevicesDropdown(
+                        modifier = Modifier.exposedDropdownSize(),
+                        expanded = isDevicesMenuExpanded,
+                        connectedDevices = connectedDevices,
+                        onDeviceSelected = {
+                            isDevicesMenuExpanded = false
+                            onDeploymentTargetSelected(it)
+                        },
+                        onDismiss = {
+                            isDevicesMenuExpanded = false
                         }
-                    },
-                    singleLine = true
-                )
+                    )
+                }
                 BuildRow(state = deploymentState)
                 DownloadRow(state = deploymentState)
                 VerifyRow(state = deploymentState)
