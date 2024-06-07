@@ -31,6 +31,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.activity.compose)
+    implementation("androidx.compose.material3:material3:1.3.0-beta02")
     implementation(libs.paging.compose)
     implementation(libs.paging.runtime)
     implementation(libs.paging.common)
@@ -43,7 +44,6 @@ dependencies {
     implementation(libs.okhttp.logging)
 
     implementation(libs.accompanist.systemuicontroller)
-    implementation(libs.accompanist.swiperefresh)
     implementation(libs.accompanist.permissions)
 
     // implementation(libs.coil.kt.compose)
