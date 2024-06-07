@@ -63,35 +63,35 @@ fun CreateProjectDialog(
                 Text(
                     text = stringResource(R.string.label_enter_project_name),
                 )
-                Column {
-                    OutlinedTextField(
-                        value = projectName,
-                        onValueChange = {
-                            projectName = it
-                            isError = projectName.isBlank()
-                        },
-                        modifier = Modifier
-                            .focusRequester(focusRequester = focusRequester)
-                            .fillMaxWidth(),
-                        label = { Text(stringResource(R.string.field_project_name)) },
-                        isError = isError,
-                        keyboardOptions = KeyboardOptions(
-                            autoCorrect = false,
-                            imeAction = ImeAction.Next
-                        ),
-                        keyboardActions = KeyboardActions(onNext = {
-                            focusRequester.freeFocus()
-                            keyboardController?.hide()
-                        }),
-                        singleLine = true,
-                    )
-                    if (isError) {
-                        Text(
-                            text = stringResource(R.string.label_empty_project_name_error),
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
-                }
+                OutlinedTextField(
+                    value = projectName,
+                    onValueChange = {
+                        projectName = it
+                        isError = projectName.isBlank()
+                    },
+                    modifier = Modifier
+                        .focusRequester(focusRequester = focusRequester)
+                        .fillMaxWidth(),
+                    label = { Text(stringResource(R.string.field_project_name)) },
+                    isError = isError,
+                    supportingText = {
+                        if (isError) {
+                            Text(
+                                text = stringResource(R.string.label_empty_project_name_error),
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        autoCorrect = false,
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(onNext = {
+                        focusRequester.freeFocus()
+                        keyboardController?.hide()
+                    }),
+                    singleLine = true,
+                )
 
                 Text(
                     text = stringResource(id = R.string.label_select_project_visibility),
