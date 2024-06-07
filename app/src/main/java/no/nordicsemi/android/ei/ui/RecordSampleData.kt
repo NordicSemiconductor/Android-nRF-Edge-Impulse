@@ -43,6 +43,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -264,7 +265,7 @@ private fun DeviceSelection(
     )
     ExposedDropdownMenuBox(
         expanded = isDevicesMenuExpanded,
-        onExpandedChange = { isDevicesMenuExpanded = isEnabled }
+        onExpandedChange = { isDevicesMenuExpanded = it }
     ) {
         OutlinedTextField(
             value = dataAcquisitionTarget?.name ?: stringResource(id = R.string.empty),
@@ -272,7 +273,7 @@ private fun DeviceSelection(
             enabled = isEnabled,
             modifier = Modifier
                 .fillMaxWidth()
-                .menuAnchor()
+                .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = isEnabled)
                 .onSizeChanged { width = it.width },
             readOnly = true,
             label = {
@@ -325,7 +326,7 @@ private fun CategorySelection(
     )
     ExposedDropdownMenuBox(
         expanded = isCategoryExpanded,
-        onExpandedChange = { isCategoryExpanded = isEnabled }
+        onExpandedChange = { isCategoryExpanded = it }
     ) {
         OutlinedTextField(
             value = category.type.replaceFirstChar {
@@ -337,7 +338,7 @@ private fun CategorySelection(
             enabled = isEnabled,
             modifier = Modifier
                 .fillMaxWidth()
-                .menuAnchor()
+                .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = isEnabled)
                 .onSizeChanged { width = it.width },
             readOnly = true,
             label = {
@@ -446,14 +447,14 @@ private fun SensorSelection(
     )
     ExposedDropdownMenuBox(
         expanded = isSensorsMenuExpanded,
-        onExpandedChange = { isSensorsMenuExpanded = isEnabled }
+        onExpandedChange = { isSensorsMenuExpanded = it }
     ) {
         OutlinedTextField(
             value = selectedSensor?.name ?: stringResource(id = R.string.empty),
             onValueChange = { },
             modifier = Modifier
                 .fillMaxWidth()
-                .menuAnchor()
+                .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = isEnabled)
                 .onSizeChanged { width = it.width },
             enabled = isEnabled,
             readOnly = true,
@@ -627,14 +628,14 @@ private fun FrequencySelection(
     )
     ExposedDropdownMenuBox(
         expanded = isFrequencyMenuExpanded,
-        onExpandedChange = { isFrequencyMenuExpanded = isEnabled }
+        onExpandedChange = { isFrequencyMenuExpanded = it }
     ) {
         OutlinedTextField(
             value = selectedFrequency?.toString() ?: stringResource(id = R.string.empty),
             onValueChange = { },
             modifier = Modifier
                 .fillMaxWidth()
-                .menuAnchor()
+                .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = isEnabled)
                 .onSizeChanged { width = it.width },
             enabled = isEnabled,
             readOnly = true,

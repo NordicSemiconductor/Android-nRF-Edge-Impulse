@@ -35,6 +35,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -138,12 +139,15 @@ private fun StartInferencing(
             Spacer(modifier = Modifier.size(16.dp))
             ExposedDropdownMenuBox(
                 expanded = isDevicesMenuExpanded,
-                onExpandedChange = { isDevicesMenuExpanded = connectedDevices.isNotEmpty() }
+                onExpandedChange = { isDevicesMenuExpanded = it }
             ) {
                 OutlinedTextField(
                     modifier = Modifier
                         .weight(0.5f)
-                        .menuAnchor()
+                        .menuAnchor(
+                            type = MenuAnchorType.PrimaryNotEditable,
+                            enabled = connectedDevices.isNotEmpty()
+                        )
                         .onSizeChanged { width = it.width },
                     value = inferencingTarget?.name ?: stringResource(id = R.string.empty),
                     enabled = connectedDevices.isNotEmpty(),
@@ -214,12 +218,15 @@ private fun StartInferencing(
         ExposedDropdownMenuBox(
             modifier = Modifier.padding(horizontal = 16.dp),
             expanded = isDevicesMenuExpanded,
-            onExpandedChange = { isDevicesMenuExpanded = connectedDevices.isNotEmpty() }
+            onExpandedChange = { isDevicesMenuExpanded = it }
         ) {
             OutlinedTextField(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor()
+                    .menuAnchor(
+                        type = MenuAnchorType.PrimaryNotEditable,
+                        enabled = connectedDevices.isNotEmpty()
+                    )
                     .onSizeChanged { width = it.width },
                 value = inferencingTarget?.name ?: stringResource(id = R.string.empty),
                 enabled = connectedDevices.isNotEmpty(),

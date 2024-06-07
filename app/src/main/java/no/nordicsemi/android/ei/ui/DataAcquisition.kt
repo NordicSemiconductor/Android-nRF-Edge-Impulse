@@ -60,7 +60,6 @@ import no.nordicsemi.android.ei.model.Sample
 import no.nordicsemi.android.ei.ui.layouts.InfoLayout
 import no.nordicsemi.android.ei.util.asMessage
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DataAcquisition(
     modifier: Modifier = Modifier,

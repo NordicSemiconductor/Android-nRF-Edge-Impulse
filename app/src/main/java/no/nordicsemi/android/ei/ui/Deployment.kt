@@ -39,6 +39,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -189,12 +190,12 @@ private fun DeployImpulse(
                 ExposedDropdownMenuBox(
                     modifier = Modifier.padding(vertical = 16.dp),
                     expanded = isDevicesMenuExpanded,
-                    onExpandedChange = { isDevicesMenuExpanded = isEnabled }
+                    onExpandedChange = { isDevicesMenuExpanded = it }
                 ) {
                     OutlinedTextField(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor()
+                            .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = isEnabled)
                             .onSizeChanged { width = it.width },
                         value = deploymentTarget?.name ?: stringResource(id = R.string.empty),
                         enabled = isEnabled,
