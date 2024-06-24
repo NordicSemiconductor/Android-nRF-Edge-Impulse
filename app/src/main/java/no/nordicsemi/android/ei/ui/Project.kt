@@ -78,7 +78,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.CoroutineScope
-import no.nordicsemi.android.common.theme.view.NordicAppBar
+import no.nordicsemi.android.common.ui.view.NordicAppBar
 import no.nordicsemi.android.ei.BottomNavigationScreen
 import no.nordicsemi.android.ei.HorizontalPagerTab
 import no.nordicsemi.android.ei.R
@@ -530,7 +530,7 @@ private fun ProjectTopAppBar(
 
         else -> {
             NordicAppBar(
-                text = projectName,
+                title = { Text(text = projectName) },
                 onNavigationButtonClick = onBackPressed,
                 showBackButton = true
             )

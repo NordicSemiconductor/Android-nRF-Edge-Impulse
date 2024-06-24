@@ -21,6 +21,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.nordic.ui)
     implementation(libs.nordic.theme)
     implementation(libs.nordic.ble.ktx)
     implementation(libs.nordic.mcumgr.ble)
@@ -31,7 +32,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.activity.compose)
-    implementation("androidx.compose.material3:material3:1.3.0-beta02")
     implementation(libs.paging.compose)
     implementation(libs.paging.runtime)
     implementation(libs.paging.common)

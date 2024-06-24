@@ -37,10 +37,10 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import no.nordicsemi.android.common.theme.R.color
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.ui.ShowDropdown
+import no.nordicsemi.android.common.ui.R as uiR
 
 private val AppBarHeight = 56.dp
 val UserAppBarImageSize = 120.dp
@@ -49,7 +49,7 @@ val UserAppBarImageSize = 120.dp
 fun UserAppBar(
     title: String,
     user: User,
-    backgroundColor: Color = colorResource(id = color.appBarColor),
+    backgroundColor: Color = colorResource(id = uiR.color.appBarColor),
     onAboutClick: () -> Unit = {},
     onDeleteUserClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},

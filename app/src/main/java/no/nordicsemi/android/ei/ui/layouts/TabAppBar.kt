@@ -43,9 +43,8 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import no.nordicsemi.android.common.theme.R
+import no.nordicsemi.android.common.ui.R as uiR
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TabTopAppBar1(
     title: @Composable () -> Unit,
@@ -53,7 +52,7 @@ fun TabTopAppBar1(
     pagerState: PagerState? = null,
     navigationIcon: @Composable (() -> Unit),
     actions: @Composable RowScope.() -> Unit = {},
-    backgroundColor: Color = colorResource(id = R.color.appBarColor),
+    backgroundColor: Color = colorResource(id = uiR.color.appBarColor),
 ) {
     val selectedTabIndex = pagerState?.currentPage ?: 0
     Column {
@@ -95,7 +94,6 @@ fun TabTopAppBar1(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TabTopAppBar(
     title: @Composable () -> Unit,
@@ -104,7 +102,7 @@ fun TabTopAppBar(
     pagerState: PagerState? = null,
     navigationIcon: @Composable (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
-    backgroundColor: Color = colorResource(id = R.color.appBarColor),
+    backgroundColor: Color = MaterialTheme.colorScheme.primaryContainer,
     contentColor: Color = contentColorFor(backgroundColor),
     elevation: Dp = 0.dp,
 ) {
