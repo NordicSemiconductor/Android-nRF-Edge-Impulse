@@ -601,8 +601,8 @@ private fun SampleLengthInput(
             }
         },
         keyboardOptions = KeyboardOptions(
-            autoCorrect = false,
-            imeAction = ImeAction.Next,
+            autoCorrectEnabled = false,
+            imeAction = ImeAction.Next
         ),
         keyboardActions = KeyboardActions(onNext = {
             keyboardController?.hide()
