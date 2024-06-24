@@ -25,6 +25,8 @@ dependencies {
     implementation(libs.nordic.theme)
     implementation(libs.nordic.ble.ktx)
     implementation(libs.nordic.mcumgr.ble)
+    // Added as a workaround for missing class when using slf4j from the current mcumgr library
+    implementation("org.slf4j:slf4j-nop:1.7.30")
 
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.material.iconsExtended)
@@ -45,8 +47,7 @@ dependencies {
 
     implementation(libs.accompanist.permissions)
 
-    // implementation(libs.coil.kt.compose)
-    implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation(libs.coil.kt.compose)
     implementation(libs.gson)
 
     testImplementation(libs.junit4)
