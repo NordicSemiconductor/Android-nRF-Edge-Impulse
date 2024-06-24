@@ -12,6 +12,7 @@ package no.nordicsemi.android.ei.ui
 
 import android.content.res.Configuration.SCREENLAYOUT_SIZE_LARGE
 import android.content.res.Configuration.SCREENLAYOUT_SIZE_MASK
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -64,13 +65,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -221,6 +222,9 @@ private fun SmallScreen(
         }
     }
 
+    Log.d("AAAA", "Sampling state ${viewModel.samplingState}")
+    Log.d("AAAA", "Sampling started from device ${viewModel.isSamplingStartedFromDevice}")
+
     ProjectContent(
         viewModel = viewModel,
         scope = scope,
@@ -238,8 +242,7 @@ private fun SmallScreen(
         },
         onBackPressed = {
             if (modalBottomSheetState.isVisible &&
-                (viewModel.samplingState is Finished || viewModel.samplingState is Unknown)
-            ) {
+                (viewModel.samplingState is Finished || viewModel.samplingState is Unknown)) {
                 showBottomSheet = false
             } else onBackPressed()
         }
@@ -290,7 +293,6 @@ private fun SmallScreen(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ProjectContent(
     viewModel: ProjectViewModel,
@@ -414,6 +416,7 @@ private fun ProjectContent(
                         },
                         connect = viewModel::connect,
                         disconnect = viewModel::disconnect,
+                        dataAcquisitionTarget = viewModel::onDataAcquisitionTargetSelected,
                         onRenameClick = viewModel::rename,
                         onDeleteClick = viewModel::delete
                     )

@@ -104,6 +104,7 @@ fun Devices(
     scannerState: ScannerState,
     onBluetoothStateChanged: (Boolean) -> Unit,
     connect: (DiscoveredBluetoothDevice) -> Unit,
+    dataAcquisitionTarget: (Device) -> Unit,
     disconnect: (DiscoveredBluetoothDevice) -> Unit,
     onRenameClick: (Device, String) -> Unit,
     onDeleteClick: (Device) -> Unit
@@ -265,7 +266,10 @@ fun Devices(
                         activeDevices = activeDevices
                     ),
                     onConnectClick = {
-                        viewModel.discoveredBluetoothDevice(device)?.let(connect)
+                        viewModel.discoveredBluetoothDevice(device)?.let {
+                            connect(it)
+                            dataAcquisitionTarget(device)
+                        }
                     },
                     onDisconnectClick = {
                         viewModel.discoveredBluetoothDevice(device)?.let(disconnect)
