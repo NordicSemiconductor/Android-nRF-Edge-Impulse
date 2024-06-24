@@ -58,6 +58,8 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -75,7 +77,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -86,12 +87,11 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import coil.transform.CircleCropTransformation
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.Collaborator
 import no.nordicsemi.android.ei.model.Project
@@ -113,7 +113,7 @@ fun Dashboard(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val user = viewModel.user
-    val swipeRefreshState = rememberSwipeRefreshState(viewModel.isRefreshing)
+    val swipeRefreshState = rememberPullToRefreshState()
     val developmentKeysState = viewModel.isDownloadingDevelopmentKeys
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -178,9 +178,9 @@ fun Dashboard(
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     ) { innerPadding ->
-        SwipeRefresh(
-            modifier =
-            Modifier
+        PullToRefreshBox(
+            isRefreshing = viewModel.isRefreshing,
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues = innerPadding)
                 .consumeWindowInsets(paddingValues = innerPadding)
@@ -339,12 +339,13 @@ fun Dashboard(
 fun ProjectRow(
     modifier: Modifier = Modifier,
     project: Project,
+    selectable: Boolean = true,
     onProjectSelected: () -> Unit = {}
 ) {
     Row(
         modifier = modifier
             .background(MaterialTheme.colorScheme.surface)
-            .clickable {
+            .clickable(enabled = selectable) {
                 onProjectSelected()
             }
             .padding(start = 16.dp, top = 8.dp, bottom = 8.dp, end = 16.dp),

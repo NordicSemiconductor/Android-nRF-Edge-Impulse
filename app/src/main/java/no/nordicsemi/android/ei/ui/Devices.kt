@@ -46,6 +46,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -69,9 +71,6 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ei.R
@@ -105,6 +104,7 @@ fun Devices(
     scannerState: ScannerState,
     onBluetoothStateChanged: (Boolean) -> Unit,
     connect: (DiscoveredBluetoothDevice) -> Unit,
+    dataAcquisitionTarget: (Device) -> Unit,
     disconnect: (DiscoveredBluetoothDevice) -> Unit,
     onRenameClick: (Device, String) -> Unit,
     onDeleteClick: (Device) -> Unit
@@ -116,18 +116,11 @@ fun Devices(
         enabled = bottomSheetState.isVisible,
         onBack = { scope.launch { bottomSheetState.hide() } }
     )
-    SwipeRefresh(
-        state = rememberSwipeRefreshState(refreshingState),
+    PullToRefreshBox(
+        state = rememberPullToRefreshState(),
+        isRefreshing = refreshingState,
         onRefresh = onRefresh,
         modifier = modifier/*.padding(it)*/,
-        // TODO After Compose is stable, try removing this and swiping in Scanner tab.
-        // Those 3 properties below copy the default values from SwipeRefresh.
-        // Without them, the Scanner page crashes when devices are displayed and Swipe is used.
-        indicator = { s, trigger ->
-            SwipeRefreshIndicator(s, trigger)
-        },
-        indicatorAlignment = Alignment.TopCenter,
-        indicatorPadding = PaddingValues(0.dp)
     ) {
         LazyColumn(
             modifier = Modifier
@@ -273,7 +266,10 @@ fun Devices(
                         activeDevices = activeDevices
                     ),
                     onConnectClick = {
-                        viewModel.discoveredBluetoothDevice(device)?.let(connect)
+                        viewModel.discoveredBluetoothDevice(device)?.let {
+                            connect(it)
+                            dataAcquisitionTarget(device)
+                        }
                     },
                     onDisconnectClick = {
                         viewModel.discoveredBluetoothDevice(device)?.let(disconnect)

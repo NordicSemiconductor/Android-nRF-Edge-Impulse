@@ -8,6 +8,7 @@
 
 package no.nordicsemi.android.ei.viewmodels
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
@@ -60,6 +61,7 @@ class DevicesViewModel @Inject constructor(
         stopScan()
     }
 
+    @SuppressLint("MissingPermission")
     fun startScan() {
         guard(bluetoothAdapter.isEnabled) {
             scannerState.onBluetoothDisabled()
@@ -82,6 +84,7 @@ class DevicesViewModel @Inject constructor(
         }
     }
 
+    @SuppressLint("MissingPermission")
     fun stopScan() {
         //guard(scannerState.scanningState != ScanningState.Stopped) { return }
         bluetoothAdapter.bluetoothLeScanner?.apply { stopScan(scanCallback) }

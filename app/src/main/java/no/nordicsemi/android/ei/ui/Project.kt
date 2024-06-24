@@ -12,7 +12,9 @@ package no.nordicsemi.android.ei.ui
 
 import android.content.res.Configuration.SCREENLAYOUT_SIZE_LARGE
 import android.content.res.Configuration.SCREENLAYOUT_SIZE_MASK
+import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,6 +26,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -61,23 +65,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.google.accompanist.pager.PagerState
-import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.CoroutineScope
-import no.nordicsemi.android.common.theme.view.NordicAppBar
+import no.nordicsemi.android.common.ui.view.NordicAppBar
 import no.nordicsemi.android.ei.BottomNavigationScreen
 import no.nordicsemi.android.ei.HorizontalPagerTab
 import no.nordicsemi.android.ei.R
@@ -220,6 +222,9 @@ private fun SmallScreen(
         }
     }
 
+    Log.d("AAAA", "Sampling state ${viewModel.samplingState}")
+    Log.d("AAAA", "Sampling started from device ${viewModel.isSamplingStartedFromDevice}")
+
     ProjectContent(
         viewModel = viewModel,
         scope = scope,
@@ -237,8 +242,7 @@ private fun SmallScreen(
         },
         onBackPressed = {
             if (modalBottomSheetState.isVisible &&
-                (viewModel.samplingState is Finished || viewModel.samplingState is Unknown)
-            ) {
+                (viewModel.samplingState is Finished || viewModel.samplingState is Unknown)) {
                 showBottomSheet = false
             } else onBackPressed()
         }
@@ -312,7 +316,10 @@ private fun ProjectContent(
         onScreenChanged(BottomNavigationScreen.fromNav(destination))
     }
     val snackbarHostState = remember { SnackbarHostState() }
-    val pagerState = rememberPagerState(initialPage = 0)
+    val pagerState = rememberPagerState(
+        initialPage = 0,
+        pageCount = { 2 },
+    )
     val trainingListState = rememberLazyListState()
     val testingListState = rememberLazyListState()
     val listStates = listOf(trainingListState, testingListState)
@@ -409,6 +416,7 @@ private fun ProjectContent(
                         },
                         connect = viewModel::connect,
                         disconnect = viewModel::disconnect,
+                        dataAcquisitionTarget = viewModel::onDataAcquisitionTargetSelected,
                         onRenameClick = viewModel::rename,
                         onDeleteClick = viewModel::delete
                     )
@@ -480,6 +488,7 @@ private fun ProjectContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 private fun ProjectTopAppBar(
     projectName: String,
@@ -524,7 +533,7 @@ private fun ProjectTopAppBar(
 
         else -> {
             NordicAppBar(
-                text = projectName,
+                title = { Text(text = projectName) },
                 onNavigationButtonClick = onBackPressed,
                 showBackButton = true
             )

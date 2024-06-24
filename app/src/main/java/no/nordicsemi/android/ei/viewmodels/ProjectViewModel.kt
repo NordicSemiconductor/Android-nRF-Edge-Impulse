@@ -368,7 +368,9 @@ class ProjectViewModel @Inject constructor(
     fun connect(
         device: DiscoveredBluetoothDevice,
         onConnected: (() -> Unit)? = null,
-        onTimeout: ((Int) -> Unit)? = null
+        onTimeout: ((Int) -> Unit)? = {
+            resetSelectedTargets(device = device)
+        }
     ) {
         commsManagers.getOrPut(key = device.deviceId, defaultValue = {
             CommsManager(

@@ -49,7 +49,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import no.nordicsemi.android.common.theme.view.NordicAppBar
+import no.nordicsemi.android.common.ui.view.NordicAppBar
 import no.nordicsemi.android.ei.R
 import no.nordicsemi.android.ei.model.User
 import no.nordicsemi.android.ei.viewmodels.DeleteUserViewModel
@@ -67,7 +67,7 @@ fun DeleteUser(viewModel: DeleteUserViewModel, onDeleted: () -> Unit, onBackPres
         topBar = {
             NordicAppBar(
                 showBackButton = true,
-                text = stringResource(id = R.string.action_delete_user),
+                title = { Text(text = stringResource(id = R.string.action_delete_user)) },
                 onNavigationButtonClick = {
                     if (state != DeleteState.Deleting) {
                         onBackPressed()
@@ -92,7 +92,11 @@ fun DeleteUser(viewModel: DeleteUserViewModel, onDeleted: () -> Unit, onBackPres
                             text = stringResource(R.string.title_warning),
                             style = MaterialTheme.typography.titleLarge
                         )
-                        Surface(modifier = Modifier.fillMaxWidth()) {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.errorContainer,
+                        ) {
                             Column(
                                 modifier = Modifier
                                     .padding(all = 16.dp)
@@ -115,7 +119,8 @@ fun DeleteUser(viewModel: DeleteUserViewModel, onDeleted: () -> Unit, onBackPres
                         key = { project -> project.id }
                     ) { project ->
                         ProjectRow(
-                            project = project
+                            project = project,
+                            selectable = false,
                         )
                         HorizontalDivider()
                     }
@@ -152,7 +157,6 @@ private fun DeleteUserContent(
     var password by remember { mutableStateOf("") }
     var passwordState by rememberSaveable { mutableStateOf(false) }
     var code by remember { mutableStateOf("") }
-    var deleteUserRequested by remember { mutableStateOf(false) }
 
     Text(
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
@@ -214,12 +218,12 @@ private fun DeleteUserContent(
                         }
                     },
                     keyboardOptions = KeyboardOptions(
-                        autoCorrect = false,
+                        autoCorrectEnabled = false,
+                        keyboardType = KeyboardType.Password,
                         imeAction = when {
                             user.mfaConfigured -> ImeAction.Next
                             else -> ImeAction.Done
-                        },
-                        keyboardType = KeyboardType.Password
+                        }
                     ),
                     singleLine = true,
                     enabled = state != DeleteState.Deleting,
@@ -243,9 +247,9 @@ private fun DeleteUserContent(
                             )
                         },
                         keyboardOptions = KeyboardOptions(
-                            autoCorrect = false,
-                            imeAction = ImeAction.Done,
-                            keyboardType = KeyboardType.Number
+                            autoCorrectEnabled = false,
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done
                         ),
                         singleLine = true,
                         enabled = state != DeleteState.Deleting,

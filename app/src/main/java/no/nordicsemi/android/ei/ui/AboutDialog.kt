@@ -25,8 +25,9 @@ fun AboutDialog(onDismiss: () -> Unit) {
         title = stringResource(id = R.string.action_about),
         text = {
             Column {
+                Text(text = stringResource(id = R.string.label_about))
+                Spacer(modifier = Modifier.height(16.dp))
                 Row {
-                    Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         modifier = Modifier.weight(1.0f),
                         text = stringResource(R.string.label_version)
