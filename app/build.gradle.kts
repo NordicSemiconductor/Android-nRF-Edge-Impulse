@@ -49,6 +49,7 @@ dependencies {
 
     implementation(libs.coil.kt.compose)
     implementation(libs.gson)
+    testImplementation("com.google.truth:truth:1.4.2")
 
     testImplementation(libs.junit4)
     testImplementation(libs.kotlin.junit)
