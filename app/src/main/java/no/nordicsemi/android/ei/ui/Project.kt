@@ -222,9 +222,6 @@ private fun SmallScreen(
         }
     }
 
-    Log.d("AAAA", "Sampling state ${viewModel.samplingState}")
-    Log.d("AAAA", "Sampling started from device ${viewModel.isSamplingStartedFromDevice}")
-
     ProjectContent(
         viewModel = viewModel,
         scope = scope,
