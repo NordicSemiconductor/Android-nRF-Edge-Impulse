@@ -19,7 +19,6 @@ class UserManager @Inject constructor(
     // lifecycle, it needs to know how to create instances of it. We use the
     // provider (i.e. factory) Dagger generates for us to create instances of UserComponent.
     private val userComponentProvider: Provider<UserComponent.Builder>
-
 ) {
     /**
      *  UserComponent is specific to a logged in user. Holds an instance of

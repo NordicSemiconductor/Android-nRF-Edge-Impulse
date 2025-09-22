@@ -47,7 +47,7 @@ class DashboardViewModel @Inject constructor(
     val eventFlow = eventChannel.receiveAsFlow()
 
     // User is kept outside of refresh state, as it is available also when refreshing.
-    var user: User by mutableStateOf(userDataRepo.user)
+    var user: User? by mutableStateOf(userDataRepo?.user)
         private set
 
     var isRefreshing: Boolean by mutableStateOf(false)
@@ -56,11 +56,12 @@ class DashboardViewModel @Inject constructor(
     var isDownloadingDevelopmentKeys: Boolean by mutableStateOf(false)
         private set
 
-    // TODO This needs to be fixed: Possible NPE when switching back to the app.
-    private val userDataRepo: UserDataRepository
-        get() = EntryPoints
-            .get(userManager.userComponent!!, UserComponentEntryPoint::class.java)
-            .userDataRepository()
+    private val userDataRepo: UserDataRepository?
+        get() = userManager.userComponent?.let {
+            EntryPoints
+                .get(it, UserComponentEntryPoint::class.java)
+                .userDataRepository()
+        }
 
     // TODO This needs to be fixed: Possible NPE when switching back to the app.
     private val projectManager: ProjectManager
@@ -77,12 +78,12 @@ class DashboardViewModel @Inject constructor(
         }
         viewModelScope.launch(handler) {
             dashboardRepository
-                .getCurrentUser(userDataRepo.token)
+                .getCurrentUser(userDataRepo!!.token)
                 .let { response ->
                     guard(response.success) {
                         throw Throwable(response.error)
                     }
-                    userManager.userLoggedIn(response, userDataRepo.token)
+                    userManager.userLoggedIn(response, userDataRepo!!.token)
                     user = response
                 }
                 .also { isRefreshing = false }
@@ -101,7 +102,7 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch(handler) {
             dashboardRepository
                 .createProject(
-                    token = userDataRepo.token,
+                    token = userDataRepo!!.token,
                     projectName = projectName,
                     projectVisibility = projectVisibility
                 ).let { response ->
@@ -124,7 +125,7 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch(handler) {
             // Retrieve the development keys for the project
             val developmentKeys = dashboardRepository.developmentKeys(
-                token = userDataRepo.token,
+                token = userDataRepo!!.token,
                 projectId = project.id
             ).let { response ->
                 guard(response.success) {
@@ -158,7 +159,9 @@ class DashboardViewModel @Inject constructor(
     }
 
     private fun handleLogout() {
-        AccountHelper.invalidateAuthToken(userDataRepo.token, getApplication())
+        userDataRepo?.let {
+            AccountHelper.invalidateAuthToken(it.token, getApplication())
+        }
         userManager.logout()
     }
 }
