@@ -108,11 +108,15 @@ fun Dashboard(
     viewModel: DashboardViewModel,
     onProjectSelected: (Project) -> Unit,
     onDeleteUser: () -> Unit,
-    onLogout: (Unit) -> Unit
+    onLogout: () -> Unit
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val user = viewModel.user
+    val user = viewModel.user ?: run {
+        viewModel.logout()
+        onLogout()
+        return
+    }
     val swipeRefreshState = rememberPullToRefreshState()
     val developmentKeysState = viewModel.isDownloadingDevelopmentKeys
 
@@ -163,7 +167,10 @@ fun Dashboard(
                 user = user,
                 onAboutClick = { showAboutDialog = !showAboutDialog },
                 onDeleteUserClick = onDeleteUser,
-                onLogoutClick = { onLogout(viewModel.logout()) }
+                onLogoutClick = {
+                    viewModel.logout()
+                    onLogout()
+                }
             )
         },
         floatingActionButton = {
