@@ -72,7 +72,8 @@ class ZipPackage(data: ByteArray) {
 
         // Unzip the file and look for the manifest.json.
         val zis = ZipInputStream(ByteArrayInputStream(data))
-        while ((zis.nextEntry.also { ze = it }) != null) {
+        while (true) {
+            ze = zis.nextEntry ?: break
             if (ze.isDirectory) throw IOException("Invalid ZIP")
 
             val name = validateFilename(ze.name)
