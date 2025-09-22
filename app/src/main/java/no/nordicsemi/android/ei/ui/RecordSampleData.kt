@@ -189,6 +189,7 @@ private fun RecordSampleContent(
     selectedFrequency: Number?,
     onFrequencySelected: (Number) -> Unit
 ) {
+    val labelValidator= remember { "^[0-9a-zA-Z-]*$".toRegex() }
     var isLabelError by rememberSaveable {
         mutableStateOf(false)
     }
@@ -217,7 +218,8 @@ private fun RecordSampleContent(
             samplingState = samplingState,
             label = label,
             onLabelChanged = {
-                isLabelError = it.isEmpty()
+                // Only allow alphanumeric characters in the label.
+                isLabelError = it.matches(labelValidator).not()
                 onLabelChanged(it)
             },
             isLabelError = isLabelError
@@ -417,7 +419,7 @@ private fun LabelInput(
     if (isLabelError) {
         Text(
             modifier = Modifier.padding(start = 16.dp),
-            text = stringResource(R.string.label_empty_label_error),
+            text = stringResource(R.string.label_invalid_label_error),
             color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.bodySmall
         )
