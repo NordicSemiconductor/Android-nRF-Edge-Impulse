@@ -1,9 +1,7 @@
 /*
+ * Copyright (c) 2022, Nordic Semiconductor
  *
- *  * Copyright (c) 2022, Nordic Semiconductor
- *  *
- *  * SPDX-License-Identifier: Apache-2.0
- *
+ * SPDX-License-Identifier: Apache-2.0
  */
 plugins {
     // https://github.com/NordicSemiconductor/Android-Gradle-Plugins/blob/main/plugins/src/main/kotlin/AndroidApplicationComposeConventionPlugin.kt
@@ -11,7 +9,6 @@ plugins {
     // https://github.com/NordicSemiconductor/Android-Gradle-Plugins/blob/main/plugins/src/main/kotlin/AndroidHiltConventionPlugin.kt
     alias(libs.plugins.nordic.hilt)
 }
-
 
 android {
     namespace = "no.nordicsemi.android.ei"
@@ -25,8 +22,7 @@ dependencies {
     implementation(libs.nordic.theme)
     implementation(libs.nordic.ble.ktx)
     implementation(libs.nordic.mcumgr.ble)
-    // Added as a workaround for missing class when using slf4j from the current mcumgr library
-    implementation("org.slf4j:slf4j-nop:1.7.30")
+    implementation(libs.slf4j.timber)
 
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.material.iconsExtended)
@@ -49,8 +45,8 @@ dependencies {
 
     implementation(libs.coil.kt.compose)
     implementation(libs.gson)
-    testImplementation("com.google.truth:truth:1.4.2")
 
+    testImplementation(libs.truth)
     testImplementation(libs.junit4)
     testImplementation(libs.kotlin.junit)
     testImplementation(libs.androidx.test.core)

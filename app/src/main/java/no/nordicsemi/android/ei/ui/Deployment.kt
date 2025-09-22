@@ -167,7 +167,6 @@ private fun DeployImpulse(
     onCancelDeployClick: () -> Unit
 ) {
     var isDevicesMenuExpanded by remember { mutableStateOf(false) }
-    var width by rememberSaveable { mutableIntStateOf(0) }
     val isEnabled = shouldEnable(
         connectedDevices = connectedDevices,
         deploymentState = deploymentState
@@ -195,8 +194,7 @@ private fun DeployImpulse(
                     OutlinedTextField(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = isEnabled)
-                            .onSizeChanged { width = it.width },
+                            .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = isEnabled),
                         value = deploymentTarget?.name ?: stringResource(id = R.string.empty),
                         enabled = isEnabled,
                         onValueChange = { },

@@ -121,7 +121,6 @@ private fun StartInferencing(
     sendInferencingRequest: (InferencingRequest) -> Unit
 ) {
     var isDevicesMenuExpanded by remember { mutableStateOf(false) }
-    var width by rememberSaveable { mutableIntStateOf(0) }
 
     if (isLargeScreen || isLandscape) {
         Row(
@@ -147,8 +146,7 @@ private fun StartInferencing(
                         .menuAnchor(
                             type = MenuAnchorType.PrimaryNotEditable,
                             enabled = connectedDevices.isNotEmpty()
-                        )
-                        .onSizeChanged { width = it.width },
+                        ),
                     value = inferencingTarget?.name ?: stringResource(id = R.string.empty),
                     enabled = connectedDevices.isNotEmpty(),
                     onValueChange = { },
@@ -226,8 +224,7 @@ private fun StartInferencing(
                     .menuAnchor(
                         type = MenuAnchorType.PrimaryNotEditable,
                         enabled = connectedDevices.isNotEmpty()
-                    )
-                    .onSizeChanged { width = it.width },
+                    ),
                 value = inferencingTarget?.name ?: stringResource(id = R.string.empty),
                 enabled = connectedDevices.isNotEmpty(),
                 onValueChange = { },
