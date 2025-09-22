@@ -20,7 +20,7 @@ import no.nordicsemi.android.ei.util.guard
 import javax.inject.Inject
 
 class AccountAuthenticator @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
 ) : AbstractAccountAuthenticator(context) {
 
     override fun addAccount(
@@ -46,7 +46,6 @@ class AccountAuthenticator @Inject constructor(
 
         val bundle = Bundle()
         bundle.putParcelable(AccountManager.KEY_INTENT, intent)
-
         return bundle
     }
 
@@ -74,7 +73,7 @@ class AccountAuthenticator @Inject constructor(
     }
 
     override fun getAuthTokenLabel(authTokenType: String?): String {
-        TODO("Not yet implemented")
+        TODO("Token type: $authTokenType")
     }
 
     override fun confirmCredentials(
@@ -105,7 +104,7 @@ class AccountAuthenticator @Inject constructor(
         response: AccountAuthenticatorResponse?,
         account: Account?,
         features: Array<out String>?
-    ): Bundle {
-        TODO("Not yet implemented")
+    ): Bundle = Bundle().apply {
+        putBoolean(AccountManager.KEY_BOOLEAN_RESULT, false)
     }
 }
