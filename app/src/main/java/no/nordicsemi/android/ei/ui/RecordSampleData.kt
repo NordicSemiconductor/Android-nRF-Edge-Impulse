@@ -48,7 +48,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -58,7 +57,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -136,7 +134,6 @@ fun RecordSampleSmallScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = MaterialTheme.colorScheme.background)
     ) {
         SamplingMessage(
             isSamplingMessageVisible = viewModel.samplingState !is Unknown,
@@ -257,7 +254,6 @@ private fun DeviceSelection(
     dataAcquisitionTarget: Device?,
     onDataAcquisitionTargetSelected: (Device) -> Unit
 ) {
-    var width by rememberSaveable { mutableIntStateOf(0) }
     var isDevicesMenuExpanded by rememberSaveable { mutableStateOf(false) }
     val isEnabled = shouldEnable(
         connectedDevices = connectedDevices,
@@ -273,8 +269,7 @@ private fun DeviceSelection(
             enabled = isEnabled,
             modifier = Modifier
                 .fillMaxWidth()
-                .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = isEnabled)
-                .onSizeChanged { width = it.width },
+                .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = isEnabled),
             readOnly = true,
             label = {
                 DeviceDisconnected(connectedDevices = connectedDevices)
@@ -318,7 +313,6 @@ private fun CategorySelection(
     category: Category,
     onCategorySelected: (Category) -> Unit
 ) {
-    var width by rememberSaveable { mutableIntStateOf(0) }
     var isCategoryExpanded by rememberSaveable { mutableStateOf(false) }
     val isEnabled = shouldEnable(
         connectedDevices = connectedDevices,
@@ -338,8 +332,7 @@ private fun CategorySelection(
             enabled = isEnabled,
             modifier = Modifier
                 .fillMaxWidth()
-                .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = isEnabled)
-                .onSizeChanged { width = it.width },
+                .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = isEnabled),
             readOnly = true,
             label = {
                 Text(text = stringResource(R.string.label_category))
@@ -439,7 +432,6 @@ private fun SensorSelection(
     selectedSensor: Sensor?,
     onSensorSelected: (Sensor) -> Unit
 ) {
-    var width by rememberSaveable { mutableIntStateOf(0) }
     var isSensorsMenuExpanded by rememberSaveable { mutableStateOf(false) }
     val isEnabled = shouldEnable(
         connectedDevices = connectedDevices,
@@ -454,8 +446,7 @@ private fun SensorSelection(
             onValueChange = { },
             modifier = Modifier
                 .fillMaxWidth()
-                .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = isEnabled)
-                .onSizeChanged { width = it.width },
+                .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = isEnabled),
             enabled = isEnabled,
             readOnly = true,
             label = {
@@ -620,7 +611,6 @@ private fun FrequencySelection(
     selectedFrequency: Number?,
     onFrequencySelected: (Number) -> Unit
 ) {
-    var width by rememberSaveable { mutableIntStateOf(0) }
     var isFrequencyMenuExpanded by rememberSaveable { mutableStateOf(false) }
     val isEnabled = shouldEnable(
         connectedDevices = connectedDevices,
@@ -635,8 +625,7 @@ private fun FrequencySelection(
             onValueChange = { },
             modifier = Modifier
                 .fillMaxWidth()
-                .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = isEnabled)
-                .onSizeChanged { width = it.width },
+                .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = isEnabled),
             enabled = isEnabled,
             readOnly = true,
             label = { Text(text = stringResource(R.string.label_frequency)) },

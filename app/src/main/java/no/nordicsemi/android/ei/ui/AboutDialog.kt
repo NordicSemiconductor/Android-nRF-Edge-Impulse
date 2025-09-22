@@ -37,7 +37,7 @@ fun AboutDialog(onDismiss: () -> Unit) {
                         text = context.packageManager.getPackageInfo(
                             context.packageName,
                             0
-                        ).versionName,
+                        ).versionName ?: "Unknown",
                         textAlign = TextAlign.End
                     )
                 }

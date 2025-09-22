@@ -30,14 +30,14 @@ import io.runtime.mcumgr.McuMgrTransport
 import io.runtime.mcumgr.ble.McuMgrBleTransport
 import io.runtime.mcumgr.dfu.FirmwareUpgradeCallback
 import io.runtime.mcumgr.dfu.FirmwareUpgradeController
-import io.runtime.mcumgr.dfu.FirmwareUpgradeManager
-import io.runtime.mcumgr.dfu.FirmwareUpgradeManager.State.CONFIRM
-import io.runtime.mcumgr.dfu.FirmwareUpgradeManager.State.NONE
-import io.runtime.mcumgr.dfu.FirmwareUpgradeManager.State.RESET
-import io.runtime.mcumgr.dfu.FirmwareUpgradeManager.State.TEST
-import io.runtime.mcumgr.dfu.FirmwareUpgradeManager.State.UPLOAD
-import io.runtime.mcumgr.dfu.FirmwareUpgradeManager.State.VALIDATE
-import io.runtime.mcumgr.dfu.model.McuMgrImageSet
+import io.runtime.mcumgr.dfu.mcuboot.FirmwareUpgradeManager
+import io.runtime.mcumgr.dfu.mcuboot.FirmwareUpgradeManager.State.CONFIRM
+import io.runtime.mcumgr.dfu.mcuboot.FirmwareUpgradeManager.State.NONE
+import io.runtime.mcumgr.dfu.mcuboot.FirmwareUpgradeManager.State.RESET
+import io.runtime.mcumgr.dfu.mcuboot.FirmwareUpgradeManager.State.TEST
+import io.runtime.mcumgr.dfu.mcuboot.FirmwareUpgradeManager.State.UPLOAD
+import io.runtime.mcumgr.dfu.mcuboot.FirmwareUpgradeManager.State.VALIDATE
+import io.runtime.mcumgr.dfu.mcuboot.model.ImageSet
 import io.runtime.mcumgr.exception.McuMgrException
 import io.runtime.mcumgr.image.McuMgrImage
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -87,7 +87,7 @@ class ProjectViewModel @Inject constructor(
     private val projectRepository: ProjectRepository,
     private val client: OkHttpClient,
     private val gson: Gson
-) : AndroidViewModel(context as Application), FirmwareUpgradeCallback {
+) : AndroidViewModel(context as Application), FirmwareUpgradeCallback<FirmwareUpgradeManager.State> {
 
     private val bluetoothManager =
         context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
@@ -410,12 +410,8 @@ class ProjectViewModel @Inject constructor(
 
     private fun resetSelectedTargets(device: DiscoveredBluetoothDevice) {
         if (deploymentState is NotStarted || deploymentState is Canceled || deploymentState is Failed || deploymentState is Complete) {
-            deploymentTarget = deploymentTarget?.takeIf {
-                it.deviceId == device.deviceId
-            }?.let {
-                firmwareUpgradeController?.cancel()
-                null
-            }
+            firmwareUpgradeController?.cancel()
+            deploymentTarget = null
         }
         dataAcquisitionTarget = dataAcquisitionTarget?.takeUnless {
             it.deviceId == device.deviceId
@@ -592,14 +588,11 @@ class ProjectViewModel @Inject constructor(
             val context = getApplication() as Context
             val transport: McuMgrTransport = McuMgrBleTransport(context, bluetoothDevice)
             dfuManager = FirmwareUpgradeManager(transport, this).apply {
-                setWindowUploadCapacity(3)
-                setMemoryAlignment(4)
-                setEstimatedSwapTime(40_000)
-                var images = McuMgrImageSet() //arrayListOf<Pair<Int, ByteArray>>()
+                var images = ImageSet()
                 try {
                     McuMgrImage.getHash(data)
                     images.add(Pair(0, data))
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     try {
                         images = ZipPackage(data).binaries
                     } catch (_: Exception) {
@@ -610,7 +603,14 @@ class ProjectViewModel @Inject constructor(
                     requestConnPriority(ConnectionPriorityRequest.CONNECTION_PRIORITY_HIGH)
                 }
                 setMode(FirmwareUpgradeManager.Mode.CONFIRM_ONLY)
-                start(images, false)
+
+                val settings = FirmwareUpgradeManager.Settings
+                    .Builder()
+                    .setWindowCapacity(3)
+                    .setMemoryAlignment(4)
+                    .setEstimatedSwapTime(40_000)
+                    .build()
+                start(images, settings)
             }
         }
     }
