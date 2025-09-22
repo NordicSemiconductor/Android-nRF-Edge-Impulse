@@ -3,8 +3,8 @@ package no.nordicsemi.android.ei.util
 import androidx.annotation.Keep
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
-import io.runtime.mcumgr.dfu.model.McuMgrImageSet
-import io.runtime.mcumgr.dfu.model.McuMgrTargetImage
+import io.runtime.mcumgr.dfu.mcuboot.model.ImageSet
+import io.runtime.mcumgr.dfu.mcuboot.model.TargetImage
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -59,12 +59,12 @@ class ZipPackage(data: ByteArray) {
              * be sent.
              * @since NCS v 2.5, nRF Connect Device Manager 1.8.
              */
-            val slot: Int = McuMgrTargetImage.SLOT_SECONDARY
+            val slot: Int = TargetImage.SLOT_SECONDARY
         }
     }
 
     private var manifest: Manifest? = null
-    val binaries: McuMgrImageSet
+    val binaries: ImageSet
 
     init {
         var ze: ZipEntry
@@ -90,14 +90,14 @@ class ZipPackage(data: ByteArray) {
             }
         }
 
-        binaries = McuMgrImageSet()
+        binaries = ImageSet()
 
         // Search for images.
         for (file in manifest!!.files) {
             val name = file.file
             val content = entries[name] ?: throw IOException("File not found: $name")
 
-            binaries.add(McuMgrTargetImage(file.imageIndex, file.slot, content))
+            binaries.add(TargetImage(file.imageIndex, file.slot, content))
         }
     }
 
