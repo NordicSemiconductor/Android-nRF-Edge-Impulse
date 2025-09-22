@@ -9,7 +9,7 @@
 package no.nordicsemi.android.ei.model
 
 data class Sample(
-    val id: Int,
+    val id: Long,
     val filename: String,
     val signatureValidate: Boolean,
     val signatureMethod: String,
