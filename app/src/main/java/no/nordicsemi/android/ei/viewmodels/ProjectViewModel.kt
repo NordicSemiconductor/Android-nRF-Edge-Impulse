@@ -482,9 +482,10 @@ class ProjectViewModel @Inject constructor(
      * Starts firmware deployment
      */
     fun deploy() {
-        deploymentJob = viewModelScope.launch(CoroutineExceptionHandler { _, throwable ->
+        val handler = CoroutineExceptionHandler { _, throwable ->
             viewModelScope.launch { eventChannel.send(Event.Error(throwable)) }
-        }) {
+        }
+        deploymentJob = viewModelScope.launch(handler) {
             projectRepository.deploymentInfo(
                 projectId = project.id,
                 keys = keys
